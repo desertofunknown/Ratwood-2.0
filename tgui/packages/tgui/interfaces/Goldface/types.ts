@@ -109,6 +109,7 @@ export type KinshipData = {
 };
 
 export type HarborData = {
+  bulk_tariff_rate: number;
   ships_docked: HarborShip[];
   ships_pool: HarborShip[];
   realms: HarborRealm[];
@@ -202,6 +203,7 @@ export type VendingData = {
   categories: string[];
   current_category: string;
   search: string;
+  search_revision: number;
   search_mode: BooleanLike;
   result_cap: number;
   total_matches: number;

@@ -8,6 +8,7 @@ import {
 
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
+import { sanitizeHTML } from '../sanitize';
 
 type Data = {
   draft: string;
@@ -16,6 +17,7 @@ type Data = {
   standard_font: string;
   fonts: string[];
   maxlen: number;
+  writer_sequence: number;
 };
 
 export const PaperWriterPanel = () => {
@@ -27,6 +29,7 @@ export const PaperWriterPanel = () => {
     standard_font,
     fonts,
     maxlen,
+    writer_sequence,
   } = data;
 
   const [draft, setDraft] = useState(initialDraft || '');
@@ -38,10 +41,10 @@ export const PaperWriterPanel = () => {
   // Holds the pending debounce timer so it can be cancelled explicitly.
   const debounceHandle = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Monotonic client action sequence to let backend ignore stale out-of-order actions.
-  const actionSeq = useRef(0);
+  const actionSeq = useRef(writer_sequence || 0);
 
   const nextActionSeq = () => {
-    actionSeq.current += 1;
+    actionSeq.current = Math.max(actionSeq.current, writer_sequence || 0) + 1;
     return actionSeq.current;
   };
 
@@ -247,7 +250,7 @@ export const PaperWriterPanel = () => {
                   padding: '10px',
                   fontFamily: 'serif',
                 }}
-                dangerouslySetInnerHTML={{ __html: preview_html || '' }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(preview_html || '') }}
               />
             </Section>
           </Stack.Item>

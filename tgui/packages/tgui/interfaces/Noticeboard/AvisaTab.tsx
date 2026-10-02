@@ -5,11 +5,6 @@ import {
   INK_FAINT,
   INK_SOFT,
   inkButtonStyle,
-  rulerStyle,
-  subTabBarStyle,
-  subTabStyle,
-  subtitleStyle,
-  titleStyle,
 } from '../common/parchment';
 import { ChartersSection } from './AvisaSections/ChartersSection';
 import { EventsSection } from './AvisaSections/EventsSection';
@@ -39,7 +34,7 @@ const SECTIONS: SectionMeta[] = [
     key: 'charters',
     label: 'Charters',
     blurb:
-      "The standing edicts of the Crown - their force, their suspension, and the year of their sealing.",
+      'The standing edicts of the Crown - their force, their suspension, and the year of their sealing.',
   },
   {
     key: 'trade_orders',
@@ -72,7 +67,8 @@ const SECTIONS: SectionMeta[] = [
   {
     key: 'assembly',
     label: 'Assembly',
-    blurb: 'Petitions, summons, and the standing business of the City Assembly.',
+    blurb:
+      'Petitions, summons, and the standing business of the City Assembly.',
   },
 ];
 
@@ -82,41 +78,35 @@ export const AvisaTab = ({ data, act }: TabProps) => {
 
   return (
     <>
-      <div
-        style={{
-          ...titleStyle,
-          fontSize: '20px',
-          marginTop: 6,
-        }}
+      <div className="RealmNoticeboard__avisaHeading">
+        <h2>The Realm's Avisa</h2>
+        <span>Tidings, edicts, and trade of the realm</span>
+      </div>
+      <nav
+        className="RealmNoticeboard__tabs RealmNoticeboard__tabs--sections"
+        aria-label="Avisa sections"
       >
-        The Realm's Avisa
-      </div>
-      <div style={subtitleStyle}>
-        Tidings, edicts, and trade of the realm
-      </div>
-      <hr style={rulerStyle} />
-
-      <div style={subTabBarStyle}>
         {SECTIONS.map((s) => (
-          <div
+          <button
             key={s.key}
-            style={subTabStyle(section === s.key)}
+            type="button"
+            aria-pressed={section === s.key}
             onClick={() => setSection(s.key)}
           >
             {s.label}
-          </div>
+          </button>
         ))}
         {section === 'market' && (
           <button
             type="button"
             title="Open the economy guidebook"
-            style={{ ...inkButtonStyle({}), marginLeft: 'auto' }}
+            className="RealmNoticeboard__guide"
             onClick={() => act('help_market')}
           >
-            ?
+            Economy guide
           </button>
         )}
-      </div>
+      </nav>
 
       <div
         style={{

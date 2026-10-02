@@ -20,6 +20,8 @@
 	var/scom_tag
 	var/obj/structure/roguemachine/scomm/calling = null
 	var/obj/structure/roguemachine/scomm/called_by = null
+	/// Invalidates prompts and ringing loops belonging to an earlier connection.
+	var/call_generation = 0
 	/// Last time the SCOM sent a message. Used to check delay
 	var/last_message = 0
 	/// Whether this is a receive only SCOM, that cannot transmit any messages. Uses this for any kind of SCOM that is out of town and is not actionable
@@ -91,12 +93,20 @@
 		view_directory(usr)
 
 /obj/structure/roguemachine/scomm/proc/view_directory(mob/user)
-	var/dat
+	var/list/contents = list("<div class='comms-folio'><div class='comms-heading'><div class='comms-eyebrow'>SCOM directory</div><h1>Rat register</h1><p>Find a designation for your next jabberline.</p></div><div class='comms-search'><label for='directory-search'>Find a station</label><input id='directory-search' type='text' placeholder='Search by number or label...' oninput='filterCommsDirectory(this.value)'></div><div class='comms-body' tabindex='0' role='region' aria-label='SCOM stations'><table class='comms-directory'><thead><tr><th scope='col' class='comms-number'>Number</th><th scope='col'>Station</th></tr></thead><tbody id='directory-entries'>")
+	var/station_count = 0
 	for(var/obj/structure/roguemachine/scomm/X in SSroguemachine.scomm_machines)
-		dat += "#[X.scom_number] [X.scom_tag]<br>"
+		station_count++
+		contents += "<tr><td class='comms-number'>#[X.scom_number]</td><td>[X.scom_tag ? html_encode(X.scom_tag) : "<span class='comms-muted'>Unlabelled station</span>"]</td></tr>"
+	contents += "</tbody></table><div id='directory-no-matches' class='comms-empty'[station_count ? " style='display:none'" : ""]>[station_count ? "No stations match your search." : "No stations are registered."]</div></div><div class='comms-footer'>[station_count] registered station[station_count == 1 ? "" : "s"] &middot; Middle-click a SCOM to dial a designation.</div></div>"
 
-	var/datum/browser/popup = new(user, "scom_directory", "<center>RAT REGISTER</center>", 387, 420)
-	popup.set_content(dat)
+	var/datum/browser/popup = new(user, "scom_directory", "", 560, 640)
+	popup.add_stylesheet("communications", 'html/browser/communications.css')
+	popup.add_script("communications_directory", 'html/browser/communications_directory.js')
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Comms Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Comms Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+	popup.set_content(contents.Join())
 	popup.open(FALSE)
 
 /obj/structure/roguemachine/scomm/process()
@@ -116,9 +126,15 @@
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
 	if(called_by && !calling)
+		if(QDELETED(called_by) || called_by.calling != src || called_by.obj_broken || obj_broken)
+			disconnect_jabberline()
+			return
 		calling = called_by
+		call_generation++
+		calling.call_generation++
 		calling.say("Jabberline fused.", spans = list("info"))
 		say("Jabberline fused.", spans = list("info"))
+		calling.update_icon()
 		update_icon()
 		return
 	if(calling)
@@ -149,100 +165,143 @@
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
 	if(called_by && !calling)
-		called_by.say("Jabberline refused.", spans = list("info"))
+		disconnect_jabberline("Jabberline refused.")
 		say("Jabberline refused.", spans = list("info"))
-		called_by.calling = null
-		called_by = null
 		return
 	if(calling)
 		speaking = !speaking
 		to_chat(user, span_info("I [speaking ? "unmute" : "mute"] the output on the SCOM."))
 		return
 	var/canread = user.can_read(src, TRUE)
-	var/contents
-	contents += "<center>[uppertext(SSticker.rulertype)]'S DECREES<BR>"
-	contents += "-----------<BR><BR></center>"
+	var/list/contents = list("<div class='comms-folio'><div class='comms-heading'><div class='comms-eyebrow'>By order of the realm</div><h1>[html_encode(SSticker.rulertype)]'s decrees</h1><p>The newest decree appears first.</p></div><div class='comms-body comms-decrees' tabindex='0' role='region' aria-label='Decrees'>")
 	for(var/i = GLOB.lord_decrees.len to 1 step -1)
-		contents += "[i]. <span class='info'>[GLOB.lord_decrees[i]]</span><BR>"
+		contents += "<div class='comms-decree'><div class='comms-eyebrow'>Decree [i]</div><div class='comms-decree-text'>[GLOB.lord_decrees[i]]</div></div>"
+	if(!length(GLOB.lord_decrees))
+		contents += "<div class='comms-empty'>No decrees have been issued.</div>"
+	contents += "</div><div class='comms-footer'>[length(GLOB.lord_decrees)] decree[length(GLOB.lord_decrees) == 1 ? "" : "s"] on record.</div></div>"
 	if(!canread)
-		contents = stars(contents)
-	var/datum/browser/popup = new(user, "VENDORTHING", "", 370, 220)
-	popup.set_content(contents)
+		contents = list("<div class='comms-folio'><div class='comms-body comms-unreadable'>[html_encode(stars(contents.Join()))]</div></div>")
+	var/datum/browser/popup = new(user, "scom_decrees", "", 600, 600)
+	popup.add_stylesheet("communications", 'html/browser/communications.css')
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Comms Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Comms Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+	popup.set_content(contents.Join())
 	popup.open()
+
+/obj/structure/roguemachine/scomm/proc/can_use_garrison_line(mob/living/carbon/human/user)
+	return HAS_TRAIT(user, TRAIT_GUARDSMAN) || (user.job in list("Watchman", "Warden", "Master Warden", "Councillor", "Squire", "Marshal", "Grand Duke", "Knight Captain", "Grand Duchess", "Hand", "Vizier", "Sheikh", "Azeb", "Azebagha"))
+
+/obj/structure/roguemachine/scomm/proc/disconnect_jabberline(peer_message)
+	call_generation++
+	var/list/peers = list(calling, called_by)
+	calling = null
+	called_by = null
+	speaking = listening
+	for(var/obj/structure/roguemachine/scomm/peer in peers)
+		if(QDELETED(peer))
+			continue
+		var/disconnected = FALSE
+		if(peer.calling == src)
+			peer.calling = null
+			disconnected = TRUE
+		if(peer.called_by == src)
+			peer.called_by = null
+			disconnected = TRUE
+		if(!disconnected)
+			continue
+		if(!peer.calling && !peer.called_by)
+			peer.call_generation++
+			peer.speaking = peer.listening
+		if(peer_message)
+			peer.say(peer_message, spans = list("info"))
+		peer.update_icon()
+	if(!QDELETED(src))
+		update_icon()
 
 /obj/structure/roguemachine/scomm/MiddleClick(mob/living/carbon/human/user)
 	if(.)
 		return
-	if((HAS_TRAIT(user, TRAIT_GUARDSMAN) || (user.job == "Watchman") || (user.job == "Warden") || (user.job == "Master Warden") || (user.job == "Councillor") || (user.job == "Squire") || (user.job == "Marshal") || (user.job == "Grand Duke") || (user.job == "Knight Captain") || (user.job == "Grand Duchess") ||(user.job == "Hand") ||(user.job == "Vizier") || (user.job == "Sheikh") || (user.job == "Azeb") || (user.job == "Azebagha")))
-		if(alert("Would you like to swap lines or connect to a jabberline?",, "swap", "jabberline") != "jabberline")
+	if(QDELETED(user) || obj_broken || !user.canUseTopic(src, BE_CLOSE))
+		return
+	var/prompt_generation = call_generation
+	if(can_use_garrison_line(user))
+		var/line_choice = tgui_alert(user, "Would you like to swap lines or connect to a jabberline?", "SCOM", list("swap", "jabberline"))
+		if(QDELETED(src) || QDELETED(user) || obj_broken || call_generation != prompt_generation || !user.canUseTopic(src, BE_CLOSE))
+			return
+		if(line_choice == "swap")
+			if(!can_use_garrison_line(user))
+				return
 			garrisonline = !garrisonline
 			to_chat(user, span_info("I [garrisonline ? "connect to the garrison SCOMline" : "connect to the general SCOMLINE"]"))
 			playsound(loc, 'sound/misc/garrisonscom.ogg', 100, FALSE, -1)
 			update_icon()
 			return
+		if(line_choice != "jabberline")
+			return
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
-	if(calling)
-		calling.say("Jabberline severed.", spans = list("info"))
-		if(calling.calling == src || calling.called_by == src)
-			var/obj/structure/roguemachine/scomm/old_calling = calling
-			old_calling.called_by = null
-			old_calling.calling = null
-			old_calling.speaking = old_calling.listening
-			old_calling.update_icon()
-		calling = null
-		called_by = null
-		speaking = listening
+	if(calling || called_by)
+		disconnect_jabberline("Jabberline severed.")
 		to_chat(user, span_info("I cut the jabberline."))
 		say("Jabberline severed.", spans = list("info"))
-		update_icon()
-	else
-		say("Input SCOM designation.", spans = list("info"))
-		var/nightcall = input(user, "Input the number you have been provided with.", "INTERFACING") as null|num
-		if(!nightcall)
-			return
-		if(nightcall == scom_number)
-			to_chat(user, span_warning("Nothing but rats squeaking back at you."))
-			playsound(src, 'sound/vo/mobs/rat/rat_life.ogg', 100, TRUE, -1)
-			return
-		if(SSroguemachine.scomm_machines.len < nightcall)
-			say("There are no rats running this jabberline.", spans = list("info"))
-			return
-		var/obj/structure/roguemachine/scomm/S = SSroguemachine.scomm_machines[nightcall]
-		if(istype(S, /obj/structure/roguemachine/scomm/receive_only))
-			say("The RCOM has no rats to answer jabberlines.")
-			return
-		if(istype(S, /obj/item/scomstone))
-			say("The jabberline's rats cannot travel to SCOMstones.") //Check prevents a runtime and leaves room to potentially make scomstones callable by ID later.
-			playsound(src, 'sound/vo/mobs/rat/rat_life.ogg', 100, TRUE, -1)
-			return
-		if(!S)
-			to_chat(user, span_warning("Nothing but rats squeaking back at you."))
-			playsound(src, 'sound/vo/mobs/rat/rat_life.ogg', 100, TRUE, -1)
-			return
-		if(S.calling || S.called_by)
-			say("This jabberline's rats are occupied.", spans = list("info"))
-			return
-		if(!S.speaking)
-			say("This jabberline's rats have been gagged.", spans = list("info"))
-			return
-		calling = S
-		S.called_by = src
-		update_icon()
+		return
 
-		for(var/i in 1 to 10)
-			if(!calling)
-				update_icon()
-				return
-			if(calling.calling == src)
-				return
-			calling.ring_ring()
-			ring_ring()
-			sleep(30)
-		say("This jabberline's rats are exhausted.", spans = list("info"))
-		calling.called_by = null
-		calling = null
-		update_icon()
+	say("Input SCOM designation.", spans = list("info"))
+	var/nightcall = tgui_input_number(user, "Input the number you have been provided with.", "INTERFACING", round_value = FALSE)
+	if(QDELETED(src) || QDELETED(user) || obj_broken || call_generation != prompt_generation || calling || called_by || !user.canUseTopic(src, BE_CLOSE))
+		return
+	if(isnull(nightcall))
+		return
+	if(!isnum(nightcall) || nightcall <= 0 || nightcall != round(nightcall))
+		to_chat(user, span_warning("A SCOM designation must be a positive whole number."))
+		return
+	if(nightcall == scom_number)
+		to_chat(user, span_warning("Nothing but rats squeaking back at you."))
+		playsound(src, 'sound/vo/mobs/rat/rat_life.ogg', 100, TRUE, -1)
+		return
+	var/atom/target = SSroguemachine.scom_by_number["[nightcall]"]
+	if(QDELETED(target))
+		say("There are no rats running this jabberline.", spans = list("info"))
+		return
+	if(istype(target, /obj/item/scomstone))
+		say("The jabberline's rats cannot travel to SCOMstones.")
+		playsound(src, 'sound/vo/mobs/rat/rat_life.ogg', 100, TRUE, -1)
+		return
+	if(!istype(target, /obj/structure/roguemachine/scomm))
+		say("There are no rats running this jabberline.", spans = list("info"))
+		return
+	var/obj/structure/roguemachine/scomm/peer = target
+	if(peer.receive_only)
+		say("The RCOM has no rats to answer jabberlines.")
+		return
+	if(peer.calling || peer.called_by)
+		say("This jabberline's rats are occupied.", spans = list("info"))
+		return
+	if(peer.obj_broken || !peer.speaking)
+		say("This jabberline's rats have been gagged.", spans = list("info"))
+		return
+	call_generation++
+	var/ringing_generation = call_generation
+	calling = peer
+	peer.called_by = src
+	peer.call_generation++
+	update_icon()
+	peer.update_icon()
+
+	for(var/i in 1 to 10)
+		peer.ring_ring()
+		ring_ring()
+		sleep(30)
+		if(QDELETED(src) || call_generation != ringing_generation || calling != peer)
+			return
+		if(QDELETED(peer) || peer.called_by != src || peer.obj_broken)
+			disconnect_jabberline()
+			return
+		if(peer.calling == src)
+			return
+	say("This jabberline's rats are exhausted.", spans = list("info"))
+	disconnect_jabberline()
 
 /obj/structure/roguemachine/scomm/receive_only/MiddleClick(mob/living/carbon/human/user)
 	to_chat(user, span_warning("The RCOM has no rats to send - it can only receive messages."))
@@ -250,12 +309,7 @@
 
 /obj/structure/roguemachine/scomm/obj_break(damage_flag)
 	..()
-	calling?.say("Jabberline severed.", spans = list("info"))
-	calling?.speaking = calling?.listening
-	calling?.called_by = null
-	calling?.calling = null
-	called_by = null
-	calling = null
+	disconnect_jabberline("Jabberline severed.")
 	speaking = FALSE
 	listening = FALSE
 	update_icon()
@@ -267,7 +321,7 @@
 	become_hearing_sensitive()
 	update_icon()
 	SSroguemachine.scomm_machines += src
-	scom_number = SSroguemachine.scomm_machines.len
+	scom_number = SSroguemachine.register_scom_number(src)
 
 /obj/structure/roguemachine/scomm/update_icon()
 	if(obj_broken)
@@ -287,6 +341,8 @@
 			icon_state = "scomm3"
 
 /obj/structure/roguemachine/scomm/Destroy()
+	disconnect_jabberline("Jabberline severed.")
+	SSroguemachine.unregister_scom_number(src, scom_number)
 	lose_hearing_sensitivity()
 	SSroguemachine.scomm_machines -= src
 	STOP_PROCESSING(SSroguemachine, src)

@@ -1,109 +1,64 @@
-import {
-  FONT_BODY,
-  INK_SOFT,
-  subtitleStyle,
-} from '../common/parchment';
-import {
-  compactCardStyle,
-  compactDataCell,
-  compactHeaderCell,
-  dividedTwoColumnLayout,
-  SectionTitle,
-  twoColTable,
-  verticalDividerStyle,
-} from './styles';
-import type { BmBucket, BucketSnapshot, RealBucket } from './types';
+import { SectionTitle } from './styles';
+import type { BucketSnapshot } from './types';
 
-type Props = {
-  b: BucketSnapshot;
-};
-
-const subTitle = {
-  ...subtitleStyle,
-  textAlign: 'left',
-  marginBottom: '2px',
-  fontSize: FONT_BODY,
-} as const;
-
-const RealMarketTable = (props: { rows: RealBucket[] }) => (
-  <div>
-    <div style={subTitle}>Real Market</div>
-    <table style={twoColTable}>
-      <thead>
-        <tr>
-          <td style={compactHeaderCell}>Bucket</td>
-          <td style={{ ...compactHeaderCell, textAlign: 'right' }}>Sold</td>
-          <td
-            style={{ ...compactHeaderCell, textAlign: 'right', paddingRight: 0 }}
-          >
-            Relieved
-          </td>
-        </tr>
-      </thead>
-      <tbody>
-        {props.rows.map((row) => (
-          <tr key={row.name}>
-            <td style={compactDataCell}>{row.name}</td>
-            <td style={{ ...compactDataCell, textAlign: 'right' }}>
-              {row.sold}
-            </td>
-            <td
-              style={{
-                ...compactDataCell,
-                textAlign: 'right',
-                color: INK_SOFT,
-                paddingRight: 0,
-              }}
-            >
-              {row.relieved}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
-
-const BlackMarketTable = (props: { rows: BmBucket[] }) => (
-  <div>
-    <div style={subTitle}>Black Market</div>
-    <table style={twoColTable}>
-      <thead>
-        <tr>
-          <td style={compactHeaderCell}>Bucket</td>
-          <td
-            style={{ ...compactHeaderCell, textAlign: 'right', paddingRight: 0 }}
-          >
-            Sold
-          </td>
-        </tr>
-      </thead>
-      <tbody>
-        {props.rows.map((row) => (
-          <tr key={row.name}>
-            <td style={compactDataCell}>{row.name}</td>
-            <td
-              style={{ ...compactDataCell, textAlign: 'right', paddingRight: 0 }}
-            >
-              {row.sold}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
-
-export const BucketsSection = (props: Props) => {
-  const { b } = props;
-  return (
-    <div style={compactCardStyle}>
-      <SectionTitle>Navigator Buckets</SectionTitle>
-      <div style={dividedTwoColumnLayout}>
-        <RealMarketTable rows={b.real} />
-        <div style={verticalDividerStyle} />
-        <BlackMarketTable rows={b.black_market} />
-      </div>
+export const BucketsSection = ({ b }: { b: BucketSnapshot }) => (
+  <section>
+    <SectionTitle>Navigator Buckets</SectionTitle>
+    <div className="EconomicChronicle__columns">
+      <section>
+        <h3>Real Market</h3>
+        {b.real.length === 0 ? (
+          <p>No real-market activity recorded.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Bucket</th>
+                <th scope="col" className="EconomicChronicle__number">
+                  Sold
+                </th>
+                <th scope="col" className="EconomicChronicle__number">
+                  Relieved
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {b.real.map((row) => (
+                <tr key={row.name}>
+                  <th scope="row">{row.name}</th>
+                  <td className="EconomicChronicle__number">{row.sold}</td>
+                  <td className="EconomicChronicle__number">{row.relieved}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+      <section>
+        <h3>Black Market</h3>
+        {b.black_market.length === 0 ? (
+          <p>No black-market activity recorded.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Bucket</th>
+                <th scope="col" className="EconomicChronicle__number">
+                  Sold
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {b.black_market.map((row) => (
+                <tr key={row.name}>
+                  <th scope="row">{row.name}</th>
+                  <td className="EconomicChronicle__number">{row.sold}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
     </div>
-  );
-};
+  </section>
+);

@@ -73,11 +73,20 @@ upstream. That cost gate was not reimplemented here - flagged for follow-up if w
 		to_chat(sender, span_warning("There are no mercenaries currently available."))
 		return
 
-	var/choice = input(sender, "Which mercenary do I wish to contact?", "Mercenary Contact") as null|anything in available_mercenaries
+	var/choice = tgui_input_list(sender, "Which mercenary do I wish to contact?", "Mercenary Contact", available_mercenaries)
 	if(!choice)
+		return
+	if(QDELETED(src) || QDELETED(sender) || GLOB.human_adjacent_state.can_use_topic(src, sender) != UI_INTERACTIVE)
 		return
 
 	var/mob/living/carbon/human/target_merc = available_mercenaries[choice]
+	if(QDELETED(target_merc))
+		return
+	var/target_key = target_merc.real_name
+	var/list/target_data = mercenary_status[target_key]
+	if(!target_data || target_data["mob"] != target_merc || target_merc.stat == DEAD || !target_merc.ckey || target_data["status"] == "Do not Disturb")
+		to_chat(sender, span_warning("My message cannot be delivered for some reason."))
+		return
 
 	var/cooldown_key = "[sender.real_name]_[target_merc.real_name]"
 	if(sender_cooldowns[cooldown_key])
@@ -91,12 +100,17 @@ upstream. That cost gate was not reimplemented here - flagged for follow-up if w
 		to_chat(sender, span_warning("I need to stay close to the statue."))
 		return
 
-	var/message = stripped_input(sender, "What message do I wish to send? (Max [message_char_limit] characters)", "Mercenary Contact", "", message_char_limit)
+	var/message = tgui_input_text(sender, "What message do I wish to send? (Max [message_char_limit] characters)", "Mercenary Contact", "", max_length = message_char_limit, encode = FALSE)
 	if(!message)
 		return
-
-	if(!Adjacent(sender))
-		to_chat(sender, span_warning("I moved too far from the statue."))
+	message = trim(html_encode(message), message_char_limit)
+	if(!message || QDELETED(src) || QDELETED(sender) || GLOB.human_adjacent_state.can_use_topic(src, sender) != UI_INTERACTIVE)
+		return
+	if(mercenary_status[target_key] != target_data || target_data["mob"] != target_merc || QDELETED(target_merc) || target_merc.stat == DEAD || !target_merc.ckey || target_data["status"] == "Do not Disturb")
+		to_chat(sender, span_warning("My message cannot be delivered for some reason."))
+		return
+	if(sender_cooldowns[cooldown_key] && sender_cooldowns[cooldown_key] + single_cooldown > world.time)
+		to_chat(sender, span_warning("I need to wait before contacting them again."))
 		return
 
 	sender_cooldowns[cooldown_key] = world.time
@@ -143,12 +157,27 @@ upstream. That cost gate was not reimplemented here - flagged for follow-up if w
 		to_chat(sender, span_warning("There are no mercenaries available to broadcast to."))
 		return
 
-	var/message = stripped_input(sender, "What message do I wish to broadcast to all mercenaries? (Max [message_char_limit] characters)", "Mercenary Broadcast", "", message_char_limit)
+	var/message = tgui_input_text(sender, "What message do I wish to broadcast to all mercenaries? (Max [message_char_limit] characters)", "Mercenary Broadcast", "", max_length = message_char_limit, encode = FALSE)
 	if(!message)
 		return
-
-	if(!Adjacent(sender))
-		to_chat(sender, span_warning("I moved too far from the statue."))
+	message = trim(html_encode(message), message_char_limit)
+	if(!message || QDELETED(src) || QDELETED(sender) || GLOB.human_adjacent_state.can_use_topic(src, sender) != UI_INTERACTIVE)
+		return
+	if(sender_cooldowns[broadcast_key] && sender_cooldowns[broadcast_key] + broadcast_cooldown_time > world.time)
+		to_chat(sender, span_warning("I need to wait before broadcasting again."))
+		return
+	// Only send to recipients still registered and accepting messages after the prompt.
+	var/list/current_recipients = list()
+	for(var/merc_key in mercenary_status)
+		var/list/merc_data = mercenary_status[merc_key]
+		var/mob/living/carbon/human/merc = merc_data["mob"]
+		if(QDELETED(merc) || merc.stat == DEAD || !merc.ckey || merc_data["status"] == "Do not Disturb")
+			continue
+		if(merc in valid_recipients)
+			current_recipients |= merc
+	valid_recipients = current_recipients
+	if(!length(valid_recipients))
+		to_chat(sender, span_warning("There are no mercenaries available to broadcast to."))
 		return
 
 	sender_cooldowns[broadcast_key] = world.time
@@ -227,10 +256,16 @@ upstream. That cost gate was not reimplemented here - flagged for follow-up if w
 
 		var/list/merc_data = mercenary_status[H.real_name]
 		var/current_msg = merc_data["message"] || ""
-		var/new_msg = stripped_input(H, "Enter my mercenary message (max 300 characters):", "Mercenary Message", current_msg, 300)
+		var/registry_key = H.real_name
+		var/message_link = pending_message_links[H.key]
+		var/new_msg = tgui_input_text(H, "Enter my mercenary message (max 300 characters):", "Mercenary Message", html_decode(current_msg), max_length = 300, encode = FALSE)
+		if(QDELETED(src) || QDELETED(H) || H.mind?.assigned_role != "Mercenary" || H.real_name != registry_key || pending_message_links[H.key] != message_link)
+			return
+		if(mercenary_status[registry_key] != merc_data || merc_data["mob"] != H || (merc_data["message"] || "") != current_msg)
+			return
 
 		if(new_msg != null)
-			merc_data["message"] = new_msg
+			merc_data["message"] = trim(html_encode(new_msg), 300)
 			to_chat(H, span_notice("My message has been recalled by the statue. I must visit it to make further changes."))
 			playsound(H.loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
 

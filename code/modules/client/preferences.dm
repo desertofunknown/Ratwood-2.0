@@ -156,6 +156,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 
 	// 0 = character settings, 1 = game preferences
 	var/current_tab = 0
+	var/character_sheet_page = "identity"
 
 // Point-buy system helpers
 // Base points available to every character
@@ -363,6 +364,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	// END PATREON
 
 
+	var/prefer_loadout_wearables = FALSE
 	var/datum/loadout_item/loadout
 	var/datum/loadout_item/loadout2
 	var/datum/loadout_item/loadout3
@@ -536,121 +538,66 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	if(slot_randomized)
 		load_character(default_slot) // Reloads the character slot. Prevents random features from overwriting the slot if saved.
 		slot_randomized = FALSE
-	var/list/dat = list("<center>")
+	if(parent && !parent.is_new_player())
+		validate_character_species()
+		normalize_character_identity()
+	var/list/dat = list("<div class='character-sheet'>")
 	if(tabchoice)
 		current_tab = tabchoice
 	if(tabchoice == 4)
 		current_tab = 0
 
-//	dat += "<a href='?_src_=prefs;preference=tab;tab=0' [current_tab == 0 ? "class='linkOn'" : ""]>Character Sheet</a>"
-//	dat += "<a href='?_src_=prefs;preference=tab;tab=1' [current_tab == 1 ? "class='linkOn'" : ""]>Game Preferences</a>"
-//	dat += "<a href='?_src_=prefs;preference=tab;tab=2' [current_tab == 2 ? "class='linkOn'" : ""]>OOC Preferences</a>"
-//	dat += "<a href='?_src_=prefs;preference=tab;tab=3' [current_tab == 3 ? "class='linkOn'" : ""]>Keybinds</a>"
-
-	dat += "</center>"
-
+	var/list/sheet_window_size = splittext(winget(user, "preferencess_window", "size"), "x")
+	if(!user?.client)
+		return
+	var/sheet_window_width = length(sheet_window_size) == 2 ? text2num(sheet_window_size[1]) : 820
+	var/sheet_window_height = length(sheet_window_size) == 2 ? text2num(sheet_window_size[2]) : 850
+	var/show_sheet_preview = current_tab == 0 && character_sheet_page == "appearance" && sheet_window_width >= 640 && sheet_window_height >= 520 && !user.client.is_new_player()
 	var/used_title
 	switch(current_tab)
-		if (0) // Character Settings#
+		if (0) // Character Settings
 			used_title = "Character Sheet"
-
-			// Top-level menu table
-			dat += "<table style='width: 100%; line-height: 20px;'>"
-			// NEXT ROW
-			dat += "<tr>"
-			dat += "<td style='width:33%;text-align:left'>"
-			dat += "<a style='white-space:nowrap;' href='?_src_=prefs;preference=changeslot;'>Change Character</a>"
-			dat += "</td>"
-
-			dat += "<td style='width:33%;text-align:center'>"
-			dat += "<a href='?_src_=prefs;preference=job;task=menu'>Class Selection</a>"
-			dat += "</td>"
-
-			dat += "<td style='width:33%;text-align:right'>"
-			dat += "<a href='?_src_=prefs;preference=keybinds;task=menu'>Keybinds</a>"
-			dat += "</td>"
-			dat += "</tr>"
-
-			// ANOTHA ROW
-			dat += "<tr style='padding-top: 0px;padding-bottom:0px'>"
-			dat += "<td style='width:33%;text-align:left'>"
-			dat += "<a href='?_src_=prefs;preference=tgui_ui_prefs;task=menu'>[tgui_pref ? "TGUI" : "Legacy"]</a>"
-			dat += "<br>"
-			dat += "<a href='?_src_=prefs;preference=tgui_theme'>Theme: [get_tgui_theme_display_name()]</a>"
-			dat += "<br>"
-			dat += "<a href='?_src_=prefs;preference=parchment_skin'>Parchment: [get_parchment_skin_display_name()]</a>"
-			dat += "</td>"
-
-			dat += "<td style='width:33%;text-align:center'>"
-			dat += "<a href='?_src_=prefs;preference=antag;task=menu'>Villain Selection</a>"
-			dat += "</td>"
-
-			dat += "<td style='width:33%;text-align:right'>"
-			dat += "</td>"
-			dat += "</tr>"
-
-			// ANOTHER ROW HOLY SHIT WE FINALLY A GOD DAMN GRID NOW! WHOA!
-			dat += "<tr style='padding-top: 0px;padding-bottom:0px'>"
-			dat += "<td style='width:33%; text-align:left'>"
-			dat += "<a href='?_src_=prefs;preference=playerquality;task=menu'><b>PQ:</b></a> [get_playerquality(user.ckey, text = TRUE)]"
-			dat += "</td>"
-
-			dat += "<td style='width:33%;text-align:center'>"
-			dat += "<a href='?_src_=prefs;preference=triumphs;task=menu'><b>TRIUMPHS:</b></a> [user.get_triumphs() ? "\Roman [user.get_triumphs()]" : "None"]"
-			if(SStriumphs.triumph_buys_enabled)
-				dat += "<a style='white-space:nowrap;' href='?_src_=prefs;preference=triumph_buy_menu'>Triumph Buy</a>"
-			dat += "</td>"
-
-			if(CONFIG_GET(flag/roundstart_traits))
-				dat += "<center><h2>Quirk Setup</h2>"
-				dat += "<a href='?_src_=prefs;preference=trait;task=menu'>Configure Quirks</a><br></center>"
-				dat += "<center><b>Current Quirks:</b> [all_quirks.len ? all_quirks.Join(", ") : "None"]</center>"
-
-			// Encapsulating table
-			dat += "<table width = '100%'>"
-			// Only one Row
-			dat += "<tr>"
-			// Leftmost Column, 40% width
-			dat += "<td width=40% valign='top'>"
-
-// 			-----------START OF IDENT TABLE-----------
-			dat += "<h2>Identity</h2>"
-			dat += "<table width='100%'><tr><td width='75%' valign='top'>"
+			var/list/identity = list()
+			var/list/heritage = list()
+			var/list/calling = list()
+			var/list/round_options = list()
+			var/list/appearance = list()
+			var/list/voice = list()
+			var/list/bark = list()
+			var/list/record = list()
+			var/list/media = list()
 			if(is_banned_from(user.ckey, "Appearance"))
-				dat += "<b>Thou are banned from using custom names and appearances. Thou can continue to adjust thy characters, but thee will be randomised once thee joins the game.</b><br>"
-//			dat += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_NAME]'>Always Random Name: [(randomise[RANDOM_NAME]) ? "Yes" : "No"]</a>"
-//			dat += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_NAME_ANTAG]'>When Antagonist: [(randomise[RANDOM_NAME_ANTAG]) ? "Yes" : "No"]</a>"
-			dat += "<b>Name:</b> "
+				identity += "<p class='sheet-warning'>Custom names and appearances are restricted for this account. You may adjust this character, but appearance will be randomised when joining.</p>"
+			identity += "<div class='sheet-field'><span class='sheet-label'>Name</span><span class='sheet-value'>"
 			if(check_nameban(user.ckey))
-				dat += "<a href='?_src_=prefs;preference=name;task=input'>NAMEBANNED</a><BR>"
+				identity += "<a href='?_src_=prefs;preference=name;task=input'>NAMEBANNED</a>"
 			else
-				dat += "<a href='?_src_=prefs;preference=name;task=input'>[real_name]</a> <a href='?_src_=prefs;preference=name;task=random'>\[R\]</a>"
-			dat += "<BR>"
-			dat += "<b>Nickname:</b> "
-			dat += "<a href='?_src_=prefs;preference=nickname;task=input'>[nickname]</a><BR>"
+				identity += "<a href='?_src_=prefs;preference=name;task=input'>[html_encode(real_name)]</a> <a href='?_src_=prefs;preference=name;task=random'>Random</a>"
+			identity += "</span></div>"
+			identity += "<div class='sheet-field'><span class='sheet-label'>Nickname</span><span class='sheet-value'><a href='?_src_=prefs;preference=nickname;task=input'>[html_encode(nickname ? nickname : "Not set")]</a></span></div>"
 			// LETHALSTONE EDIT BEGIN: add pronoun prefs
-			dat += "<b>Pronouns:</b> <a href='?_src_=prefs;preference=pronouns;task=input'>[pronouns]</a><BR>"
+			identity += "<div class='sheet-field'><span class='sheet-label'>Pronouns</span><span class='sheet-value'><a href='?_src_=prefs;preference=pronouns;task=input'>[pronouns]</a></span></div>"
 			// LETHALSTONE EDIT END
 			if(!voice_pack)
 				voice_pack = "Default"
 			// LETHALSTONE EDIT BEGIN: add voice type prefs
-			dat += "<b>Voice Identity</b>: <a href='?_src_=prefs;preference=voicetype;task=input'>[voice_type]</a><BR>"
+			voice += "<div class='sheet-field'><span class='sheet-label'>Voice identity</span><span class='sheet-value'><a href='?_src_=prefs;preference=voicetype;task=input'>[voice_type]</a></span></div>"
 			// LETHALSTONE EDIT END
-			dat += "<b>Voice Pack</b>: <a href='?_src_=prefs;preference=voicepack;task=input'>[voice_pack]</a><BR>"
+			voice += "<div class='sheet-field'><span class='sheet-label'>Voice pack</span><span class='sheet-value'><a href='?_src_=prefs;preference=voicepack;task=input'>[voice_pack]</a></span></div>"
 
-			dat += "<BR>"
-			dat += "<b>Race:</b> <a href='?_src_=prefs;preference=species;task=input'>[pref_species.name]</a>[spec_check(user) ? "" : " (!)"]<BR>"
+			heritage += "<h3>Heritage</h3>"
+			heritage += "<div class='sheet-field'><span class='sheet-label'>Race</span><span class='sheet-value'><a href='?_src_=prefs;preference=species;task=input'>[pref_species.name]</a>[spec_check(user) ? "" : " <span class='sheet-warning'>Unavailable</span>"]</span></div>"
 			if(pref_species.use_titles)
 				var/display_title = selected_title ? selected_title : "None"
-				dat += "<b>Race Title:</b> <a href='?_src_=prefs;preference=race_title;task=input'>[display_title]</a><BR>"
-			dat += "<b>Family:</b> <a href='?_src_=prefs;preference=family'>[family ? family : "None"]</a><BR>"
+				heritage += "<div class='sheet-field'><span class='sheet-label'>Race Title</span><span class='sheet-value'><a href='?_src_=prefs;preference=race_title;task=input'>[display_title]</a></span></div>"
+			heritage += "<div class='sheet-field'><span class='sheet-label'>Family</span><span class='sheet-value'><a href='?_src_=prefs;preference=family'>[family ? family : "None"]</a></span></div>"
 			if(family != FAMILY_NONE)
 				var/spousename = "Preferred Spouse"
 				if(family == FAMILY_PARTIAL)
 					spousename = "Preferred Parent"
-				dat += "<b>[spousename]:</b> <a href='?_src_=prefs;preference=setspouse'>[setspouse ? setspouse : "None"]</a><BR>"
+				heritage += "<div class='sheet-field'><span class='sheet-label'>[spousename]</span><span class='sheet-value'><a href='?_src_=prefs;preference=setspouse'>[setspouse ? setspouse : "None"]</a></span></div>"
 				if(family != FAMILY_NONE)
-					dat += "<b>Preferred Gender:</b> <a href='?_src_=prefs;preference=gender_choice'>[gender_choice ? gender_choice : "Any Gender"]</a><BR>"
+					heritage += "<div class='sheet-field'><span class='sheet-label'>Preferred Gender</span><span class='sheet-value'><a href='?_src_=prefs;preference=gender_choice'>[gender_choice ? gender_choice : "Any Gender"]</a></span></div>"
 					var/species_text
 					if(xenophobe_pref == 1)
 						species_text = "<font color='#FFA500'>Same Race</font>"
@@ -658,7 +605,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 						species_text = "<font color='#aa0202'>[restricted_species_pref] Only</font>"
 					else
 						species_text = "<font color='#1cb308'>Unrestricted</font>"
-					dat += "<b>Restrict Species:</b> <a href='?_src_=prefs;preference=species_choice'>[species_text]</a><BR>"
+					heritage += "<div class='sheet-field'><span class='sheet-label'>Restrict Species</span><span class='sheet-value'><a href='?_src_=prefs;preference=species_choice'>[species_text]</a></span></div>"
 			if(length(pref_species.custom_selection))
 				var/race_bonus_display
 				if(race_bonus)
@@ -666,13 +613,11 @@ GLOBAL_LIST_EMPTY(chosen_names)
 						if(pref_species.custom_selection[bonus] == race_bonus)
 							race_bonus_display = bonus
 							break
-				dat += "<b>Race Bonus:</b> <a href='?_src_=prefs;preference=race_bonus_select;task=input'>[race_bonus_display ? "[race_bonus_display]" : "None"]</a><BR>"
+				heritage += "<div class='sheet-field'><span class='sheet-label'>Race Bonus</span><span class='sheet-value'><a href='?_src_=prefs;preference=race_bonus_select;task=input'>[race_bonus_display ? "[race_bonus_display]" : "None"]</a></span></div>"
 			else
 				race_bonus = null
-				dat += "<BR>"
+				heritage += "<BR>"
 
-//			dat += "<a href='?_src_=prefs;preference=species;task=random'>Random Species</A> "
-//			dat += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_SPECIES]'>Always Random Species: [(randomise[RANDOM_SPECIES]) ? "Yes" : "No"]</A><br>"
 
 			if(!(AGENDER in pref_species.species_traits))
 				var/dispGender
@@ -682,28 +627,23 @@ GLOBAL_LIST_EMPTY(chosen_names)
 					dispGender = "Feminine" // LETHALSTONE EDIT: repurpose gender as bodytype, display accordingly
 				else
 					dispGender = "Other"
-				dat += "<b>Body Type:</b> <a href='?_src_=prefs;preference=gender'>[dispGender]</a><BR>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Body Type</span><span class='sheet-value'><a href='?_src_=prefs;preference=gender'>[dispGender]</a></span></div>"
 				if(randomise[RANDOM_BODY] || randomise[RANDOM_BODY_ANTAG]) //doesn't work unless random body
-					dat += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_GENDER]'>Always Random Bodytype: [(randomise[RANDOM_GENDER]) ? "Yes" : "No"]</A>"
-					dat += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_GENDER_ANTAG]'>When Antagonist: [(randomise[RANDOM_GENDER_ANTAG]) ? "Yes" : "No"]</A>"
+					appearance += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_GENDER]'>Always Random Bodytype: [(randomise[RANDOM_GENDER]) ? "Yes" : "No"]</A>"
+					appearance += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_GENDER_ANTAG]'>When Antagonist: [(randomise[RANDOM_GENDER_ANTAG]) ? "Yes" : "No"]</A>"
 
 			if(LAZYLEN(pref_species.allowed_taur_types))
 				var/obj/item/bodypart/taur/T = taur_type
 				var/name = ispath(T) ? T::name : "None"
-				dat += "<b>Taur Body Type:</b> <a href='?_src_=prefs;preference=taur_type;task=input'>[name]</a><BR>"
-				dat += "<b>Taur Color:</b> <span style='border: 1px solid #161616; background-color: #[taur_color];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=taur_color;task=input'>Change</a><BR>"
-				dat += "<b>Taur Markings:</b> <span style='border: 1px solid #161616; background-color: #[taur_markings];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=taur_markings;task=input'>Change</a><BR>"
-				dat += "<b>Taur Tertiary:</b> <span style='border: 1px solid #161616; background-color: #[taur_tertiary];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=taur_tertiary;task=input'>Change</a><BR>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Taur Body Type</span><span class='sheet-value'><a href='?_src_=prefs;preference=taur_type;task=input'>[name]</a></span></div>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Taur Color</span><span class='sheet-value'><span style='border: 1px solid #161616; background-color: #[taur_color];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=taur_color;task=input'>Change</a></span></div>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Taur Markings</span><span class='sheet-value'><span style='border: 1px solid #161616; background-color: #[taur_markings];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=taur_markings;task=input'>Change</a></span></div>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Taur Tertiary</span><span class='sheet-value'><span style='border: 1px solid #161616; background-color: #[taur_tertiary];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=taur_tertiary;task=input'>Change</a></span></div>"
 
-			dat += "<b>Age:</b> <a href='?_src_=prefs;preference=age;task=input'>[age]</a><BR>"
-			dat += "<b>Origin:</b> <a href='?_src_=prefs;preference=origin;task=input'>[origin ? origin.name : "None"]</a><BR>"
+			identity += "<div class='sheet-field'><span class='sheet-label'>Age</span><span class='sheet-value'><a href='?_src_=prefs;preference=age;task=input'>[age]</a></span></div>"
+			identity += "<div class='sheet-field'><span class='sheet-label'>Origin</span><span class='sheet-value'><a href='?_src_=prefs;preference=origin;task=input'>[origin ? origin.name : "None"]</a></span></div>"
 
-//			dat += "<br><b>Age:</b> <a href='?_src_=prefs;preference=age;task=input'>[age]</a>"
-//			if(randomise[RANDOM_BODY] || randomise[RANDOM_BODY_ANTAG]) //doesn't work unless random body
-//				dat += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_AGE]'>Always Random Age: [(randomise[RANDOM_AGE]) ? "Yes" : "No"]</A>"
-//				dat += "<a href='?_src_=prefs;preference=toggle_random;random_type=[RANDOM_AGE_ANTAG]'>When Antagonist: [(randomise[RANDOM_AGE_ANTAG]) ? "Yes" : "No"]</A>"
 
-//			dat += "<b><a href='?_src_=prefs;preference=name;task=random'>Random Name</A></b><BR>"
 			if(length(pref_species.restricted_virtues))
 				if(virtue.type in pref_species.restricted_virtues)
 					virtue = GLOB.virtues[/datum/virtue/none]
@@ -715,63 +655,36 @@ GLOBAL_LIST_EMPTY(chosen_names)
 						quirks -= Q
 			if(statpack.name != "Virtuous")
 				virtuetwo = GLOB.virtues[/datum/virtue/none]
-			dat += "<b>Character Customization:</b> <a href='?_src_=prefs;preference=vices_menu;task=input'>Configure All</a><BR>"
+			calling += "<h3>Beliefs &amp; calling</h3>"
 			var/datum/faith/selected_faith = GLOB.faithlist[selected_patron?.associated_faith]
-			dat += "<b>Faith:</b> <a href='?_src_=prefs;preference=faith;task=input'>[selected_faith?.name || "FUCK!"]</a><BR>"
-			dat += "<b>Patron:</b> <a href='?_src_=prefs;preference=patron;task=input'>[selected_patron?.name || "FUCK!"]</a><BR>"
-			dat += "<b>Dominance:</b> <a href='?_src_=prefs;preference=domhand'>[domhand == 1 ? "Left-handed" : "Right-handed"]</a><BR>"
-			dat += "<b>Food Preferences:</b> <a href='?_src_=prefs;preference=culinary;task=menu'>Change</a><BR>"
+			calling += "<div class='sheet-field'><span class='sheet-label'>Faith</span><span class='sheet-value'><a href='?_src_=prefs;preference=faith;task=input'>[selected_faith?.name || "Not selected"]</a></span></div>"
+			calling += "<div class='sheet-field'><span class='sheet-label'>Patron</span><span class='sheet-value'><a href='?_src_=prefs;preference=patron;task=input'>[selected_patron?.name || "Not selected"]</a></span></div>"
+			calling += "<div class='sheet-field'><span class='sheet-label'>Dominance</span><span class='sheet-value'><a href='?_src_=prefs;preference=domhand'>[domhand == 1 ? "Left-handed" : "Right-handed"]</a></span></div>"
+			calling += "<div class='sheet-field'><span class='sheet-label'>Food Preferences</span><span class='sheet-value'><a href='?_src_=prefs;preference=culinary;task=menu'>Change</a></span></div>"
 
 			var/musicname = (combat_music.shortname ? combat_music.shortname : combat_music.name)
-			dat += "<b>Combat Music:</b> <a href='?_src_=prefs;preference=combat_music;task=input'>[musicname || "FUCK!"]</a><BR>"
+			round_options += "<div class='sheet-field'><span class='sheet-label'>Combat Music</span><span class='sheet-value'><a href='?_src_=prefs;preference=combat_music;task=input'>[musicname || "Not selected"]</a></span></div>"
 
-			dat += "<b>Unrevivable:</b> <a href='?_src_=prefs;preference=dnr;task=input'>[dnr_pref ? "Yes" : "No"]</a><BR>"
+			round_options += "<div class='sheet-field'><span class='sheet-label'>Unrevivable</span><span class='sheet-value'><a href='?_src_=prefs;preference=dnr;task=input'>[dnr_pref ? "Yes" : "No"]</a></span></div>"
 
-			dat += "<b>Be a Familiar:</b><a href='?_src_=prefs;preference=familiar_prefs;task=input'>Familiar Preferences</a><br>"
+			round_options += "<div class='sheet-field'><span class='sheet-label'>Be a Familiar</span><span class='sheet-value'><a href='?_src_=prefs;preference=familiar_prefs;task=input'>Familiar Preferences</a></span></div>"
 
-			dat += "<b>Preferred Map:</b> <a href='?_src_=prefs;preference=preferred_map;task=input'>[preferred_map || "No Preference"]</a><br>"
+			round_options += "<div class='sheet-field'><span class='sheet-label'>Preferred Map</span><span class='sheet-value'><a href='?_src_=prefs;preference=preferred_map;task=input'>[preferred_map || "No Preference"]</a></span></div>"
 
-			dat += "<br><b>Gnoll Customization:</b><a href='?_src_=prefs;preference=gnoll_prefs;task=input'>Gnoll Preferences</a>"
-
-/*
-			dat += "<br><br><b>Special Names:</b><BR>"
-			var/old_group
-			for(var/custom_name_id in GLOB.preferences_custom_names)
-				var/namedata = GLOB.preferences_custom_names[custom_name_id]
-				if(!old_group)
-					old_group = namedata["group"]
-				else if(old_group != namedata["group"])
-					old_group = namedata["group"]
-					dat += "<br>"
-				dat += "<a href ='?_src_=prefs;preference=[custom_name_id];task=input'><b>[namedata["pref_name"]]:</b> [custom_names[custom_name_id]]</a> "
-			dat += "<br><br>"
-
-			dat += "<b>Custom Job Preferences:</b><BR>"
-			dat += "<a href='?_src_=prefs;preference=ai_core_icon;task=input'><b>Preferred AI Core Display:</b> [preferred_ai_core_display]</a><br>"
-			dat += "<a href='?_src_=prefs;preference=sec_dept;task=input'><b>Preferred Security Department:</b> [prefered_security_department]</a><BR></td>"
-*/
+			round_options += "<div class='sheet-field'><span class='sheet-label'>Gnoll Customization</span><span class='sheet-value'><a href='?_src_=prefs;preference=gnoll_prefs;task=input'>Gnoll Preferences</a></span></div>"
 			var/datum/bark/B = GLOB.bark_list[bark_id]
-			dat += "<br>"
-			dat += "<b>Vocal Bark Sound:</b><br>"
-			dat += "<a href='?_src_=prefs;preference=barksound;task=input'>[B ? initial(B.name) : "INVALID"]</a><br>"
-			dat += "<b>Vocal Bark Speed:</b> <a href='?_src_=prefs;preference=barkspeed;task=input'>[bark_speed]</a><br>"
-			dat += "<b>Vocal Bark Pitch:</b> <a href='?_src_=prefs;preference=barkpitch;task=input'>[bark_pitch]</a><br>"
-			dat += "<b>Vocal Bark Variance:</b> <a href='?_src_=prefs;preference=barkvary;task=input'>[bark_variance]</a><br>"
-			dat += "<b><a href='?_src_=prefs;preference=barkpreview;task=input'>Preview Bark</a></b><br>"
-			dat += "</td>"
-			dat += "</tr></table>"
-// 			-----------END OF IDENT TABLE-----------
-
-
-			// Middle dummy Column, 20% width
-			dat += "</td>"
-			dat += "<td width=20% valign='top'>"
-			var/datum/job/highest_pref
-			for(var/job in job_preferences)
-				if(job_preferences[job] > highest_pref)
-					highest_pref = SSjob.GetJob(job)
+			bark += "<h3>Voice preview</h3>"
+			bark += "<div class='sheet-field'><span class='sheet-label'>Vocal Bark Sound</span><span class='sheet-value'><a href='?_src_=prefs;preference=barksound;task=input'>[B ? initial(B.name) : "INVALID"]</a></span></div>"
+			bark += "<div class='sheet-field'><span class='sheet-label'>Vocal Bark Speed</span><span class='sheet-value'><a href='?_src_=prefs;preference=barkspeed;task=input'>[bark_speed]</a></span></div>"
+			bark += "<div class='sheet-field'><span class='sheet-label'>Vocal Bark Pitch</span><span class='sheet-value'><a href='?_src_=prefs;preference=barkpitch;task=input'>[bark_pitch]</a></span></div>"
+			bark += "<div class='sheet-field'><span class='sheet-label'>Vocal Bark Variance</span><span class='sheet-value'><a href='?_src_=prefs;preference=barkvary;task=input'>[bark_variance]</a></span></div>"
+			bark += "<b><a href='?_src_=prefs;preference=barkpreview;task=input'>Preview Bark</a></b><br>"
+			appearance += "<h3>Portrait preview</h3>"
+			var/datum/job/highest_pref = get_preview_job()
+			if(preview_subclass && !(preview_subclass.type in highest_pref?.job_subclasses))
+				preview_subclass = null
 			if(!isnull(highest_pref) && !istype(highest_pref, /datum/job/roguetown/jester))
-				dat += "<div style='text-align: center'><br>Subclass Preview:<br> <a href='?_src_=prefs;preference=subclassoutfit;task=input'>[preview_subclass ? "[preview_subclass.name]" : "None"]</a></div>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Subclass Preview</span><span class='sheet-value'><a href='?_src_=prefs;preference=subclassoutfit;task=input'>[preview_subclass ? html_encode(preview_subclass.name) : "None"]</a></span></div>"
 			else
 				preview_subclass = null
 			var/arousal_preview_label
@@ -782,73 +695,88 @@ GLOBAL_LIST_EMPTY(chosen_names)
 					arousal_preview_label = "Hard"
 				else
 					arousal_preview_label = "None"
-			dat += "<div style='text-align: center'><br>Arousal Preview:<br> <a href='?_src_=prefs;preference=preview_erect_state'>[arousal_preview_label]</a></div>"
-			// Rightmost column, 40% width
-			dat += "<td width=40% valign='top'>"
-			dat += "<h2>Body</h2>"
-
-//			-----------START OF BODY TABLE-----------
-			dat += "<table width='100%'><tr><td width='1%' valign='top'>"
-			dat += "<b>Update feature colors with change:</b> <a href='?_src_=prefs;preference=update_mutant_colors;task=input'>[update_mutant_colors ? "Yes" : "No"]</a><BR>"
+			appearance += "<div class='sheet-field'><span class='sheet-label'>Arousal Preview</span><span class='sheet-value'><a href='?_src_=prefs;preference=preview_erect_state'>[arousal_preview_label]</a></span></div>"
+			appearance += "<h3>Colour &amp; complexion</h3>"
+			appearance += "<div class='sheet-field'><span class='sheet-label'>Match feature colours</span><span class='sheet-value'><a href='?_src_=prefs;preference=update_mutant_colors;task=input'>[update_mutant_colors ? "Yes" : "No"]</a></span></div>"
 			var/use_skintones = pref_species.use_skintones
 			if(use_skintones)
 
 				var/skin_tone_wording = pref_species.skin_tone_wording // Both the skintone names and the word swap here is useless fluff
 
-				dat += "<b>[skin_tone_wording]: </b><a href='?_src_=prefs;preference=s_tone;task=input'>Change </a><br>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>[skin_tone_wording]</span><span class='sheet-value'><a href='?_src_=prefs;preference=s_tone;task=input'>Change </a></span></div>"
 				if(pref_species.mutant_skin_option)
-					dat += "<b>Mutant Skintone:</b> <a href='?_src_=prefs;preference=mutant_skin;task=input'>[mutant_skin ? "Yes" : "No"]</a><br>"
+					appearance += "<div class='sheet-field'><span class='sheet-label'>Mutant Skintone</span><span class='sheet-value'><a href='?_src_=prefs;preference=mutant_skin;task=input'>[mutant_skin ? "Yes" : "No"]</a></span></div>"
 
 			if((MUTCOLORS in pref_species.species_traits) || (MUTCOLORS_PARTSONLY in pref_species.species_traits))
 
-				dat += "<b>Mutant Color #1:</b> <span style='border: 1px solid #161616; background-color: #[features["mcolor"]];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color;task=input'>Change</a><BR>"
-				dat += "<b>Mutant Color #2:</b> <span style='border: 1px solid #161616; background-color: #[features["mcolor2"]];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color2;task=input'>Change</a><BR>"
-				dat += "<b>Mutant Color #3:</b> <span style='border: 1px solid #161616; background-color: #[features["mcolor3"]];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color3;task=input'>Change</a><BR>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Mutant Color #1</span><span class='sheet-value'><span style='border: 1px solid #161616; background-color: #[features["mcolor"]];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color;task=input'>Change</a></span></div>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Mutant Color #2</span><span class='sheet-value'><span style='border: 1px solid #161616; background-color: #[features["mcolor2"]];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color2;task=input'>Change</a></span></div>"
+				appearance += "<div class='sheet-field'><span class='sheet-label'>Mutant Color #3</span><span class='sheet-value'><span style='border: 1px solid #161616; background-color: #[features["mcolor3"]];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color3;task=input'>Change</a></span></div>"
 
-			dat += "<br><b>Voice Color: </b><a href='?_src_=prefs;preference=voice;task=input'>Change</a>"
-			dat += "<br><b>Nickname Color: </b> </b><a href='?_src_=prefs;preference=highlight_color;task=input'>Change</a>"
-			dat += "<br><b>Voice Pitch: </b><a href='?_src_=prefs;preference=voice_pitch;task=input'>[voice_pitch]</a>"
-			dat += "<br><b>Accent:</b> <a href='?_src_=prefs;preference=char_accent;task=input'>[char_accent]</a>"
-			dat += "<br><b>Speech Mannerism:</b> <a href='?_src_=prefs;preference=char_mannerism;task=input'>[char_mannerism]</a>"
-			dat += "<br><b>Features:</b> <a href='?_src_=prefs;preference=customizers;task=menu'>Change</a>"
-			dat += "<br><b>Sprite Scale:</b><a href='?_src_=prefs;preference=body_size;task=input'>[(features["body_size"] * 100)]%</a>"
-			dat += "<br><b>Markings:</b> <a href='?_src_=prefs;preference=markings;task=menu'>Change</a>"
-			dat += "<br><b>Descriptors:</b> <a href='?_src_=prefs;preference=descriptors;task=menu'>Change</a>"
-
-			dat += "<br><b>Headshot:</b> <a href='?_src_=prefs;preference=headshot;task=input'>Change</a>"
+			voice += "<h3>Voice &amp; presence</h3><div class='sheet-field'><span class='sheet-label'>Voice Color</span><span class='sheet-value'><a href='?_src_=prefs;preference=voice;task=input'>Change</a></span></div>"
+			voice += "<div class='sheet-field'><span class='sheet-label'>Nickname Color</span><span class='sheet-value'><a href='?_src_=prefs;preference=highlight_color;task=input'>Change</a></span></div>"
+			voice += "<div class='sheet-field'><span class='sheet-label'>Voice Pitch</span><span class='sheet-value'><a href='?_src_=prefs;preference=voice_pitch;task=input'>[voice_pitch]</a></span></div>"
+			voice += "<div class='sheet-field'><span class='sheet-label'>Accent</span><span class='sheet-value'><a href='?_src_=prefs;preference=char_accent;task=input'>[char_accent]</a></span></div>"
+			voice += "<div class='sheet-field'><span class='sheet-label'>Speech Mannerism</span><span class='sheet-value'><a href='?_src_=prefs;preference=char_mannerism;task=input'>[char_mannerism]</a></span></div>"
+			appearance += "<h3>Details &amp; markings</h3><div class='sheet-field'><span class='sheet-label'>Features</span><span class='sheet-value'><a href='?_src_=prefs;preference=customizers;task=menu'>Change</a></span></div>"
+			appearance += "<div class='sheet-field'><span class='sheet-label'>Sprite scale</span><span class='sheet-value'><a href='?_src_=prefs;preference=body_size;task=input'>[(features["body_size"] * 100)]%</a></span></div>"
+			appearance += "<div class='sheet-field'><span class='sheet-label'>Markings</span><span class='sheet-value'><a href='?_src_=prefs;preference=markings;task=menu'>Change</a></span></div>"
+			appearance += "<div class='sheet-field'><span class='sheet-label'>Descriptors</span><span class='sheet-value'><a href='?_src_=prefs;preference=descriptors;task=menu'>Change</a></span></div>"
+			media += "<div class='sheet-field'><span class='sheet-label'>Headshot</span><span class='sheet-value'><a href='?_src_=prefs;preference=headshot;task=input'>Change</a></span></div>"
 			if(headshot_link != null)
-				dat += "<br><img src='[headshot_link]' width='100px' height='100px'>"
+				media += "<br><img src='[headshot_link]' width='100px' height='100px'>"
 
-			dat += "<br><b>[(length(flavortext) < MINIMUM_FLAVOR_TEXT) ? "<font color = '#802929'>" : ""]Flavortext:[(length(flavortext) < MINIMUM_FLAVOR_TEXT) ? "</font>" : ""]</b><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=flavortext;task=input'>Change</a>"
-			dat += "<br><b>NSFW Flavortext:</b><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=nsfwflavortext;task=input'>Change</a>"
-			dat += "<br><b>[(length(ooc_notes) < MINIMUM_OOC_NOTES) ? "<font color = '#802929'>" : ""]OOC Notes:[(length(ooc_notes) < MINIMUM_OOC_NOTES) ? "</font>" : ""]</b><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=ooc_notes;task=input'>Change</a>"
+			record += "<div class='sheet-field'><span class='sheet-label [(length(flavortext) < MINIMUM_FLAVOR_TEXT) ? "sheet-warning" : ""]'>Flavour text</span><span class='sheet-value'><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=flavortext;task=input'>Change</a></span></div>"
+			record += "<div class='sheet-field'><span class='sheet-label'>Adult flavour text</span><span class='sheet-value'><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=nsfwflavortext;task=input'>Change</a></span></div>"
+			record += "<div class='sheet-field'><span class='sheet-label [(length(ooc_notes) < MINIMUM_OOC_NOTES) ? "sheet-warning" : ""]'>OOC Notes</span><span class='sheet-value'><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=ooc_notes;task=input'>Change</a></span></div>"
 
 			// Rumours / Gossip
-			dat += "<br><b>Rumours & Noble Gossip:</b><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><br><a href='?_src_=prefs;preference=rumour;task=input'>Set Rumours</a><a href='?_src_=prefs;preference=gossip;task=input'>Set Gossip</a><a href='?_src_=prefs;preference=rumour_preview;task=input'><i>Preview</i></a>"
+			record += "<div class='sheet-field'><span class='sheet-label'>Rumours &amp; gossip</span><span class='sheet-value'><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=rumour;task=input'>Set Rumours</a><a href='?_src_=prefs;preference=gossip;task=input'>Set Gossip</a><a href='?_src_=prefs;preference=rumour_preview;task=input'><i>Preview</i></a></span></div>"
 
-			dat += "<br><b>ERP Preferences:</b><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=erpprefs;task=input'>Change</a>"
-			dat += "<br><b>Song:</b> <a href='?_src_=prefs;preference=ooc_extra;task=input'>Change URL</a>"
-			dat += "<a href='?_src_=prefs;preference=change_title;task=input'>Change Title</a>"
-			dat += "<a href='?_src_=prefs;preference=change_artist;task=input'>Change Artist</a>"
-			dat += "<br><b>OOC Extra Image/Video/Gif (Flavor Text):</b> <a href='?_src_=prefs;preference=ooc_extra_img;task=input'>Change</a>"
+			record += "<div class='sheet-field'><span class='sheet-label'>ERP Preferences</span><span class='sheet-value'><a href='?_src_=prefs;preference=formathelp;task=input'>(?)</a><a href='?_src_=prefs;preference=erpprefs;task=input'>Change</a></span></div>"
+			media += "<div class='sheet-field'><span class='sheet-label'>Song</span><span class='sheet-value'><a href='?_src_=prefs;preference=ooc_extra;task=input'>Change URL</a><a href='?_src_=prefs;preference=change_title;task=input'>Change Title</a><a href='?_src_=prefs;preference=change_artist;task=input'>Change Artist</a></span></div>"
+			media += "<div class='sheet-field'><span class='sheet-label'>Profile media</span><span class='sheet-value'><a href='?_src_=prefs;preference=ooc_extra_img;task=input'>Change</a></span></div>"
 			if(ooc_extra_img_link != null)
-				dat += "<br><img src='[ooc_extra_img_link]' width='100px' height='100px'>"
-			dat += "<br><b>NSFW OOC Extra Image/Video/Gif (Flavor Text):</b> <a href='?_src_=prefs;preference=nsfw_ooc_extra_img;task=input'>Change</a>"
+				media += "<br><img src='[ooc_extra_img_link]' width='100px' height='100px'>"
+			media += "<div class='sheet-field'><span class='sheet-label'>Adult profile media</span><span class='sheet-value'><a href='?_src_=prefs;preference=nsfw_ooc_extra_img;task=input'>Change</a></span></div>"
 			if(nsfw_ooc_extra_img_link != null)
-				dat += "<br><img src='[nsfw_ooc_extra_img_link]' width='100px' height='100px'>"
-			dat += "<br><B>Image Gallery:</b> <a href='?_src_=prefs;preference=img_gallery;task=input'>Add</a>"
-			dat+= "<a href='?_src_=prefs;preference=clear_gallery;task=input'>Clear Gallery</a>"
-			dat += "<br><B>Nsfw Image Gallery:</b> <a href='?_src_=prefs;preference=nsfw_img_gallery;task=input'>Add</a>"
-			dat+= "<a href='?_src_=prefs;preference=clear_nsfw_gallery;task=input'>Clear Nsfw Gallery</a>"
-			dat += "<br><a href='?_src_=prefs;preference=ooc_preview;task=input'><b>Preview Examine</b></a>"
+				media += "<br><img src='[nsfw_ooc_extra_img_link]' width='100px' height='100px'>"
+			media += "<div class='sheet-field'><span class='sheet-label'>Image Gallery</span><span class='sheet-value'><a href='?_src_=prefs;preference=img_gallery;task=input'>Add</a><a href='?_src_=prefs;preference=clear_gallery;task=input'>Clear Gallery</a></span></div>"
+			media += "<div class='sheet-field'><span class='sheet-label'>Adult gallery</span><span class='sheet-value'><a href='?_src_=prefs;preference=nsfw_img_gallery;task=input'>Add</a><a href='?_src_=prefs;preference=clear_nsfw_gallery;task=input'>Clear gallery</a></span></div>"
+			media += "<a class='sheet-primary' href='?_src_=prefs;preference=ooc_preview;task=input'>Preview Examine</a>"
 
-			dat += "</td>"
-
-			dat += "</tr></table>"
-//			-----------END OF BODY TABLE-----------
-			dat += "</td>"
-			dat += "</tr>"
-			dat += "</table>"
+			dat += "<div class='sheet-masthead'><div class='sheet-heading'><h1>[html_encode(real_name)] <small>Character [default_slot]</small></h1><p>[html_encode(pref_species.name)] &middot; [html_encode(age)] &middot; [html_encode(origin ? origin.name : "No origin selected")]</p></div>"
+			dat += "<div class='sheet-navigation'><a href='?_src_=prefs;preference=changeslot;'>Change Character</a><a href='?_src_=prefs;preference=job;task=menu'>Choose Class</a>"
+			dat += "<a class='sheet-primary' href='?_src_=prefs;preference=vices_menu;task=input'>Traits &amp; Gear</a><a href='?_src_=prefs;preference=antag;task=menu'>Villain Selection</a></div></div>"
+			var/list/sheet_pages = list("identity" = "Identity", "appearance" = "Appearance", "voice" = "Voice", "record" = "Chronicle", "settings" = "Settings")
+			dat += "<nav class='sheet-tabs' aria-label='Character pages'>"
+			for(var/page_id in sheet_pages)
+				dat += "<a class='[character_sheet_page == page_id ? "sheet-tab-active" : ""]' href='?_src_=prefs;preference=sheet_page;page=[page_id]' [character_sheet_page == page_id ? "aria-current='page'" : ""]>[sheet_pages[page_id]]</a>"
+			dat += "</nav><div class='sheet-main [show_sheet_preview ? "sheet-main--portrait" : ""]'>"
+			switch(character_sheet_page)
+				if("identity")
+					dat += "<div class='sheet-grid'>"
+					dat += "<section class='sheet-column'><h3>Personal details</h3><div class='sheet-fields'>[identity.Join()]</div>"
+					if(CONFIG_GET(flag/roundstart_traits))
+						dat += "<h3>Quirks</h3><a href='?_src_=prefs;preference=trait;task=menu'>Configure Quirks</a><p>[all_quirks.len ? html_encode(all_quirks.Join(", ")) : "No quirks selected."]</p>"
+					dat += "</section><section class='sheet-column'><div class='sheet-fields'>[heritage.Join()][calling.Join()]</div></section></div>"
+				if("appearance")
+					dat += "<div class='sheet-fields'>[appearance.Join()]</div>"
+				if("voice")
+					dat += "<div class='sheet-grid'><section class='sheet-column'><div class='sheet-fields'>[voice.Join()]</div></section><section class='sheet-column'><div class='sheet-fields'>[bark.Join()]</div></section></div>"
+				if("record")
+					dat += "<div class='sheet-grid'><section class='sheet-column'><h3>Character &amp; player notes</h3><div class='sheet-fields sheet-fields--stacked'>[record.Join()]</div></section><section class='sheet-column'><h3>Portrait &amp; accompanying media</h3><div class='sheet-fields sheet-fields--stacked'>[media.Join()]</div></section></div>"
+				if("settings")
+					dat += "<div class='sheet-grid'><section class='sheet-column'><h3>Presentation</h3><div class='sheet-fields'>"
+					dat += "<div class='sheet-field'><span class='sheet-label'>Options</span><span class='sheet-value'><a href='?_src_=prefs;preference=tgui_ui_prefs;task=menu'>[tgui_pref ? "TGUI" : "Legacy"]</a></span></div><div class='sheet-field'><span class='sheet-label'>Theme</span><span class='sheet-value'><a href='?_src_=prefs;preference=tgui_theme'>[html_encode(get_tgui_theme_display_name())]</a></span></div><div class='sheet-field'><span class='sheet-label'>Parchment</span><span class='sheet-value'><a href='?_src_=prefs;preference=parchment_skin'>[html_encode(get_parchment_skin_display_name())]</a></span></div>"
+					dat += "<div class='sheet-field'><span class='sheet-label'>Ambient occlusion</span><span class='sheet-value'><a href='?_src_=prefs;preference=ambientocclusion'>[ambientocclusion ? "Enabled" : "Disabled"]</a></span></div><div class='sheet-field'><span class='sheet-label'>Be voice</span><span class='sheet-value'><a href='?_src_=prefs;preference=schizo_voice'>[(toggles & SCHIZO_VOICE) ? "Enabled" : "Disabled"]</a></span></div><div class='sheet-field'><span class='sheet-label'>Admin sounds</span><span class='sheet-value'><a href='?_src_=prefs;preference=hear_midis'>[(toggles & SOUND_MIDI) ? "Enabled" : "Disabled"]</a></span></div></div></section>"
+					dat += "<section class='sheet-column'><h3>Controls &amp; standing</h3><a href='?_src_=prefs;preference=keybinds;task=menu'>Configure Keybinds</a><div class='sheet-standing'><a href='?_src_=prefs;preference=playerquality;task=menu'>Player Quality</a> [get_playerquality(user.ckey, text = TRUE)]<br><a href='?_src_=prefs;preference=triumphs;task=menu'>Triumphs</a> [user.get_triumphs()]"
+					if(SStriumphs.triumph_buys_enabled)
+						dat += "<br><a href='?_src_=prefs;preference=triumph_buy_menu'>Triumph Buy</a>"
+					dat += "</div><h3>Round preferences</h3><div class='sheet-fields'>[round_options.Join()]</div></section></div>"
+			dat += "</div>"
+			if(show_sheet_preview)
+				dat += "<aside class='sheet-portrait'><h3>Preview</h3><div class='sheet-portrait-space'></div></aside>"
 
 		if (1) // Game Preferences
 			used_title = "Options"
@@ -1072,62 +1000,67 @@ GLOBAL_LIST_EMPTY(chosen_names)
 			dat += "</body>"
 
 
-	if(!IsGuestKey(user.key))
-		dat += "<a href='?_src_=prefs;preference=save'>Save</a><br>"
-		dat += "<a href='?_src_=prefs;preference=load'>Undo</a><br>"
+	if(current_tab == 0)
+		dat += "<div class='sheet-bottom-bar [show_sheet_preview ? "sheet-bottom-bar--portrait" : ""]'>"
 
-	// well.... one empty slot here for something I suppose lol
-	dat += "<table width='100%'>"
-	dat += "<tr>"
-	dat += "<td width='33%' align='left'>"
-	dat += "<b>Ambient Occlusion:</b> <a href='?_src_=prefs;preference=ambientocclusion'>[ambientocclusion ? "Enabled" : "Disabled"]</a><br>"
-	dat += "</td>"
-	dat += "<td width='33%' align='center'>"
+	if(!IsGuestKey(user.key))
+		dat += "<div class='sheet-record-actions'><a class='sheet-primary' href='?_src_=prefs;preference=save'>Save Character</a>"
+		dat += "<a href='?_src_=prefs;preference=load'>Revert to Saved</a></div>"
+
+	if(current_tab != 0)
+		dat += "<div class='sheet-footer'><div class='sheet-footer-options'>"
+		dat += "<b>Ambient Occlusion:</b> <a href='?_src_=prefs;preference=ambientocclusion'>[ambientocclusion ? "Enabled" : "Disabled"]</a><br>"
+		dat += "<b>Be voice:</b> <a href='?_src_=prefs;preference=schizo_voice'>[(toggles & SCHIZO_VOICE) ? "Enabled":"Disabled"]</a><br>"
+		dat += "<b>Admin Sounds:</b> <a href='?_src_=prefs;preference=hear_midis'>[(toggles & SOUND_MIDI) ? "Enabled":"Disabled"]</a></div>"
+	dat += "<div class='sheet-session'>"
 	var/mob/dead/new_player/N = user
 	if(istype(N))
 		//dat += "<a href='?_src_=prefs;preference=bespecial'><b>[next_special_trait ? "<font color='red'>SPECIAL</font>" : "Be Special"]</b></a><BR>"
 		if(SSticker.current_state <= GAME_STATE_PREGAME)
 			switch(N.ready)
 				if(PLAYER_NOT_READY)
-					dat += "<b>UNREADY</b> <a href='byond://?src=[REF(N)];ready=[PLAYER_READY_TO_PLAY]'>READY</a>"
+					dat += "<span class='sheet-hint'>Not ready</span> <a class='sheet-primary' href='byond://?src=[REF(N)];ready=[PLAYER_READY_TO_PLAY]'>Ready</a>"
 				if(PLAYER_READY_TO_PLAY)
-					dat += "<a href='byond://?src=[REF(N)];ready=[PLAYER_NOT_READY]'>UNREADY</a> <b>READY</b>"
+					dat += "<span class='sheet-hint'>Ready</span> <a href='byond://?src=[REF(N)];ready=[PLAYER_NOT_READY]'>Unready</a>"
 					log_game("([user || "NO KEY"]) readied as ([real_name])")
-			dat += "<br><a href='byond://?src=[REF(N)];villains=1'><b><font color='red'>VILLAINS</font></b></a>"
+			dat += " <a href='byond://?src=[REF(N)];show_lobby=1'>Round Lobby</a>"
+			dat += "<br><a href='byond://?src=[REF(N)];villains=1'>Villains</a>"
 		else
 			if(!is_active_migrant())
-				dat += "<a href='byond://?src=[REF(N)];late_join=1'>JOINLATE</a>"
+				dat += "<a class='sheet-primary' href='byond://?src=[REF(N)];late_join=1'>Join the Round</a>"
 			else
-				dat += "<a class='linkOff' href='byond://?src=[REF(N)];late_join=1'>JOINLATE</a>"
-			dat += " - <a href='?_src_=prefs;preference=migrants'>MIGRATION</a>"
-			dat += "<br><a href='?_src_=prefs;preference=manifest'>ACTORS</a>"
-			dat += " - <a href='?_src_=prefs;preference=observe'>SPECTATE</a>"
-			dat += "<br><a href='byond://?src=[REF(N)];villains=1'><b><font color='red'>VILLAINS</font></b></a>"
+				dat += "<a class='linkOff' href='byond://?src=[REF(N)];late_join=1'>Join the Round</a>"
+			dat += " <a href='?_src_=prefs;preference=migrants'>Migration</a>"
+			dat += "<br><a href='?_src_=prefs;preference=manifest'>Actors</a>"
+			dat += " <a href='?_src_=prefs;preference=observe'>Spectate</a>"
+			dat += "<br><a href='byond://?src=[REF(N)];villains=1'>Villains</a>"
 	else
-		dat += "<a href='?_src_=prefs;preference=finished'>DONE</a>"
+		dat += "<a href='?_src_=prefs;preference=finished'>Done</a>"
 
-	dat += "</td>"
-	dat += "<td width='33%' align='right'>"
-	dat += "<b>Be voice:</b> <a href='?_src_=prefs;preference=schizo_voice'>[(toggles & SCHIZO_VOICE) ? "Enabled":"Disabled"]</a>"
-	dat += "<br><b>Toggle Admin Sounds:</b> <a href='?_src_=prefs;preference=hear_midis'>[(toggles & SOUND_MIDI) ? "Enabled":"Disabled"]</a>"
-	dat += "<br><a href='?_src_=prefs;preference=close_prefs'><b>CLOSE</b></a>"
-	dat += "</td>"
-	dat += "</tr>"
-	dat += "</table>"
-//	dat += "<a href='?_src_=prefs;preference=reset_all'>Reset Setup</a>"
+	dat += "<a href='?_src_=prefs;preference=close_prefs'>Close</a></div></div></div>"
 
 
 	if(user.client?.is_new_player())
 		dat = list("<center>REGISTER!</center>")
 
 	winshow(user, "preferencess_window", TRUE)
-	winset(user, "preferencess_window", "size=820x850")
-	winset(user, "preferencess_window", "pos=280,80")
+	winset(user, "preferences_browser", "pos=0,0;size=[sheet_window_width]x[sheet_window_height];anchor1=0,0;anchor2=100,100")
+	winset(user, "character_preview_map", "pos=[sheet_window_width - 198],158;size=172x192;anchor1=100,0;anchor2=100,0;background-color=#181413;is-visible=[show_sheet_preview ? "true" : "false"]")
+	winset(user, "preferencess_window", "background-color=#161817")
 	var/datum/browser/noclose/popup = new(user, "preferences_browser", "<div align='center'>[used_title]</div>")
 	popup.set_window_options("can_close=0")
+	popup.add_stylesheet("character_sheet", 'html/browser/character_sheet.css')
+	var/datum/asset/simple/roguefonts/sheet_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = sheet_fonts.get_url_mappings()
+	var/list/common_urls = get_asset_datum(/datum/asset/simple/namespaced/common).get_url_mappings()
+	var/sheet_head = "<style>@font-face { font-family: 'Sheet Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Sheet Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Sheet Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Sheet Rocker'; src: url('[font_urls["newrocker.ttf"]]'); } .sheet-masthead { background-image: url('[common_urls["flowers.png"]]'); }</style>"
+	if(current_tab == 0)
+		sheet_head += "<style>html, body { height:100%; overflow:hidden; } .uiWrapper { height:100%; } .uiWrapper .uiTitleWrapper { display:none; } .uiWrapper .uiContent { height:100%; padding:0; } .character-sheet { height:100%; display:flex; flex-direction:column; }</style>"
+	popup.add_head_content(sheet_head)
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
-	update_preview_icon()
+	if(show_sheet_preview)
+		update_preview_icon()
 //	onclose(user, "preferencess_window", src)
 
 #undef APPEARANCE_CATEGORY_COLUMN
@@ -1135,7 +1068,11 @@ GLOBAL_LIST_EMPTY(chosen_names)
 
 /datum/preferences/proc/CaptureKeybinding(mob/user, datum/keybinding/kb, old_key)
 	var/HTML = {"
-	<div id='focus' style="outline: 0;" tabindex=0>Keybinding: [kb.full_name]<br>[kb.description]<br><br><b>Press any key to change<br>Press ESC to clear</b></div>
+	<div class='keep-keycapture' id='focus' tabindex=0>
+		<header><h1>Assign key</h1></header><h2>[html_encode(kb.full_name)]</h2>
+		<p>[html_encode(kb.description)]</p>
+		<div class='keep-notice'>Press a key or key combination.<br><span class='keep-empty'>Press Escape to clear this binding.</span></div>
+	</div>
 	<script>
 	var deedDone = false;
 	document.onkeyup = function(e) {
@@ -1144,17 +1081,9 @@ GLOBAL_LIST_EMPTY(chosen_names)
 		var ctrl = e.ctrlKey ? 1 : 0;
 		var shift = e.shiftKey ? 1 : 0;
 		var numpad = (95 < e.keyCode && e.keyCode < 112) ? 1 : 0;
-		var main_key = e.key;
-		switch (main_key){
-			case '#':main_key = '%23';
-			break;
-			case '&':main_key = '%26';
-			break;
-			case '=':main_key = '%3D';
-			break;
-		};
+		var main_key = encodeURIComponent(e.key);
 		var escPressed = e.keyCode == 27 ? 1 : 0;
-		var url = 'byond://?_src_=prefs;preference=keybinds;task=keybindings_set;keybinding=[kb.name];old_key=[old_key];clear_key='+escPressed+';key='+main_key+';alt='+alt+';ctrl='+ctrl+';shift='+shift+';numpad='+numpad+';key_code='+e.keyCode;
+		var url = 'byond://?_src_=prefs;preference=keybinds;task=keybindings_set;keybinding=[url_encode(kb.name)];old_key=[url_encode(old_key)];clear_key='+escPressed+';key='+main_key+';alt='+alt+';ctrl='+ctrl+';shift='+shift+';numpad='+numpad+';key_code='+e.keyCode;
 		window.location=url;
 		deedDone = true;
 	}
@@ -1162,259 +1091,196 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	</script>
 	"}
 	winshow(user, "capturekeypress", TRUE)
-	var/datum/browser/noclose/popup = new(user, "capturekeypress", "<div align='center'>Keybindings</div>", 350, 300)
+	var/datum/browser/noclose/popup = new(user, "capturekeypress", "", 480, 280)
+	popup.add_stylesheet("keybindings", 'html/browser/keybindings.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(HTML)
 	popup.open(FALSE)
 	onclose(user, "capturekeypress", src)
 
-/datum/preferences/proc/SetChoices(mob/user, limit = 14, list/splitJobs = list("Court Magician", "Knight Captain", "Bishop", "Merchant", "Archivist", "Towner", "Grenzelhoft Mercenary", "Beggar", "Prisoner", "Goblin King"), widthPerColumn = 295, height = 620) //295 620
+/datum/preferences/proc/SetChoices(mob/user)
 	if(!SSjob)
 		return
 
-	//limit - The amount of jobs allowed per column. Defaults to 17 to make it look nice.
-	//splitJobs - Allows you split the table by job. You can make different tables for each department by including their heads. Defaults to CE to make it look nice.
-	//widthPerColumn - Screen's width for every column.
-	//height - Screen's height.
+	if(joblessrole != RETURNTOLOBBY && joblessrole != BERANDOMJOB)
+		joblessrole = RETURNTOLOBBY
 
-	var/width = widthPerColumn
+	var/list/departments = list()
+	for(var/datum/job/job in sortList(SSjob.occupations, GLOBAL_PROC_REF(cmp_job_display_asc)))
+		if(!job.spawn_positions || (job.title in GLOB.villain_positions))
+			continue
+		var/department = SSjob.bitflag_to_department(job.department_flag, job.obsfuscated_job)
+		if(!departments[department])
+			departments[department] = list()
+		departments[department] += job
 
-	var/HTML = "<center>"
-	if(SSjob.occupations.len <= 0)
-//		HTML += "The job SSticker is not yet finished creating jobs, please try again later"
-		HTML += "<center><a href='?_src_=prefs;preference=job;task=close'>Done</a></center><br>" // Easier to press up here.
+	var/list/HTML = list()
+	HTML += {"
+	<div class='job-ledger'>
+		<header class='job-header'>
+			<h1>Class preferences</h1>
+			<p>Choose one High preference, then rank your alternatives. Linked class names open their setup.</p>
+			<div class='job-tools'>
+				<label for='job-search'>Find a class<input id='job-search' type='text' placeholder='Search class names...' autocomplete='off'></label>
+				<label for='job-department'>Department<select id='job-department'><option value=''>All departments</option>
+	"}
+	for(var/department in departments)
+		HTML += "<option value='[html_encode(department)]'>[html_encode(department)]</option>"
+	HTML += "</select></label></div><div class='job-fallback'>If no preferred role is available: <a href='?_src_=prefs;preference=job;task=nojob'>[html_encode(joblessrole)]</a></div></header>"
+	HTML += "<main class='job-list' id='job-list'><p class='job-empty' id='job-empty' style='display:none'>No classes match your search.</p>"
+	if(!length(departments))
+		HTML += "<p class='job-empty'>Classes are not available yet. Close this ledger and try again shortly.</p>"
 
-	else
-//		HTML += "<b>Choose class preferences</b><br>"
-//		HTML += "<div align='center'>Left-click to raise a class preference, right-click to lower it.<br></div>"
-		HTML += "<center><a href='?_src_=prefs;preference=job;task=close'>Done</a></center>" // Easier to press up here.
-		if(joblessrole != RETURNTOLOBBY && joblessrole != BERANDOMJOB) // this is to catch those that used the previous definition and reset.
-			joblessrole = RETURNTOLOBBY
-		HTML += "<i>Click on an unlocked Class to get more information</i><br>"
-		HTML += "<b>If Role Unavailable:</b><font color='purple'><a href='?_src_=prefs;preference=job;task=nojob'>[joblessrole]</a></font><BR>"
-		HTML += "<script type='text/javascript'>function setJobPrefRedirect(level, rank) { window.location.href='?_src_=prefs;preference=job;task=setJobLevel;level=' + level + ';text=' + encodeURIComponent(rank); return false; }</script>"
-		HTML += "<table width='100%' cellpadding='1' cellspacing='0'><tr><td width='20%'>" // Table within a table for alignment, also allows you to easily add more colomns.
-		HTML += "<table width='100%' cellpadding='1' cellspacing='0'>"
-		var/index = -1
-
-		//The job before the current job. I only use this to get the previous jobs color when I'm filling in blank rows.
-		var/datum/job/lastJob
-		for(var/datum/job/job in sortList(SSjob.occupations, GLOBAL_PROC_REF(cmp_job_display_asc)))
-			if(!job.spawn_positions)
-				continue
-			if(job.title in GLOB.villain_positions)
-				continue
-
-			index += 1
-//			if((index >= limit) || (job.title in splitJobs))
-			if(index >= limit)
-				width += widthPerColumn
-				if((index < limit) && (lastJob != null))
-					//If the cells were broken up by a job in the splitJob list then it will fill in the rest of the cells with
-					//the last job's selection color. Creating a rather nice effect.
-					for(var/i = 0, i < (limit - index), i += 1)
-						HTML += "<tr bgcolor='#000000'><td width='60%' align='right'>&nbsp</td><td>&nbsp</td></tr>"
-				HTML += "</table></td><td width='20%'><table width='100%' cellpadding='1' cellspacing='0'>"
-				index = 0
-
-			if(job.title in splitJobs)
-				HTML += "<tr bgcolor='#000000'><td width='60%' align='right'><hr></td></tr>"
-
-			HTML += "<tr bgcolor='#000000'><td width='60%' align='right'>"
+	var/role_index = 0
+	var/player_quality = get_playerquality(user.ckey)
+	var/static/list/acceptable_unavailables = list(JOB_AVAILABLE, JOB_UNAVAILABLE_SLOTFULL)
+	var/static/list/preference_labels = list("High", "Medium", "Low", "Never")
+	for(var/department in departments)
+		HTML += "<section class='job-group' data-department='[html_encode(department)]'><h2>[html_encode(department)]</h2>"
+		for(var/datum/job/job in departments[department])
+			role_index++
 			var/rank = job.title
 			var/used_name = job.display_title || job.title
 			if((pronouns == SHE_HER || pronouns == THEY_THEM_F) && job.f_title)
-				used_name = "[job.f_title]"
-			lastJob = job
+				used_name = job.f_title
+
+			var/blocking_reason
 			if(is_banned_from(user.ckey, rank))
-				HTML += "[used_name]</td> <td><a href='?_src_=prefs;bancheck=[rank]'> BANNED</a></td></tr>"
-				continue
-			var/required_playtime_remaining = job.required_playtime_remaining(user.client)
-			if(required_playtime_remaining)
-				HTML += "[used_name]</td> <td><font color=red> \[ [get_exp_format(required_playtime_remaining)] as [job.get_exp_req_type()] \] </font></td></tr>"
-				continue
-			if(!job.player_old_enough(user.client))
-				var/available_in_days = job.available_in_days(user.client)
-				HTML += "[used_name]</td> <td><font color=red> \[IN [(available_in_days)] DAYS\]</font></td></tr>"
-				continue
+				blocking_reason = "<a href='?_src_=prefs;bancheck=[url_encode(rank)]'>Banned &mdash; view reason</a>"
+			if(!blocking_reason)
+				var/required_playtime_remaining = job.required_playtime_remaining(user.client)
+				if(required_playtime_remaining)
+					blocking_reason = "Requires [html_encode(get_exp_format(required_playtime_remaining))] more as [html_encode(job.get_exp_req_type())]"
+			if(!blocking_reason && !job.player_old_enough(user.client))
+				blocking_reason = "Available in [job.available_in_days(user.client)] days"
 			#ifdef USES_PQ
-			if(!job.required && !isnull(job.min_pq) && (get_playerquality(user.ckey) < job.min_pq))
-				HTML += "<font color=#a59461>[used_name] (Min PQ: [job.min_pq])</font></td> <td> </td></tr>"
-				continue
+			if(!blocking_reason && !job.required && !isnull(job.min_pq) && (player_quality < job.min_pq))
+				blocking_reason = "Minimum PQ: [job.min_pq]"
 			#endif
-			if(!job.required && !isnull(job.max_pq) && (get_playerquality(user.ckey) > job.max_pq))
-				HTML += "<font color=#a59461>[used_name] (Max PQ: [job.max_pq])</font></td> <td> </td></tr>"
-				continue
-			if(length(job.virtue_restrictions) && length(job.vice_restrictions))
-				var/name
-				if(virtue.type in job.virtue_restrictions)
-					name = virtue.name
-				if(virtuetwo?.type in job.virtue_restrictions)
-					if(name)
-						name += ", "
-						name += virtuetwo.name
-					else
-						name = virtuetwo.name
-				// Check all vices
-				for(var/datum/charflaw/vice in list(vice1, vice2, vice3, vice4, vice5, vice6, charflaw))
-					if(vice?.type in job.vice_restrictions)
-						if(name)
-							name += ", "
-							name += vice.name
-						else
-							name = vice.name
-				if(!isnull(name))
-					HTML += "<font color='#a561a5'>[used_name] (Disallowed by Virtues / Vice: [name])</font></td> <td> </td></tr>"
-			if(length(job.virtue_restrictions))
-				var/name
-				if(virtue.type in job.virtue_restrictions)
-					name = virtue.name
-				if(virtuetwo?.type in job.virtue_restrictions)
-					if(name)
-						name += ", "
-						name += virtuetwo.name
-					else
-						name = virtuetwo.name
-				if(!isnull(name))
-					HTML += "<font color='#a59461'>[used_name] (Disallowed by Virtue: [name])</font></td> <td> </td></tr>"
-					continue
-			if(length(job.vice_restrictions))
-				var/list/restricted_vices = list()
-				// Check all vices
-				for(var/datum/charflaw/vice in list(vice1, vice2, vice3, vice4, vice5, vice6, charflaw))
-					if(vice?.type in job.vice_restrictions)
-						restricted_vices += vice.name
-				if(length(restricted_vices))
-					HTML += "<font color='#a56161'>[used_name] (Disallowed by Vice: [restricted_vices.Join(", ")])</font></td> <td> </td></tr>"
-					continue
-			var/job_unavailable = JOB_AVAILABLE
-			if(isnewplayer(parent?.mob))
+			if(!blocking_reason && !job.required && !isnull(job.max_pq) && (player_quality > job.max_pq))
+				blocking_reason = "Maximum PQ: [job.max_pq]"
+			if(!blocking_reason)
+				var/list/restricted_traits = list()
+				if(length(job.virtue_restrictions))
+					if(virtue.type in job.virtue_restrictions)
+						restricted_traits += virtue.name
+					if(virtuetwo?.type in job.virtue_restrictions)
+						restricted_traits += virtuetwo.name
+				if(length(job.vice_restrictions))
+					for(var/datum/charflaw/vice in list(vice1, vice2, vice3, vice4, vice5, vice6, charflaw))
+						if(vice?.type in job.vice_restrictions)
+							restricted_traits += vice.name
+				if(length(restricted_traits))
+					blocking_reason = "Disallowed by virtues / vices: [html_encode(restricted_traits.Join(", "))]"
+			if(!blocking_reason && isnewplayer(parent?.mob))
 				var/mob/dead/new_player/new_player = parent.mob
-				job_unavailable = new_player.IsJobUnavailable(job.title, latejoin = FALSE)
-			var/static/list/acceptable_unavailables = list(
-				JOB_AVAILABLE,
-				JOB_UNAVAILABLE_SLOTFULL,
-			)
-			if(!(job_unavailable in acceptable_unavailables))
-				HTML += "<font color=#a36c63>[used_name]</font></td> <td> </td></tr>"
+				if(!(new_player.IsJobUnavailable(job.title, latejoin = FALSE, player_quality = player_quality) in acceptable_unavailables))
+					blocking_reason = "Unavailable for this character"
+
+			HTML += "<article class='job-row[blocking_reason ? " job-locked" : ""]' data-search='[html_encode("[used_name] [rank] [department]")]'><div class='job-summary'><div class='job-description'>"
+			if(!blocking_reason && job.class_setup_examine)
+				HTML += "<a class='job-name' href='?src=[REF(job)];explainjob=1'>[html_encode(used_name)]</a>"
+			else
+				HTML += "<span class='job-name'>[html_encode(used_name)]</span>"
+			if(blocking_reason)
+				HTML += "<div class='job-restriction'>[blocking_reason]</div></div><span class='job-unavailable'>Locked</span></div></article>"
 				continue
 
-			var/job_display = used_name
-			//job_display += " <a href='?src=[REF(job)];explainjob=1'>{?}</a></span>"
-//			if((job_preferences[SSjob.overflow_role] == JP_LOW) && (rank != SSjob.overflow_role) && !is_banned_from(user.ckey, SSjob.overflow_role))
-//				HTML += "<font color=orange>[rank]</font></td><td></td></tr>"
-//				continue
-/*			if((rank in GLOB.command_positions) || (rank == "AI"))//Bold head jobs
-				HTML += "<b><span class='dark'><a href='?_src_=prefs;preference=job;task=tutorial;tut='[job.tutorial]''>[used_name]</a></span></b>"
-			else
-				HTML += span_dark("<a href='?_src_=prefs;preference=job;task=tutorial;tut='[job.tutorial]''>[used_name]</a>")*/
+			HTML += "<div class='job-meta'>Slots: [job.spawn_positions][job.round_contrib_points ? " &middot; RCP: +[job.round_contrib_points]" : ""]"
+			if(job.tutorial)
+				HTML += " &middot; <button type='button' class='job-details-toggle' aria-expanded='false' aria-controls='job-details-[role_index]' onclick='toggleJobDetails(this)'>Class details</button>"
+			HTML += "</div></div><div class='job-preferences' role='group' aria-label='Preference for [html_encode(used_name)]'>"
 
-			HTML += {"
-
-<style>
-
-
-.tutorialhover {
-	position: relative;
-	display: inline-block;
-	border-bottom: 1px dotted black;
-}
-
-.tutorialhover .tutorial {
-
-	visibility: hidden;
-	width: 280px;
-	background-color: black;
-	color: #e3c06f;
-	text-align: center;
-	border-radius: 6px;
-	padding: 5px 0;
-
-	position: absolute;
-	z-index: 1;
-	top: 100%;
-	left: 50%;
-	margin-left: -140px;
-}
-
-.tutorialhover:hover .tutorial{
-	visibility: visible;
-}
-
-</style>
-
-<div class="tutorialhover"> [job.class_setup_examine ? "<a href='?src=[REF(job)];explainjob=1'><font>[job_display]</font></a>" : "<font>[job_display]</font>"]</span>
-<span class="tutorial">[job.tutorial]<br>
-Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contrib_points]" : ""]</span>
-</div>
-
-			"}
-
-			HTML += "</td><td width='40%'>"
-
-			var/prefLevelLabel = "ERROR"
-			var/prefLevelColor = "pink"
-			var/prefUpperLevel = -1 // level to assign on left click
-			var/prefLowerLevel = -1 // level to assign on right click
-
+			var/preference_level = 4
 			switch(job_preferences[job.title])
 				if(JP_HIGH)
-					prefLevelLabel = "High"
-					prefLevelColor = "slateblue"
-					prefUpperLevel = 4
-					prefLowerLevel = 2
+					preference_level = 1
 					var/mob/dead/new_player/P = user
 					if(istype(P))
 						P.topjob = job.title
 				if(JP_MEDIUM)
-					prefLevelLabel = "Medium"
-					prefLevelColor = "green"
-					prefUpperLevel = 1
-					prefLowerLevel = 3
+					preference_level = 2
 				if(JP_LOW)
-					prefLevelLabel = "Low"
-					prefLevelColor = "orange"
-					prefUpperLevel = 2
-					prefLowerLevel = 4
+					preference_level = 3
+			var/low_only = FALSE
+			#ifdef USES_PQ
+			low_only = job.required && !isnull(job.min_pq) && player_quality < job.min_pq
+			#endif
+			for(var/level in 1 to 4)
+				if(level == preference_level)
+					HTML += "<span class='job-preference job-selected' aria-current='true'>[preference_labels[level]]</span>"
+				else if(low_only && level < 3)
+					HTML += "<span class='job-preference job-disabled' aria-disabled='true'>[preference_labels[level]]</span>"
 				else
-					prefLevelLabel = "NEVER"
-					prefLevelColor = "red"
-					prefUpperLevel = 3
-					prefLowerLevel = 1
+					HTML += "<a class='job-preference' href='?_src_=prefs;preference=job;task=setJobLevel;level=[level];text=[url_encode(rank)]'>[preference_labels[level]]</a>"
+			HTML += "</div></div>"
+			if(low_only)
+				HTML += "<div class='job-restriction'>Only Low or Never is available below [job.min_pq] PQ.</div>"
+			if(job.tutorial)
+				HTML += "<div class='job-details' id='job-details-[role_index]' style='display:none'>[job.tutorial]</div>"
+			HTML += "</article>"
+		HTML += "</section>"
 
-			HTML += "<a class='white' href='?_src_=prefs;preference=job;task=setJobLevel;level=[prefUpperLevel];text=[rank]' oncontextmenu='javascript:return setJobPrefRedirect([prefLowerLevel], \"[rank]\");'>"
+	HTML += "</main><footer class='job-footer'><div class='job-footer-options'><a href='?_src_=prefs;preference=job;task=reset'>Reset preferences</a>"
+	if(user.client.prefs.lastclass)
+		HTML += "<a class='job-repeat' href='?_src_=prefs;preference=job;task=triumphthing'>Clear repeat-class restriction: [html_encode(user.client.prefs.lastclass)] &mdash; 2 Triumphs</a>"
+	HTML += "</div><a class='job-done' href='?_src_=prefs;preference=job;task=close'>Done</a></footer></div>"
+	HTML += {"
+	<script type='text/javascript'>
+	function toggleJobDetails(button) {
+		var expanded = button.getAttribute('aria-expanded') === 'true';
+		button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+		document.getElementById(button.getAttribute('aria-controls')).style.display = expanded ? 'none' : 'block';
+	}
+	(function() {
+		var search = document.getElementById('job-search');
+		var department = document.getElementById('job-department');
+		var ledger = document.getElementById('job-list');
+		var groups = ledger.querySelectorAll('.job-group');
+		function filterJobs() {
+			var query = search.value.toLowerCase();
+			var total = 0;
+			for(var i = 0; i < groups.length; i++) {
+				var group = groups.item(i);
+				var rows = group.querySelectorAll('.job-row');
+				var matches = 0;
+				for(var j = 0; j < rows.length; j++) {
+					var row = rows.item(j);
+					var visible = (!department.value || department.value === group.getAttribute('data-department')) && row.getAttribute('data-search').toLowerCase().indexOf(query) !== -1;
+					row.style.display = visible ? '' : 'none';
+					if(visible) { matches++; }
+				}
+				group.style.display = matches ? '' : 'none';
+				total += matches;
+			}
+			document.getElementById('job-empty').style.display = !total && groups.length ? 'block' : 'none';
+			try {
+				sessionStorage.setItem('keep-job-search', search.value);
+				sessionStorage.setItem('keep-job-department', department.value);
+			} catch(e) {}
+		}
+		try {
+			search.value = sessionStorage.getItem('keep-job-search') || '';
+			department.value = sessionStorage.getItem('keep-job-department') || '';
+		} catch(e) {}
+		search.oninput = filterJobs;
+		department.onchange = filterJobs;
+		filterJobs();
+		try { ledger.scrollTop = Number(sessionStorage.getItem('keep-job-scroll')) || 0; } catch(e) {}
+		ledger.onscroll = function() {
+			try { sessionStorage.setItem('keep-job-scroll', ledger.scrollTop); } catch(e) {}
+		};
+	})();
+	</script>
+	"}
 
-//			if(rank == SSjob.overflow_role)//Overflow is special
-//				if(job_preferences[SSjob.overflow_role] == JP_LOW)
-//					HTML += "<font color=green>Yes</font>"
-//				else
-//					HTML += "<font color=red>No</font>"
-//				HTML += "</a></td></tr>"
-//				continue
-
-			HTML += "<font color=[prefLevelColor]>[prefLevelLabel]</font>"
-			HTML += "</a></td></tr>"
-
-		for(var/i = 1, i < (limit - index), i += 1) // Finish the column so it is even
-			HTML += "<tr bgcolor='000000'><td width='60%' align='right'>&nbsp</td><td>&nbsp</td></tr>"
-
-		HTML += "</td'></tr></table>"
-		HTML += "</center></table><br>"
-
-//		var/message = "Be an [SSjob.overflow_role] if preferences unavailable"
-//		if(joblessrole == BERANDOMJOB)
-//			message = "Get random job if preferences unavailable"
-//		else if(joblessrole == RETURNTOLOBBY)
-//			message = "Return to lobby if preferences unavailable"
-//		HTML += "<center><br><a href='?_src_=prefs;preference=job;task=random'>[message]</a></center>"
-		if(user.client.prefs.lastclass)
-			HTML += "<center><a href='?_src_=prefs;preference=job;task=triumphthing'>PLAY AS [user.client.prefs.lastclass] AGAIN</a></center>"
-		else
-			HTML += "<br>"
-		HTML += "<center><a href='?_src_=prefs;preference=job;task=reset'>Reset</a></center>"
-
-	var/datum/browser/noclose/popup = new(user, "mob_occupation", "<div align='center'>Class Selection</div>", width, height)
-	popup.set_window_options("can_close=0")
-	popup.set_content(HTML)
+	var/datum/browser/noclose/popup = new(user, "mob_occupation", "", 900, 720)
+	popup.set_window_options("can_close=0;can_resize=1;can_minimize=1;can_maximize=1;titlebar=1;")
+	popup.add_stylesheet("job_preferences", 'html/browser/job_preferences.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
+	popup.set_content(HTML.Join())
 	popup.open(FALSE)
 
 /datum/preferences/proc/SetJobPreferenceLevel(datum/job/job, level)
@@ -1457,9 +1323,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 
 	#ifdef USES_PQ
 	if(job.required && !isnull(job.min_pq) && (get_playerquality(user.ckey) < job.min_pq))
-		if(job_preferences[job.title] == JP_LOW)
-			jpval = null
-		else
+		if(!isnull(jpval) && jpval != JP_LOW)
 			var/used_name = job.display_title || job.title
 			if((pronouns == SHE_HER || pronouns == THEY_THEM_F) && job.f_title)
 				used_name = "[job.f_title]"
@@ -1511,70 +1375,141 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 		var/datum/keybinding/kb = GLOB.keybindings_by_name[name]
 		kb_categories[kb.category] += list(kb)
 
-	dat += "<style>label { display: inline-block; width: 200px; }</style><body>"
-
-	dat += "<center><a href='?_src_=prefs;preference=keybinds;task=close;return_to_prefs=[return_flag]'>Done</a></center><br>"
+	dat += "<div class='keep-keybindings'><header class='keep-key-heading'><h1>Keybindings</h1><p>Choose a binding to change it, or add a second key.</p></header>"
+	dat += "<div class='keep-key-search'><label for='key-search'>Find a command</label><input id='key-search' type='text' placeholder='Search commands, categories, or keys...' autocomplete='off'></div><main id='key-list' class='keep-key-list' tabindex='0' aria-label='Keybindings'>"
 	for (var/category in kb_categories)
+		dat += "<section class='keep-key-group'><h2>[html_encode(category)]</h2><div>"
 		for (var/i in kb_categories[category])
 			var/datum/keybinding/kb = i
+			dat += "<div class='keep-key-row' data-binding='[html_encode(kb.name)]' data-category='[html_encode(category)]'><div class='keep-key-command'><span>[html_encode(kb.full_name)]</span><small>[html_encode(kb.description)]</small></div><div class='keep-key-values'>"
 			if(!length(user_binds[kb.name]))
-				dat += "<label>[kb.full_name]</label> <a href ='?_src_=prefs;preference=keybinds;task=keybindings_capture;keybinding=[kb.name];old_key=["Unbound"]'>Unbound</a>"
-//						var/list/default_keys = hotkeys ? kb.hotkey_keys : kb.classic_keys
-//						if(LAZYLEN(default_keys))
-//							dat += "| Default: [default_keys.Join(", ")]"
-				dat += "<br>"
+				dat += "<a class='keep-key-unbound' href='?_src_=prefs;preference=keybinds;task=keybindings_capture;keybinding=[kb.name];old_key=Unbound'>Unbound</a>"
 			else
 				var/bound_key = user_binds[kb.name][1]
-				dat += "<label>[kb.full_name]</label> <a href ='?_src_=prefs;preference=keybinds;task=keybindings_capture;keybinding=[kb.name];old_key=[bound_key]'>[bound_key]</a>"
+				dat += "<a href='?_src_=prefs;preference=keybinds;task=keybindings_capture;keybinding=[kb.name];old_key=[url_encode(bound_key)]'>[html_encode(bound_key)]</a>"
 				for(var/bound_key_index in 2 to length(user_binds[kb.name]))
 					bound_key = user_binds[kb.name][bound_key_index]
-					dat += " | <a href ='?_src_=prefs;preference=keybinds;task=keybindings_capture;keybinding=[kb.name];old_key=[bound_key]'>[bound_key]</a>"
+					dat += "<a href='?_src_=prefs;preference=keybinds;task=keybindings_capture;keybinding=[kb.name];old_key=[url_encode(bound_key)]'>[html_encode(bound_key)]</a>"
 				if(length(user_binds[kb.name]) < MAX_KEYS_PER_KEYBIND)
-					dat += "| <a href ='?_src_=prefs;preference=keybinds;task=keybindings_capture;keybinding=[kb.name]'>Add Secondary</a>"
-				dat += "<br>"
+					dat += "<a class='keep-key-secondary' href='?_src_=prefs;preference=keybinds;task=keybindings_capture;keybinding=[kb.name]'>+ Add key</a>"
+			dat += "</div></div>"
+		dat += "</div></section>"
 
-	dat += "<br><br>"
-	dat += "<a href ='?_src_=prefs;preference=keybinds;task=keybindings_reset'>\[Reset to default\]</a>"
-	dat += "</body>"
+	dat += "<p id='key-search-empty' class='keep-empty' style='display:none'>No commands match your search.</p></main><footer class='keep-key-footer'><a href='?_src_=prefs;preference=keybinds;task=keybindings_reset'>Reset to defaults</a><a class='keep-key-done' href='?_src_=prefs;preference=keybinds;task=close;return_to_prefs=[return_flag]'>Done</a></footer></div>"
+	dat += {"<script>
+	(function() {
+		var search = document.getElementById('key-search');
+		var ledger = document.getElementById('key-list');
+		function filterKeys() {
+			var query = search.value.toLowerCase().trim();
+			var groups = document.querySelectorAll('.keep-key-group');
+			var total = 0;
+			for(var g = 0; g < groups.length; g++) {
+				var rows = groups\[g\].querySelectorAll('.keep-key-row');
+				var shown = 0;
+				for(var r = 0; r < rows.length; r++) {
+					var row = rows\[r\];
+					var matches = (row.textContent + ' ' + row.getAttribute('data-category')).toLowerCase().indexOf(query) !== -1;
+					row.style.display = matches ? '' : 'none';
+					if(matches) shown++;
+				}
+				groups\[g\].style.display = shown ? '' : 'none';
+				total += shown;
+			}
+			document.getElementById('key-search-empty').style.display = total ? 'none' : '';
+			try { sessionStorage.setItem('keep-key-search', search.value); } catch(e) {}
+		}
+		try { search.value = sessionStorage.getItem('keep-key-search') || ''; } catch(e) {}
+		search.oninput = filterKeys;
+		filterKeys();
+		var rows = ledger.querySelectorAll('.keep-key-row');
+		var restoreBinding = '';
+		var restoreScroll = 0;
+		try {
+			restoreBinding = sessionStorage.getItem('keep-key-focus') || '';
+			restoreScroll = Number(sessionStorage.getItem('keep-key-scroll')) || 0;
+			sessionStorage.removeItem('keep-key-focus');
+		} catch(e) {}
+		for(var i = 0; i < rows.length; i++) {
+			var row = rows.item(i);
+			row.onclick = function(event) {
+				var target = event.target || event.srcElement;
+				if(target.tagName !== 'A') { return; }
+				try { sessionStorage.setItem('keep-key-focus', this.getAttribute('data-binding')); } catch(e) {}
+			};
+			if(row.getAttribute('data-binding') === restoreBinding && row.style.display !== 'none') {
+				var control = row.querySelector('a');
+				if(control) { control.focus(); }
+			}
+		}
+		ledger.scrollTop = restoreScroll;
+		ledger.onscroll = function() {
+			try { sessionStorage.setItem('keep-key-scroll', ledger.scrollTop); } catch(e) {}
+		};
+	})();
+	</script>"}
 
-	var/datum/browser/noclose/popup = new(user, "keybind_setup", "<div align='center'>Keybinds</div>", 600, 600) //no reason not to reuse the occupation window, as it's cleaner that way
+	var/datum/browser/noclose/popup = new(user, "keybind_setup", "", 760, 720)
 	popup.set_window_options("can_close=0")
+	popup.add_stylesheet("keybindings", 'html/browser/keybindings.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); } html, body, .uiWrapper, .uiContent { height:100%; overflow:hidden; } .uiTitleWrapper { display:none; }</style>")
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
+	winset(user, "keybind_setup.browser", "focus=true")
 
-/datum/preferences/proc/SetAntag(mob/user)
+/datum/preferences/proc/SetAntag(mob/user, focus_role = null)
 	var/list/dat = list()
 
-	dat += "<style>label { display: inline-block; width: 200px; }</style><body>"
-
-	dat += "<center><a href='?_src_=prefs;preference=antag;task=close'>Done</a></center><br>"
-
+	dat += "<div class='role-preferences'><header><h1>Villain selection</h1><p>Enable the roles you wish to be considered for.</p></header><main id='role-list' tabindex='0' aria-label='Villain preferences' data-current-role='[html_encode(focus_role)]'>"
 
 	if(is_banned_from(user.ckey, ROLE_SYNDICATE))
-		dat += "<font color=red><b>I am banned from antagonist roles.</b></font><br>"
+		dat += "<p class='role-notice'>I am banned from antagonist roles.</p>"
 		src.be_special = list()
 
-
+	dat += "<table><thead><tr><th scope='col'>Role</th><th scope='col' class='role-state'>Preference</th></tr></thead><tbody>"
 	for (var/i in GLOB.special_roles_rogue)
+		dat += "<tr><th scope='row'>[html_encode(capitalize(i))]</th><td class='role-state'>"
 		if(is_banned_from(user.ckey, i))
-			dat += "<b>[capitalize(i)]:</b> <a href='?_src_=prefs;bancheck=[i]'>BANNED</a><br>"
+			dat += "<a class='role-banned' href='?_src_=prefs;bancheck=[url_encode(i)]'>Banned</a>"
 		else
 			var/days_remaining = null
 			if(ispath(GLOB.special_roles_rogue[i]) && CONFIG_GET(flag/use_age_restriction_for_jobs)) //If it's a game mode antag, check if the player meets the minimum age
 				days_remaining = get_remaining_days(user.client)
 
 			if(days_remaining)
-				dat += "<b>[capitalize(i)]:</b> <font color=red> \[IN [days_remaining] DAYS]</font><br>"
+				dat += "<span class='role-waiting'>In [days_remaining] days</span>"
 			else
-				dat += "<b>[capitalize(i)]:</b> <a href='?_src_=prefs;preference=antag;task=be_special;be_special_type=[i]'>[(i in be_special) ? "Enabled" : "Disabled"]</a><br>"
+				var/enabled = (i in be_special)
+				dat += "<a class='[enabled ? "role-enabled" : "role-disabled"]' role='button' aria-pressed='[enabled ? "true" : "false"]' aria-label='[enabled ? "Disable" : "Enable"] [html_encode(i)]' data-role='[html_encode(i)]' href='?_src_=prefs;preference=antag;task=be_special;be_special_type=[url_encode(i)]'>[enabled ? "Enabled" : "Disabled"]</a>"
+		dat += "</td></tr>"
 
+	dat += "</tbody></table></main><footer><a href='?_src_=prefs;preference=antag;task=close'>Done</a></footer></div>"
+	dat += {"<script>
+	(function() {
+		var list = document.getElementById('role-list');
+		var role = list.getAttribute('data-current-role');
+		if(!role) { return; }
+		var controls = list.querySelectorAll('a\[data-role\]');
+		for(var i = 0; i < controls.length; i++) {
+			var control = controls.item(i);
+			if(control.getAttribute('data-role') === role) {
+				control.focus();
+				break;
+			}
+		}
+	})();
+	</script>"}
 
-	dat += "</body>"
-
-	var/datum/browser/noclose/popup = new(user, "antag_setup", "<div align='center'>Special Role</div>", 250, 300) //no reason not to reuse the occupation window, as it's cleaner that way
+	var/datum/browser/noclose/popup = new(user, "antag_setup", "", 520, 560)
 	popup.set_window_options("can_close=0")
+	popup.add_stylesheet("special_roles", 'html/browser/special_roles.css')
+	var/datum/asset/simple/roguefonts/panel_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = panel_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
+	winset(user, "antag_setup.browser", "focus=true")
 
 
 /datum/preferences/Topic(href, href_list, hsrc)			//yeah, gotta do this I guess..
@@ -1610,6 +1545,12 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 				expires = " The ban is for [DisplayTimeText(text2num(ban_details["duration"]) MINUTES)] and expires on [ban_details["expiration_time"]] (server time)."
 			to_chat(user, span_danger("You, or another user of this computer or connection ([ban_details["key"]]) is banned from playing [href_list["bancheck"]].<br>The ban reason is: [ban_details["reason"]]<br>This ban (BanID #[ban_details["id"]]) was applied by [ban_details["admin_key"]] on [ban_details["bantime"]] during round ID [ban_details["round_id"]].<br>[expires]"))
 			return
+	if(href_list["preference"] == "sheet_page")
+		if(href_list["page"] in list("identity", "appearance", "voice", "record", "settings"))
+			character_sheet_page = href_list["page"]
+			current_tab = 0
+			ShowChoices(user)
+		return
 	if(href_list["preference"] == "job")
 		switch(href_list["task"])
 			if("close")
@@ -1664,7 +1605,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					be_special -= be_special_type
 				else
 					be_special += be_special_type
-				SetAntag(user)
+				SetAntag(user, be_special_type)
 			if("update")
 				SetAntag(user)
 			else
@@ -1739,7 +1680,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						if(!length(key_bindings[old_key]))
 							key_bindings -= old_key
 					user << browse(null, "window=capturekeypress")
-					save_preferences()
+					apply_keybinding_changes(user.client)
 					SetKeybinds(user)
 					return
 
@@ -1771,8 +1712,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 				key_bindings[full_key] = sortList(key_bindings[full_key])
 
 				user << browse(null, "window=capturekeypress")
-				user.client.update_movement_keys()
-				save_preferences()
+				apply_keybinding_changes(user.client)
 				SetKeybinds(user)
 
 			if("keybindings_reset")
@@ -1782,7 +1722,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					return
 				hotkeys = (choice == "Do It")
 				key_bindings = (hotkeys) ? deepCopyList(GLOB.hotkey_keybinding_list_by_key) : deepCopyList(GLOB.classic_keybinding_list_by_key)
-				user.client.update_movement_keys()
+				apply_keybinding_changes(user.client)
 				SetKeybinds(user)
 			else
 				SetKeybinds(user)
@@ -1835,12 +1775,12 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 			switch(href_list["preference"])
 				if("ghostform")
 					if(unlock_content)
-						var/new_form = input(user, "Thanks for supporting BYOND - Choose your ghostly form:","Thanks for supporting BYOND",null) as null|anything in GLOB.ghost_forms
+						var/new_form = tgui_input_list(user, "Thanks for supporting BYOND - Choose your ghostly form:", "Thanks for supporting BYOND", GLOB.ghost_forms, ghost_form)
 						if(new_form)
 							ghost_form = new_form
 				if("ghostorbit")
 					if(unlock_content)
-						var/new_orbit = input(user, "Thanks for supporting BYOND - Choose your ghostly orbit:","Thanks for supporting BYOND", null) as null|anything in GLOB.ghost_orbits
+						var/new_orbit = tgui_input_list(user, "Thanks for supporting BYOND - Choose your ghostly orbit:", "Thanks for supporting BYOND", GLOB.ghost_orbits, ghost_orbit)
 						if(new_orbit)
 							ghost_orbit = new_orbit
 
@@ -1884,25 +1824,19 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 
 				if("subclassoutfit")
 					var/list/choices = list("None")
-					var/datum/job/highest_pref
-					for(var/job in job_preferences)
-						if(job_preferences[job] > highest_pref)
-							highest_pref = SSjob.GetJob(job)
+					var/datum/job/highest_pref = get_preview_job()
 					if(isnull(highest_pref))
-						to_chat(user, "<b>I don't have a Class set to High!</b>")
+						to_chat(user, span_warning("Choose a class preference before previewing an outfit."))
+						return
 					if(length(highest_pref.job_subclasses))
 						for(var/adv in highest_pref.job_subclasses)
 							var/datum/advclass/advpath = adv
 							var/datum/advclass/advref = SSrole_class_handler.get_advclass_by_name(initial(advpath.name))
 							choices[advref.name] = advref
-					if(length(choices))
-						var/new_choice = input(user, "Choose an outfit preview:", "Outfit Preview")  as anything in choices|null
-						if(new_choice && new_choice != "None")
-							preview_subclass = choices[new_choice]
-							update_preview_icon()
-						else
-							preview_subclass = null
-							update_preview_icon(jobOnly = TRUE)
+					var/new_choice = tgui_input_list(user, "Choose an outfit preview:", "Outfit Preview", choices, preview_subclass ? preview_subclass.name : "None")
+					if(isnull(new_choice))
+						return
+					preview_subclass = new_choice == "None" ? null : choices[new_choice]
 
 //				if("age")
 //					var/new_age = input(user, "Choose your character's age:\n([AGE_MIN]-[AGE_MAX])", "Years Dead") as num|null
@@ -1910,7 +1844,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 //						age = max(min( round(text2num(new_age)), AGE_MAX),AGE_MIN)
 
 				if("age")
-					var/new_age = tgui_input_list(user, "Choose your character's age (18-[pref_species.max_age])", "YILS LIVED", pref_species.possible_ages)
+					var/new_age = tgui_input_list(user, "Choose your character's age (18-[pref_species.max_age])", "YILS LIVED", pref_species.possible_ages, age)
 					if(new_age)
 						age = new_age
 						var/list/hairs
@@ -1952,7 +1886,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					return
 				// LETHALSTONE EDIT: add pronouns
 				if ("pronouns")
-					var pronouns_input = tgui_input_list(user, "Choose your character's pronouns", "PRONOUNS", GLOB.pronouns_list)
+					var pronouns_input = tgui_input_list(user, "Choose your character's pronouns", "PRONOUNS", GLOB.pronouns_list, pronouns)
 					if(pronouns_input)
 						pronouns = pronouns_input
 						ResetJobs()
@@ -2070,12 +2004,13 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					return
 
 				if("voice")
-					var/new_voice = input(user, "Choose your character's voice color:", "Character Preference","#"+voice_color) as color|null
+					var/new_voice = tgui_color_picker(user, "Choose your character's voice color:", "Voice colour", "#"+voice_color)
 					if(new_voice)
-						if(color_hex2num(new_voice) < 230)
+						new_voice = sanitize_hexcolor(new_voice)
+						if(color_hex2num("#[new_voice]") < 230)
 							to_chat(user, "<font color='red'>This voice color is too dark for mortals.</font>")
 							return
-						voice_color = sanitize_hexcolor(new_voice)
+						voice_color = new_voice
 
 				if("extra_language")
 					var/static/list/selectable_languages = list(
@@ -2136,6 +2071,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 
 				if("barksound")
 					var/list/woof_woof = list()
+					var/current_bark
 					for(var/path in GLOB.bark_list)
 						var/datum/bark/B = GLOB.bark_list[path]
 						if(initial(B.ignore))
@@ -2145,7 +2081,9 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 							if(!allowed.Find(user.client.ckey))
 								continue
 						woof_woof[initial(B.name)] = initial(B.id)
-					var/new_bork = input(user, "Choose your desired vocal bark", "Character Preference") as null|anything in woof_woof
+						if(initial(B.id) == bark_id)
+							current_bark = initial(B.name)
+					var/new_bork = tgui_input_list(user, "Choose your vocal bark.", "Character voice", woof_woof, current_bark)
 					if(new_bork)
 						bark_id = woof_woof[new_bork]
 						var/datum/bark/B = GLOB.bark_list[bark_id] //Now we need sanitization to take into account bark-specific min/max values
@@ -2155,19 +2093,19 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 
 				if("barkspeed")
 					var/datum/bark/B = GLOB.bark_list[bark_id]
-					var/borkset = input(user, "Choose your desired bark speed (Higher is slower, lower is faster). Min: [initial(B.minspeed)]. Max: [initial(B.maxspeed)]", "Character Preference") as null|num
+					var/borkset = tgui_input_number(user, "Choose your bark speed. Higher is slower; lower is faster.", "Bark speed", bark_speed, initial(B.maxspeed), initial(B.minspeed))
 					if(!isnull(borkset))
 						bark_speed = round(clamp(borkset, initial(B.minspeed), initial(B.maxspeed)), 1)
 
 				if("barkpitch")
 					var/datum/bark/B = GLOB.bark_list[bark_id]
-					var/borkset = input(user, "Choose your desired baseline bark pitch. Min: [initial(B.minpitch)]. Max: [initial(B.maxpitch)]", "Character Preference") as null|num
+					var/borkset = tgui_input_number(user, "Choose your baseline bark pitch.", "Bark pitch", bark_pitch, initial(B.maxpitch), initial(B.minpitch), round_value = FALSE)
 					if(!isnull(borkset))
 						bark_pitch = clamp(borkset, initial(B.minpitch), initial(B.maxpitch))
 
 				if("barkvary")
 					var/datum/bark/B = GLOB.bark_list[bark_id]
-					var/borkset = input(user, "Choose your desired baseline bark pitch. Min: [initial(B.minvariance)]. Max: [initial(B.maxvariance)]", "Character Preference") as null|num
+					var/borkset = tgui_input_number(user, "Choose how much your bark pitch varies.", "Bark variation", bark_variance, initial(B.maxvariance), initial(B.minvariance), round_value = FALSE)
 					if(!isnull(borkset))
 						bark_variance = clamp(borkset, initial(B.minvariance), initial(B.maxvariance))
 
@@ -2224,22 +2162,29 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					popup.open(FALSE)
 				if("formathelp")
 					var/list/dat = list()
-					dat +="You can use backslash (\\) to escape special characters.<br>"
-					dat += "<br>"
-					dat += "# text : Defines a header.<br>"
-					dat += "|text| : Centers the text.<br>"
-					dat += "**text** : Makes the text <b>bold</b>.<br>"
-					dat += "*text* : Makes the text <i>italic</i>.<br>"
-					dat += "^text^ : Increases the <font size = \"4\">size</font> of the text.<br>"
-					dat += "((text)) : Decreases the <font size = \"1\">size</font> of the text.<br>"
-					dat += "* item : An unordered list item.<br>"
-					dat += "--- : Adds a horizontal rule.<br>"
-					dat += "-=FFFFFFtext=- : Adds a specific <font color = '#FFFFFF'>colour</font> to text.<br><br>"
-					dat += "Minimum Flavortext: <b>[MINIMUM_FLAVOR_TEXT]</b> characters.<br>"
-					dat += "Minimum OOC Notes: <b>[MINIMUM_OOC_NOTES]</b> characters."
-					var/datum/browser/popup = new(user, "Formatting Help", nwidth = 400, nheight = 350)
+					dat += "<div class='chronicle-help' tabindex='0' role='region' aria-label='Chronicle formatting reference'>"
+					dat += "<h1>Formatting Help</h1>"
+					dat += "<table><thead><tr><th scope='col'>Syntax</th><th scope='col'>Result</th></tr></thead><tbody>"
+					dat += "<tr><td><code># text</code></td><td><h2>text</h2>Header</td></tr>"
+					dat += "<tr><td><code>|text|</code></td><td><div class='chronicle-center'>text</div>Centered text</td></tr>"
+					dat += "<tr><td><code>**text**</code></td><td><b>text</b> &mdash; bold</td></tr>"
+					dat += "<tr><td><code>*text*</code></td><td><i>text</i> &mdash; italic</td></tr>"
+					dat += "<tr><td><code>^text^</code></td><td><font size='4'>text</font> &mdash; larger</td></tr>"
+					dat += "<tr><td><code>((text))</code></td><td><font size='1'>text</font> &mdash; smaller</td></tr>"
+					dat += "<tr><td><code>* item</code></td><td><ul><li>item</li></ul>Unordered list</td></tr>"
+					dat += "<tr><td><code>---</code></td><td><hr>Horizontal rule</td></tr>"
+					dat += "<tr><td><code>-=FFFFFFtext=-</code></td><td><font color='#FFFFFF'>text</font> &mdash; colour</td></tr>"
+					dat += "</tbody></table>"
+					dat += "<p class='chronicle-note'>Use a backslash (<code>&#92;</code>) to escape special characters. Replace <code>FFFFFF</code> with a six-digit colour code.</p>"
+					dat += "<p class='chronicle-minimums'>Minimum Flavortext: <b>[MINIMUM_FLAVOR_TEXT]</b> characters.<br>Minimum OOC Notes: <b>[MINIMUM_OOC_NOTES]</b> characters.</p></div>"
+					var/datum/browser/popup = new(user, "chronicle_formathelp", nwidth = 460, nheight = 560)
+					popup.add_stylesheet("chronicle_help", 'html/browser/chronicle_help.css')
+					var/datum/asset/simple/roguefonts/panel_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+					var/list/font_urls = panel_fonts.get_url_mappings()
+					popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 					popup.set_content(dat.Join())
 					popup.open(FALSE)
+					winset(user, "chronicle_formathelp.browser", "focus=true")
 				if("skin_color_ref_list")
 					var/list/dat = list()
 					dat +="Skin color codes reference list<br>"
@@ -2589,7 +2534,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 
 					species = sortNames(species)
 
-					var/result = tgui_input_list(user, "By what shape are you bound?", "RACE", species)
+					var/result = tgui_input_list(user, "By what shape are you bound?", "RACE", species, pref_species.name)
 
 					if(result)
 						set_new_race(result, user)
@@ -2674,7 +2619,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 							try_update_mutant_colors()
 					if(prompt == "Predefined")
 						var/listy = pref_species.get_skin_list()
-						var/new_mutantcolor = input(user, "Choose your character's skin tone:", "Sun")  as null|anything in listy
+						var/new_mutantcolor = tgui_input_list(user, "Choose your character's skin tone:", "Skin tone", listy)
 						if(new_mutantcolor)
 							features["mcolor"] = listy[new_mutantcolor]
 							try_update_mutant_colors()
@@ -2708,7 +2653,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 							to_chat(user, span_info("[charflaw.desc]"))
 
 				if("char_accent")
-					var/selectedaccent = tgui_input_list(user, "Choose your character's accent:", "Character Preference", GLOB.character_accents)
+					var/selectedaccent = tgui_input_list(user, "Choose your character's accent:", "Character Preference", GLOB.character_accents, char_accent)
 					if(selectedaccent)
 						char_accent = selectedaccent
 						var/test_message = "Hello friend, yes this is good. My Lord rides through the Duchy with servants and soldiers; the captain and sergeant guard the church while archers and cavalry hold the north road. My sword and shield are sharp, the water flows refreshingly, and we thank the Duke before saying goodbye."
@@ -2728,7 +2673,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						to_chat(user, span_info("<b>[selectedaccent] Preview:</b> [preview_text]"))
 
 				if("char_mannerism")
-					var/selected_mannerism = tgui_input_list(user, "Choose your character's speech mannerism:", "Character Preference", GLOB.character_mannerisms)
+					var/selected_mannerism = tgui_input_list(user, "Choose your character's speech mannerism:", "Character Preference", GLOB.character_mannerisms, char_mannerism)
 					if(selected_mannerism)
 						char_mannerism = selected_mannerism
 						var/test_message = "Hello friend, yes this is good. My Lord rides through the Duchy with servants and soldiers; the captain and sergeant guard the church while archers and cavalry hold the north road. My sword and shield are sharp, the water flows refreshingly, and we thank the Duke before saying goodbye."
@@ -2783,6 +2728,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 				if ("preferred_map")
 					var/maplist = list()
 					var/no_preference = "No Preference"
+					var/current_map = no_preference
 					for(var/M in config.maplist)
 						var/datum/map_config/VM = config.maplist[M]
 
@@ -2793,13 +2739,15 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						if (VM.voteweight <= 0)
 							friendlyname += " (disabled)"
 						maplist[friendlyname] = VM.map_name
+						if(VM.map_name == preferred_map)
+							current_map = friendlyname
 					maplist[no_preference] = null
-					var/pickedmap = input(user, "Choose your preferred map. This will be used to help weight random map selection.", "Character Preference")  as null|anything in sortList(maplist)
+					var/pickedmap = tgui_input_list(user, "Choose your preferred map. This will be used to help weight random map selection.", "Preferred Map", sortList(maplist), current_map)
 					if (pickedmap)
 						preferred_map = maplist[pickedmap]
 
 				if ("clientfps")
-					var/desiredfps = input(user, "Choose your desired fps. (0 = synced with server tick rate (currently:[world.fps]))", "Character Preference", clientfps)  as null|num
+					var/desiredfps = tgui_input_number(user, "Choose your frame rate. Use 0 to follow the server tick rate (currently [world.fps]).", "Frame Rate", clientfps, 1000, 0)
 					if (!isnull(desiredfps))
 						clientfps = desiredfps
 						parent.fps = desiredfps
@@ -2829,7 +2777,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					if(unlock_content)
 						toggles ^= MEMBER_PUBLIC
 				if ("max_chat_length")
-					var/desiredlength = input(user, "Choose the max character length of shown Runechat messages. Valid range is 1 to [CHAT_MESSAGE_MAX_LENGTH] (default: [initial(max_chat_length)]))", "Character Preference", max_chat_length)  as null|num
+					var/desiredlength = tgui_input_number(user, "Choose the maximum length of Runechat messages. Range: 1 to [CHAT_MESSAGE_MAX_LENGTH]. Default: [initial(max_chat_length)].", "Runechat Length", max_chat_length, CHAT_MESSAGE_MAX_LENGTH, 1)
 					if (!isnull(desiredlength))
 						max_chat_length = clamp(desiredlength, 1, CHAT_MESSAGE_MAX_LENGTH)
 				if("gender")
@@ -2930,7 +2878,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 							if(!length(key_bindings[old_key]))
 								key_bindings -= old_key
 						user << browse(null, "window=capturekeypress")
-						save_preferences()
+						apply_keybinding_changes(user.client)
 						ShowChoices(user, 3)
 						return
 
@@ -2962,8 +2910,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					key_bindings[full_key] = sortList(key_bindings[full_key])
 
 					user << browse(null, "window=capturekeypress")
-					user.client.update_movement_keys()
-					save_preferences()
+					apply_keybinding_changes(user.client)
 
 				if("keybindings_reset")
 					var/choice = tgalert(user, "Would you prefer 'hotkey' or 'classic' defaults?", "Setup keybindings", "Hotkey", "Classic", "Cancel")
@@ -2972,7 +2919,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						return
 					hotkeys = (choice == "Hotkey")
 					key_bindings = (hotkeys) ? deepCopyList(GLOB.hotkey_keybinding_list_by_key) : deepCopyList(GLOB.classic_keybinding_list_by_key)
-					user.client.update_movement_keys()
+					apply_keybinding_changes(user.client)
 				if("chat_on_map")
 					chat_on_map = !chat_on_map
 				if("see_chat_non_mob")
@@ -3162,7 +3109,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 								S["real_name"] >> name
 								if(!name)
 									name = "Slot[i]"
-								choices[name] = i
+								choices["Slot [i]: [name]"] = i
 					var/choice = tgui_input_list(user, "CHOOSE A HERO","ROGUETOWN", choices)
 					if(choice)
 						choice = choices[choice]
@@ -3177,78 +3124,26 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 	ShowChoices(user)
 	return 1
 
-/datum/preferences/proc/resolve_loadout_to_color(item_path)
-	if (loadout && (item_path == loadout.path) && loadout_1_hex && length(loadout_1_hex))
-		return loadout_1_hex
-	if (loadout2 && (item_path == loadout2.path) && loadout_2_hex && length(loadout_2_hex))
-		return loadout_2_hex
-	if (loadout3 && (item_path == loadout3.path) && loadout_3_hex && length(loadout_3_hex))
-		return loadout_3_hex
-	if (loadout4 && (item_path == loadout4.path) && loadout_4_hex && length(loadout_4_hex))
-		return loadout_4_hex
-	if (loadout5 && (item_path == loadout5.path) && loadout_5_hex && length(loadout_5_hex))
-		return loadout_5_hex
-	if (loadout6 && (item_path == loadout6.path) && loadout_6_hex && length(loadout_6_hex))
-		return loadout_6_hex
-	if (loadout7 && (item_path == loadout7.path) && loadout_7_hex && length(loadout_7_hex))
-		return loadout_7_hex
-	if (loadout8 && (item_path == loadout8.path) && loadout_8_hex && length(loadout_8_hex))
-		return loadout_8_hex
-	if (loadout9 && (item_path == loadout9.path) && loadout_9_hex && length(loadout_9_hex))
-		return loadout_9_hex
-	if (loadout10 && (item_path == loadout10.path) && loadout_10_hex && length(loadout_10_hex))
-		return loadout_10_hex
+/datum/preferences/proc/validate_character_species()
+	if(!(pref_species.name in GLOB.roundstart_races))
+		set_new_race(new /datum/species/human/northern)
+		random_character(gender, FALSE, FALSE)
+	if(parent && pref_species.patreon_req > parent.patreonlevel())
+		set_new_race(new /datum/species/human/northern)
+		random_character(gender, FALSE, FALSE)
 
-	return FALSE
-
-/datum/preferences/proc/resolve_loadout_to_name(item_path)
-	if (loadout && (item_path == loadout.path) && loadout_1_name)
-		return loadout_1_name
-	if (loadout2 && (item_path == loadout2.path) && loadout_2_name)
-		return loadout_2_name
-	if (loadout3 && (item_path == loadout3.path) && loadout_3_name)
-		return loadout_3_name
-	if (loadout4 && (item_path == loadout4.path) && loadout_4_name)
-		return loadout_4_name
-	if (loadout5 && (item_path == loadout5.path) && loadout_5_name)
-		return loadout_5_name
-	if (loadout6 && (item_path == loadout6.path) && loadout_6_name)
-		return loadout_6_name
-	if (loadout7 && (item_path == loadout7.path) && loadout_7_name)
-		return loadout_7_name
-	if (loadout8 && (item_path == loadout8.path) && loadout_8_name)
-		return loadout_8_name
-	if (loadout9 && (item_path == loadout9.path) && loadout_9_name)
-		return loadout_9_name
-	if (loadout10 && (item_path == loadout10.path) && loadout_10_name)
-		return loadout_10_name
-
-	return FALSE
-
-/datum/preferences/proc/resolve_loadout_to_desc(item_path)
-	if (loadout && (item_path == loadout.path) && loadout_1_desc)
-		return loadout_1_desc
-	if (loadout2 && (item_path == loadout2.path) && loadout_2_desc)
-		return loadout_2_desc
-	if (loadout3 && (item_path == loadout3.path) && loadout_3_desc)
-		return loadout_3_desc
-	if (loadout4 && (item_path == loadout4.path) && loadout_4_desc)
-		return loadout_4_desc
-	if (loadout5 && (item_path == loadout5.path) && loadout_5_desc)
-		return loadout_5_desc
-	if (loadout6 && (item_path == loadout6.path) && loadout_6_desc)
-		return loadout_6_desc
-	if (loadout7 && (item_path == loadout7.path) && loadout_7_desc)
-		return loadout_7_desc
-	if (loadout8 && (item_path == loadout8.path) && loadout_8_desc)
-		return loadout_8_desc
-	if (loadout9 && (item_path == loadout9.path) && loadout_9_desc)
-		return loadout_9_desc
-	if (loadout10 && (item_path == loadout10.path) && loadout_10_desc)
-		return loadout_10_desc
-
-	return FALSE
-
+// Preference validation must also run when the portrait is not visible.
+/datum/preferences/proc/normalize_character_identity(roundstart_checks = TRUE)
+	if(roundstart_checks && CONFIG_GET(flag/humans_need_surnames) && (pref_species.id == "human" || pref_species.id == "humen"))
+		var/firstspace = findtext(real_name, " ")
+		if(!firstspace)
+			real_name += " [pick(GLOB.last_names)]"
+		else if(firstspace == length(real_name))
+			real_name += "[pick(GLOB.last_names)]"
+	if(!(char_accent in GLOB.character_accents))
+		char_accent = "No accent"
+	if(!(char_mannerism in GLOB.character_mannerisms))
+		char_mannerism = "No mannerism"
 
 /datum/preferences/proc/copy_to(mob/living/carbon/human/character, icon_updates = 1, roundstart_checks = TRUE, character_setup = FALSE, antagonist = FALSE, skip_normal_prefs = FALSE)
 	if(skip_normal_prefs)
@@ -3285,35 +3180,19 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 		character.regenerate_limb(BODY_ZONE_R_ARM)
 		character.regenerate_limb(BODY_ZONE_L_ARM)
 
-	var/datum/species/chosen_species
-	chosen_species = pref_species.type
-	if(!(pref_species.name in GLOB.roundstart_races))
-		set_new_race(new /datum/species/human/northern)
-
-		random_character(gender, FALSE, FALSE)
-	if(parent)
-		if(pref_species.patreon_req > parent.patreonlevel())
-			set_new_race(new /datum/species/human/northern)
-			random_character(gender, FALSE, FALSE)
+	validate_character_species()
 
 	character.age = age
 	character.dna.features = features.Copy()
 	character.gender = gender
-	character.set_species(chosen_species, icon_update = FALSE, pref_load = src)
+	character.set_species(pref_species.type, icon_update = FALSE, pref_load = src)
 	character.dna.update_body_size()
 
 	if((randomise[RANDOM_NAME] || randomise[RANDOM_NAME_ANTAG] && antagonist) && !character_setup)
 		slot_randomized = TRUE
 		real_name = pref_species.random_name(gender)
 
-	if(roundstart_checks)
-		if(CONFIG_GET(flag/humans_need_surnames) && ((pref_species.id == "human") || (pref_species.id == "humen")))
-			var/firstspace = findtext(real_name, " ")
-			var/name_length = length(real_name)
-			if(!firstspace)	//we need a surname
-				real_name += " [pick(GLOB.last_names)]"
-			else if(firstspace == name_length)
-				real_name += "[pick(GLOB.last_names)]"
+	normalize_character_identity(roundstart_checks)
 
 	if(real_name in GLOB.chosen_names)
 		character.real_name = pref_species.random_name(gender)
@@ -3451,17 +3330,8 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 		character.update_hair()
 		character.update_body_parts(redraw = TRUE)
 
-	if (character.char_accent in GLOB.character_accents)
-		character.char_accent = char_accent
-	else
-		char_accent = "No accent"
-		character.char_accent = char_accent
-
-	if (char_mannerism in GLOB.character_mannerisms)
-		character.char_mannerism = char_mannerism
-	else
-		char_mannerism = "No mannerism"
-		character.char_mannerism = char_mannerism
+	character.char_accent = char_accent
+	character.char_mannerism = char_mannerism
 
 	if(culinary_preferences)
 		apply_culinary_preferences(character)
@@ -3593,3 +3463,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 	return dat
 
 #undef MAX_SONG_TITLE_LENGTH
+
+/datum/preferences/proc/apply_keybinding_changes(client/user)
+	save_preferences()
+	user?.set_macros(src, preserve_focus = TRUE)

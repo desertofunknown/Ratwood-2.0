@@ -11,6 +11,9 @@
 		return TRUE
 	log_admin_private("[key_name(usr)] clicked an href with [msg] authorization key! [href]")
 
+/datum/admins/proc/can_manage_heal_target(mob/living/target, obj/item/bodypart/limb)
+	return usr?.client == owner && check_rights(R_ADMIN) && istype(target) && !QDELETED(target) && (!limb || (!QDELETED(limb) && limb.owner == target))
+
 /datum/admins/Topic(href, href_list)
 	..()
 
@@ -21,6 +24,9 @@
 
 	if(!CheckAdminHref(href, href_list))
 		return
+	for(var/action in href_list)
+		if(findtext(action, "heal_") == 1 && !check_rights(R_ADMIN))
+			return
 
 	if(href_list["mass_direct"])
 		if(mass_direct_handle_topic(href_list))
@@ -117,7 +123,7 @@
 		if(M && ishuman(M))
 			var/mob/living/carbon/human/H = M
 			var/new_amount = input(usr, "Set blood volume to:", "Blood Volume", H.get_blood_volume()) as num|null
-			if(new_amount != null)
+			if(new_amount != null && can_manage_heal_target(H))
 				H.set_blood_volume(clamp(new_amount, 0, BLOOD_VOLUME_MAXIMUM))
 				message_admins("[key_name_admin(usr)] set [key_name_admin(M)]'s blood volume to [new_amount].")
 				log_admin("[key_name(usr)] set [key_name(M)]'s blood volume to [new_amount].")
@@ -139,16 +145,16 @@
 				current_value = M.getOxyLoss()
 
 			var/new_value = input(usr, "Set [damage_type] damage:", "Edit Damage", current_value) as num|null
-			if(new_value != null)
+			if(new_value != null && can_manage_heal_target(M))
 				new_value = max(0, new_value)
 				if(damage_type == "brute")
-					M.adjustBruteLoss(new_value - current_value)
+					M.adjustBruteLoss(new_value - M.getBruteLoss())
 				else if(damage_type == "burn")
-					M.adjustFireLoss(new_value - current_value)
+					M.adjustFireLoss(new_value - M.getFireLoss())
 				else if(damage_type == "toxin")
-					M.adjustToxLoss(new_value - current_value)
+					M.setToxLoss(new_value)
 				else if(damage_type == "oxy")
-					M.adjustOxyLoss(new_value - current_value)
+					M.setOxyLoss(new_value)
 				message_admins("[key_name_admin(usr)] set [damage_type] damage to [new_value] on [key_name_admin(M)].")
 				log_admin("[key_name(usr)] set [damage_type] damage to [new_value] on [key_name(M)].")
 				show_heal_panel(M)
@@ -166,7 +172,7 @@
 				current_value = H.getOxyLoss()
 
 			var/new_value = input(usr, "Set [damage_type] damage:", "Edit Damage", current_value) as num|null
-			if(new_value != null)
+			if(new_value != null && can_manage_heal_target(H))
 				new_value = max(0, new_value)
 				if(damage_type == "toxin")
 					H.setToxLoss(new_value)
@@ -180,7 +186,7 @@
 	if(href_list["heal_edit_damage"])
 		var/mob/living/M = locate(href_list["heal_edit_damage"])
 		var/obj/item/bodypart/BP = locate(href_list["bodypart"])
-		if(M && BP && ishuman(M))
+		if(M && BP && ishuman(M) && BP.owner == M)
 			var/damage_type = href_list["damage_type"]
 			var/current_value = 0
 			if(damage_type == "brute")
@@ -189,7 +195,7 @@
 				current_value = BP.burn_dam
 
 			var/new_value = input(usr, "Set [damage_type] damage for [BP.name]:", "Edit Damage", current_value) as num|null
-			if(new_value != null)
+			if(new_value != null && can_manage_heal_target(M, BP))
 				new_value = max(0, new_value)
 				if(damage_type == "brute")
 					BP.brute_dam = new_value
@@ -204,7 +210,7 @@
 	if(href_list["heal_fix_bodypart"])
 		var/mob/living/M = locate(href_list["heal_fix_bodypart"])
 		var/obj/item/bodypart/BP = locate(href_list["bodypart"])
-		if(M && BP && ishuman(M))
+		if(M && BP && ishuman(M) && BP.owner == M)
 			BP.brute_dam = 0
 			BP.burn_dam = 0
 			BP.update_limb()
@@ -216,7 +222,7 @@
 	if(href_list["heal_add_wound"])
 		var/mob/living/M = locate(href_list["heal_add_wound"])
 		var/obj/item/bodypart/BP = locate(href_list["bodypart"])
-		if(M && BP && ishuman(M))
+		if(M && BP && ishuman(M) && BP.owner == M)
 			var/list/wound_types = list(
 				"Fracture" = /datum/wound/fracture,
 				"Slash" = /datum/wound/slash,
@@ -228,7 +234,7 @@
 				"Dislocation" = /datum/wound/dislocation
 			)
 			var/wound_choice = input(usr, "Select wound type:", "Add Wound") as null|anything in wound_types
-			if(wound_choice)
+			if(wound_choice && can_manage_heal_target(M, BP))
 				var/wound_path = wound_types[wound_choice]
 				// Apply body-part-specific wound variants
 				if(wound_choice == "Fracture")
@@ -262,6 +268,8 @@
 						show_heal_panel(M)
 						return
 
+				if(!can_manage_heal_target(M, BP))
+					return
 				BP.add_wound(wound_path)
 				var/datum/wound/applied_wound = wound_path
 				var/wound_display_name = initial(applied_wound:name)
@@ -273,11 +281,11 @@
 	if(href_list["heal_remove_bodypart"])
 		var/mob/living/M = locate(href_list["heal_remove_bodypart"])
 		var/obj/item/bodypart/BP = locate(href_list["bodypart"])
-		if(M && BP && ishuman(M))
+		if(M && BP && ishuman(M) && BP.owner == M)
 			// Special case for chest - just gib them
 			if(BP.body_zone == BODY_ZONE_CHEST)
 				var/confirm = alert(usr, "Removing the chest will gib [M.name], leaving behind all body parts except the chest. Continue?", "Gib Mob", "Yes", "Cancel")
-				if(confirm == "Yes")
+				if(confirm == "Yes" && can_manage_heal_target(M, BP))
 					message_admins("[key_name_admin(usr)] gibbed [key_name_admin(M)] by removing the chest.")
 					log_admin("[key_name(usr)] gibbed [key_name(M)] by removing the chest.")
 					M.gib(no_brain = FALSE, no_organs = FALSE, no_bodyparts = FALSE)
@@ -285,6 +293,8 @@
 			// Special case for head - properly remove it
 			else if(BP.body_zone == BODY_ZONE_HEAD)
 				var/removal_type = alert(usr, "How to remove [BP.name]?", "Remove Bodypart", "Chop", "Safely Amputate", "Cancel")
+				if(!can_manage_heal_target(M, BP))
+					return
 				if(removal_type == "Chop")
 					BP.drop_limb()
 					message_admins("[key_name_admin(usr)] chopped off [BP.name] from [key_name_admin(M)].")
@@ -297,6 +307,8 @@
 			// All other limbs
 			else
 				var/removal_type = alert(usr, "How to remove [BP.name]?", "Remove Bodypart", "Chop", "Safely Amputate", "Cancel")
+				if(!can_manage_heal_target(M, BP))
+					return
 				if(removal_type == "Chop")
 					// Use admin-only dismember that bypasses all armor checks
 					BP.admin_dismember()
@@ -647,8 +659,9 @@
 		browse_messages(target_ckey = target, agegate = agegate)
 
 	else if(href_list["showmessageckeylinkless"])
-		var/target = href_list["showmessageckeylinkless"]
-		browse_messages(target_ckey = target, linkless = 1)
+		if(!CONFIG_GET(flag/see_own_notes) || ckey(href_list["showmessageckeylinkless"]) != usr.ckey)
+			return
+		browse_messages(target_ckey = usr.ckey, linkless = TRUE)
 
 	else if(href_list["messageedits"])
 		if(!check_rights(R_BAN))

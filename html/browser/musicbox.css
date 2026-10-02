@@ -1,0 +1,36 @@
+html, body, .uiWrapper, .uiWrapper .uiContent {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body { background: #100d0e; color: #ded1c2; font: 13px/1.4 'Keep Lora', Georgia, serif; overflow: hidden; scrollbar-color: #594046 #100d0e; }
+.uiWrapper .uiContent { font: inherit; }
+.musicbox { display: flex; flex-direction: column; height: 100%; }
+.musicbox header { display: flex; flex: 0 0 auto; align-items: baseline; gap: 10px; padding: 9px 12px; border-bottom: 1px solid #594046; }
+.musicbox h1 { flex: 1; margin: 0; padding: 0; color: #ded1c2; font: normal 21px/1.25 'Keep Rocker', Georgia, serif !important; }
+.musicbox-status { color: #b9a6a0; font-size: 12px; }
+.musicbox-controls { flex: 0 0 auto; padding: 8px 12px; border-bottom: 1px solid #594046; }
+.musicbox-track { margin-bottom: 7px; overflow-wrap: anywhere; }
+.musicbox-playback { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.musicbox form { display: flex; align-items: center; gap: 5px; margin: 0; }
+.musicbox a, .musicbox a:link, .musicbox a:visited, .musicbox button { display: inline-block; box-sizing: border-box; margin: 0; padding: 4px 9px; border: 1px solid #594046; border-radius: 0; background: #281b1f; color: #ded1c2; font: inherit !important; line-height: 1.3; text-decoration: none; cursor: pointer; }
+.musicbox a:hover, .musicbox button:hover { background: #42222a; border-color: #ae8189; }
+.musicbox input { box-sizing: border-box; min-width: 0; padding: 4px 6px; border: 1px solid #594046; border-radius: 0; background: #191315; color: #ded1c2; font: inherit; }
+.musicbox input::placeholder { color: #b9a6a0; opacity: 1; }
+.musicbox input[type='number'] { width: 60px; }
+.musicbox a:focus, .musicbox button:focus, .musicbox input:focus { outline: 2px solid #ae8189; outline-offset: 1px; }
+.musicbox-filter { flex: 0 0 auto; padding: 7px 12px; border-bottom: 1px solid #594046; }
+.musicbox-filter label { display: block; margin-bottom: 4px; color: #b9a6a0; font-size: 12px; }
+.musicbox-filter input { width: 100%; }
+.musicbox-catalogue { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 12px 9px; scroll-padding: 5px 0; }
+.musicbox-catalogue:focus { outline: 1px solid #ae8189; outline-offset: -3px; }
+.musicbox-collection h2 { margin: 0; padding: 10px 0 4px; color: #b9a6a0; font: normal 16px/1.3 'Keep Pterra', Georgia, serif !important; }
+.musicbox a.musicbox-song { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 6px 4px; border: 0; border-bottom: 1px solid #382b2f; background: none; scroll-margin: 5px 0; }
+.musicbox-song span { min-width: 0; overflow-wrap: anywhere; }
+.musicbox-song small { flex: 0 0 auto; color: #b9a6a0; font-size: 11px; }
+.musicbox a.musicbox-song:hover, .musicbox a.musicbox-song.is-selected { background: #281b1f; }
+.musicbox a.musicbox-song.is-selected { border-left: 2px solid #ae8189; padding-left: 7px; }
+.musicbox footer { display: flex; flex: 0 0 auto; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 12px; border-top: 1px solid #594046; }
+.musicbox footer span { color: #b9a6a0; font-size: 11px; }

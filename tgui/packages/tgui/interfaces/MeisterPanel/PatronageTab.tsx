@@ -1,22 +1,6 @@
 import { useState } from 'react';
 
-import {
-  cardStyle,
-  fieldLabelStyle,
-  fieldRowStyle,
-  fieldValueStyle,
-  INK_SOFT,
-  inkButtonStyle,
-  SEAL_AMBER,
-  sectionHeaderStyle,
-  tabBarStyle,
-  tabStyle,
-} from '../common/parchment';
-import {
-  type PatronRoster,
-  type PatronRosterStatic,
-  type TabProps,
-} from './types';
+import { type PatronRoster, type PatronRosterStatic, type TabProps } from './types';
 
 export const PatronageTab = ({ data, act }: TabProps) => {
   const fundsWithPatronage = data.funds.filter(
@@ -25,53 +9,38 @@ export const PatronageTab = ({ data, act }: TabProps) => {
   const [selectedFundId, setSelectedFundId] = useState<string>(
     fundsWithPatronage[0]?.id ?? '',
   );
+  const selectedFund = fundsWithPatronage.find((f) => f.id === selectedFundId) ?? fundsWithPatronage[0];
 
-  if (!fundsWithPatronage.length) {
-    return (
-      <div style={cardStyle}>
-        <div style={{ color: INK_SOFT }}>
-          You hold no patronage authority.
-        </div>
-      </div>
-    );
+  if (!selectedFund) {
+    return <p className="MeisterPanel__empty">You hold no patronage authority.</p>;
   }
-
-  const roster = data.patron_rosters[selectedFundId];
-  const rosterStatic = data.patron_rosters_static[selectedFundId];
+  const roster = data.patron_rosters[selectedFund.id];
+  const rosterStatic = data.patron_rosters_static[selectedFund.id];
 
   return (
-    <div style={cardStyle}>
+    <>
       {fundsWithPatronage.length > 1 && (
-        <div style={tabBarStyle}>
+        <nav className="MeisterPanel__funds" aria-label="Patronage funds">
           {fundsWithPatronage.map((f) => (
-            <div
+            <button
+              type="button"
               key={f.id}
-              style={tabStyle(selectedFundId === f.id)}
+              aria-pressed={selectedFund.id === f.id}
               onClick={() => setSelectedFundId(f.id)}
             >
               {f.patron_label}
-            </div>
+            </button>
           ))}
-        </div>
+        </nav>
       )}
       {!!roster && !!rosterStatic && (
-        <RosterView
-          fundId={selectedFundId}
-          roster={roster}
-          rosterStatic={rosterStatic}
-          act={act}
-        />
+        <RosterView key={selectedFund.id} fundId={selectedFund.id} roster={roster} rosterStatic={rosterStatic} act={act} />
       )}
-    </div>
+    </>
   );
 };
 
-const RosterView = ({
-  fundId,
-  roster,
-  rosterStatic,
-  act,
-}: {
+const RosterView = ({ fundId, roster, rosterStatic, act }: {
   fundId: string;
   roster: PatronRoster;
   rosterStatic: PatronRosterStatic;
@@ -79,86 +48,44 @@ const RosterView = ({
 }) => {
   const enrolled = roster.patrons.length;
   const full = enrolled >= roster.cap;
+  const sigSplit = rosterStatic.explanation.lastIndexOf(' - ');
+  const body = sigSplit >= 0 ? rosterStatic.explanation.slice(0, sigSplit).trimEnd() : rosterStatic.explanation;
+  const signature = sigSplit >= 0 ? rosterStatic.explanation.slice(sigSplit + 3).trim() : '';
 
   return (
-    <>
-      <div style={sectionHeaderStyle}>{roster.label}</div>
-      {!!rosterStatic.explanation && (() => {
-        const sigSplit = rosterStatic.explanation.lastIndexOf(' - ');
-        const body =
-          sigSplit >= 0
-            ? rosterStatic.explanation.slice(0, sigSplit).trimEnd()
-            : rosterStatic.explanation;
-        const signature =
-          sigSplit >= 0
-            ? rosterStatic.explanation.slice(sigSplit + 3).trim()
-            : '';
-        return (
-          <div
-            style={{
-              color: INK_SOFT,
-              whiteSpace: 'pre-wrap',
-              marginBottom: 10,
-              lineHeight: 1.4,
-            }}
-          >
-            {body}
-            {!!signature && (
-              <div
-                style={{
-                  fontStyle: 'italic',
-                  textAlign: 'right',
-                  marginTop: 6,
-                }}
-              >
-                - {signature}
-              </div>
-            )}
-          </div>
-        );
-      })()}
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>Roster</div>
-        <div style={fieldValueStyle}>
-          {enrolled} / {roster.cap} enrolled
-        </div>
+    <section className="MeisterPanel__section">
+      <div className="MeisterPanel__sectionTitle">
+        <h2>{roster.label}</h2>
+        <span>{enrolled} / {roster.cap} enrolled</span>
       </div>
-      {full && (
-        <div style={{ color: SEAL_AMBER, marginBottom: 8 }}>
-          The roster is full. Revoke an existing patron before drafting a new
-          writ.
-        </div>
-      )}
-      {roster.patrons.map((p) => (
-        <div key={p.ref} style={fieldRowStyle}>
-          <div style={fieldValueStyle}>
-            {p.name}
-            {p.job ? `, the ${p.job}` : ''}
+      {!!rosterStatic.explanation && (
+        <details className="MeisterPanel__disclosure">
+          <summary>Terms of patronage</summary>
+          <div className="MeisterPanel__lore">
+            {body}
+            {!!signature && <p className="MeisterPanel__signature">- {signature}</p>}
           </div>
+        </details>
+      )}
+      {full && <p className="MeisterPanel__help">Roster full. Revoke a patron before drafting a new writ.</p>}
+      {!enrolled && <p className="MeisterPanel__empty">No patrons enrolled.</p>}
+      {roster.patrons.map((p) => (
+        <div key={p.ref} className="MeisterPanel__rosterRow">
+          <span>{p.name}{p.job ? `, the ${p.job}` : ''}</span>
           <button
             type="button"
-            style={inkButtonStyle({})}
-            onClick={() =>
-              act('revoke_patronage', {
-                fund_id: fundId,
-                target_ref: p.ref,
-              })
-            }
+            aria-label={`Revoke patronage for ${p.name}`}
+            onClick={() => act('revoke_patronage', { fund_id: fundId, target_ref: p.ref })}
           >
             Revoke
           </button>
         </div>
       ))}
-      <div style={{ marginTop: 10, textAlign: 'right' }}>
-        <button
-          type="button"
-          style={inkButtonStyle({ disabled: full })}
-          disabled={full}
-          onClick={() => act('issue_patronage', { fund_id: fundId })}
-        >
-          Draft Writ
+      <div className="MeisterPanel__actions MeisterPanel__actions--end">
+        <button type="button" disabled={full} onClick={() => act('issue_patronage', { fund_id: fundId })}>
+          Draft writ
         </button>
       </div>
-    </>
+    </section>
   );
 };

@@ -167,10 +167,12 @@ GLOBAL_VAR(last_connection)
 					newmatch = FALSE
 			if (cachedban["matches_this_round"][ckey])
 				newmatch = FALSE
+			if (cachedban["pending_matches_this_round"][ckey])
+				newmatch = FALSE
 
 		if (newmatch && cachedban)
 			var/list/newmatches = cachedban["matches_this_round"]
-			var/list/pendingmatches = cachedban["matches_this_round"]
+			var/list/pendingmatches = cachedban["pending_matches_this_round"]
 			var/list/newmatches_connected = cachedban["existing_user_matches_this_round"]
 			var/list/newmatches_admin = cachedban["admin_matches_this_round"]
 
@@ -216,6 +218,7 @@ GLOBAL_VAR(last_connection)
 					if (!ban["fromdb"])
 						cachedban = cachedban.Copy() //so old references to the list still see the ban as reverting
 						cachedban["matches_this_round"] = list()
+						cachedban["pending_matches_this_round"] = list()
 						cachedban["existing_user_matches_this_round"] = list()
 						cachedban["admin_matches_this_round"] = list()
 						cachedban -= "reverting"

@@ -1,0 +1,166 @@
+html,
+body,
+.uiWrapper,
+.uiWrapper .uiContent {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: #211c19;
+	color: #e7dac2;
+	font: 14px/1.55 'Comms Lora', Georgia, serif;
+	scrollbar-face-color: #65503c;
+	scrollbar-track-color: #211c19;
+	scrollbar-arrow-color: #d7bb87;
+}
+
+.uiWrapper .uiContent {
+	font-family: 'Comms Lora', Georgia, serif;
+}
+
+.comms-folio {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 280px;
+}
+
+.comms-heading {
+	flex: 0 0 auto;
+	padding: 18px 22px 15px;
+	border-top: 3px solid #a68a59;
+	border-bottom: 1px solid #65503c;
+	background: #30251f;
+}
+
+.comms-eyebrow {
+	color: #c8b591;
+	font-size: 11px;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+}
+
+.comms-heading h1 {
+	margin: 4px 0;
+	padding: 0;
+	color: #f0dfbb;
+	font: normal 30px/1.3 'Comms Pterra', Georgia, serif !important;
+	word-wrap: break-word;
+}
+
+.comms-heading p {
+	margin: 6px 0 0;
+	color: #c8b591;
+}
+
+.comms-search {
+	flex: 0 0 auto;
+	padding: 12px 22px;
+	border-bottom: 1px solid #65503c;
+	background: #2b231e;
+}
+
+.comms-search label {
+	display: block;
+	margin-bottom: 5px;
+	color: #c8b591;
+	font-size: 12px;
+}
+
+.comms-search input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 9px 10px;
+	border: 1px solid #80694a;
+	background: #211c19;
+	color: #f0dfbb;
+	font: inherit;
+}
+
+.comms-search input:focus {
+	outline: 1px solid #c5a970;
+}
+
+.comms-search input::placeholder {
+	color: #b5a58c;
+}
+
+.comms-search input:-ms-input-placeholder {
+	color: #b5a58c;
+}
+
+.comms-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+}
+
+.comms-directory {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.comms-directory th,
+.comms-directory td {
+	padding: 12px 20px;
+	border-bottom: 1px solid #4d3c2f;
+	text-align: left;
+	word-wrap: break-word;
+}
+
+.comms-directory th {
+	background: #30251f;
+	color: #c8b591;
+	font-size: 12px;
+	font-weight: normal;
+}
+
+.comms-directory .comms-number {
+	width: 75px;
+	color: #d7bb87;
+}
+
+.comms-directory tbody tr:nth-child(even) {
+	background: #29211d;
+}
+
+.comms-muted,
+.comms-empty {
+	color: #c0b098;
+}
+
+.comms-empty {
+	padding: 24px 22px;
+}
+
+.comms-footer {
+	flex: 0 0 auto;
+	padding: 12px 22px;
+	border-top: 1px solid #65503c;
+	background: #30251f;
+	color: #c8b591;
+	font-size: 12px;
+}
+
+.comms-decrees,
+.comms-unreadable {
+	padding: 18px;
+	word-wrap: break-word;
+}
+
+.comms-decree {
+	margin-bottom: 12px;
+	padding: 16px 18px;
+	border: 1px solid #65503c;
+	border-left: 3px solid #a68a59;
+	background: #2b231e;
+}
+
+.comms-decree-text {
+	margin-top: 8px;
+	line-height: 1.7;
+}

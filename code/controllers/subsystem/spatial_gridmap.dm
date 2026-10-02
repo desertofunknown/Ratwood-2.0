@@ -192,7 +192,7 @@ SUBSYSTEM_DEF(spatial_grid)
 
 			for(var/grid_cell_for_expanded_x_axis in 1 to cells_on_x_axis)
 
-				if(grid_cell_for_expanded_x_axis > old_x_axis)
+				if(grid_cell_for_expanded_x_axis > old_x_axis || cell_row_for_expanded_y_axis > old_y_axis)
 					var/datum/spatial_grid_cell/new_cell_inserted = new(grid_cell_for_expanded_x_axis, cell_row_for_expanded_y_axis, z_level)
 					cell_row += new_cell_inserted
 					continue

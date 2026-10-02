@@ -89,7 +89,8 @@ export const buildWeekRows = (
   for (let w = 0; w < total; w++) {
     const row: number[] = [];
     for (let d = 1; d <= daysInWeek; d++) {
-      row.push(w * daysInWeek + d);
+      const day = w * daysInWeek + d;
+      if (day <= daysInMonth) row.push(day);
     }
     weeks.push(row);
   }

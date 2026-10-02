@@ -1,5 +1,13 @@
 /**********************Mineral deposits**************************/
 
+/proc/record_mined_output(obj/item/output, direct_ore = FALSE)
+	if(QDELETED(output))
+		return
+	SSblackbox.record_feedback("tally", "mining_outputs", 1, output.type)
+	if(direct_ore)
+		SSblackbox.record_feedback("tally", "ore_mined", 1, output.type)
+	return output
+
 /turf/closed/mineral //wall piece
 	name = "rock"
 	desc = "Lichens and moss cling to the jagged contours of the rock face. It is slick with moisture and exudes the heavy odors of dirt, minerals, and petrichor."
@@ -107,6 +115,7 @@
 						if(prob(50))
 							if(user.Adjacent(src))
 								var/obj/item/natural/stone/dropped_stone = new(src)
+								record_mined_output(dropped_stone)
 								dropped_stone.forceMove(get_turf(user))
 					if(!density)
 						break
@@ -139,42 +148,40 @@
 		ScrapeAway()
 		GLOB.mined_resource_loc |= get_turf(src)
 		queue_smooth_neighbors(src)
-		new /obj/item/natural/stone(src)
+		record_mined_output(new /obj/item/natural/stone(src))
 		if(prob(30))
-			new /obj/item/natural/stone(src)
+			record_mined_output(new /obj/item/natural/stone(src))
 		if (explo_mineral && (explo_mineral_amount > 0))
 			if(prob(33)) //chance to spawn ore directly
-				new explo_mineral(src)
+				record_mined_output(new explo_mineral(src), TRUE)
 			if(explo_rock)
 				if(prob(23))
-					new explo_rock(src)
-			SSblackbox.record_feedback("tally", "ore_mined", explo_mineral_amount, explo_mineral)
+					record_mined_output(new explo_rock(src))
 		else
 			return
 	else
 		if(lastminer.goodluck(2) && mineralType)
 	//		to_chat(lastminer, span_notice("Bonus ducks!"))
-			new mineralType(src)
+			record_mined_output(new mineralType(src), TRUE)
 		gets_drilled(lastminer)
 		queue_smooth_neighbors(src)
 	..()
 
 /turf/closed/mineral/proc/gets_drilled(mob/living/user, triggered_by_explosion = FALSE, give_exp = TRUE)
-	new /obj/item/natural/stone(src)
+	record_mined_output(new /obj/item/natural/stone(src))
 	if(prob(30))
-		new /obj/item/natural/stone(src)
+		record_mined_output(new /obj/item/natural/stone(src))
 	if (mineralType && (mineralAmt > 0))
 		if(prob(33)) //chance to spawn ore directly
-			new mineralType(src)
+			record_mined_output(new mineralType(src), TRUE)
 		if(rockType) //always spawn at least 1 rock
-			new rockType(src)
+			record_mined_output(new rockType(src))
 			if(prob(23))
-				new rockType(src)
-		SSblackbox.record_feedback("tally", "ore_mined", mineralAmt, mineralType)
+				record_mined_output(new rockType(src))
 	else if(user?.goodluck(2))
 		var/newthing = pickweight(list(/obj/item/natural/rock/salt = 2, /obj/item/natural/rock/iron = 1, /obj/item/natural/rock/coal = 2))
 //		to_chat(user, "<span class='notice'>Bonus ducks!</span>")
-		new newthing(src)
+		record_mined_output(new newthing(src))
 	var/flags = NONE
 	if(defer_change) // TODO: make the defer change var a var for any changeturf flag
 		flags = CHANGETURF_DEFER_CHANGE

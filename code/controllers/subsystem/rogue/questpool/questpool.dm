@@ -429,7 +429,7 @@ SUBSYSTEM_DEF(questpool)
 	log_event("generate", "blockade-defense in-hand for [ER.name] (faction [Q.faction_id], reward [Q.reward_amount])")
 	return Q
 
-/datum/controller/subsystem/questpool/proc/issue_towner_quest(type, mob/living/carbon/human/poster, posting_tier = TOWNER_POSTING_TIER_MEDIUM, to_hand = FALSE, loadout_variety = null)
+/datum/controller/subsystem/questpool/proc/issue_towner_quest(type, mob/living/carbon/human/poster, posting_tier = TOWNER_POSTING_TIER_MEDIUM, to_hand = FALSE, loadout_variety = null, datum/fund/source_fund = null, cost = 0)
 	if(!type || !poster)
 		return null
 	var/datum/quest/Q = instantiate_quest_of_type(type)
@@ -460,6 +460,16 @@ SUBSYSTEM_DEF(questpool)
 	var/turf/landmark_turf = get_turf(landmark)
 	var/turf/origin = get_nearest_ledger_turf(landmark_turf) || landmark_turf
 	Q.reward_amount = Q.calculate_reward(origin, landmark_turf)
+	// Charge only a prepared contract, before publishing its scroll or board entry.
+	if(cost > 0)
+		var/paid
+		if(source_fund == SStreasury.discretionary_fund)
+			paid = SStreasury.burn(source_fund, cost, "crown towner commission ([type])")
+		else
+			paid = SStreasury.transfer(source_fund, SStreasury.discretionary_fund, cost, "towner contract posting ([type])")
+		if(!paid)
+			qdel(Q)
+			return null
 	if(to_hand)
 		var/scroll_type = Q.get_scroll_type()
 		var/obj/item/quest_writ/scroll = new scroll_type(get_turf(poster))

@@ -89,7 +89,7 @@ GLOBAL_VAR_INIT(steward_tax_cooldown, -50000) // Antispam
 /mob/living/carbon/human/proc/adjust_taxes()
 	set name = "Adjust Taxes"
 	set category = "Stewardry"
-	if(stat)
+	if(stat || job != "Steward")
 		return
 	if(world.time < GLOB.steward_tax_cooldown + 600 SECONDS)
 		to_chat(src, span_warning("You must wait [round((GLOB.steward_tax_cooldown + 600 SECONDS - world.time)/600, 0.1)] minutes before adjusting taxes again! Think of the realm."))
@@ -107,7 +107,7 @@ GLOBAL_VAR_INIT(steward_tax_cooldown, -50000) // Antispam
 		lines += "[pretty]: [entry["rate"]]%"
 	var/summary = length(lines) ? jointext(lines, "\n") : "No changes specified."
 	var/choice = alert(lord, "The steward requests new levy rates!\n[summary]", "STEWARD TAX REQUEST", "Yes", "No")
-	if(choice != "Yes" || QDELETED(lord) || lord.stat > CONSCIOUS)
+	if(choice != "Yes" || QDELETED(lord) || lord.stat > CONSCIOUS || lord != find_lord() || QDELETED(steward) || steward.stat != CONSCIOUS || steward.job != "Steward")
 		if(steward)
 			to_chat(steward, span_warning("The lord has denied the request to adjust levy rates!"))
 		return
@@ -122,7 +122,7 @@ GLOBAL_VAR_INIT(steward_tax_cooldown, -50000) // Antispam
 		lines += "[pretty]: [entry["rate"]]m/day"
 	var/summary = length(lines) ? jointext(lines, "\n") : "No changes specified."
 	var/choice = alert(lord, "The steward requests new poll tax rates!\n[summary]", "STEWARD POLL TAX REQUEST", "Yes", "No")
-	if(choice != "Yes" || QDELETED(lord) || lord.stat > CONSCIOUS)
+	if(choice != "Yes" || QDELETED(lord) || lord.stat > CONSCIOUS || lord != find_lord() || QDELETED(steward) || steward.stat != CONSCIOUS || steward.job != "Steward")
 		if(steward)
 			to_chat(steward, span_warning("The lord has denied the request to adjust poll tax rates!"))
 		return

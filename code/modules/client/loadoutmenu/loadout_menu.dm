@@ -23,6 +23,22 @@
 
 /datum/loadout_menu/ui_data(mob/user)
 	var/list/data = ..()
+	var/datum/preferences/prefs = user.client?.prefs
+	if(!prefs)
+		return data
+	var/spent_points = 0
+	var/list/selected_slots = list()
+	for(var/slot = 1 to 10)
+		var/datum/loadout_item/item = prefs.vars[slot == 1 ? "loadout" : "loadout[slot]"]
+		if(!item)
+			continue
+		selected_slots["[item.type]"] = slot
+		if(slot != current_slot)
+			spent_points += item.triumph_cost
+	data["current_slot"] = current_slot
+	data["total_points"] = prefs.get_total_points()
+	data["available_points"] = prefs.get_total_points() - spent_points
+	data["selected_slots"] = selected_slots
 	return data
 
 /datum/loadout_menu/ui_static_data(mob/user)
@@ -39,8 +55,10 @@
 				donoritem_passed = FALSE // True means it won't show up in the TGUI
 		UNTYPED_LIST_ADD(loadout_items, list(
 			"name" = item.name,
+			"category" = item.category,
 			"desc" = initial(I.desc),
-			"triumph_cost" = item.desc, // Don't @ me... this is wack.
+			"cost" = item.triumph_cost || 0,
+			"type" = "[item.type]",
 			"nobility_check" = noble_passed, // True means they passed. Returns true on items that don't have the check as well.
 			"donoritem" = donoritem_passed,
 			"ref" = ref(item),
@@ -67,7 +85,7 @@
 	switch(action)
 		if("choose_item")
 			var/datum/loadout_item/item = locate(params["ref"])
-			if(!istype(item))
+			if(!istype(item) || !(item in GLOB.loadout_items) || !item.available_to(user.client))
 				ui.close()
 				prefs.open_vices_menu(user)
 				return TRUE
@@ -78,9 +96,8 @@
 					continue
 				var/datum/loadout_item/other_item = prefs.vars[slot == 1 ? "loadout" : "loadout[slot]"]
 				if(other_item)
-					if(other_item == item)
+					if(other_item.type == item.type)
 						to_chat(usr, span_warning("[item.name] is already in slot [slot]."))
-						prefs.open_vices_menu(user)
 						ui.close()
 						prefs.open_vices_menu(user)
 						return TRUE

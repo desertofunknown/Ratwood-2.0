@@ -24,59 +24,36 @@ enum DIRECTION {
 
 export function AlertModal(props) {
   const { act, data } = useBackend<Data>();
-  const {
-    autofocus,
-    buttons = [],
-    large_buttons,
-    message = '',
-    timeout,
-    title,
-  } = data;
-
-  // Stolen wholesale from fontcode
-  function textWidth(text: string, font: string, fontsize: number) {
-    // default font height is 12 in tgui
-    font = `${fontsize}x ${font}`;
-    const c = document.createElement('canvas');
-    const ctx = c.getContext('2d') as CanvasRenderingContext2D;
-    ctx.font = font;
-    return ctx.measureText(text).width;
-  }
+  const { autofocus, buttons = [], message = '', timeout, title } = data;
 
   const [selected, setSelected] = useState(0);
-
-  const windowWidth = 345 + (buttons.length > 2 ? 55 : 0);
-
-  // very accurate estimate of padding for each num of buttons
-  const paddingMagicNumber = 67 / buttons.length + 23;
-
-  // At least one of the buttons has a long text message
-  const isVerbose = buttons.some(
-    (button) =>
-      textWidth(button, '', large_buttons ? 14 : 12) > // 14 is the larger font size for large buttons
-      windowWidth / buttons.length - paddingMagicNumber,
+  const windowWidth = 500;
+  const isVerbose =
+    buttons.some((button) => button.length > 18) || buttons.length > 3;
+  const windowHeight = Math.min(
+    640,
+    190 +
+      Math.ceil(message.length / 55) * 22 +
+      (isVerbose ? buttons.length * 46 : 0),
   );
-  const largeSpacing = isVerbose && large_buttons ? 20 : 15;
-
-  // Dynamically sets window dimensions
-  const windowHeight =
-    120 +
-    (isVerbose ? largeSpacing * buttons.length : 0) +
-    (message.length > 30 ? Math.ceil(message.length / 4) : 0) +
-    (message.length && large_buttons ? 5 : 0);
-
   /** Changes button selection, etc */
   function keyDownHandler(event: KeyboardEvent<HTMLDivElement>) {
     switch (event.key) {
       case KEY.Space:
       case KEY.Enter:
-        act('choose', { choice: buttons[selected] });
+        event.preventDefault();
+        if (buttons[selected] !== undefined) {
+          act('choose', { choice: buttons[selected] });
+        }
         return;
       case KEY.Left:
         event.preventDefault();
         onKey(DIRECTION.Decrement);
         return;
       case KEY.Tab:
+        event.preventDefault();
+        onKey(event.shiftKey ? DIRECTION.Decrement : DIRECTION.Increment);
+        return;
       case KEY.Right:
         event.preventDefault();
         onKey(DIRECTION.Increment);
@@ -92,6 +69,9 @@ export function AlertModal(props) {
 
   /** Manages iterating through the buttons */
   function onKey(direction: DIRECTION) {
+    if (!buttons.length) {
+      return;
+    }
     const newIndex = (selected + direction + buttons.length) % buttons.length;
     setSelected(newIndex);
   }
@@ -99,20 +79,18 @@ export function AlertModal(props) {
   return (
     <Window height={windowHeight} title={title} width={windowWidth}>
       {!!timeout && <Loader value={timeout} />}
-      <Window.Content onKeyDown={keyDownHandler}>
+      <Window.Content className="InputModal" onKeyDown={keyDownHandler}>
         <Section fill>
           <Stack fill vertical>
-            <Stack.Item m={1} grow>
-              <Box color="label" overflow="hidden">
-                {message}
-              </Box>
+            <Stack.Item grow className="InputModal__alertMessage">
+              <Box className="InputModal__prompt">{message}</Box>
             </Stack.Item>
-            <Stack.Item grow>
+            <Stack.Item className="InputModal__footer">
               {!!autofocus && <Autofocus />}
               {isVerbose ? (
-                <VerticalButtons selected={selected} />
+                <VerticalButtons selected={selected} onSelect={setSelected} />
               ) : (
-                <HorizontalButtons selected={selected} />
+                <HorizontalButtons selected={selected} onSelect={setSelected} />
               )}
             </Stack.Item>
           </Stack>
@@ -124,6 +102,7 @@ export function AlertModal(props) {
 
 type ButtonDisplayProps = {
   selected: number;
+  onSelect: (index: number) => void;
 };
 
 /**
@@ -132,24 +111,27 @@ type ButtonDisplayProps = {
 function HorizontalButtons(props: ButtonDisplayProps) {
   const { act, data } = useBackend<Data>();
   const { buttons = [], large_buttons, swapped_buttons } = data;
-  const { selected } = props;
+  const { selected, onSelect } = props;
 
   return (
     <Stack fill justify="space-around" reverse={!swapped_buttons}>
       {buttons.map((button, index) => (
         <Stack.Item grow={large_buttons ? 1 : undefined} key={index}>
-          <Button
-            fluid={!!large_buttons}
-            minWidth={5}
-            onClick={() => act('choose', { choice: button })}
-            overflowX="hidden"
-            px={2}
-            py={large_buttons ? 0.5 : 0}
-            selected={selected === index}
-            textAlign="center"
-          >
-            {!large_buttons ? button : button.toUpperCase()}
-          </Button>
+          <div onFocusCapture={() => onSelect(index)}>
+            <Button
+              fluid={!!large_buttons}
+              minWidth={5}
+              onClick={() => act('choose', { choice: button })}
+              className="InputModal__choice"
+              captureKeys={false}
+              px={2}
+              py={large_buttons ? 0.5 : 0}
+              selected={selected === index}
+              textAlign="center"
+            >
+              {button}
+            </Button>
+          </div>
         </Stack.Item>
       ))}
     </Stack>
@@ -163,7 +145,7 @@ function HorizontalButtons(props: ButtonDisplayProps) {
 function VerticalButtons(props: ButtonDisplayProps) {
   const { act, data } = useBackend<Data>();
   const { buttons = [], large_buttons, swapped_buttons } = data;
-  const { selected } = props;
+  const { selected, onSelect } = props;
 
   return (
     <Stack
@@ -176,22 +158,25 @@ function VerticalButtons(props: ButtonDisplayProps) {
       {buttons.map((button, index) => (
         <Stack.Item
           grow
-          width={large_buttons ? '100%' : undefined}
+          width="100%"
           key={index}
           m={0}
         >
-          <Button
-            fluid
-            minWidth={20}
-            onClick={() => act('choose', { choice: button })}
-            overflowX="hidden"
-            px={2}
-            py={large_buttons ? 0.5 : 0}
-            selected={selected === index}
-            textAlign="center"
-          >
-            {!large_buttons ? button : button.toUpperCase()}
-          </Button>
+          <div onFocusCapture={() => onSelect(index)}>
+            <Button
+              fluid
+              minWidth={0}
+              onClick={() => act('choose', { choice: button })}
+              className="InputModal__choice"
+              captureKeys={false}
+              px={2}
+              py={large_buttons ? 0.5 : 0}
+              selected={selected === index}
+              textAlign="center"
+            >
+              {button}
+            </Button>
+          </div>
         </Stack.Item>
       ))}
     </Stack>

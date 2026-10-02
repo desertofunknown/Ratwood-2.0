@@ -67,7 +67,7 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 	while(!l)
 		stoplag(3)
 		l = SSpathfinder.mobs.getfree(caller)
-	var/list/path = AStar(caller, end, dist, maxnodes, maxnodedepth, mintargetdist, adjacent,id, exclude)
+	var/list/path = AStar(caller, end, dist, maxnodes, maxnodedepth, mintargetdist, adjacent, id, exclude, allow_multiz)
 
 	SSpathfinder.mobs.found(l)
 	if(!path)

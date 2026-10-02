@@ -309,29 +309,56 @@ GLOBAL_LIST_INIT(cross_training_map, list(
 
 	show_ui(mind.current)
 
-/datum/sleep_adv/proc/show_ui(mob/living/user)
-	var/list/dat = list()
-	dat += "<center>Cycle \Roman[sleep_adv_cycle]</center>"
-	dat += "<br><center>Dream, for those who dream may reach higher heights</center><br>"
-	dat += "<center>\Roman[sleep_adv_points]</center>"
+/datum/sleep_adv/proc/show_ui(mob/living/user, focus_control = null)
+	if(user != mind?.current || !user?.client)
+		return
+	var/points_label = sleep_adv_points ? "\Roman[sleep_adv_points]" : "0"
+	var/list/dat = list("<main class='dreams'><header class='dreams-heading'><h1>Dreams</h1><span>Cycle \Roman[sleep_adv_cycle]</span><strong title='[sleep_adv_points] dream points'>[points_label] <small>points</small></strong></header>")
+	dat += "<div class='dreams-body' tabindex='0' aria-label='Dreams to pursue'><p class='dreams-intro'>Dream, for those who dream may reach higher heights.</p>"
+	var/available_skills = 0
+	var/cursed = HAS_TRAIT(user, TRAIT_CURSE_MALUM)
+	if(cursed)
+		dat += "<p class='dreams-notice'>My dreams turn to nitemares. I cannot improve my skills.</p>"
+	dat += "<table class='dreams-skills'><thead><tr><th scope='col'>Skill</th><th scope='col'>Cost</th><th scope='col'>Learn</th></tr></thead><tbody>"
 	for(var/skill_type in SSskills.all_skills)
 		var/datum/skill/skill = GetSkillRef(skill_type)
 		if(!enough_sleep_xp_to_advance(skill_type, 1))
 			continue
-		var/can_buy = can_buy_skill(skill_type)
+		available_skills++
+		var/cost = get_skill_cost(skill_type)
+		var/can_buy = !cursed && can_buy_skill(skill_type)
 		var/next_level = get_next_level_for_skill(skill_type)
-		var/level_name = SSskills.level_names[next_level]
-		dat += "<br><a [can_buy ? "" : "class='linkOff'"] href='?src=[REF(src)];task=buy_skill;skill_type=[skill_type]'>[skill.name] ([level_name])</a> - \Roman[get_skill_cost(skill_type)]"
-	dat += "<br>"
+		var/level_name = skill_to_string(next_level)
+		var/control_id = "dream-skill-[REF(skill)]"
+		dat += "<tr><th scope='row'>[html_encode(skill.name)]<small>[html_encode(skill_to_string(user.get_skill_level(skill_type)))] &rarr; [html_encode(level_name)]</small></th><td title='[cost] dream points'>\Roman[cost]</td><td>"
+		if(can_buy)
+			dat += "<a role='button' id='[control_id]' aria-label='Learn [html_encode(skill.name)] at [html_encode(level_name)]' href='?src=[REF(src)];task=buy_skill;skill_type=[skill_type]'>Dream</a>"
+		else
+			var/reason = cursed ? "Dreams cursed" : "Need [cost - sleep_adv_points] more points"
+			dat += "<span class='dreams-disabled' role='button' tabindex='-1' aria-disabled='true' id='[control_id]' title='[reason]'>Dream</span><small class='dreams-reason'>[reason]</small>"
+		dat += "</td></tr>"
+	if(!available_skills)
+		dat += "<tr><td colspan='3' class='dreams-empty'>No skills are ready to improve.<small>Practise while awake, then rest to learn from your experience.</small></td></tr>"
+	dat += "</tbody></table>"
 	if(rolled_specials > 0)
 		var/can_buy = can_buy_special()
-		dat += "<br><a [can_buy ? "" : "class='linkOff'"] href='?src=[REF(src)];task=buy_special'>Dream something <b>special</b></a> - \Roman[get_special_cost()]"
-		dat += "<br>Specials can have negative or positive effects"
-	dat += "<br><br><center>Your points will be retained<br><a href='?src=[REF(src)];task=continue'>Continue</a></center>"
-	var/datum/browser/popup = new(user, "dreams", "<center>Dreams</center>", 350, 450)
+		dat += "<section class='dreams-special'><h2>Something special</h2><p>Specials can have negative or positive effects.</p><span>Cost: \Roman[get_special_cost()]</span> "
+		if(can_buy)
+			dat += "<a role='button' id='dream-special' href='?src=[REF(src)];task=buy_special'>Dream something special</a>"
+		else
+			dat += "<span class='dreams-disabled' role='button' tabindex='-1' aria-disabled='true' id='dream-special' title='Not enough points'>Dream something special</span>"
+		dat += "</section>"
+	dat += "</div><footer class='dreams-footer'><span>Unspent points are retained.</span><a role='button' id='dream-continue' href='?src=[REF(src)];task=continue'>Continue</a></footer></main>"
+	if(focus_control)
+		dat += "<script>var target = document.getElementById('[focus_control]') || document.getElementById('dream-continue'); if(target) target.focus();</script>"
+	var/datum/browser/popup = new(user, "dreams", "", 440, 480)
 	popup.set_window_options("can_close=0")
+	popup.add_stylesheet("dreams", 'html/browser/dreams.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
+	winset(user, "dreams.browser", "focus=true")
 
 /datum/sleep_adv/proc/close_ui()
 	if(!mind.current)
@@ -472,24 +499,30 @@ GLOBAL_LIST_INIT(cross_training_map, list(
 
 /datum/sleep_adv/Topic(href, list/href_list)
 	. = ..()
-	if(!mind.current)
-		close_ui()
+	if(!mind?.current || usr != mind.current)
 		return
 	if(!is_considered_sleeping())
 		close_ui()
 		return
+	var/focus_control
 	switch(href_list["task"])
 		if("buy_skill")
 			var/skill_type = text2path(href_list["skill_type"])
-			if(!skill_type)
+			if(!(skill_type in SSskills.all_skills))
 				return
 			buy_skill(skill_type)
+			focus_control = "dream-skill-[REF(GetSkillRef(skill_type))]"
 		if("buy_special")
+			if(rolled_specials <= 0)
+				return
 			buy_special()
+			focus_control = "dream-special"
 		if("continue")
 			finish()
 			return
-	show_ui(mind.current)
+		else
+			return
+	show_ui(mind.current, focus_control)
 
 /proc/can_train_combat_skill(mob/living/user, skill_type, target_skill_level)
 	if(!user.mind)

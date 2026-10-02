@@ -354,24 +354,36 @@
 	name = "bag of baker's dozen dice"
 	desc = "A set of dice for Baker's Dozen. Activate in hand (Z) to start or join a game."
 	var/datum/bakers_dozen_game/active_game
-	var/static/bakers_dozen_rules_text = {"<div style='padding:8px;font-family:Verdana,sans-serif;'>
-<h2 style='text-align:center;margin:0 0 6px 0;'>Baker's Dozen</h2>
-<br>
-<b>Objective:</b> A blackjack-style d6 game for 1-4 players where the target is to get as close to 13 as possible.<br>
-<br>
-<b>Rules:</b><br>
-- Each player must roll 2d6 (one die at a time).<br>
-- After the two mandatory rolls, players may either roll one d6 (hit) or stay.<br>
-- Going over 13 is an immediate bust.<br>
-- The round ends when every player has stayed, hits exactly 13, or busted.<br>
-- Highest non-bust total wins.<br>
-- If top totals tie, tied players repeatedly roll one extra d6 each until whoever gets the highest.<br>
+	var/static/bakers_dozen_rules_text = {"<div class='keep-panel keep-prose' role='main' tabindex='0'>
+	<h1>Baker's Dozen</h1>
+	<h2>Objective:</h2>
+	<p>A blackjack-style d6 game for 1-4 players where the target is to get as close to 13 as possible.</p>
+	<h2>Rules:</h2>
+	<ul>
+		<li>Each player must roll 2d6 (one die at a time).</li>
+		<li>After the two mandatory rolls, players may either roll one d6 (hit) or stay.</li>
+		<li>Going over 13 is an immediate bust.</li>
+		<li>The round ends when every player has stayed, hits exactly 13, or busted.</li>
+		<li>Highest non-bust total wins.</li>
+		<li>If top totals tie, tied players repeatedly roll one extra d6 each until whoever gets the highest.</li>
+	</ul>
 </div>"}
 
 /obj/item/storage/pill_bottle/dice/bakers_dozen/proc/show_rules(mob/living/user)
 	if(!user)
 		return
-	user << browse(bakers_dozen_rules_text, "window=bakers_dozen_rules;size=700x450")
+	var/datum/browser/noclose/popup = new(user, "bakers_dozen_rules", "", 700, 450)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content({"<style>
+		@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+		@font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+		@font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+		@font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+	</style>"})
+	popup.set_content(bakers_dozen_rules_text)
+	popup.open(FALSE)
+	winset(user, "bakers_dozen_rules.browser", "focus=true")
 
 /obj/item/storage/pill_bottle/dice/bakers_dozen/PopulateContents()
 	for(var/i in 1 to 6)

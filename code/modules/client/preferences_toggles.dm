@@ -436,12 +436,7 @@
 	set name = "Toggle ERP Panel"
 	set hidden = 1
 	if(prefs)
-		prefs.sexable = !prefs.sexable
-		prefs.save_preferences()
-		if(prefs.sexable)
-			to_chat(src, "Others can play with you.")
-		else
-			to_chat(src, "Others can't touch you.")
+		set_erp_participation(!prefs.sexable)
 
 /client/verb/toggle_ERP_visuals()
 	set category = "Options"

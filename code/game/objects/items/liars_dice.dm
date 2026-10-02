@@ -530,40 +530,52 @@
 	name = "bag of liar's dice"
 	desc = "A bag used to play Liar's Dice. Activate in hand (Z) to start or join a game."
 	var/datum/liars_dice_game/active_game
-	var/static/liars_dice_rules_text = {"<div style='padding:8px;font-family:Verdana,sans-serif;'>
-	<h2 style='text-align:center;margin:0 0 6px 0;'>Liar's Dice</h2>
-<br>
-<b>Objective:</b> Be the last player with at least one die.<br>
-<br>
-<b>Setup:</b><br>
-Each player starts with 5 dice, rolled in secret. You see only your own dice.<br>
-<br>
-<b>Bidding:</b><br>
-- The opening player bids a dice quantity and a face value (e.g., <i>Three 4s</i>).<br>
-- Their bid claims that many dice showing that face exist across all cups combined.<br>
-- Each player in turn must: <b>Raise the Bid</b> or <b>Call Liar!</b><br>
-<br>
-<b>Valid Raises:</b><br>
-- Increase the quantity (same face), OR<br>
-- Name a higher face value (quantity must stay the same or increase).<br>
-<br>
-<b>Wild 1s:</b> When resolving a challenge, 1s count toward any non-1 face bid.<br>
-(e.g., a bid of <i>Three 4s</i> counts all 4s and all 1s on the table)<br>
-<br>
-<b>Challenge (Call Liar!):</b><br>
-- All dice are revealed.<br>
-- If the real count (with wilds) <b>equals or exceeds</b> the bid: the <b>challenger</b> loses a die.<br>
-- If the real count <b>falls short</b> of the bid: the <b>bidder</b> loses a die.<br>
-<br>
-<b>Elimination:</b> A player who loses their last die is eliminated.<br>
-<br>
-<b>Next Round:</b> The loser of the round starts the next round's bidding. All dice re-roll.<br>
+	var/static/liars_dice_rules_text = {"<div class='keep-panel keep-prose' role='main' tabindex='0'>
+	<h1>Liar's Dice</h1>
+	<h2>Objective:</h2>
+	<p>Be the last player with at least one die.</p>
+	<h2>Setup:</h2>
+	<p>Each player starts with 5 dice, rolled in secret. You see only your own dice.</p>
+	<h2>Bidding:</h2>
+	<ul>
+		<li>The opening player bids a dice quantity and a face value (e.g., <i>Three 4s</i>).</li>
+		<li>Their bid claims that many dice showing that face exist across all cups combined.</li>
+		<li>Each player in turn must: <b>Raise the Bid</b> or <b>Call Liar!</b></li>
+	</ul>
+	<h2>Valid Raises:</h2>
+	<ul>
+		<li>Increase the quantity (same face), OR</li>
+		<li>Name a higher face value (quantity must stay the same or increase).</li>
+	</ul>
+	<h2>Wild 1s:</h2>
+	<p>When resolving a challenge, 1s count toward any non-1 face bid. (e.g., a bid of <i>Three 4s</i> counts all 4s and all 1s on the table)</p>
+	<h2>Challenge (Call Liar!):</h2>
+	<ul>
+		<li>All dice are revealed.</li>
+		<li>If the real count (with wilds) <b>equals or exceeds</b> the bid: the <b>challenger</b> loses a die.</li>
+		<li>If the real count <b>falls short</b> of the bid: the <b>bidder</b> loses a die.</li>
+	</ul>
+	<h2>Elimination:</h2>
+	<p>A player who loses their last die is eliminated.</p>
+	<h2>Next Round:</h2>
+	<p>The loser of the round starts the next round's bidding. All dice re-roll.</p>
 </div>"}
 
 /obj/item/storage/pill_bottle/dice/liars_dice/proc/show_rules(mob/living/user)
 	if(!user)
 		return
-	user << browse(liars_dice_rules_text, "window=liars_dice_rules;size=700x520")
+	var/datum/browser/noclose/popup = new(user, "liars_dice_rules", "", 700, 520)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content({"<style>
+		@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+		@font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+		@font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+		@font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+	</style>"})
+	popup.set_content(liars_dice_rules_text)
+	popup.open(FALSE)
+	winset(user, "liars_dice_rules.browser", "focus=true")
 
 /obj/item/storage/pill_bottle/dice/liars_dice/PopulateContents()
 	for(var/i in 1 to 5)

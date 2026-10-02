@@ -21,75 +21,44 @@ export const InputButtons = (props: InputButtonsProps) => {
   const { large_buttons, swapped_buttons } = data;
   const { input, message, on_submit, on_cancel, disabled } = props;
 
-  let on_submit_actual = on_submit;
-  if (!on_submit_actual) {
-    on_submit_actual = () => {
-      act('submit', { entry: input });
-    };
-  }
-
-  let on_cancel_actual = on_cancel;
-  if (!on_cancel_actual) {
-    on_cancel_actual = () => {
-      act('cancel');
-    };
-  }
-
-  const submitButton = (
-    <Button
-      color="transparent"
-      className="input-button__submit"
-      disabled={disabled}
-      fluid={!!large_buttons}
-      height={large_buttons ? 2 : undefined}
-      onClick={on_submit_actual}
-      m={0.5}
-      pt={large_buttons ? 0.33 : 0}
-      textAlign="center"
-      tooltip={large_buttons ? message : undefined}
-    >
-      MAKE IT SO
-    </Button>
-  );
-  const cancelButton = (
-    <Button
-      color="transparent"
-      className="input-button__cancel"
-      fluid={!!large_buttons}
-      height={large_buttons ? 2 : undefined}
-      onClick={on_cancel_actual}
-      m={0.5}
-      pt={large_buttons ? 0.33 : 0}
-      textAlign="center"
-    >
-      I RESCIND
-    </Button>
-  );
-
   return (
     <Stack
+      className="InputButtons"
       align="center"
       direction={!swapped_buttons ? 'row' : 'row-reverse'}
       fill
-      justify="space-around"
+      justify="space-between"
     >
-     {large_buttons ? (
-        <Stack.Item grow>{submitButton}</Stack.Item>
-      ) : (
-        <Stack.Item>{submitButton}</Stack.Item>
-      )}
+      <Stack.Item grow={large_buttons ? 1 : undefined}>
+        <Button
+          className="input-button__submit"
+          disabled={disabled}
+          fluid={!!large_buttons}
+          icon="check"
+          onClick={on_submit || (() => act('submit', { entry: input }))}
+          textAlign="center"
+          tooltip={large_buttons ? message : undefined}
+        >
+          Confirm
+        </Button>
+      </Stack.Item>
       {!large_buttons && message && (
         <Stack.Item>
-          <Box color="label" textAlign="center">
+          <Box className="InputModal__hint" textAlign="center">
             {message}
           </Box>
         </Stack.Item>
       )}
-            {large_buttons ? (
-        <Stack.Item grow>{cancelButton}</Stack.Item>
-      ) : (
-        <Stack.Item>{cancelButton}</Stack.Item>
-      )}
+      <Stack.Item grow={large_buttons ? 1 : undefined}>
+        <Button
+          className="input-button__cancel"
+          fluid={!!large_buttons}
+          onClick={on_cancel || (() => act('cancel'))}
+          textAlign="center"
+        >
+          Cancel
+        </Button>
+      </Stack.Item>
     </Stack>
   );
 };

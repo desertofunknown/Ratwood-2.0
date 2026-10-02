@@ -63,10 +63,10 @@ GLOBAL_LIST_EMPTY(player_letter_history)
 	if(!clean_recipient_ckey)
 		clean_recipient_ckey = "unknown"
 
-	var/clean_body = body || ""
+	// Archive text is displayed as text, independently of letter stationery HTML.
+	var/clean_body = istext(body) ? body : ""
 	clean_body = html_decode(clean_body)
 	clean_body = replacetext(clean_body, ascii2text(13), "")
-	clean_body = replacetext(clean_body, "\n", "<br>")
 	clean_body = copytext(clean_body, 1, 4000)
 
 	var/list/entry = list(
@@ -92,7 +92,7 @@ GLOBAL_LIST_EMPTY(player_letter_history)
 	return data
 
 /datum/fax_panel/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
-	if(..())
+	if(..() || !check_rights_for(ui.user.client, R_ADMIN))
 		return TRUE
 
 	switch(action)
@@ -201,22 +201,18 @@ GLOBAL_LIST_EMPTY(player_letter_history)
 
 /// Routes a fax directly to a HERMES machine by number.
 /datum/fax_panel/proc/fax_send_to_hermes(mob/user, content, rim_css, sender, hermes_num, dest_label)
-	var/found = FALSE
-	for(var/obj/structure/roguemachine/mail/X in SSroguemachine.hermailers)
-		if(X.ournum == hermes_num)
-			var/obj/item/paper/P = new(X.loc)
-			P.info = content
-			P.window_rim_style = rim_css
-			P.mailer = sender
-			P.mailedto = "#[hermes_num][X.mailtag ? " ([X.mailtag])" : ""]"
-			P.update_icon()
-			X.say("New mail!")
-			playsound(X, 'sound/misc/hiss.ogg', 100, FALSE, -1)
-			found = TRUE
-			break
-	if(!found)
+	var/obj/structure/roguemachine/mail/X = SSroguemachine.get_hermes_by_number(hermes_num)
+	if(!X)
 		to_chat(user, span_warning("HERMES #[hermes_num] not found."))
 		return FALSE
+	var/obj/item/paper/P = new(X.loc)
+	P.info = content
+	P.window_rim_style = rim_css
+	P.mailer = sender
+	P.mailedto = "#[hermes_num][X.mailtag ? " ([X.mailtag])" : ""]"
+	P.update_icon()
+	X.say("New mail!")
+	playsound(X, 'sound/misc/hiss.ogg', 100, FALSE, -1)
 	log_admin("[key_name(user)] sent admin letter to HERMES #[hermes_num] from '[sender]'.")
 	message_admins("[key_name_admin(user)] sent an admin letter to HERMES #[hermes_num] from '[sender]'.")
 	return TRUE
@@ -254,37 +250,33 @@ GLOBAL_LIST_EMPTY(player_letter_history)
 
 /// Sends a parcel (item + optional letter note) to a HERMES machine.
 /datum/fax_panel/proc/fax_send_parcel_to_hermes(mob/user, note_content, rim_css, sender, item_type, hermes_num, item_name_override, item_desc_override, package_size)
-	var/found = FALSE
-	for(var/obj/structure/roguemachine/mail/X in SSroguemachine.hermailers)
-		if(X.ournum == hermes_num)
-			var/turf/T = get_turf(X)
-			var/obj/item/smallDelivery/D = new(T)
-			var/obj/item/I = new item_type(T)
-			if(item_name_override)
-				I.name = item_name_override
-			if(item_desc_override)
-				I.desc = item_desc_override
-			var/size = package_size ? package_size : max(1, min(5, round(I.w_class)))
-			D.name = "[weightclass2text(min(size,5))] package"
-			D.w_class = size
-			D.icon_state = "deliverypackage[min(size,5)]"
-			I.forceMove(D)
-			if(note_content)
-				var/obj/item/paper/note = new(T)
-				note.info = note_content
-				note.window_rim_style = rim_css
-				note.update_icon()
-				note.forceMove(D)
-				D.note = note
-			D.mailer = sender
-			D.mailedto = "#[hermes_num][X.mailtag ? " ([X.mailtag])" : ""]"
-			X.say("New mail!")
-			playsound(X, 'sound/misc/hiss.ogg', 100, FALSE, -1)
-			found = TRUE
-			break
-	if(!found)
+	var/obj/structure/roguemachine/mail/X = SSroguemachine.get_hermes_by_number(hermes_num)
+	if(!X)
 		to_chat(user, span_warning("HERMES #[hermes_num] not found."))
 		return FALSE
+	var/turf/T = get_turf(X)
+	var/obj/item/smallDelivery/D = new(T)
+	var/obj/item/I = new item_type(T)
+	if(item_name_override)
+		I.name = item_name_override
+	if(item_desc_override)
+		I.desc = item_desc_override
+	var/size = package_size ? package_size : max(1, min(5, round(I.w_class)))
+	D.name = "[weightclass2text(min(size,5))] package"
+	D.w_class = size
+	D.icon_state = "deliverypackage[min(size,5)]"
+	I.forceMove(D)
+	if(note_content)
+		var/obj/item/paper/note = new(T)
+		note.info = note_content
+		note.window_rim_style = rim_css
+		note.update_icon()
+		note.forceMove(D)
+		D.note = note
+	D.mailer = sender
+	D.mailedto = "#[hermes_num][X.mailtag ? " ([X.mailtag])" : ""]"
+	X.say("New mail!")
+	playsound(X, 'sound/misc/hiss.ogg', 100, FALSE, -1)
 	log_admin("[key_name(user)] sent admin parcel ([item_type]) to HERMES #[hermes_num] from '[sender]'.")
 	message_admins("[key_name_admin(user)] sent an admin parcel ([item_type]) to HERMES #[hermes_num] from '[sender]'.")
 	return TRUE

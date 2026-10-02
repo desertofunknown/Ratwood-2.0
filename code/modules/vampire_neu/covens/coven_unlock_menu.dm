@@ -163,7 +163,7 @@
 			var/datum/coven_power/power = new node.unlocks_power(parent_coven)
 			if(power.level >= 3)
 				node_classes += " power-node"
-				power_level_html = "<div class='power-level'>[power.level]</div>"
+				power_level_html = "<span class='power-level'>[power.level]</span>"
 			qdel(power)
 		else if(node.special_effect)
 			node_classes += " enhancement-node"
@@ -222,14 +222,14 @@
 				icon_html = "<img src='\ref['icons/effects/clan.dmi']?state=watch' alt=\"[node.name]\" />"
 
 		var/encoded_json = replacetext(node_data_json, "'", "&#39;")
-		html += {"<div class="[node_classes]"
+		html += {"<button type="button" id="research-node-[research_type]" aria-label="[html_encode(node.name)]" class="[node_classes]"
 			style="left: [node.node_x]px; top: [node.node_y]px;"
 			data-node-id="[research_type]"
 			data-user-ref="[REF(user)]"
 			data-node-data='[encoded_json]'>
 			[icon_html]
 			[power_level_html]
-		</div>"}
+		</button>"}
 
 	return html
 
@@ -239,7 +239,10 @@
 	return round((parent_coven.experience / parent_coven.experience_needed) * 100, 1)
 
 /datum/coven_research_interface/Topic(href, href_list)
-	if(!user || !parent_coven)
+	if(QDELETED(user) || usr != user || QDELETED(parent_coven) || parent_coven.owner != user || parent_coven.research_interface != src || user.covens[parent_coven.name] != parent_coven)
+		return
+	var/datum/clan_menu_interface/menu = user.clan_menu_interface
+	if(QDELETED(menu) || !menu.is_current_user(usr))
 		return
 
 	if(href_list["action"] == "research_node")
@@ -269,6 +272,8 @@
 						missing_prereqs += prereq_node.name
 
 			var/datum/antagonist/vampire/vampire = parent_coven.owner.mind?.has_antag_datum(/datum/antagonist/vampire)
+			if(!vampire)
+				return
 			if(prereqs_met && node.research_cost && vampire.research_points < node.research_cost)
 				to_chat(user, "<span class='warning'>[node.name] requires [node.research_cost] RP.</span>")
 				return

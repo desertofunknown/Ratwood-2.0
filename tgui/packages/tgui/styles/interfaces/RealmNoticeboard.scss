@@ -1,0 +1,79 @@
+.RealmNoticeboard {
+  padding: 8px 14px 16px;
+  color: #3b2813;
+  font:
+    14px/1.4 'Lora',
+    Georgia,
+    serif;
+  &__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 16px;
+    padding-bottom: 8px;
+    border-bottom: 3px double #8b6d39;
+  }
+  &__heading h1 {
+    margin: 0;
+    font:
+      24px/1.15 'Pterra',
+      Georgia,
+      serif;
+  }
+  &__heading p {
+    margin: 3px 0 0;
+    color: #614d2f;
+    font-size: 12px;
+  }
+  &__heading > button,
+  &__tabs > button {
+    font: inherit;
+    color: inherit;
+    padding: 3px 8px;
+    border: 1px solid #8b6d39;
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  &__heading > button:focus-visible,
+  &__tabs > button:focus-visible {
+    outline: 2px solid #6b3826;
+    outline-offset: 2px;
+  }
+  &__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 8px 0;
+  }
+  &__tabs > button[aria-pressed='true'] {
+    background: rgba(92, 57, 20, 0.15);
+    font-weight: bold;
+    border-bottom: 2px solid #594024;
+  }
+  &__tabs--sections {
+    font-size: 13px;
+  }
+  &__avisaHeading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    margin-top: 10px;
+  }
+  &__avisaHeading h2 {
+    margin: 0;
+    font:
+      19px/1.2 'Pterra',
+      Georgia,
+      serif;
+  }
+  &__avisaHeading span {
+    color: #614d2f;
+    font-size: 12px;
+  }
+  &__guide {
+    margin-left: auto;
+  }
+}

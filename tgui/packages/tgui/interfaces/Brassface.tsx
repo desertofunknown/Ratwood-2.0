@@ -1,27 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { BooleanLike } from 'tgui-core/react';
 
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
 import {
   cardStyle,
-  fieldRowStyle,
-  fieldValueStyle,
   FONT_BODY,
   INK,
   INK_FAINT,
   INK_SOFT,
   inkButtonStyle,
-  pageStyle,
   PARCHMENT_SHADOW,
   SEAL_AMBER,
   SEAL_GREEN,
   SERIF,
   sectionHeaderStyle,
-  tabBarStyle,
-  tabStyle,
 } from './common/parchment';
-import { PacksGrid } from './Goldface/PacksGrid';
+import { PackRow } from './Goldface/PackRow';
 import { SearchBar } from './Goldface/SearchBar';
 import { TariffHeader } from './Goldface/TariffHeader';
 import type { ActFn, VendingPack } from './Goldface/types';
@@ -48,6 +43,7 @@ type BrassfaceData = {
   categories: string[];
   current_category: string;
   search: string;
+  search_revision: number;
   search_mode: BooleanLike;
   result_cap: number;
   total_matches: number;
@@ -157,15 +153,26 @@ const HoardTab = (props: { entries: HoardEntry[]; canRead: boolean }) => {
 export const Brassface = () => {
   const { act, data } = useBackend<BrassfaceData>();
   const [tab, setTab] = useState<'shop' | 'hoard'>('shop');
+  const initializedCategory = useRef(false);
+  const [searchReset, setSearchReset] = useState(0);
   const canRead = !!data.can_read;
   const isProprietor = !!data.is_proprietor;
   const inSearchMode = !!data.search_mode;
   const hasCategory = !!data.current_category;
 
+  useEffect(() => {
+    if (initializedCategory.current || !data.categories.length) return;
+    initializedCategory.current = true;
+    if (!data.current_category && !data.search) {
+      setSearchReset((value) => value + 1);
+      act('changecat', { category: data.categories[0] });
+    }
+  }, [act, data.categories, data.current_category, data.search]);
+
   return (
-    <Window width={840} height={760} theme="parchment">
-      <Window.Content scrollable>
-        <div style={pageStyle}>
+    <Window width={840} height={760}>
+      <Window.Content className="KeepLedger TradeCounter" scrollable>
+        <header className="TradeCounter__header">
           <TariffHeader
             motto={data.motto}
             canRead={canRead}
@@ -175,112 +182,58 @@ export const Brassface = () => {
             isProprietor={isProprietor}
             dodging={!!data.dodging}
           />
-          <div style={tabBarStyle}>
-            <div
-              style={tabStyle(tab === 'shop')}
-              onClick={() => setTab('shop')}
-            >
-              Shop
-            </div>
-            <div
-              style={tabStyle(tab === 'hoard')}
-              onClick={() => setTab('hoard')}
-            >
-              Hoard
-            </div>
+          <div className="TradeCounter__balance">
+            <div><span>{starsIfIlliterate('Mammon loaded', canRead)}</span><strong>{data.budget}<small>m</small></strong></div>
+            <button type="button" disabled={data.budget <= 0 || !!data.locked} onClick={() => act('change')}>Return coins</button>
           </div>
-          {tab === 'shop' && (
-            <>
-              <div style={fieldRowStyle}>
-                <div
-                  style={{
-                    flex: '0 0 auto',
-                    fontFamily: SERIF,
-                    color: SEAL_AMBER,
-                    marginRight: '12px',
-                  }}
-                >
-                  {starsIfIlliterate('Mammon Loaded', canRead)}
-                </div>
-                <div style={{ ...fieldValueStyle, fontWeight: 'bold' }}>
-                  {data.budget}m
-                </div>
-                <button
-                  type="button"
-                  style={inkButtonStyle({ disabled: data.budget <= 0 })}
-                  disabled={data.budget <= 0}
-                  onClick={() => act('change')}
-                >
-                  Withdraw as Coin
+        </header>
+        <nav className="TradeCounter__tabs" aria-label="Brassface sections">
+          <button type="button" aria-pressed={tab === 'shop'} onClick={() => setTab('shop')}>Shop</button>
+          <button type="button" aria-pressed={tab === 'hoard'} onClick={() => setTab('hoard')}>Hoard ledger</button>
+        </nav>
+        {!!data.locked && <p className="TradeCounter__notice">This counter is locked. You can browse its stock.</p>}
+        {tab === 'shop' ? (
+          <div className="TradeCounter__body">
+            <nav className="TradeCounter__categories" aria-label="Goods categories">
+              {data.categories.map((category) => (
+                <button key={category} type="button" aria-pressed={!inSearchMode && category === data.current_category} onClick={() => {
+                  setSearchReset((value) => value + 1);
+                  act('changecat', { category });
+                }}>
+                  {category}
                 </button>
+              ))}
+            </nav>
+            <main className="TradeCounter__goods">
+              <div className="TradeCounter__toolbar">
+                <div className="TradeCounter__listHeading">
+                  <h2>{inSearchMode ? 'Search results' : data.current_category || 'Goods'}</h2>
+                  <span>({data.packs.length})</span>
+                </div>
+                <SearchBar serverSearch={data.search} searchRevision={data.search_revision} resetKey={searchReset} act={act} />
               </div>
-              <SearchBar serverSearch={data.search} act={act} />
-              {!inSearchMode && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '6px',
-                    justifyContent: 'center',
-                    margin: '6px 0 10px',
-                  }}
-                >
-                  {hasCategory ? (
-                    <button
-                      type="button"
-                      style={inkButtonStyle()}
-                      onClick={() => act('changecat', { category: '' })}
-                    >
-                      ← All Categories
-                    </button>
-                  ) : (
-                    data.categories.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        style={inkButtonStyle()}
-                        onClick={() => act('changecat', { category: cat })}
-                      >
-                        {cat}
-                      </button>
-                    ))
-                  )}
+              {!hasCategory && !inSearchMode ? (
+                <p className="TradeCounter__notice">Choose a category to browse its goods.</p>
+              ) : !data.packs.length ? (
+                <p className="TradeCounter__notice">{inSearchMode ? `No goods match "${data.search}".` : 'This category has no stock.'}</p>
+              ) : (
+                <div className="TradeCounter__stock">
+                  {data.packs.map((pack) => (
+                    <div className="TradeCounter__item" key={pack.ref}>
+                      <PackRow pack={pack} budget={data.budget} canRead={canRead} showCategory={inSearchMode} browseOnly={!!data.locked} act={act} />
+                    </div>
+                  ))}
                 </div>
               )}
-              {hasCategory && !inSearchMode && (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    fontFamily: SERIF,
-                    fontSize: FONT_BODY,
-                    color: INK,
-                    marginBottom: '6px',
-                  }}
-                >
-                  {data.current_category}
-                </div>
+              {inSearchMode && data.total_matches > data.result_cap && (
+                <p className="TradeCounter__notice">Showing {data.result_cap} of {data.total_matches} matches. Refine your search to narrow the list.</p>
               )}
-              <PacksGrid
-                packs={data.packs}
-                budget={data.budget}
-                canRead={canRead}
-                inSearchMode={inSearchMode}
-                serverSearch={data.search}
-                hasCategory={hasCategory}
-                browseOnly={false}
-                resultCap={data.result_cap}
-                totalMatches={data.total_matches}
-                act={act}
-              />
-              {isProprietor && (
-                <SecretsCard data={data} canRead={canRead} act={act} />
-              )}
-            </>
-          )}
-          {tab === 'hoard' && (
-            <HoardTab entries={data.hoard_log || []} canRead={canRead} />
-          )}
-        </div>
+              {isProprietor && <SecretsCard data={data} canRead={canRead} act={act} />}
+            </main>
+          </div>
+        ) : (
+          <div className="TradeCounter__ledger"><HoardTab entries={data.hoard_log || []} canRead={canRead} /></div>
+        )}
       </Window.Content>
     </Window>
   );

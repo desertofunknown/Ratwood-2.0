@@ -1,5 +1,4 @@
 GLOBAL_LIST_EMPTY(musicboxes) //list of all music boxes
-GLOBAL_VAR_INIT(musicboxes_last_upload, 0) //last time of the last upload, to prevent multiple uploads within seconds of eachother
 GLOBAL_VAR_INIT(musicboxes_last_play, 0) //last time of the last played track, to prevent spamming clients too often with play/stop
 
 /datum/looping_sound/dmusloop
@@ -94,54 +93,25 @@ GLOBAL_VAR_INIT(musicboxes_last_play, 0) //last time of the last played track, t
 
 /obj/item/dmusicbox/proc/upload_file(mob/user)
 	set waitfor = FALSE
-	var/infile = input(user, "CHOOSE A NEW SONG", src) as null|file
-
-	if(!infile)
+	if(!can_upload_song(user))
 		return
-
-	if(!loaded)
+	var/datum/audio_upload_request/request = GLOB.audio_uploads.begin(user)
+	if(!request)
 		return
-
-	if(world.time < GLOB.musicboxes_last_upload + 30 SECONDS)
-		say("NOT YET!")
+	var/infile = input(user, "CHOOSE A NEW SONG (OGG, 6 MB OR LESS)", src) as null|file
+	var/cached_song
+	if(infile && request.is_current(user) && can_upload_song(user))
+		cached_song = GLOB.audio_uploads.cache_song(request, infile)
+	GLOB.audio_uploads.finish(request)
+	if(!cached_song)
 		return
-
-	var/filename = "[infile]"
-	var/file_ext = LOWER_TEXT(copytext(filename, -4))
-	var/file_size = length(infile)
-
-	if(file_ext != ".ogg")
-		to_chat(user, span_warning("SONG MUST BE AN OGG."))
-		return
-	if(file_size > 6485760)
-		to_chat(user, span_warning("TOO BIG. 6 MEGS OR LESS."))
-		return
+	curfile = cached_song
 	lastfilechange = world.time
-	GLOB.musicboxes_last_upload = world.time
-	var/logged_filename = "data/jukeboxuploads/round-[GLOB.round_id ? GLOB.round_id : "NULL"]/[user.ckey[1]]/[user.ckey]/[time2text(world.time, "hh_mm_ss", 0)][file_ext]"
-	if(fexists(logged_filename))
-		fdel(logged_filename)
-	if(!fcopy(infile, logged_filename))
-		to_chat(user, span_warning("Could not upload song."))
-		return
-	if(QDELETED(user) || QDELETED(src)) // clean up uploaded file if object/user was deleted while upload was in progress
-		if(fexists(logged_filename))
-			fdel(logged_filename)
-		return
-	if(fexists(logged_filename))
-		curfile = file(logged_filename)
-		if(curfile && length(curfile) != file_size) // file didn't finish/uploaded file size does not match - delete file
-			fdel(logged_filename)
-			curfile = null
-		if(!curfile)
-			user.log_message("attempted to upload jukebox song: [logged_filename]", LOG_GAME)
-		else
-			user.log_message("uploaded jukebox song: [logged_filename]", LOG_GAME)
-	else
-		curfile = null
-
 	loaded = FALSE
 	update_icon()
+
+/obj/item/dmusicbox/proc/can_upload_song(mob/user)
+	return !QDELETED(src) && !QDELETED(user) && user.client && loc == user && !playing && loaded && (!lastfilechange || world.time >= lastfilechange + 3 MINUTES)
 
 /obj/item/dmusicbox/attack_self(mob/living/user)
 	. = ..()

@@ -1,13 +1,48 @@
-.Changelog {
-  &__Button {
-    height: 22px;
+:root .Changelog {
+  color: #ded1c2;
+  background: #100d0e;
+  font: 13px/1.45 'Lora', Georgia, serif;
+  scrollbar-color: #594046 #100d0e;
+
+  > .Window__contentPadding { margin: 0; height: 100%; }
+  h1, h3 { padding: 0; }
+
+  &__layout { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  &__masthead {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #594046;
   }
+  &__masthead h1 { margin: 0; color: #ded1c2; font: 22px/1.2 'Nervelock Rocker', 'Pterra', Georgia, serif; }
+  &__navigation { min-width: 0; }
+  &__entries { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 14px 14px; }
 
-  &__Cell {
-    padding: var(--space-s) 0;
+  &__Button { min-height: 28px; line-height: 28px; }
+  .Dropdown { min-height: 28px; font: inherit; }
+  &__day.Section { margin: 12px 0 16px; background: transparent; border: 0; }
+  &__day .Section__title { padding: 0 0 5px; border-bottom: 1px solid #594046; }
+  &__day .Section__titleText { color: #ded1c2; font: 18px/1.3 'Pterra', Georgia, serif; }
+  &__day .Section__content { padding: 0; }
+  &__author { margin: 10px 0 3px; color: #d3acb0; font: 13px/1.45 'Lora', Georgia, serif; }
+  &__Cell { padding: 5px 0; vertical-align: top; line-height: 1.45; font-weight: normal; }
+  &__Cell--Icon { width: 24px; padding-right: 8px; }
+  &__description { color: #ded1c2; overflow-wrap: anywhere; }
+  &__day .Table__row + .Table__row .Changelog__Cell { border-top: 1px solid #382b2f; }
+  &__credits { color: #b9a6a0; border-bottom: 1px solid #382b2f; }
+  &__credits summary { cursor: pointer; padding: 5px 0 7px; color: #ded1c2; }
+  &__credits summary:focus-visible { outline: 2px solid #ae8189; outline-offset: 2px; }
+  &__creditsBody { padding: 0 0 8px; overflow-wrap: anywhere; }
+  &__creditsBody h3 { color: #ded1c2; font: 17px/1.3 'Pterra', Georgia, serif; margin: 12px 0 6px; }
+  &__creditsBody p { margin: 8px 0; font-weight: normal; }
+  &__status { color: #b9a6a0; padding: 8px 0; }
 
-    &--Icon {
-      width: 25px;
-    }
+  @media (max-width: 520px) {
+    &__masthead { padding: 8px 10px; }
+    &__entries { padding: 6px 10px 10px; }
   }
 }

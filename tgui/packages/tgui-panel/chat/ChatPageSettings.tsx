@@ -22,11 +22,14 @@ import {
   updateChatPage,
 } from './actions';
 import { MESSAGE_TYPES } from './constants';
-import { selectCurrentChatPage } from './selectors';
+import { selectChatInitialized, selectCurrentChatPage } from './selectors';
 
 export function ChatPageSettings(props) {
   const page = useSelector(selectCurrentChatPage);
+  const initialized = useSelector(selectChatInitialized);
   const dispatch = useDispatch();
+
+  if (!initialized) return <Section>Loading chat tabs…</Section>;
 
   return (
     <Section>
@@ -49,6 +52,9 @@ export function ChatPageSettings(props) {
         )}
         <Stack.Item grow ml={0.5}>
           <Input
+            key={page.id}
+            id="chat-tab-name"
+            {...{ 'aria-label': 'Chat tab name' }}
             fluid
             value={page.name}
             onBlur={(value) =>
@@ -107,7 +113,7 @@ export function ChatPageSettings(props) {
                 )
               }
             >
-              Remove
+              Close tab
             </Button>
           </Stack.Item>
         )}

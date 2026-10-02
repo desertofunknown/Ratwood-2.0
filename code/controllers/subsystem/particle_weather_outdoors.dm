@@ -50,6 +50,9 @@ SUBSYSTEM_DEF(outdoor_effects)
 	var/datum/time_of_day/current_step_datum
 	var/datum/time_of_day/next_step_datum
 	var/list/mutable_appearance/sunlight_overlays
+	// Only retained during initialization; roof changes invalidate both views of a turf.
+	var/alist/sky_status_cache
+	var/alist/ceiling_status_cache
 
 	var/last_color = null
 	var/picked_color
@@ -63,10 +66,7 @@ SUBSYSTEM_DEF(outdoor_effects)
 	var/next_day = FALSE // Resets when station_time is less than the next start time.
 
 /datum/controller/subsystem/outdoor_effects/proc/fullPlonk()
-	for (var/z in SSmapping.levels_by_trait(ZTRAIT_STATION))
-		if(SSmapping.level_trait(z, ZTRAIT_IGNORE_WEATHER_TRAIT))
-			continue
-		GLOB.SUNLIGHT_QUEUE_WORK += block(locate(1,1,z), locate(world.maxx,world.maxy,z))
+	InitializeTurfs()
 
 /datum/controller/subsystem/outdoor_effects/Initialize(timeofday)
 	if(!initialized)
@@ -74,18 +74,47 @@ SUBSYSTEM_DEF(outdoor_effects)
 		get_time_of_day()
 		InitializeTurfs()
 		initialized = TRUE
+		sky_status_cache = alist()
+		ceiling_status_cache = alist()
 	fire(FALSE, TRUE)
+	sky_status_cache = null
+	ceiling_status_cache = null
 	..()
 
 /datum/controller/subsystem/outdoor_effects/stat_entry(msg)
 	msg = "W:[GLOB.SUNLIGHT_QUEUE_WORK.len]|U:[GLOB.SUNLIGHT_QUEUE_UPDATE.len]|C:[GLOB.SUNLIGHT_QUEUE_CORNER.len]"
 	return ..()
 
-/datum/controller/subsystem/outdoor_effects/proc/InitializeTurfs(list/targets)
+/datum/controller/subsystem/outdoor_effects/proc/InitializeTurfs()
 	for (var/z in SSmapping.levels_by_trait(ZTRAIT_STATION))
 		if(SSmapping.level_trait(z, ZTRAIT_IGNORE_WEATHER_TRAIT))
 			continue
-		GLOB.SUNLIGHT_QUEUE_WORK += block(locate(1,1,z), locate(world.maxx,world.maxy,z))
+		for(var/turf/T as anything in block(locate(1,1,z), locate(world.maxx,world.maxy,z)))
+			queue_turf(T)
+			CHECK_TICK
+
+/datum/controller/subsystem/outdoor_effects/proc/queue_turf(turf/T)
+	if(!T || T.sunlight_work_queued || istype(T, /turf/closed/void))
+		return
+	T.sunlight_work_queued = TRUE
+	GLOB.SUNLIGHT_QUEUE_WORK += T
+
+/datum/controller/subsystem/outdoor_effects/proc/queue_outdoor_effect(datum/outdoor_info/OE)
+	if(QDELETED(OE) || OE.update_queued)
+		return
+	OE.update_queued = TRUE
+	GLOB.SUNLIGHT_QUEUE_UPDATE += OE
+
+/datum/controller/subsystem/outdoor_effects/proc/queue_corner(turf/T)
+	if(!T || T.sunlight_corner_queued || istype(T, /turf/closed/void))
+		return
+	T.sunlight_corner_queued = TRUE
+	GLOB.SUNLIGHT_QUEUE_CORNER += T
+
+/datum/controller/subsystem/outdoor_effects/proc/clear_ceiling_cache()
+	if(!isnull(sky_status_cache))
+		sky_status_cache = alist()
+		ceiling_status_cache = alist()
 
 
 /datum/controller/subsystem/outdoor_effects/proc/check_cycle()
@@ -157,12 +186,14 @@ SUBSYSTEM_DEF(outdoor_effects)
 				weather_planes_need_vis.Cut(1, i+1)
 				i = 0
 
-	for (i in 1 to GLOB.SUNLIGHT_QUEUE_WORK.len)
+	while(i < length(GLOB.SUNLIGHT_QUEUE_WORK))
+		i++
 		var/turf/T = GLOB.SUNLIGHT_QUEUE_WORK[i]
 		if(T)
+			T.sunlight_work_queued = FALSE
 			T.get_sky_and_weather_states()
 			if(T.outdoor_effect)
-				GLOB.SUNLIGHT_QUEUE_UPDATE += T.outdoor_effect
+				queue_outdoor_effect(T.outdoor_effect)
 
 		if(init_tick_checks)
 			CHECK_TICK
@@ -176,9 +207,11 @@ SUBSYSTEM_DEF(outdoor_effects)
 	if(!init_tick_checks)
 		MC_SPLIT_TICK
 
-	for (i in 1 to GLOB.SUNLIGHT_QUEUE_UPDATE.len)
+	while(i < length(GLOB.SUNLIGHT_QUEUE_UPDATE))
+		i++
 		var/datum/outdoor_info/U = GLOB.SUNLIGHT_QUEUE_UPDATE[i]
-		if(U)
+		if(!QDELETED(U))
+			U.update_queued = FALSE
 			U.process_state()
 			update_outdoor_effect_overlays(U)
 
@@ -195,25 +228,22 @@ SUBSYSTEM_DEF(outdoor_effects)
 		MC_SPLIT_TICK
 
 	// update SKY_BLOCKED turfs so they can get their correct indirect lighting
-	for (i in 1 to length(GLOB.SUNLIGHT_QUEUE_CORNER))
+	while(i < length(GLOB.SUNLIGHT_QUEUE_CORNER))
+		i++
 		var/turf/T = GLOB.SUNLIGHT_QUEUE_CORNER[i]
-		var/datum/outdoor_info/U = T.outdoor_effect
+		if(T)
+			T.sunlight_corner_queued = FALSE
+			var/datum/outdoor_info/U = T.outdoor_effect
 
-		/* if we haven't initialized but we are affected, create new and check state */
-		if(!U)
-			// force-init the outdoor_effect since we're indirectly lit by sunlight
-			U = new /datum/outdoor_info(T)
-			T.get_sky_and_weather_states()
-			/* in case we aren't indoor somehow, wack us into the proc queue, we will be skipped on next indoor check */
-			if(U.state != SKY_BLOCKED)
-				GLOB.SUNLIGHT_QUEUE_UPDATE += T.outdoor_effect
+			if(!U)
+				// Indirect sunlight also needs an overlay on roofed turfs.
+				U = new /datum/outdoor_info(T)
+				T.get_sky_and_weather_states()
+				if(U.state != SKY_BLOCKED)
+					queue_outdoor_effect(U)
 
-		if(U.state != SKY_BLOCKED)
-			continue
-
-		//This might need to be run more liberally
-		update_outdoor_effect_overlays(U)
-
+			if(U.state == SKY_BLOCKED)
+				update_outdoor_effect_overlays(U)
 
 		if(init_tick_checks)
 			CHECK_TICK
@@ -249,10 +279,10 @@ SUBSYSTEM_DEF(outdoor_effects)
 		if (!OE.source_turf.lighting_corners_initialised)
 			OE.source_turf.generate_missing_corners()
 		var/list/corners = OE.source_turf.corners
-		var/datum/lighting_corner/cr = corners[3] || dummy_lighting_corner
-		var/datum/lighting_corner/cg = corners[2] || dummy_lighting_corner
-		var/datum/lighting_corner/cb = corners[4] || dummy_lighting_corner
-		var/datum/lighting_corner/ca = corners[1] || dummy_lighting_corner
+		var/datum/lighting_corner/cr = corners?[3] || dummy_lighting_corner
+		var/datum/lighting_corner/cg = corners?[2] || dummy_lighting_corner
+		var/datum/lighting_corner/cb = corners?[4] || dummy_lighting_corner
+		var/datum/lighting_corner/ca = corners?[1] || dummy_lighting_corner
 
 		var/fr = cr.sunFalloff
 		var/fg = cg.sunFalloff
@@ -265,18 +295,37 @@ SUBSYSTEM_DEF(outdoor_effects)
 	var/dirty = OE.underlays_dirty
 
 	var/want_weather = !OE.weatherproof
-	if(dirty || want_weather != OE.weather_applied)
+	var/update_weather = dirty || want_weather != OE.weather_applied
+	var/update_sunlight = dirty || MA != OE.sunlight_overlay
+	var/list/next_underlays
+	if(update_weather || update_sunlight)
+		// Apply both effects in one appearance change, retaining unrelated underlays.
+		next_underlays = source_turf.underlays.Copy()
+
+	// Unions keep image operands; removals match their stored appearance snapshots.
+	if(update_weather)
 		if(want_weather)
-			source_turf.underlays |= shared_weather_overlay
+			next_underlays |= shared_weather_overlay
 		else
-			source_turf.underlays -= shared_weather_overlay
+			next_underlays -= shared_weather_overlay?.appearance
 		OE.weather_applied = want_weather
 
-	if(dirty || MA != OE.sunlight_overlay)
-		source_turf.underlays -= OE.sunlight_overlay
-		source_turf.underlays |= MA
+	if(update_sunlight)
+		if(OE.sunlight_overlay?.luminosity && !MA.luminosity)
+			// Recompute visibility when sunlight fades without a lamp changing.
+			var/datum/lighting_object/lighting_object = source_turf.lighting_object
+			if(!lighting_object)
+				if(source_turf.has_dynamic_lighting())
+					new /datum/lighting_object(source_turf)
+			else if(!lighting_object.needs_update)
+				lighting_object.needs_update = TRUE
+				SSlighting.objects_queue += lighting_object
+		next_underlays -= OE.sunlight_overlay?.appearance
+		next_underlays |= MA
 		OE.sunlight_overlay = MA
 
+	if(!isnull(next_underlays))
+		source_turf.underlays = next_underlays
 	OE.underlays_dirty = FALSE
 	source_turf.luminosity = max(source_turf.luminosity, MA.luminosity)
 

@@ -121,6 +121,8 @@ export default defineConfig({
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.jsx'],
     alias: {
+      'tgui-core/components$': path.resolve(dirname, './packages/tgui/components/keyboard'),
+      'tgui-core/base-components$': path.resolve(dirname, './node_modules/tgui-core/dist/components/index.js'),
       tgui: path.resolve(dirname, './packages/tgui'),
       'tgui-panel': path.resolve(dirname, './packages/tgui-panel'),
       'tgui-say': path.resolve(dirname, './packages/tgui-say'),

@@ -118,7 +118,9 @@
 
 	ComponentInitialize()
 
-	queue_smooth_neighbors(src)
+	// Map atoms queue themselves before the first smoothing pass.
+	if(!mapload || SSicon_smooth.initialized)
+		queue_smooth_neighbors(src)
 
 	return INITIALIZE_HINT_NORMAL
 

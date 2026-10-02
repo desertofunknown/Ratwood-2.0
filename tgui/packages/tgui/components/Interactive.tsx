@@ -64,6 +64,7 @@ export class Interactive extends Component<InteractiveProps> {
   }
 
   handleMoveStart = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
     const el = this.containerRef?.current;
     if (!el) return;
 
@@ -77,7 +78,7 @@ export class Interactive extends Component<InteractiveProps> {
   handleMove = (event: MouseEvent) => {
     event.preventDefault();
 
-    const isDown = event.buttons > 0;
+    const isDown = Boolean(event.buttons & 1);
 
     if (isDown && this.containerRef?.current) {
       this.props.onMove(getRelativePosition(this.containerRef.current, event));
@@ -108,15 +109,15 @@ export class Interactive extends Component<InteractiveProps> {
     const el = this.containerRef?.current;
     const parentWindow = getParentWindow(el);
 
-    const toggleEvent = state
-      ? parentWindow.addEventListener
-      : parentWindow.removeEventListener;
-    toggleEvent('mousemove', this.handleMove);
-    toggleEvent('mouseup', this.handleMoveEnd);
-  }
-
-  componentDidMount() {
-    this.toggleDocumentEvents(true);
+    if (state) {
+      parentWindow.addEventListener('mousemove', this.handleMove);
+      parentWindow.addEventListener('mouseup', this.handleMoveEnd);
+      parentWindow.addEventListener('blur', this.handleMoveEnd);
+    } else {
+      parentWindow.removeEventListener('mousemove', this.handleMove);
+      parentWindow.removeEventListener('mouseup', this.handleMoveEnd);
+      parentWindow.removeEventListener('blur', this.handleMoveEnd);
+    }
   }
 
   componentWillUnmount() {

@@ -1,5 +1,4 @@
 import {
-  cardStyle,
   FONT_BODY,
   INK_SOFT,
   SERIF,
@@ -20,16 +19,10 @@ type Props = {
   act: ActFn;
 };
 
-const HintCard = (props: { children: React.ReactNode }) => (
-  <div
-    style={{
-      ...cardStyle,
-      textAlign: 'center',
-      color: INK_SOFT,
-    }}
-  >
+const StockNotice = (props: { children: React.ReactNode }) => (
+  <p className="Goldface__notice">
     {props.children}
-  </div>
+  </p>
 );
 
 export const PacksGrid = (props: Props) => {
@@ -48,32 +41,27 @@ export const PacksGrid = (props: Props) => {
 
   if (!hasCategory && !inSearchMode) {
     return (
-      <HintCard>
-        Select a category above, or type in the search to find goods.
-      </HintCard>
+      <StockNotice>
+        Choose a category or search to find goods.
+      </StockNotice>
     );
   }
   if (packs.length === 0) {
     return (
-      <HintCard>
+      <StockNotice>
         {inSearchMode
           ? `No goods match "${serverSearch}".`
           : 'No goods stocked in this category.'}
-      </HintCard>
+      </StockNotice>
     );
   }
 
   const overflowed = inSearchMode && totalMatches > resultCap;
   return (
     <>
-      <div
-        style={{
-          columnCount: 3,
-          columnGap: '12px',
-        }}
-      >
+      <div className="Goldface__stock">
         {packs.map((p) => (
-          <div key={p.ref} style={{ breakInside: 'avoid' }}>
+          <div key={p.ref} className="Goldface__item">
             <PackRow
               pack={p}
               budget={budget}

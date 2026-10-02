@@ -20,10 +20,19 @@ GLOBAL_DATUM(economic_chronicle, /datum/economic_chronicle)
 
 /datum/economic_chronicle/ui_interact(mob/user, datum/tgui/ui)
 	ui = SStgui.try_update_ui(user, src, ui)
-	if(!ui)
+	if(ui)
+		update_static_data(user, ui)
+	else
 		ui = new(user, src, "EconomicChronicle", "Realm Economics")
 		ui.open()
 		ui.set_autoupdate(FALSE)
+
+/datum/economic_chronicle/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
+	if(..())
+		return TRUE
+	if(action == "refresh")
+		update_static_data(ui.user, ui)
+		return TRUE
 
 /datum/economic_chronicle/ui_static_data(mob/user)
 	var/list/data = list()

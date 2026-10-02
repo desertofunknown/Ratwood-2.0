@@ -18,14 +18,20 @@ const regexParseNode = (params) => {
   let fragment;
   let n = 0;
   let count = 0;
+  regex.lastIndex = 0;
   // eslint-disable-next-line no-cond-assign
   while ((match = regex.exec(text))) {
-    n += 1;
+    if (match[0].length === 0) {
+      regex.lastIndex = match.index + 1;
+      continue;
+    }
     // Safety check to prevent permanent
     // client crashing
     if (++count > 9999) {
-      return {};
+      regex.lastIndex = 0;
+      return { n: 0 };
     }
+    n += 1;
     // Lazy init fragment
     if (!fragment) {
       fragment = document.createDocumentFragment();
@@ -48,7 +54,6 @@ const regexParseNode = (params) => {
     lastIndex = matchIndex + matchLength;
     // Create a wrapper node
     new_node = createNode(matchText);
-    nodes.push(new_node);
     fragment.appendChild(new_node);
   }
   if (fragment) {
@@ -72,22 +77,9 @@ const regexParseNode = (params) => {
  * Replace text of a node with custom nades if they match
  * a regex expression or are in a word list
  */
-export const replaceInTextNode = (regex, words, createNode) => (node) => {
-  let nodes;
-  let result;
-  let n = 0;
-
-  if (regex) {
-    result = regexParseNode({
-      node: node,
-      regex: regex,
-      createNode: createNode,
-    });
-    nodes = result.nodes;
-    n += result.n;
-  }
-
-  if (words) {
+export const replaceInTextNode = (regex, words, createNode) => {
+  let wordRegex;
+  if (words?.length) {
     let i = 0;
     let wordRegexStr = '(';
     for (const word of words) {
@@ -100,26 +92,52 @@ export const replaceInTextNode = (regex, words, createNode) => (node) => {
       }
     }
     wordRegexStr += ')';
-    const wordRegex = new RegExp(wordRegexStr, 'gi');
-    if (regex && nodes) {
-      for (const a_node of nodes) {
+    wordRegex = new RegExp(wordRegexStr, 'gi');
+  }
+
+  return (node) => {
+    let nodes;
+    let result;
+    let n = 0;
+
+    if (regex) {
+      result = regexParseNode({
+        node,
+        regex,
+        createNode,
+      });
+      nodes = result.nodes;
+      n += result.n;
+    }
+
+    if (wordRegex) {
+      // Only unmatched text is eligible for the secondary word pass.
+      for (const textNode of nodes || [node]) {
         result = regexParseNode({
-          node: a_node,
+          node: textNode,
           regex: wordRegex,
           createNode: createNode,
           captureAdjust: (str) => str.replace(/^\W|\W$/g, ''),
         });
         n += result.n;
       }
-    } else {
-      result = regexParseNode({
-        node: node,
-        regex: wordRegex,
-        createNode: createNode,
-        captureAdjust: (str) => str.replace(/^\W|\W$/g, ''),
-      });
-      n += result.n;
     }
+    return n;
+  };
+};
+
+const replaceChildText = (node, replaceText, skipLinks = false) => {
+  let n = 0;
+  let child = node.firstChild;
+  while (child) {
+    // Replacements insert siblings; visit only the original children.
+    const next = child.nextSibling;
+    if (child.nodeType === 3) {
+      n += replaceText(child);
+    } else if (!skipLinks || child.nodeName.toLowerCase() !== 'a') {
+      n += replaceChildText(child, replaceText, skipLinks);
+    }
+    child = next;
   }
   return n;
 };
@@ -154,18 +172,7 @@ export const highlightNode = (
   if (!createNode) {
     createNode = createHighlightNode;
   }
-  let n = 0;
-  const childNodes = node.childNodes;
-  for (let i = 0; i < childNodes.length; i++) {
-    const node = childNodes[i];
-    // Is a text node
-    if (node.nodeType === 3) {
-      n += replaceInTextNode(regex, words, createNode)(node);
-    } else {
-      n += highlightNode(node, regex, words, createNode);
-    }
-  }
-  return n;
+  return replaceChildText(node, replaceInTextNode(regex, words, createNode));
 };
 
 // Linkify
@@ -181,19 +188,7 @@ const URL_REGEX =
  * @returns {number} Number of matches
  */
 export const linkifyNode = (node) => {
-  let n = 0;
-  const childNodes = node.childNodes;
-  for (let i = 0; i < childNodes.length; i++) {
-    const node = childNodes[i];
-    const tag = String(node.nodeName).toLowerCase();
-    // Is a text node
-    if (node.nodeType === 3) {
-      n += linkifyTextNode(node);
-    } else if (tag !== 'a') {
-      n += linkifyNode(node);
-    }
-  }
-  return n;
+  return replaceChildText(node, linkifyTextNode, true);
 };
 
 const linkifyTextNode = replaceInTextNode(URL_REGEX, null, (text) => {

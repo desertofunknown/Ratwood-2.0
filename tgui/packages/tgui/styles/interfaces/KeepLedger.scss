@@ -1,0 +1,47 @@
+// Shared palette for the commerce and account interfaces using parchment helpers.
+:root .KeepLedger {
+  --p-font-tiny: 11px;
+  --p-font-small: 12px;
+  --p-font-body: 14px;
+  --p-font-lead: 15px;
+  --p-font-title: 16px;
+  --p-font-head: 19px;
+  --p-title: #f2e3c8;
+  --p-title-font: 'Pterra', Georgia, serif;
+  --p-bg: #181413;
+  --p-bg-deep: #211a17;
+  --p-bg-shadow: #493a2e;
+  --p-ink: #e7dac2;
+  --p-ink-soft: #c2b399;
+  --p-ink-faint: #a9987c;
+  --p-seal-red: #df9c89;
+  --p-seal-red-soft: #c48c7e;
+  --p-seal-green: #b6c59a;
+  --p-seal-blue: #a6bdcf;
+  --p-seal-amber: #dfc08b;
+  --p-button-bg: #382920;
+  --p-tab-active-bg: #592c28;
+  --p-card-bg: #241d18;
+  --p-card-shadow: rgba(0, 0, 0, .18);
+  --p-banner-bg: #38251e;
+  --p-banner-bg-soft: #2b211b;
+  --p-badge-text: #181413;
+  color: var(--p-ink);
+  font: 14px/1.5 'Lora', Georgia, serif;
+
+  button, input, select, textarea { font-family: inherit; }
+  button { min-height: 30px; }
+  button:not(:disabled), select:not(:disabled) { cursor: pointer; }
+  button:disabled { cursor: default; }
+  button:hover:not(:disabled) { filter: brightness(1.15); }
+  button:focus-visible, input:focus-visible, select:focus-visible,
+  textarea:focus-visible, a:focus-visible, [tabindex='0']:focus-visible {
+    outline: 2px solid #d4bb8f !important;
+    outline-offset: 2px;
+  }
+  input::placeholder, textarea::placeholder { color: #ae9e86; opacity: 1; }
+  select { background: #211a17; color: var(--p-ink); }
+  option { background: #211a17; color: var(--p-ink); }
+  input[type='checkbox'], input[type='radio'] { accent-color: #a68a59; }
+  h1, h2, h3 { padding: 0; }
+}

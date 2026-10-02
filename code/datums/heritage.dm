@@ -78,18 +78,21 @@
 	if(user.family_datum)
 		var/curse_info = ""
 		for(var/datum/family_curse/curse in user.family_datum.family_curses)
-			curse_info += "<b>[curse.name]</b><br>"
-			curse_info += "[curse.description]<br>"
+			curse_info += "<div class='social-record'><h2>[html_encode(curse.name)]</h2>"
+			curse_info += "<p>[html_encode(curse.description)]</p>"
 			if(curse.cursed_by)
 				var/mob/curser = curse.cursed_by.resolve()
 				if(curser)
-					curse_info += "[curse.blessing ? "Blessed" : "Cursed"] by: [curser.real_name]<br>"
-			curse_info += "Severity: [curse.severity]/3<br>"
-			curse_info += "Time cursed: [DisplayTimeText(world.time - curse.when_cursed)] ago<br>"
+					curse_info += "<div>[curse.blessing ? "Blessed" : "Cursed"] by: [html_encode(curser.real_name)]</div>"
+			curse_info += "<div class='social-detail'>Severity: [curse.severity]/3</div>"
+			curse_info += "<div class='social-detail'>Time cursed: [DisplayTimeText(world.time - curse.when_cursed)] ago</div></div>"
 
 		if(curse_info)
-			var/datum/browser/popup = new(usr, "curse_info", "Family Modifier Details", 300, 200)
-			popup.set_content(curse_info)
+			var/datum/browser/popup = new(usr, "curse_info", "", 340, 280)
+			popup.add_stylesheet("social_records", 'html/browser/social_records.css')
+			var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+			popup.add_head_content("<title>Family Modifier Details</title><style>@font-face { font-family: 'Social Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Social Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Social Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Social Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
+			popup.set_content("<div class='social-records'><div class='social-header'><h1>Family Modifiers</h1></div>[curse_info]</div>")
 			popup.open()
 
 /datum/heritage
@@ -628,10 +631,8 @@
 	return span_love(span_bold("[relationship_text]."))
 
 /datum/heritage/proc/FormatFamilyList(checker)
-	var/household = uppertext(housename)
-	var/house_title = "THE [household] HOUSE"
-	. = "<center>[household ? house_title : "Nameless House"]:</center><BR>"
-	. += "-----<br>"
+	var/house_title = housename ? "House [housename]" : "Nameless House"
+	. = "<div class='social-records'><div class='social-header'><h1>Family</h1></div><p class='social-context'>[html_encode(house_title)]</p>"
 
 	// Sort by generation
 	var/list/by_generation = list()
@@ -645,7 +646,7 @@
 	for(var/gen_text in by_generation)
 		var/gen_num = text2num(gen_text)
 		var/gen_name = GetGenerationName(gen_num)
-		. += "<B>[gen_name]:</B><BR>"
+		. += "<div class='social-generation'><h2>[html_encode(gen_name)]</h2>"
 
 		for(var/datum/family_member/member in by_generation[gen_text])
 			var/status_text = ""
@@ -664,21 +665,23 @@
 					if("husband", "wife")
 						name_color = "FF69B4"
 			if(member.adoption_status)
-				status_text = " (Adopted)"
+				status_text = "<div class='social-detail'>Adopted</div>"
 			if(member.spouses.len)
 				var/spouse_names = ""
 				for(var/datum/family_member/spouse in member.spouses)
 					if(spouse_names)
 						spouse_names += ", "
-					spouse_names += spouse.person?.real_name
-				status_text += " (Married to: [spouse_names])"
-			relation_text = uppertext(relation_text)
+					var/spouse_name = spouse.person?.real_name
+					spouse_names += html_encode(spouse_name ? spouse_name : "Unknown")
+				status_text += "<div class='social-detail'>Married to: [spouse_names]</div>"
+			var/member_name = member.person?.real_name
+			. += "<div class='social-record'><div class='social-name'><strong style='color: #[name_color]'>[html_encode(member_name ? member_name : "Unknown")]</strong></div>"
+			if(relation_text)
+				. += "<div class='social-relation'>[html_encode(capitalize(relation_text))]</div>"
+			. += "[status_text]</div>"
+		. += "</div>"
 
-			. += "<B><font color=#[name_color];text-shadow:0 0 10px #8d5958, 0 0 20px #8d5958, 0 0 30px #8d5958, 0 0 40px #8d5958, 0 0 50px #e60073, 0 0 60px #8d5958, 0 0 70px #8d5958;>\
-				[member.person?.real_name]</font></B> <B>[relation_text]</B> [status_text]<BR>"
-		. += "<BR>"
-
-	. += "----------<br>"
+	. += "</div>"
 
 /datum/heritage/proc/GetMemberForPerson(mob/living/carbon/human/P)
 	for(var/datum/family_member/member in members)
@@ -707,7 +710,10 @@
 	if(!members.len)
 		return
 	var/contents = FormatFamilyList(checker)
-	var/datum/browser/popup = new(checker, "FAMILYDISPLAY", "", 300, 500)
+	var/datum/browser/popup = new(checker, "FAMILYDISPLAY", "", 380, 500)
+	popup.add_stylesheet("social_records", 'html/browser/social_records.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<title>Family</title><style>@font-face { font-family: 'Social Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Social Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Social Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Social Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(contents)
 	popup.open()
 

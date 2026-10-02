@@ -18,6 +18,31 @@
 		hierarchy_interface = new /datum/clan_hierarchy_interface(user)
 	..()
 
+/datum/clan_menu_interface/Destroy()
+	if(user?.clan_menu_interface == src)
+		user.clan_menu_interface = null
+	QDEL_NULL(hierarchy_interface)
+	user = null
+	user_clan = null
+	user_covens = null
+	return ..()
+
+/datum/clan_menu_interface/proc/is_current_user(mob/caller)
+	return !QDELETED(user) && caller == user && !QDELETED(user_clan) && user.clan == user_clan && user.clan_menu_interface == src && (user in user_clan.clan_members)
+
+/datum/clan_menu_interface/proc/select_coven(slot, coven_path)
+	if(user != user_clan.clan_leader || user_clan.covens_to_select < slot || !user_clan.can_select_coven(coven_path))
+		return
+	if(coven_path == coven_one_preliminary || coven_path == coven_two_preliminary || coven_path == coven_three_preliminary)
+		return
+	switch(slot)
+		if(1)
+			coven_one_preliminary = coven_path
+		if(2)
+			coven_two_preliminary = coven_path
+		if(3)
+			coven_three_preliminary = coven_path
+
 /datum/clan_menu_interface/proc/show_hierarchy()
 	if(!hierarchy_interface)
 		return
@@ -229,7 +254,7 @@
 	var/html = ""
 	for(var/coven_path in subtypesof(/datum/coven))
 		var/datum/coven/typecasted = coven_path
-		if(initial(typecasted.clan_restricted))
+		if(!user_clan.can_select_coven(coven_path))
 			continue
 
 		if(coven_path == coven_one_preliminary || coven_path == coven_two_preliminary || coven_path == coven_three_preliminary)
@@ -250,7 +275,7 @@
 		var/experience_percent = coven.experience_needed > 0 ? round((coven.experience / coven.experience_needed) * 100, 1) : 100
 
 		html += {"
-		<li class="coven-item" onclick="selectCoven('[coven_name]')">
+		<li><a class="coven-item" id="coven-[html_encode(coven_name)]" href="byond://?src=[REF(src)];action=load_coven_tree;coven_name=[url_encode(coven_name)]">
 			<div class="coven-name">[coven.name]</div>
 			<div class="coven-stats">
 				<span>Level [coven.level]/[coven.max_level]</span>
@@ -259,7 +284,7 @@
 			<div class="coven-progress">
 				<div class="coven-progress-fill" style="width: [experience_percent]%"></div>
 			</div>
-		</li>
+		</a></li>
 		"}
 
 	return html
@@ -981,6 +1006,39 @@
 				color: #FFD700;
 				margin-bottom: 30px;
 			}
+
+			a.coven-item {
+				display: block;
+				color: inherit;
+				text-decoration: none;
+			}
+			button.hierarchy-node, button.research-node {
+				font: inherit;
+				color: inherit;
+				margin: 0;
+			}
+			button.research-node {
+				padding: 0;
+				border: 0;
+			}
+			a:focus, button:focus, input:focus, select:focus, textarea:focus, #container:focus {
+				outline: 2px solid #ffe3a3;
+				outline-offset: 2px;
+			}
+			#container:focus { outline-offset: -3px; }
+			#container:focus::after {
+				content: 'Arrows: pan | + / -: zoom | 0: reset | Tab: nodes';
+				position: absolute;
+				top: 8px;
+				left: 8px;
+				padding: 6px 10px;
+				background: #17151c;
+				color: #ffe3a3;
+				font-size: 12px;
+				pointer-events: none;
+				z-index: 102;
+			}
+			.hierarchy-node:focus, .research-node:focus { z-index: 101; }
 		</style>
 	</head>
 	<body>
@@ -999,12 +1057,13 @@
 			<div class="sidebar">
 				<h3>Clan Hierarchy</h3>
 				<ul class="coven-list">
-					<li class="coven-item hierarchy-button" onclick="window.location.href='?src=[REF(src)];action=show_hierarchy'">
+					<li><a class="coven-item hierarchy-button" id="clan-hierarchy" href="?src=[REF(src)];action=show_hierarchy">
 					<div class="coven-name">Clan Hierarchy</div>
 					<div class="coven-stats">
 						<span>Management</span>
 						<span>View & Edit</span>
 					</div>
+					</a></li>
 				</ul>
 				<h3>Your Covens</h3>
 				<ul class="coven-list">
@@ -1023,7 +1082,7 @@
 
 
 		function closeModal() {
-			document.getElementById('management-modal').style.display = 'none';
+			closeHierarchyModal();
 		}
 
 
@@ -1032,7 +1091,7 @@
 		window.onclick = function(event) {
 			const modal = document.getElementById('management-modal');
 			if (event.target == modal) {
-				modal.style.display = 'none';
+				closeHierarchyModal();
 			}
 		}
 
@@ -1072,15 +1131,6 @@
 					hierarchyDragging = false;
 				});
 			}
-			// Coven selection
-			function selectCoven(covenName) {
-				document.querySelectorAll('.coven-item').forEach(item => {
-					item.classList.remove('selected');
-				});
-				event.target.closest('.coven-item').classList.add('selected');
-				window.location.href = 'byond://?src=[REF(src)];action=load_coven_tree;coven_name=' + encodeURIComponent(covenName);
-			}
-
 			// Research tree interaction variables
 			let isDragging = false;
 			let startX, startY;
@@ -1118,10 +1168,158 @@
 				}
 			}
 
+			var treeFocusKey = 'clan_tree_focus_[REF(src)]';
+			var modalReturnId = '';
+			var activationKeyDown = 0;
+
+			function getOpenHierarchyModal() {
+				var modal = document.getElementById('management-modal');
+				return modal && modal.style.display !== 'none' ? modal : null;
+			}
+
+			function modalControls(modal) {
+				return Array.prototype.filter.call(modal.querySelectorAll('input, select, textarea, button, a'), function(control) {
+					return !control.disabled && control.tabIndex >= 0 && control.getClientRects().length > 0;
+				});
+			}
+
+			function closeHierarchyModal() {
+				var modal = document.getElementById('management-modal');
+				if (!modal) return;
+				modal.style.display = 'none';
+				try { sessionStorage.removeItem(treeFocusKey); } catch(e) {}
+				var returnControl = document.getElementById(modalReturnId) || document.getElementById('hierarchy-create') || container;
+				if (returnControl) returnControl.focus();
+			}
+
+			// Restore the initiating control after a server-rendered page refresh.
+			document.addEventListener('click', function(e) {
+				var control = e.target.closest('button, a');
+				if (!control || !control.id || control.closest('#management-modal')) return;
+				try { sessionStorage.setItem(treeFocusKey, control.id); } catch(error) {}
+			}, true);
+
+			document.addEventListener('keydown', function(e) {
+				var modal = getOpenHierarchyModal();
+				if (modal && !e.defaultPrevented && !e.altKey && !e.ctrlKey && !e.metaKey) {
+					if (e.keyCode === 9) {
+						var controls = modalControls(modal);
+						var first = controls\[0\];
+						var last = controls\[controls.length - 1\];
+						if (first && (!modal.contains(document.activeElement) || (e.shiftKey && document.activeElement === first) || (!e.shiftKey && document.activeElement === last))) {
+							e.preventDefault();
+							(e.shiftKey ? last : first).focus();
+						}
+					} else if (e.keyCode === 27 && !e.shiftKey && !e.target.isContentEditable && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) {
+						e.preventDefault();
+						e.stopPropagation();
+						closeHierarchyModal();
+					}
+				}
+				if ((e.keyCode === 13 || e.keyCode === 32) && !e.defaultPrevented && !e.target.isContentEditable && e.target.matches('button, a') && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+					if (e.repeat || activationKeyDown === e.keyCode) {
+						e.preventDefault();
+						return;
+					}
+					activationKeyDown = e.keyCode;
+					if (e.keyCode === 32 && e.target.tagName === 'A' && e.target.hasAttribute('href') && !e.target.isContentEditable) {
+						e.preventDefault();
+						e.target.click();
+					}
+				}
+			});
+			document.addEventListener('keyup', function(e) {
+				if (e.keyCode === activationKeyDown) activationKeyDown = 0;
+			});
+			window.addEventListener('blur', function() { activationKeyDown = 0; });
+
+			document.addEventListener('focusin', function(e) {
+				var modal = getOpenHierarchyModal();
+				if (modal && !modal.contains(e.target)) {
+					var controls = modalControls(modal);
+					if (controls.length) controls\[0\].focus();
+				}
+			});
+
+			document.addEventListener('DOMContentLoaded', function() {
+				var savedFocus = '';
+				try { savedFocus = sessionStorage.getItem(treeFocusKey) || ''; } catch(e) {}
+				var modal = getOpenHierarchyModal();
+				if (modal) {
+					modalReturnId = savedFocus;
+					var controls = modalControls(modal);
+					var field = controls.filter(function(control) { return /^(INPUT|SELECT|TEXTAREA)$/.test(control.tagName); })\[0\];
+					if (field || controls.length) (field || controls\[0\]).focus();
+				} else {
+					try { sessionStorage.removeItem(treeFocusKey); } catch(e) {}
+					var control = document.getElementById(savedFocus);
+					if (control) control.focus();
+				}
+			});
+
+			function revealTreeNode(node) {
+				container.scrollLeft = 0;
+				container.scrollTop = 0;
+				var bounds = container.getBoundingClientRect();
+				var right = bounds.right;
+				var sidebar = document.getElementById('hierarchy-sidebar');
+				if (sidebar && window.getComputedStyle(sidebar).position === 'fixed') right = Math.min(right, sidebar.getBoundingClientRect().left);
+				var nodeBounds = node.getBoundingClientRect();
+				var padding = 18;
+				var dx = nodeBounds.left < bounds.left + padding ? bounds.left + padding - nodeBounds.left : Math.min(0, right - padding - nodeBounds.right);
+				var dy = nodeBounds.top < bounds.top + padding ? bounds.top + padding - nodeBounds.top : Math.min(0, bounds.bottom - padding - nodeBounds.bottom);
+				currentX += dx;
+				currentY += dy;
+				updateCanvasTransform();
+				updateParallax();
+				savePosition();
+				var rect = node.getBoundingClientRect();
+				if (node.classList.contains('hierarchy-node')) {
+					showNodeTooltip({clientX: rect.left, clientY: rect.bottom}, node.dataset.nodeData);
+				} else {
+					showCovenTooltip({clientX: rect.left, clientY: rect.bottom}, node);
+				}
+			}
+
 			// Initialize research tree if elements exist
 			if (container && canvas) {
 				updateCanvasTransform();
 				updateParallax();
+
+				container.addEventListener('focusin', function(e) {
+					if (e.target.matches('.hierarchy-node, .research-node')) {
+						var node = e.target;
+						window.setTimeout(function() {
+							if (document.activeElement === node) revealTreeNode(node);
+						}, 0);
+					}
+				});
+				container.addEventListener('focusout', function(e) {
+					if (e.target.matches('.hierarchy-node, .research-node')) hideTooltip();
+				});
+				container.addEventListener('keydown', function(e) {
+					if (e.target !== container || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || getOpenHierarchyModal()) return;
+					var oldScale = scale;
+					switch (e.keyCode) {
+						case 37: currentX += 40; break;
+						case 38: currentY += 40; break;
+						case 39: currentX -= 40; break;
+						case 40: currentY -= 40; break;
+						case 107: case 187: scale = Math.min(scale + 0.1, 2.0); break;
+						case 109: case 189: scale = Math.max(scale - 0.1, 0.3); break;
+						case 48: case 96: currentX = 400; currentY = 300; scale = 1; break;
+						default: return;
+					}
+					e.preventDefault();
+					if (e.keyCode !== 48 && e.keyCode !== 96 && oldScale !== scale) {
+						var ratio = scale / oldScale;
+						currentX = container.clientWidth / 2 - (container.clientWidth / 2 - currentX) * ratio;
+						currentY = container.clientHeight / 2 - (container.clientHeight / 2 - currentY) * ratio;
+					}
+					updateCanvasTransform();
+					updateParallax();
+					savePosition();
+				});
 
 				// Mouse interaction events
 				container.addEventListener('mousedown', function(e) {
@@ -1142,6 +1340,8 @@
 						updateParallax();
 						savePosition();
 					}
+
+					if (document.activeElement && document.activeElement.matches('.hierarchy-node:focus, .research-node:focus')) return;
 
 					// Tooltip handling
 					if (e.target.classList.contains('research-node') || e.target.parentElement.classList.contains('research-node')) {
@@ -1306,8 +1506,10 @@
 	var/datum/coven/selected_coven
 
 	if(preview)
+		if(!user_clan.can_select_coven(coven_name))
+			return
 		selected_coven = new coven_name()
-		current_coven = selected_coven.name
+		current_coven = null
 	else
 		selected_coven = user_covens[coven_name]
 		current_coven = coven_name
@@ -1322,7 +1524,7 @@
 		<div class="parallax-layer parallax-neb" id="parallax-neb"></div>
 	</div>
 
-	<div class="research-container" id="container">
+	<div class="research-container" id="container" tabindex="0" aria-label="Research viewport. Arrow keys pan, plus and minus zoom, zero resets.">
 		<div class="research-canvas" id="canvas">
 			[selected_coven.research_interface.generate_coven_connections_html()]
 			[selected_coven.research_interface.generate_coven_nodes_html()]
@@ -1335,8 +1537,9 @@
 	user << browse(generate_combined_html(research_html, in_preview = TRUE), "window=clan_menu")
 
 /datum/clan_menu_interface/Topic(href, href_list)
-	if(!user)
+	if(!is_current_user(usr))
 		return
+	user_covens = user.covens
 
 	switch(href_list["action"])
 		if("load_coven_tree")
@@ -1371,32 +1574,27 @@
 					load_coven_research_tree(current_coven)
 
 		if("select_coven_one")
-			var/datum/coven/typecasted = text2path(href_list["coven-type"])
-			if(!initial(typecasted.clan_restricted))
-				coven_one_preliminary = typecasted
+			select_coven(1, text2path(href_list["coven-type"]))
 			generate_interface()
 
 		if("select_coven_two")
-			var/datum/coven/typecasted = text2path(href_list["coven-type"])
-			if(!initial(typecasted.clan_restricted))
-				coven_two_preliminary = typecasted
+			select_coven(2, text2path(href_list["coven-type"]))
 			generate_interface()
 
 		if("select_coven_three")
-			var/datum/coven/typecasted = text2path(href_list["coven-type"])
-			if(!initial(typecasted.clan_restricted))
-				coven_three_preliminary = typecasted
+			select_coven(3, text2path(href_list["coven-type"]))
 			generate_interface()
 
 		if("select_covens")
-			if(user_clan.covens_to_select >= 1)
-				if(user_clan?.add_coven_to_clan(coven_one_preliminary, TRUE))
-					user_clan.covens_to_select--
-				if(user_clan?.add_coven_to_clan(coven_two_preliminary, TRUE))
-					user_clan.covens_to_select--
-				if(user_clan?.add_coven_to_clan(coven_three_preliminary, TRUE))
-					user_clan.covens_to_select--
-				generate_interface()
+			var/list/choices = list()
+			for(var/coven_path in list(coven_one_preliminary, coven_two_preliminary, coven_three_preliminary))
+				if(coven_path)
+					choices += coven_path
+			if(user_clan.select_covens(user, choices))
+				coven_one_preliminary = null
+				coven_two_preliminary = null
+				coven_three_preliminary = null
+			generate_interface()
 
 		if("edit_position", "submit_edit_position", "select_position", "create_position", "submit_create_position", "assign_member", "submit_assign_member", "remove_position")
 			if(hierarchy_interface)

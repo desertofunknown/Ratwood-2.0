@@ -8,6 +8,7 @@ export const BeastWrit = (props: {
   realm: string;
   crimes: string[];
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -25,6 +26,7 @@ export const BeastWrit = (props: {
     realm,
     crimes,
     reward,
+    deposit,
     levyRate,
     levyExempt,
     guildCutRate,
@@ -62,6 +64,7 @@ export const BeastWrit = (props: {
         Return it then to the Contract Ledger, and the bounty of{' '}
         <RewardClause
           reward={reward}
+          deposit={deposit}
           levyRate={levyRate}
           levyExempt={levyExempt}
           guildCutRate={guildCutRate}

@@ -1,0 +1,75 @@
+.StewardControl {
+  padding: 6px 0;
+  border-top: 1px solid #8b6d39;
+  color: #3b2813;
+  font:
+    14px/1.4 'Lora',
+    Georgia,
+    serif;
+  h2 {
+    margin: 0 0 8px;
+    font:
+      19px/1.3 'Pterra',
+      Georgia,
+      serif;
+  }
+  p {
+    margin: 6px 0;
+  }
+  &__rate {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+  }
+  &__rate > span {
+    margin-right: auto;
+  }
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  input {
+    width: 70px;
+  }
+  input,
+  button {
+    font: inherit;
+    color: inherit;
+    border: 1px solid #846b3e;
+    border-radius: 0;
+    padding: 3px 6px;
+    background: rgba(244, 231, 198, 0.35);
+  }
+  input:disabled,
+  button:disabled {
+    opacity: 0.55;
+  }
+  input:focus-visible,
+  button:focus-visible {
+    outline: 2px solid #6b3826;
+    outline-offset: 2px;
+  }
+}
+.StewardSequestration {
+  &__notice {
+    margin: 6px 0 10px;
+    padding: 6px 8px;
+    color: #8b2020;
+    border-left: 3px solid currentColor;
+    font:
+      14px/1.4 'Lora',
+      Georgia,
+      serif;
+  }
+  &__controls {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+  &__controls:disabled {
+    opacity: 0.65;
+  }
+}

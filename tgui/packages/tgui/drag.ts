@@ -6,6 +6,7 @@
 
 import { storage } from 'common/storage';
 import { vecAdd, vecMultiply, vecScale, vecSubtract } from 'common/vector';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import type { BooleanLike } from 'tgui-core/react';
 
 import { createLogger } from './logging';
@@ -24,6 +25,7 @@ let size: [number, number];
 
 // Set the window key
 export const setWindowKey = (key: string): void => {
+  cancelWindowInteraction();
   windowKey = key;
 };
 
@@ -98,15 +100,16 @@ export const touchRecents = (
 // Store window geometry in local storage
 const storeWindowGeometry = async () => {
   logger.log('storing geometry');
+  const key = windowKey;
   const geometry = {
     pos: getWindowPosition(),
     size: getWindowSize(),
   };
-  storage.set(windowKey, geometry);
+  storage.set(key, geometry);
   // Update the list of stored geometries
   const [geometries, trimmedKey] = touchRecents(
     (await storage.get('geometries')) || [],
-    windowKey,
+    key,
   );
   if (trimmedKey) {
     storage.remove(trimmedKey);
@@ -123,8 +126,23 @@ export const recallWindowGeometry = async (
     locked?: BooleanLike;
     scale?: BooleanLike;
   } = {},
+  isCancelled: () => boolean = () => false,
 ) => {
-  const geometry = options.fancy && (await storage.get(windowKey));
+  const key = windowKey;
+  let geometry;
+  if (options.fancy) {
+    try {
+      geometry = await storage.get(key);
+    } catch (error) {
+      // A failed preference read must not keep the window hidden.
+      logger.error('unable to recall geometry:', error);
+    }
+  }
+  // Both storage and the native screen offset may resolve after this UI closes.
+  await screenOffsetPromise;
+  if (isCancelled() || key !== windowKey) {
+    return false;
+  }
   if (geometry) {
     logger.log('recalled geometry:', geometry);
   }
@@ -147,8 +165,6 @@ export const recallWindowGeometry = async (
     document.documentElement.style.setProperty('--scaling-amount', null);
   }
 
-  // Wait until screen offset gets resolved
-  await screenOffsetPromise;
   const areaAvailable = getScreenSize();
   // Set window size
   if (size) {
@@ -175,6 +191,7 @@ export const recallWindowGeometry = async (
     );
     setWindowPosition(pos);
   }
+  return true;
 };
 
 // Setup draggable window
@@ -182,11 +199,15 @@ export const setupDrag = async () => {
   // Calculate screen offset caused by the windows taskbar
   const windowPosition = getWindowPosition();
 
-  screenOffsetPromise = Byond.winget(Byond.windowId, 'pos').then((pos) => [
-    pos.x - windowPosition[0],
-    pos.y - windowPosition[1],
-  ]);
-  screenOffset = await screenOffsetPromise;
+  const offsetPromise = Byond.winget(Byond.windowId, 'pos').then<
+    [number, number]
+  >((pos) => [pos.x - windowPosition[0], pos.y - windowPosition[1]]);
+  screenOffsetPromise = offsetPromise;
+  const offset = await offsetPromise;
+  if (screenOffsetPromise !== offsetPromise) {
+    return;
+  }
+  screenOffset = offset;
   logger.debug('screen offset', screenOffset);
 };
 
@@ -216,8 +237,33 @@ const constraintPosition = (
   return [relocated, nextPos];
 };
 
+type WindowMouseEvent = MouseEvent | ReactMouseEvent<HTMLElement>;
+
+// A pooled window can disappear without delivering a mouseup event.
+export const cancelWindowInteraction = () => {
+  document.removeEventListener('mousemove', dragMoveHandler);
+  document.removeEventListener('mouseup', dragEndHandler);
+  document.removeEventListener('mousemove', resizeMoveHandler);
+  document.removeEventListener('mouseup', resizeEndHandler);
+  window.removeEventListener('blur', finishWindowInteraction);
+  dragging = false;
+  resizing = false;
+};
+
+const finishWindowInteraction = () => {
+  const wasActive = dragging || resizing;
+  cancelWindowInteraction();
+  if (wasActive) {
+    storeWindowGeometry();
+  }
+};
+
 // Start dragging the window
-export const dragStartHandler = (event) => {
+export const dragStartHandler = (event: WindowMouseEvent) => {
+  if (event.button !== 0) {
+    return;
+  }
+  cancelWindowInteraction();
   logger.log('drag start');
   dragging = true;
   dragPointOffset = vecSubtract(
@@ -225,25 +271,32 @@ export const dragStartHandler = (event) => {
     getWindowPosition(),
   ) as [number, number];
   // Focus click target
-  (event.target as HTMLElement)?.focus();
+  if (event.target instanceof HTMLElement) {
+    event.target.focus();
+  }
   document.addEventListener('mousemove', dragMoveHandler);
   document.addEventListener('mouseup', dragEndHandler);
+  window.addEventListener('blur', finishWindowInteraction);
   dragMoveHandler(event);
 };
 
 // End dragging the window
-const dragEndHandler = (event) => {
+const dragEndHandler = (event: MouseEvent) => {
+  if (event.button !== 0) {
+    return;
+  }
   logger.log('drag end');
   dragMoveHandler(event);
-  document.removeEventListener('mousemove', dragMoveHandler);
-  document.removeEventListener('mouseup', dragEndHandler);
-  dragging = false;
-  storeWindowGeometry();
+  finishWindowInteraction();
 };
 
 // Move the window while dragging
-const dragMoveHandler = (event: MouseEvent) => {
+const dragMoveHandler = (event: WindowMouseEvent) => {
   if (!dragging) {
+    return;
+  }
+  if (event.type !== 'mouseup' && !(event.buttons & 1)) {
+    finishWindowInteraction();
     return;
   }
   event.preventDefault();
@@ -257,7 +310,11 @@ const dragMoveHandler = (event: MouseEvent) => {
 
 // Start resizing the window
 export const resizeStartHandler =
-  (x: number, y: number) => (event: MouseEvent) => {
+  (x: number, y: number) => (event: WindowMouseEvent) => {
+    if (event.button !== 0) {
+      return;
+    }
+    cancelWindowInteraction();
     resizeMatrix = [x, y];
     logger.log('resize start', resizeMatrix);
     resizing = true;
@@ -267,25 +324,32 @@ export const resizeStartHandler =
     ) as [number, number];
     initialSize = getWindowSize();
     // Focus click target
-    (event.target as HTMLElement)?.focus();
+    if (event.target instanceof HTMLElement) {
+      event.target.focus();
+    }
     document.addEventListener('mousemove', resizeMoveHandler);
     document.addEventListener('mouseup', resizeEndHandler);
+    window.addEventListener('blur', finishWindowInteraction);
     resizeMoveHandler(event);
   };
 
 // End resizing the window
 const resizeEndHandler = (event: MouseEvent) => {
+  if (event.button !== 0) {
+    return;
+  }
   logger.log('resize end', size);
   resizeMoveHandler(event);
-  document.removeEventListener('mousemove', resizeMoveHandler);
-  document.removeEventListener('mouseup', resizeEndHandler);
-  resizing = false;
-  storeWindowGeometry();
+  finishWindowInteraction();
 };
 
 // Move the window while resizing
-const resizeMoveHandler = (event: MouseEvent) => {
+const resizeMoveHandler = (event: WindowMouseEvent) => {
   if (!resizing) {
+    return;
+  }
+  if (event.type !== 'mouseup' && !(event.buttons & 1)) {
+    finishWindowInteraction();
     return;
   }
   event.preventDefault();

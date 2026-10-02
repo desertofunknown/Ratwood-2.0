@@ -4,12 +4,13 @@
  * @license MIT
  */
 
+import { useRef } from 'react';
 import { useDispatch, useSelector } from 'tgui/backend';
-import { Box, Button, Stack, Tabs } from 'tgui-core/components';
+import { Box, Button, Tabs } from 'tgui-core/components';
 
 import { openChatSettings } from '../settings/actions';
-import { addChatPage, changeChatPage } from './actions';
-import { selectChatPages, selectCurrentChatPage } from './selectors';
+import { addChatPage, changeChatPage, removeChatPage } from './actions';
+import { selectChatInitialized, selectChatPages, selectCurrentChatPage } from './selectors';
 
 function UnreadCountWidget({ value }: { value: number }) {
   return <Box className="UnreadCount">{Math.min(value, 99)}</Box>;
@@ -18,42 +19,61 @@ function UnreadCountWidget({ value }: { value: number }) {
 export function ChatTabs(props) {
   const pages = useSelector(selectChatPages);
   const currentPage = useSelector(selectCurrentChatPage);
+  const initialized = useSelector(selectChatInitialized);
   const dispatch = useDispatch();
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Stack align="center">
-      <Stack.Item>
-        <Tabs textAlign="center">
-          {pages.map((page) => (
+    <div className="ChatTabs" ref={tabsRef}>
+      <Tabs className="ChatTabs__list" textAlign="center">
+        {pages.map((page) => (
+          <div className="ChatTabs__page" key={page.id}>
             <Tabs.Tab
-              key={page.id}
-              selected={page === currentPage}
-              onClick={() =>
-                dispatch(
-                  changeChatPage({
-                    pageId: page.id,
-                  }),
-                )
-              }
+              selected={page.id === currentPage.id}
+              disabled={!initialized}
+              {...{ title: page.name }}
+              onClick={() => dispatch(changeChatPage({ pageId: page.id }))}
             >
               {page.name}
               {!page.hideUnreadCount && page.unreadCount > 0 && (
                 <UnreadCountWidget value={page.unreadCount} />
               )}
             </Tabs.Tab>
-          ))}
-        </Tabs>
-      </Stack.Item>
-      <Stack.Item>
-        <Button
-          color="transparent"
-          icon="plus"
-          onClick={() => {
-            dispatch(addChatPage());
-            dispatch(openChatSettings());
-          }}
-        />
-      </Stack.Item>
-    </Stack>
+            {!page.isMain && (
+              <button
+                type="button"
+                className="ChatTabs__close"
+                disabled={!initialized}
+                aria-label={`Close chat tab ${page.name}`}
+                title={`Close chat tab ${page.name}`}
+                onClick={() => {
+                  dispatch(removeChatPage({ pageId: page.id }));
+                  requestAnimationFrame(() => {
+                    tabsRef.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus();
+                  });
+                }}
+              >×</button>
+            )}
+          </div>
+        ))}
+      </Tabs>
+      <Button
+        className="ChatTabs__add"
+        color="transparent"
+        icon="plus"
+        disabled={!initialized}
+        tooltip={initialized ? 'New chat tab' : 'Loading chat tabs…'}
+        onClick={(event) => {
+          if ('repeat' in event && event.repeat) return;
+          dispatch(addChatPage());
+          dispatch(openChatSettings());
+          requestAnimationFrame(() => {
+            const name = document.getElementById('chat-tab-name') as HTMLInputElement | null;
+            name?.focus();
+            name?.select();
+          });
+        }}
+      />
+    </div>
   );
 }

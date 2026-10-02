@@ -92,6 +92,7 @@
 	var/datum/asset/simple/namespaced/common/common_asset = get_asset_datum(/datum/asset/simple/namespaced/common)
 	var/list/new_head_content = list()
 	new_head_content += "<link rel='stylesheet' type='text/css' href='[common_asset.get_url_mappings()["common.css"]]'>"
+	new_head_content += "<script type='text/javascript' src='[common_asset.get_url_mappings()["keyboard.js"]]'></script>"
 	for(var/file in stylesheets)
 		new_head_content += "<link rel='stylesheet' type='text/css' href='[SSassets.transport.get_asset_url(file)]'>"
 

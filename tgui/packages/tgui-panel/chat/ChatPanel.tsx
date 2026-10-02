@@ -27,7 +27,7 @@ export class ChatPanel extends Component<Props, State> {
     super(props);
     this.ref = createRef();
     this.state = {
-      scrollTracking: true,
+      scrollTracking: chatRenderer.scrollTracking,
     };
     this.handleScrollTrackingChange = (value) =>
       this.setState({
@@ -45,6 +45,7 @@ export class ChatPanel extends Component<Props, State> {
   }
 
   componentWillUnmount() {
+    chatRenderer.unmount(this.ref.current);
     chatRenderer.events.off(
       'scrollTrackingChanged',
       this.handleScrollTrackingChange,
@@ -52,9 +53,6 @@ export class ChatPanel extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps) {
-    requestAnimationFrame(() => {
-      chatRenderer.ensureScrollTracking();
-    });
     const shouldUpdateStyle =
       !prevProps || shallowDiffers(this.props, prevProps);
     if (shouldUpdateStyle) {
@@ -65,6 +63,7 @@ export class ChatPanel extends Component<Props, State> {
         'line-height': this.props.lineHeight,
       });
     }
+    chatRenderer.ensureScrollTracking();
   }
 
   render() {

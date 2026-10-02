@@ -80,7 +80,6 @@
 		read(usr)
 
 /obj/item/book/proc/read(mob/user)
-	user << browse_rsc('html/book.png')
 	if(!user.client || !user.hud_used)
 		return
 	if(!user.hud_used.reads)
@@ -96,15 +95,26 @@
 			to_chat(user, span_warning("This book is completely blank."))
 		if(curpage > pages.len)
 			curpage = 1
-//		var/curdat = pages[curpage]
-		var/dat = {"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">
-					<html><head><style type=\"text/css\">
-					body { background-image:url('book.png');background-repeat: repeat; }</style></head><body scroll=yes>"}
+		var/display_title = title ? title : name
+		var/list/content = list("<div class='book-reader'><div class='book-reader-heading'><div><div class='book-reader-eyebrow'>From the shelves of the realm</div><h1>[html_encode(display_title)]</h1></div><a class='book-reader-close' href='?src=[REF(src)];close=1'>Close</a></div><div class='book-reader-paper' tabindex='0' role='region' aria-label='Book contents' style=\"background-image:url('book.png')\"><div class='book-reader-column'>")
 		for(var/A in pages)
-			dat += A
-			dat += "<br>"
-		dat += "</body></html>"
-		user << browse(dat, "window=reading;size=1000x700;can_close=1;can_minimize=0;can_maximize=0;can_resize=1;titlebar=1;border=0")
+			var/page_html = istype(src, /obj/item/book/rogue/playerbook) ? sanitize_document_html(A) : A
+			if(!findtext(page_html, "<"))
+				content += "<div class='book-reader-prose'>[page_html]</div>"
+			else
+				content += page_html
+			content += "<br>"
+		if(!length(pages))
+			content += "<p class='book-reader-empty'>These pages have yet to be written.</p>"
+		content += "</div></div><div class='book-reader-footer'>Tab to the page, then use the arrow keys or Page Up / Page Down to scroll.</div></div>"
+		user << browse_rsc('html/book.png')
+		var/datum/browser/noclose/popup = new(user, "reading", null, 900, 700, src)
+		popup.set_window_options("can_close=1;can_minimize=0;can_maximize=0;can_resize=1;titlebar=1;border=0;")
+		popup.add_stylesheet("book_reader", 'html/browser/book_reader.css')
+		var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+		popup.add_head_content("<title>[html_encode(display_title)]</title><style>@font-face { font-family: 'Reader Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Reader Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Reader Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+		popup.set_content(content.Join())
+		popup.open(FALSE)
 		onclose(user, "reading", src)
 	else
 		return span_warning("You're too far away to read it.")

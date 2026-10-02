@@ -53,12 +53,13 @@
 	var/list/dat = list()
 	. = dat
 	if(!pref_species)
+		dat += "<p class='appearance-empty'>Choose a species to customize your appearance.</p>"
 		return
 	var/list/customizers = pref_species.customizers
 	if(!customizers)
+		dat += "<p class='appearance-empty'>No appearance choices are available for this species.</p>"
 		return
-	dat += "<table width='100%'>"
-	dat += "<td valign='top' width='33%'>"
+	dat += "<div class='appearance-cards'>"
 	var/iterated_customizers = 0
 	for(var/customizer_type in customizers)
 		var/datum/customizer/customizer = CUSTOMIZER(customizer_type)
@@ -82,8 +83,12 @@
 			else
 				customizer_link = ""
 
-		dat += "<table align='center'; width='100%'; height='100px'; style='background-color:#1c1313'><td width=100%>"
-		dat += "<a [customizer_link]>[customizer.name]</a>"
+		dat += "<div class='appearance-card'><h2>"
+		if(customizer_link)
+			dat += "<a [customizer_link]>[customizer.name]</a>"
+		else
+			dat += "[customizer.name]"
+		dat += "</h2>"
 		if(!entry.disabled)
 			var/choice_link
 			if(length(customizer.customizer_choices) > 1)
@@ -91,18 +96,22 @@
 			else
 				choice_link = "class='linkOff'"
 			if(length(customizer.customizer_choices) > 1)
-				dat += "<br><a [choice_link]>[choice.name]</a>"
+				dat += "<div class='appearance-choice'><span class='appearance-label'>Type</span> <a [choice_link]>[choice.name]</a></div>"
 
 			var/list/choice_list = choice.show_pref_choices(src, entry, customizer_type)
 			if(choice_list)
+				dat += "<div class='appearance-controls'>"
 				dat += choice_list
+				dat += "</div>"
 
-		dat += "</td></table><br>"
+		else
+			dat += "<p class='appearance-empty'>Disabled. Select the heading to enable.</p>"
+
+		dat += "</div>"
 		iterated_customizers += 1
-		if(iterated_customizers >= 5)
-			dat += "</td><td valign='top' width='33%'>"
-			iterated_customizers = 0
-	dat += "</td></table>"
+	dat += "</div>"
+	if(!iterated_customizers)
+		dat += "<p class='appearance-empty'>No appearance choices are available for this character.</p>"
 	return
 
 /// We dont associate the entries just to be safer for save/load, so we can't lookup easily and we do this.
@@ -193,9 +202,13 @@
 
 /datum/preferences/proc/ShowCustomizers(mob/user)
 	var/list/dat = list()
-	dat += "<style>span.color_holder_box{display: inline-block; width: 20px; height: 8px; border:1px solid #000; padding: 0px;}</style>"
+	dat += "<p class='appearance-intro'>Choose features, styles and colors for your character.</p>"
 	dat += print_customizers_page()
-	var/datum/browser/popup = new(user, "customization", "<div align='center'>Customization</div>", 630, 730)
+	var/datum/browser/popup = new(user, "customization", "Customization", 630, 730)
+	popup.add_stylesheet("appearance_editor", 'html/browser/appearance_editor.css')
+	var/datum/asset/simple/roguefonts/appearance_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = appearance_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
 

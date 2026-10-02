@@ -5,8 +5,8 @@
 	// Redirect to unified character customization menu
 	if(!loadout_menu)
 		loadout_menu = new(src)
-	loadout_menu.ui_interact(user)
 	loadout_menu.current_slot = slot
+	loadout_menu.ui_interact(user)
 
 /datum/preferences/proc/generate_loadout_html(mob/user)
 	var/total_triumphs = usr.get_triumphs()

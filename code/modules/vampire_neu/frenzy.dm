@@ -1,3 +1,8 @@
+/mob/living/carbon
+	var/frenzy_step_timer
+	var/frenzy_step_running = FALSE
+	var/turf/frenzy_path_target
+
 /mob/proc/dice_roll(dices_num = 1, hardness = 1, atom/rollviewer)
 	var/wins = 0
 	var/crits = 0
@@ -73,6 +78,8 @@
 	GLOB.frenzy_list += src
 
 /mob/living/carbon/proc/exit_frenzymod()
+	stop_frenzy_movement()
+	frenzy_target = null
 	if (!HAS_TRAIT(src, TRAIT_IN_FRENZY))
 		return
 
@@ -80,7 +87,6 @@
 	beast_release()
 	log_combat(src, src, "exits frenzy!")
 	GLOB.frenzy_list -= src
-	clear_frenzy_cache()
 	last_frenzy_check = world.time
 
 /mob/living/carbon/proc/can_frenzy_move()
@@ -112,7 +118,23 @@
 	return TRUE
 
 /mob/living/carbon/proc/frenzystep()
-	if(!isturf(loc) || !can_frenzy_move() || !frenzy_target || !HAS_TRAIT(src, TRAIT_IN_FRENZY))
+	if(frenzy_step_running)
+		return
+	frenzy_step_timer = null
+	frenzy_step_running = TRUE
+	perform_frenzy_step()
+	frenzy_step_running = FALSE
+	if(!QDELETED(src) && isturf(loc) && can_frenzy_move() && !QDELETED(frenzy_target) && HAS_TRAIT(src, TRAIT_IN_FRENZY))
+		frenzy_step_timer = addtimer(CALLBACK(src, PROC_REF(frenzystep)), total_multiplicative_slowdown(), TIMER_STOPPABLE)
+
+/mob/living/carbon/proc/stop_frenzy_movement()
+	if(frenzy_step_timer)
+		deltimer(frenzy_step_timer)
+		frenzy_step_timer = null
+	clear_frenzy_cache()
+
+/mob/living/carbon/proc/perform_frenzy_step()
+	if(QDELETED(src) || !isturf(loc) || !can_frenzy_move() || QDELETED(frenzy_target) || !HAS_TRAIT(src, TRAIT_IN_FRENZY))
 		return
 	if(m_intent == MOVE_INTENT_WALK)
 		toggle_move_intent(src)
@@ -154,9 +176,6 @@
 			frenzy_pathfind_to_target()
 			face_atom(frenzy_target)
 
-	// Continue the frenzy loop
-	addtimer(CALLBACK(src, PROC_REF(frenzystep)), total_multiplicative_slowdown())
-
 /mob/living/carbon/proc/can_frenzy_feed_on(atom/prey)
 	if(prey == src || !ishuman(prey))
 		return FALSE
@@ -188,37 +207,58 @@
 
 
 /mob/living/carbon/proc/handle_automated_frenzy()
-	if(isturf(loc))
-		frenzy_target = get_frenzy_targets()
-		if(frenzy_target)
-			frenzystep() // Start the frenzy stepping process
-		else
-			if(can_frenzy_move())
-				if(isturf(loc))
-					var/turf/T = get_step(loc, pick(NORTH, SOUTH, WEST, EAST))
-					face_atom(T)
-					Move(T)
+	if(!isturf(loc) || !can_frenzy_move() || !HAS_TRAIT(src, TRAIT_IN_FRENZY))
+		stop_frenzy_movement()
+		return
+	var/atom/new_target = get_frenzy_targets()
+	if(new_target != frenzy_target)
+		clear_frenzy_cache()
+	frenzy_target = new_target
+	if(frenzy_target)
+		if(!frenzy_step_timer && !frenzy_step_running)
+			frenzystep()
+		return
+	stop_frenzy_movement()
+	if(!frenzy_step_running)
+		var/turf/T = get_step(loc, pick(NORTH, SOUTH, WEST, EAST))
+		face_atom(T)
+		Move(T)
 
 /mob/living/carbon/proc/frenzy_pathfind_to_target()
-	if(!frenzy_target)
+	if(QDELETED(frenzy_target))
 		return
 
 	var/turf/current_pos = get_turf(src)
+	var/atom/path_target = frenzy_target
 	var/turf/target_pos = get_turf(frenzy_target)
+	if(!current_pos || !target_pos)
+		return
 
-	// Only regenerate path if we've moved to a different position or don't have a cached path
-	if(!frenzy_cached_path || frenzy_last_pos != current_pos)
-		frenzy_cached_path = get_path_to(src, target_pos, TYPE_PROC_REF(/turf, Heuristic_cardinal_3d), 33, 250, 1)
-		frenzy_last_pos = current_pos
+	// Keep the remaining path while both its destination and our expected position agree.
+	if(!length(frenzy_cached_path) || frenzy_last_pos != current_pos || frenzy_path_target != target_pos)
+		var/list/new_path = get_path_to(src, target_pos, TYPE_PROC_REF(/turf, Heuristic_cardinal_3d), 33, 250, 1)
+		// Path generation may yield while waiting for a pathfinder slot.
+		if(QDELETED(src) || !HAS_TRAIT(src, TRAIT_IN_FRENZY) || !can_frenzy_move() || !isturf(loc) || get_turf(src) != current_pos || QDELETED(path_target) || frenzy_target != path_target || get_turf(path_target) != target_pos)
+			return
+		frenzy_cached_path = new_path
+		frenzy_path_target = target_pos
 
+	while(length(frenzy_cached_path) && frenzy_cached_path[1] == current_pos)
+		frenzy_cached_path.Cut(1, 2)
 	if(length(frenzy_cached_path))
 		walk(src, 0) // Stop any existing walk
-		step_to(src, frenzy_cached_path[1], 0)
-		frenzy_cached_path.Cut(1, 2)
+		var/turf/next_step = frenzy_cached_path[1]
+		step_to(src, next_step, 0)
+		if(get_turf(src) == next_step)
+			frenzy_cached_path.Cut(1, 2)
+		else
+			clear_frenzy_cache()
 	else
 		// Fallback to direct pathfinding if cached path fails
 		step_to(src, frenzy_target, 0)
+	frenzy_last_pos = get_turf(src)
 
 /mob/living/carbon/proc/clear_frenzy_cache()
 	frenzy_cached_path = null
 	frenzy_last_pos = null
+	frenzy_path_target = null

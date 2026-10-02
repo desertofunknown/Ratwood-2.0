@@ -9,6 +9,7 @@ export const CarriageWrit = (props: {
   destination?: string | null;
   deliveryItem?: string | null;
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -24,6 +25,7 @@ export const CarriageWrit = (props: {
     destination,
     deliveryItem,
     reward,
+    deposit,
     levyRate,
     levyExempt,
     guildCutRate,
@@ -51,6 +53,7 @@ export const CarriageWrit = (props: {
         bounty of{' '}
         <RewardClause
           reward={reward}
+          deposit={deposit}
           levyRate={levyRate}
           levyExempt={levyExempt}
           guildCutRate={guildCutRate}

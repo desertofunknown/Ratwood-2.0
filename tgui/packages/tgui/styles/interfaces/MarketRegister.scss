@@ -1,0 +1,184 @@
+:root .MarketRegister {
+  --market-ink: var(--p-ink, #281a07);
+  --market-muted: var(--p-ink-soft, #4a3416);
+  --market-rule: var(--p-bg-shadow, #8a7444);
+  --market-paper: var(--p-bg, #c2ad7c);
+  --market-accent: var(--p-seal-amber, #7a5616);
+  --market-good: var(--p-seal-green, #3b6a35);
+  --market-bad: var(--p-seal-red, #8b2020);
+  --market-warm: #875116;
+  --market-cool: var(--p-seal-blue, #2e4a78);
+
+  min-width: 0;
+  color: var(--market-ink);
+  font:
+    13px/1.45 'Lora',
+    Georgia,
+    serif;
+
+  h2 {
+    margin: 0;
+    font:
+      18px/1.3 'Pterra',
+      Georgia,
+      serif;
+    color: var(--market-ink);
+  }
+  p {
+    margin: 5px 0;
+  }
+  &__header {
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--market-rule);
+  }
+  &__dispatch {
+    color: var(--market-accent);
+    font-style: italic;
+  }
+  &__muted {
+    color: var(--market-muted);
+  }
+  &__accent {
+    color: var(--market-accent);
+  }
+  &__good {
+    color: var(--market-good);
+  }
+  &__bad {
+    color: var(--market-bad);
+  }
+  &__warm {
+    color: var(--market-warm);
+  }
+  &__cool {
+    color: var(--market-cool);
+  }
+  &__disclosures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    padding: 5px 0;
+  }
+  &__disclosures > button {
+    padding: 3px 0;
+    min-height: 28px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--market-accent);
+    font: inherit;
+    text-align: left;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  &__disclosures > button:focus-visible,
+  &__matrixScroll:focus-visible {
+    outline: 2px solid var(--market-accent);
+    outline-offset: 2px;
+  }
+  &__notes {
+    padding: 3px 0 7px;
+    border-bottom: 1px solid var(--market-rule);
+  }
+  &__ledger,
+  &__matrix {
+    width: 100%;
+    border-collapse: collapse;
+    color: inherit;
+    font: inherit;
+  }
+  &__ledger caption {
+    padding: 5px 0;
+    text-align: left;
+    font:
+      16px/1.3 'Pterra',
+      Georgia,
+      serif;
+  }
+  &__ledger th,
+  &__ledger td,
+  &__matrix th,
+  &__matrix td {
+    padding: 5px 7px;
+    border-bottom: 1px solid var(--market-rule);
+    vertical-align: top;
+  }
+  &__ledger thead th,
+  &__matrix thead th {
+    color: var(--market-muted);
+    font-size: 12px;
+    font-weight: normal;
+  }
+  &__ledger th:first-child {
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  &__ledger th:nth-child(n + 2):nth-child(-n + 4),
+  &__ledger td:nth-child(n + 2):nth-child(-n + 4) {
+    width: 1%;
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  &__ledger th:last-child {
+    text-align: left;
+  }
+  &__status {
+    width: 120px;
+    font-size: 12px;
+  }
+  &__status span {
+    display: block;
+  }
+  &__key {
+    color: var(--market-muted);
+    font-size: 12px;
+  }
+  &__matrixScroll {
+    max-width: 100%;
+    overflow-x: auto;
+    margin-top: 6px;
+  }
+  &__matrix {
+    table-layout: fixed;
+    width: max-content;
+    min-width: 100%;
+  }
+  &__matrix th,
+  &__matrix td {
+    width: 138px;
+    min-width: 138px;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+  &__matrix th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--market-paper);
+    text-align: left;
+  }
+  @media (max-width: 560px) {
+    &__ledger th,
+    &__ledger td {
+      padding: 4px;
+    }
+    &__status {
+      width: 90px;
+    }
+  }
+}
+
+:root .MarketRegisterTheme--dark .MarketRegister {
+  --market-ink: #ded1c2;
+  --market-muted: #b9a6a0;
+  --market-rule: #594046;
+  --market-paper: #1b1114;
+  --market-accent: #dfc08b;
+  --market-good: #b6c59a;
+  --market-bad: #df9c89;
+  --market-warm: #d7b077;
+  --market-cool: #adc0d4;
+  padding: 8px 12px 10px;
+  background: var(--market-paper);
+}

@@ -126,7 +126,7 @@ passerby may peruse the board, examine a worker's headshot, or send them an offe
 			"key" = advert_key,
 			"name" = worker.real_name,
 			"status" = advert_data["status"] || ROSEWALL_STATUS_AVAILABLE,
-			"message" = advert_data["message"] || "",
+			"message" = html_decode(advert_data["message"] || ""),
 			"advjob" = worker.advjob || "",
 		))
 	data["adverts"] = adverts
@@ -163,17 +163,25 @@ passerby may peruse the board, examine a worker's headshot, or send them an offe
 		if("edit_advert")
 			if(!is_bathhouse_worker(H))
 				return
-			var/list/advert_data = rosewall_adverts[H.real_name]
-			if(!advert_data)
-				advert_data = list("status" = ROSEWALL_STATUS_AVAILABLE, "mob" = H, "message" = "")
-				rosewall_adverts[H.real_name] = advert_data
-			var/current_msg = advert_data["message"] || ""
-			var/new_msg = stripped_input(H, "Compose my advert for the Rosewall (max [message_char_limit] characters):", "Rosewall Advert", current_msg, message_char_limit)
+			var/advert_key = H.real_name
+			var/list/advert_data = rosewall_adverts[advert_key]
+			var/mob/advert_owner = advert_data ? advert_data["mob"] : null
+			var/current_msg = advert_data ? (advert_data["message"] || "") : ""
+			var/new_msg = tgui_input_text(H, "Compose my advert for the Rosewall (max [message_char_limit] characters):", "Rosewall Advert", html_decode(current_msg), max_length = message_char_limit, encode = FALSE)
 			if(new_msg == null)
 				return
-			if(!Adjacent(H))
+			new_msg = trim(html_encode(new_msg), message_char_limit)
+			if(QDELETED(src) || QDELETED(H) || !is_bathhouse_worker(H))
+				return
+			if(!H.canUseTopic(src, BE_CLOSE))
 				to_chat(H, span_warning("I moved too far from the board."))
 				return
+			if(H.real_name != advert_key || rosewall_adverts[advert_key] != advert_data || (advert_data && (advert_data["mob"] != advert_owner || (advert_data["message"] || "") != current_msg)))
+				to_chat(H, span_warning("My advert changed while I was writing. I should open it again."))
+				return
+			if(!advert_data)
+				advert_data = list("status" = ROSEWALL_STATUS_AVAILABLE, "mob" = H)
+				rosewall_adverts[advert_key] = advert_data
 			advert_data["message"] = new_msg
 			advert_data["mob"] = H
 			to_chat(H, span_notice("My advert has been pinned to the Rosewall."))
@@ -248,19 +256,35 @@ passerby may peruse the board, examine a worker's headshot, or send them an offe
 	if(!Adjacent(sender))
 		to_chat(sender, span_warning("I need to stay close to the board."))
 		return
-	var/message = stripped_input(sender, "What offer do I wish to send? (Max [message_char_limit] characters)", "Rosewall Offer", "", message_char_limit)
+	var/message = tgui_input_text(sender, "What offer do I wish to send? (Max [message_char_limit] characters)", "Rosewall Offer", "", max_length = message_char_limit, encode = FALSE)
 	if(!message)
 		return
-	if(!Adjacent(sender))
+	message = trim(html_encode(message), message_char_limit)
+	if(!message)
+		return
+	if(QDELETED(src) || QDELETED(sender))
+		return
+	if(!sender.canUseTopic(src, BE_CLOSE))
 		to_chat(sender, span_warning("I moved too far from the board."))
+		return
+	// The advert and recipient may have changed while the offer was being composed.
+	if(rosewall_adverts[target_key] != advert_data || advert_data["mob"] != worker)
+		to_chat(sender, span_warning("That advert is no longer pinned here."))
+		return
+	if(QDELETED(worker) || worker.stat == DEAD || !worker.ckey)
+		to_chat(sender, span_warning("My offer cannot be delivered for some reason."))
+		return
+	if(worker == sender || advert_data["status"] == ROSEWALL_STATUS_DND)
+		to_chat(sender, span_warning("[worker.real_name] is not to be disturbed."))
+		return
+	if(sender_cooldowns[cooldown_key] && sender_cooldowns[cooldown_key] + offer_cooldown > world.time)
+		to_chat(sender, span_warning("I have already sent an offer. I must wait before sending another."))
 		return
 	sender_cooldowns[cooldown_key] = world.time
 	response_id_counter++
 	var/response_id = "rosewall_[worker.real_name]_[world.time]_[response_id_counter]"
-	if(!QDELETED(worker) && !QDELETED(sender))
-		// Tracked by expiry time rather than an addtimer bound to this board, so the
-		// entry cannot leak (holding refs to both mobs) if this board is destroyed.
-		pending_offer_responses[response_id] = list("responder" = worker, "sender" = sender, "expires" = world.time + response_timeout)
+	// Expiry is independent of the board's lifetime.
+	pending_offer_responses[response_id] = list("responder" = worker, "sender" = sender, "expires" = world.time + response_timeout)
 	to_chat(worker, span_boldnotice("A perfumed slip finds its way to me from the Rosewall: <i>[message]</i> - [sender.real_name]<br><a href='?src=[REF(src)];offer_response=yae;response_id=[response_id]'>\[YAE\]</a> | <a href='?src=[REF(src)];offer_response=nae;response_id=[response_id]'>\[NAE\]</a>"))
 	to_chat(sender, span_notice("My offer has been sent to [worker.real_name]."))
 	playsound(worker.loc, 'sound/misc/notice (2).ogg', 100, FALSE, -1)

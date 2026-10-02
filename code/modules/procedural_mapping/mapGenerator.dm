@@ -43,7 +43,10 @@
 
 	if(replace)
 		undefineRegion()
-	map |= block(Start,End)
+	if(length(map))
+		map |= block(Start,End)
+	else
+		map = block(Start,End)
 	return map
 
 

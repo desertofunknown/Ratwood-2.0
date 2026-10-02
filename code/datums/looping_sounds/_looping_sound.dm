@@ -209,12 +209,16 @@ GLOBAL_LIST_EMPTY(created_sound_groups)
 			mob.playsound_local(mob, soundfile, volume, vary, frequency, falloff, repeat = src, channel = channel)
 		return
 	var/list/R = playsound(parent, soundfile, volume, vary, extra_range, falloff, frequency, channel, ignore_walls = ignore_walls, repeat = src)
+	// Resolve membership once, rather than scanning every recipient for every retained listener.
+	var/list/heard_by = list()
+	for(var/mob/recipient as anything in R)
+		heard_by[recipient] = TRUE
 	for(var/datum/weakref/listener_ref in thingshearing)
 		var/mob/M = listener_ref.resolve()
 		if(!M?.client)
 			thingshearing -= listener_ref
 			continue
-		if(!(M in R) || M.IsSleeping())// they are out of range
+		if(!heard_by[M] || M.IsSleeping())// they are out of range
 			var/list/L = M.client.played_loops[src]
 			if(L)
 				var/sound/SD = L["SOUND"]

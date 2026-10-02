@@ -483,6 +483,8 @@ SUBSYSTEM_DEF(job)
 		for(var/mob/dead/new_player/player in unassigned)
 			if(PopcapReached())
 				RejectPlayer(player)
+				if(!(player in unassigned))
+					continue
 
 			// Loop through all jobs
 			for(var/datum/job/job in shuffledoccupations) // SHUFFLE ME BABY
@@ -625,7 +627,7 @@ SUBSYSTEM_DEF(job)
 				if(length(job.virtue_restrictions) && ((player.client.prefs.virtue.type in job.virtue_restrictions) || (player.client.prefs.virtuetwo?.type in job.virtue_restrictions)))
 					continue
 
-				if(length(job.vice_restrictions) && (player.client.prefs.charflaw.type in job.vice_restrictions))
+				if(has_restricted_vice(player.client.prefs, job))
 					continue
 
 				if(job.plevel_req > player.client.patreonlevel())
@@ -986,22 +988,14 @@ SUBSYSTEM_DEF(job)
 	if(!length(job.vice_restrictions))
 		return FALSE
 
-	// Check new vice system (vice1-vice6)
-	if(prefs.vice1?.type in job.vice_restrictions)
-		return TRUE
-	if(prefs.vice2?.type in job.vice_restrictions)
-		return TRUE
-	if(prefs.vice3?.type in job.vice_restrictions)
-		return TRUE
-	if(prefs.vice4?.type in job.vice_restrictions)
-		return TRUE
-	if(prefs.vice5?.type in job.vice_restrictions)
-		return TRUE
-	if(prefs.vice6?.type in job.vice_restrictions)
-		return TRUE
-
-	// Legacy charflaw check
-	if(prefs.charflaw?.type in job.vice_restrictions)
+	var/has_modern_vices = FALSE
+	for(var/i in 1 to 6)
+		var/datum/charflaw/vice = prefs.vars["vice[i]"]
+		if(vice)
+			has_modern_vices = TRUE
+			if(vice.type in job.vice_restrictions)
+				return TRUE
+	if(!has_modern_vices && (prefs.charflaw?.type in job.vice_restrictions))
 		return TRUE
 
 	return FALSE

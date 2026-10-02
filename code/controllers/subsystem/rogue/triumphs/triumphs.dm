@@ -339,22 +339,30 @@ SUBSYSTEM_DEF(triumphs)
 */
 // Display leaderboard browser popup
 /datum/controller/subsystem/triumphs/proc/show_triumph_leaderboard(client/C)
-
-	var/webpagu = "<B>CHAMPIONS OF THE VALE</B><br>"
-	webpagu += "Current Season: [GLOB.triumph_wipe_season]"
-	webpagu += "<hr><br>"
+	if(!C?.mob)
+		return
+	var/webpagu = "<div class='triumph-leaderboard'><h1>Champions of the Vale</h1>"
+	webpagu += "<p class='triumph-season'>Current Season: [html_encode("[GLOB.triumph_wipe_season]")]</p>"
 
 	if(triumph_leaderboard.len)
+		webpagu += "<table><thead><tr><th scope='col' class='triumph-rank'>Rank</th><th scope='col'>Name</th><th scope='col' class='triumph-total'>Triumphs</th></tr></thead><tbody>"
 		var/position_number = 0
 		for(var/key in triumph_leaderboard)
 			position_number++
-			webpagu += "[position_number]. [key] - [triumph_leaderboard[key]]<br>"
+			webpagu += "<tr><td class='triumph-rank'>[position_number]</td><td>[html_encode("[key]")]</td><td class='triumph-total'>[html_encode("[triumph_leaderboard[key]]")]</td></tr>"
 			if(position_number >= triumph_leaderboard_positions_tracked)
 				break
+		webpagu += "</tbody></table>"
 	else
-		webpagu += "The hall of triumphs is quite empty, Yes?"
+		webpagu += "<p class='triumph-empty'>The hall of triumphs is quite empty, Yes?</p>"
+	webpagu += "</div>"
 
-	C << browse(webpagu, "window=triumph_leaderboard;size=300x500")
+	var/datum/browser/noclose/popup = new(C.mob, "triumph_leaderboard", null, 300, 500)
+	popup.add_stylesheet("triumph_leaderboard", 'html/browser/triumph_leaderboard.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<title>Champions of the Vale</title><style>@font-face { font-family: 'Triumph Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Triumph Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Triumph Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
+	popup.set_content(webpagu)
+	popup.open()
 
 // PREP THE BOARD
 /datum/controller/subsystem/triumphs/proc/prep_the_triumphs_leaderboard()
@@ -403,7 +411,7 @@ SUBSYSTEM_DEF(triumphs)
 					sorted_list[cache_key] = triumph_leaderboard[cache_key]
 					break
 
-			if(sorted_list.Find(cache_key))
-				continue
+			if(!sorted_list.Find(cache_key))
+				sorted_list[cache_key] = triumph_leaderboard[cache_key]
 
 		triumph_leaderboard = sorted_list

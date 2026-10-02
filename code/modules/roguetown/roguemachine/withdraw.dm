@@ -78,32 +78,7 @@
 	data["title"] = "Vomitorium"
 	data["subtitle"] = "Insert mammons, then withdraw goods from the local stockpile or import from afar."
 
-	var/list/rows = list()
-	for(var/datum/roguestock/stockpile/R in SStreasury.stockpile_datums)
-		R.refresh_auto_price()
-		var/list/shortage = R.get_shortage_progress()
-		var/export_unit_price = 0
-		if(R.importexport_amt > 0)
-			export_unit_price = round(R.get_export_price() / R.importexport_amt)
-		rows += list(list(
-			"ref" = "\ref[R]",
-			"name" = R.name,
-			"desc" = R.desc,
-			"category" = R.category,
-			"amount" = R.stockpile_amount,
-			"limit" = R.stockpile_limit,
-			"withdraw_price" = R.withdraw_price,
-			"deposit_price" = R.payout_price,
-			"export_price" = export_unit_price,
-			"import_price" = withdraw_tab.direct_import_price(R),
-			"withdraw_disabled" = R.withdraw_disabled ? TRUE : FALSE,
-			"accept_enabled" = R.accept_toggle_enabled ? TRUE : FALSE,
-			"event_tag" = R.get_event_label(),
-			"shortage_progress" = shortage ? shortage["progress"] : 0,
-			"shortage_target" = shortage ? shortage["target"] : 0,
-			"shortage_affected" = shortage ? shortage["affected"] : "",
-		))
-	data["stocks"] = rows
+	data["stocks"] = withdraw_tab.get_stock_rows(include_export_prices = FALSE)
 	data["bounties"] = list()
 	return data
 

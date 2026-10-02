@@ -95,12 +95,16 @@
 
 /datum/world_topic/server_hop
 	keyword = "server_hop"
+	require_comms_key = TRUE
 
 /datum/world_topic/server_hop/Run(list/input)
 	var/expected_key = input[keyword]
 	for(var/mob/dead/observer/O in GLOB.player_list)
-		if(O.key == expected_key)
-			new /atom/movable/screen/splash(O.client, TRUE)
+		if(O.key == expected_key && O.client)
+			for(var/atom/movable/screen/splash/server_hop/old_splash in O.client.screen)
+				qdel(old_splash)
+			var/atom/movable/screen/splash/server_hop/splash = new(O.client, TRUE)
+			splash.Fade(TRUE)
 			break
 
 /datum/world_topic/adminmsg

@@ -95,9 +95,9 @@ const BonusPayOption = (props: {
     onClick={props.onClick}
     style={{
       padding: '3px 10px',
-      border: `1px solid ${props.active ? '#7a5616' : '#8a7250'}`,
-      background: props.active ? 'rgba(200,170,100,0.25)' : 'transparent',
-      color: props.active ? '#3a2a14' : '#6b4e2a',
+      border: `1px solid ${props.active ? 'var(--p-bg-shadow)' : 'var(--p-ink-soft)'}`,
+      background: props.active ? 'var(--p-tab-active-bg)' : 'transparent',
+      color: props.active ? 'var(--p-ink)' : 'var(--p-ink-soft)',
       fontWeight: props.active ? 'bold' : 'normal',
       cursor: 'pointer',
       borderRadius: '2px',
@@ -109,7 +109,9 @@ const BonusPayOption = (props: {
     }}
   >
     <span>{props.label}</span>
-    <span style={{ fontSize: '10px', color: '#8a7250' }}>{props.sublabel}</span>
+    <span style={{ fontSize: '10px', color: 'var(--p-ink-soft)' }}>
+      {props.sublabel}
+    </span>
   </button>
 );
 
@@ -152,8 +154,10 @@ const SubTabBar = (props: {
   return (
     <div className="ContractLedger__InnkeeperSubTabBar">
       {tabs.map((t) => (
-        <div
+        <button
+          type="button"
           key={t.id}
+          aria-pressed={t.id === props.active}
           className={
             'ContractLedger__InnkeeperSubTab' +
             (t.id === props.active
@@ -163,7 +167,7 @@ const SubTabBar = (props: {
           onClick={() => props.onSelect(t.id)}
         >
           {t.label}
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -223,7 +227,7 @@ const LevyStampRow = (props: {
     <label
       style={
         props.aldermanActing
-          ? { textDecoration: 'line-through', color: '#8a7250' }
+          ? { textDecoration: 'line-through', color: 'var(--p-ink-soft)' }
           : undefined
       }
       title={
@@ -279,12 +283,16 @@ const ComposeView = () => {
   const bonusPayEligible = funding !== 'directive';
   const effectiveLevel = bonusPayEligible ? bonusPayLevel : 0;
   const bonusMult =
-    effectiveLevel === 2 ? bonusFullMult : effectiveLevel === 1 ? bonusLightMult : 1;
-  const scaledCost = effectiveLevel !== 0 ? Math.round(cost * bonusMult) : cost;
+    effectiveLevel === 2
+      ? bonusFullMult
+      : effectiveLevel === 1
+        ? bonusLightMult
+        : 1;
+  const scaledCost = effectiveLevel !== 0 ? Math.floor(cost * bonusMult) : cost;
   const effectiveCost = funding === 'directive' ? 0 : scaledCost;
 
   // If the currently-selected funding disappears (pledge repealed, quota spent), fall back.
-  if (funding === 'pledge' && !pledgeAvailable) {
+  if (funding === 'pledge' && !pledgeAvailable && !aldermanActing) {
     setFunding('crown');
   }
   if (funding === 'directive' && directivesRemaining <= 0) {
@@ -307,13 +315,15 @@ const ComposeView = () => {
   };
 
   const fundingDisabledReason =
-    funding === 'pledge' && data.pledge_balance < scaledCost
-      ? `Insufficient Pledge (need ${coin(scaledCost)}, have ${coin(data.pledge_balance)}).`
-      : funding === 'crown' && data.crown_purse_balance < scaledCost
-        ? `Insufficient Crown's Purse (need ${coin(scaledCost)}, have ${coin(data.crown_purse_balance)}).`
-        : funding === 'directive' && directivesRemaining <= 0
-          ? "Today's directive quota is spent."
-          : undefined;
+    funding === 'pledge' && !pledgeAvailable
+      ? 'The Burgher Pledge is unavailable.'
+      : funding === 'pledge' && data.pledge_balance < scaledCost
+        ? `Insufficient Pledge (need ${coin(scaledCost)}, have ${coin(data.pledge_balance)}).`
+        : funding === 'crown' && data.crown_purse_balance < scaledCost
+          ? `Insufficient Crown's Purse (need ${coin(scaledCost)}, have ${coin(data.crown_purse_balance)}).`
+          : funding === 'directive' && directivesRemaining <= 0
+            ? "Today's directive quota is spent."
+            : undefined;
 
   const disabledReason = inflight
     ? 'Drafting...'
@@ -417,7 +427,7 @@ const ComposeView = () => {
             <div
               style={{
                 fontSize: '12px',
-                color: '#6b4e2a',
+                color: 'var(--p-ink-soft)',
                 padding: '2px 0 6px 0',
                 marginLeft: '6px',
               }}
@@ -453,7 +463,7 @@ const ComposeView = () => {
           <label
             style={
               aldermanActing
-                ? { textDecoration: 'line-through', color: '#8a7250' }
+                ? { textDecoration: 'line-through', color: 'var(--p-ink-soft)' }
                 : undefined
             }
             title={
@@ -474,7 +484,7 @@ const ComposeView = () => {
           <label
             style={
               aldermanActing
-                ? { textDecoration: 'line-through', color: '#8a7250' }
+                ? { textDecoration: 'line-through', color: 'var(--p-ink-soft)' }
                 : undefined
             }
             title={
@@ -490,16 +500,17 @@ const ComposeView = () => {
               disabled={aldermanActing || directivesRemaining <= 0}
               onChange={() => setFunding('directive')}
             />
-            &nbsp;Request ({directivesRemaining}/{data.directives_per_day ?? 0} left)
+            &nbsp;Request ({directivesRemaining}/{data.directives_per_day ?? 0}{' '}
+            left)
           </label>
         </div>
       </FormRow>
 
       {funding === 'directive' && (
         <div className="ContractLedger__InnkeeperFlavor">
-          A Request calls upon someone to
-          answer out of duty. No coin changes hands; the scroll is drawn to
-          your hand and must be given directly to whoever will honour it.
+          A Request calls upon someone to answer out of duty. No coin changes
+          hands; the scroll is drawn to your hand and must be given directly to
+          whoever will honour it.
         </div>
       )}
 
@@ -597,7 +608,9 @@ const ComposeView = () => {
             onClick={() => act('recall_blockade_writ', { region })}
           >
             Recall Writ
-            {recallEntry.refund > 0 ? ` (refund ${coin(recallEntry.refund)})` : ''}
+            {recallEntry.refund > 0
+              ? ` (refund ${coin(recallEntry.refund)})`
+              : ''}
           </button>
         )}
       </div>
@@ -637,7 +650,7 @@ export const StewardDefensePanel = () => {
         {!data.pledge_golden_active && (
           <div
             className="ContractLedger__InnkeeperBalanceFormula"
-            style={{ color: '#c84' }}
+            style={{ color: 'var(--p-seal-amber)' }}
           >
             Golden Bull suspended - the Pledge does not refill.
           </div>

@@ -1,0 +1,121 @@
+.TaxRoll {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 8px 12px 12px;
+  color: var(--p-ink);
+  font:
+    13px/1.4 'Lora',
+    Georgia,
+    serif;
+
+  &__column {
+    min-width: 0;
+  }
+  h2 {
+    margin: 0 0 7px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+    font:
+      20px/1.3 'Pterra',
+      Georgia,
+      serif;
+  }
+  p {
+    margin: 0 0 8px;
+  }
+  &__rate {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  &__rate > span:first-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  &__amount {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  input,
+  button {
+    border: 1px solid var(--p-bg-shadow);
+    border-radius: 0;
+    padding: 3px 6px;
+    color: inherit;
+    background: var(--p-button-bg);
+    font: inherit;
+  }
+  input {
+    width: 68px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  input[aria-invalid='true'] {
+    border-color: var(--p-seal-red);
+  }
+  input:disabled,
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  button {
+    cursor: pointer;
+  }
+  input:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--p-seal-blue);
+    outline-offset: 1px;
+  }
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 9px;
+  }
+  &__projection {
+    margin-bottom: 8px;
+    padding: 6px 0;
+    border-top: 1px solid var(--p-bg-shadow);
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  &__projection p {
+    margin: 4px 0 0;
+  }
+  &__projectionHeading,
+  &__totals {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 3px 10px;
+  }
+  &__totals {
+    margin-top: 3px;
+  }
+  &__muted {
+    color: var(--p-ink-soft);
+  }
+  &__locked,
+  &__error,
+  &__bad {
+    color: var(--p-seal-red);
+  }
+  &__error {
+    margin-top: 6px !important;
+  }
+  &__good {
+    color: var(--p-seal-green);
+  }
+}
+@media (max-width: 620px) {
+  .TaxRoll {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+}

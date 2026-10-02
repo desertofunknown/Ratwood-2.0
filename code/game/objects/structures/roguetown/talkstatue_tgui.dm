@@ -28,35 +28,47 @@
 	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
 	log_admin_private("[key_name(user)] set statue status to [new_status]")
 
-/obj/structure/roguemachine/talkstatue/mercenary/proc/edit_role_message(mob/living/carbon/human/user, list/registry, default_state)
-	var/list/data = registry[user.real_name]
-	if(!data)
-		data = list("status" = default_state, "mob" = user, "message" = "")
-		registry[user.real_name] = data
-	var/current_msg = data["message"] || ""
-	var/new_msg = stripped_input(user, "Enter my custom message (max [message_char_limit] characters):", "Statue Message", current_msg, message_char_limit)
+/obj/structure/roguemachine/talkstatue/mercenary/proc/edit_role_message(mob/living/carbon/human/user, list/registry, default_state, required_role)
+	var/registry_key = user.real_name
+	var/list/data = registry[registry_key]
+	var/current_msg = data ? data["message"] : ""
+	var/mob/current_owner = data ? data["mob"] : null
+	var/new_msg = tgui_input_text(user, "Enter my custom message (max [message_char_limit] characters):", "Statue Message", html_decode(current_msg), max_length = message_char_limit, encode = FALSE)
 	if(new_msg == null)
 		return
-	if(!Adjacent(user))
-		to_chat(user, span_warning("I moved too far from the statue."))
+	if(QDELETED(src) || QDELETED(user) || GLOB.human_adjacent_state.can_use_topic(src, user) != UI_INTERACTIVE)
 		return
+	if(required_role == "Wretch" ? role_title(user) != required_role : !role_matches(user, required_role))
+		return
+	if(user.real_name != registry_key || registry[registry_key] != data || (data && (data["mob"] != current_owner || data["message"] != current_msg)))
+		to_chat(user, span_warning("The registry changed while I was writing. Open the message again."))
+		return
+	new_msg = trim(html_encode(new_msg), message_char_limit)
+	if(!data)
+		data = list("status" = default_state, "mob" = user, "message" = "")
+		registry[registry_key] = data
 	data["message"] = new_msg
 	to_chat(user, span_notice("My statue message has been updated."))
 	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
 	log_admin_private("[key_name(user)] set statue custom message: \"[new_msg]\"")
 
 /obj/structure/roguemachine/talkstatue/mercenary/proc/edit_wretch_nom_de_guerre(mob/living/carbon/human/user)
-	var/list/data = wretch_status[user.real_name]
-	if(!data)
-		data = list("status" = "Available", "mob" = user, "message" = "", "nom_de_guerre" = "")
-		wretch_status[user.real_name] = data
-	var/current = data["nom_de_guerre"] || ""
-	var/new_nom = stripped_input(user, "Choose my nom de guerre (max 60 characters). Empty to clear.", "Nom de Guerre", current, 60)
+	var/registry_key = user.real_name
+	var/list/data = wretch_status[registry_key]
+	var/current = data ? data["nom_de_guerre"] : ""
+	var/mob/current_owner = data ? data["mob"] : null
+	var/new_nom = tgui_input_text(user, "Choose my nom de guerre (max 60 characters). Empty to clear.", "Nom de Guerre", html_decode(current), max_length = 60, encode = FALSE)
 	if(new_nom == null)
 		return
-	if(!Adjacent(user))
-		to_chat(user, span_warning("I moved too far from the statue."))
+	if(QDELETED(src) || QDELETED(user) || role_title(user) != "Wretch" || GLOB.human_adjacent_state.can_use_topic(src, user) != UI_INTERACTIVE)
 		return
+	if(user.real_name != registry_key || wretch_status[registry_key] != data || (data && (data["mob"] != current_owner || data["nom_de_guerre"] != current)))
+		to_chat(user, span_warning("The registry changed while I was writing. Choose the name again."))
+		return
+	new_nom = trim(html_encode(new_nom), 60)
+	if(!data)
+		data = list("status" = "Available", "mob" = user, "message" = "", "nom_de_guerre" = "")
+		wretch_status[registry_key] = data
 	data["nom_de_guerre"] = new_nom
 	to_chat(user, span_notice("My nom de guerre is set to: <b>[new_nom ? new_nom : "(real name)"]</b>"))
 	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
@@ -86,10 +98,12 @@
 		if(!picker.len)
 			to_chat(sender, span_warning("There are no adventurers currently available."))
 			return
-		var/choice = input(sender, "Which adventurer do I wish to contact?", "Adventurer Contact") as null|anything in picker
+		var/choice = tgui_input_list(sender, "Which adventurer do I wish to contact?", "Adventurer Contact", picker)
 		if(!choice)
 			return
 		target_key = picker[choice]
+	if(QDELETED(src) || QDELETED(sender) || GLOB.human_adjacent_state.can_use_topic(src, sender) != UI_INTERACTIVE)
+		return
 	var/list/data = adventurer_status[target_key]
 	if(!data)
 		to_chat(sender, span_warning("My message cannot be delivered for some reason."))
@@ -112,11 +126,17 @@
 	if(!Adjacent(sender))
 		to_chat(sender, span_warning("I need to stay close to the statue."))
 		return
-	var/message = stripped_input(sender, "What message do I wish to send? (Max [message_char_limit] characters)", "Adventurer Contact", "", message_char_limit)
+	var/message = tgui_input_text(sender, "What message do I wish to send? (Max [message_char_limit] characters)", "Adventurer Contact", "", max_length = message_char_limit, encode = FALSE)
 	if(!message)
 		return
-	if(!Adjacent(sender))
-		to_chat(sender, span_warning("I moved too far from the statue."))
+	message = trim(html_encode(message), message_char_limit)
+	if(!message || QDELETED(src) || QDELETED(sender) || GLOB.human_adjacent_state.can_use_topic(src, sender) != UI_INTERACTIVE)
+		return
+	if(adventurer_status[target_key] != data || data["mob"] != target || QDELETED(target) || target.stat == DEAD || !target.ckey || data["status"] == "Do not Disturb")
+		to_chat(sender, span_warning("My message cannot be delivered for some reason."))
+		return
+	if(sender_cooldowns[cooldown_key] && sender_cooldowns[cooldown_key] + single_cooldown > world.time)
+		to_chat(sender, span_warning("I need to wait before contacting them again."))
 		return
 	sender_cooldowns[cooldown_key] = world.time
 	response_id_counter++
@@ -150,10 +170,14 @@
 		if(!picker.len)
 			to_chat(sender, span_warning("There are no wretches currently available."))
 			return
-		var/choice = input(sender, "Which wretch do I wish to contact?", "Wretch Contact") as null|anything in picker
+		var/choice = tgui_input_list(sender, "Which wretch do I wish to contact?", "Wretch Contact", picker)
 		if(!choice)
 			return
 		target_key = picker[choice]
+	if(QDELETED(src) || QDELETED(sender) || GLOB.human_adjacent_state.can_use_topic(src, sender) != UI_INTERACTIVE)
+		return
+	if(role_title(sender) != "Bathmaster" && role_title(sender) != "Bathhouse Attendant")
+		return
 	var/list/data = wretch_status[target_key]
 	if(!data)
 		to_chat(sender, span_warning("My message cannot be delivered for some reason."))
@@ -177,11 +201,19 @@
 	if(!Adjacent(sender))
 		to_chat(sender, span_warning("I need to stay close to the statue."))
 		return
-	var/message = stripped_input(sender, "What message do I wish to send? (Max [message_char_limit] characters)", "Wretch Contact", "", message_char_limit)
+	var/message = tgui_input_text(sender, "What message do I wish to send? (Max [message_char_limit] characters)", "Wretch Contact", "", max_length = message_char_limit, encode = FALSE)
 	if(!message)
 		return
-	if(!Adjacent(sender))
-		to_chat(sender, span_warning("I moved too far from the statue."))
+	message = trim(html_encode(message), message_char_limit)
+	if(!message || QDELETED(src) || QDELETED(sender) || GLOB.human_adjacent_state.can_use_topic(src, sender) != UI_INTERACTIVE)
+		return
+	if(role_title(sender) != "Bathmaster" && role_title(sender) != "Bathhouse Attendant")
+		return
+	if(wretch_status[target_key] != data || data["mob"] != target || QDELETED(target) || target.stat == DEAD || !target.ckey || data["status"] == "Do not Disturb")
+		to_chat(sender, span_warning("My message cannot be delivered for some reason."))
+		return
+	if(sender_cooldowns[cooldown_key] && sender_cooldowns[cooldown_key] + single_cooldown > world.time)
+		to_chat(sender, span_warning("I need to wait before contacting them again."))
 		return
 	sender_cooldowns[cooldown_key] = world.time
 	response_id_counter++
@@ -250,14 +282,14 @@
 			continue
 		var/display_name = M.real_name
 		if(use_nom && d["nom_de_guerre"])
-			display_name = d["nom_de_guerre"]
+			display_name = html_decode(d["nom_de_guerre"])
 		out += list(list(
 			"key" = key,
 			"name" = display_name,
 			"status" = d["status"] || "Available",
-			"message" = d["message"] || "",
+			"message" = html_decode(d["message"] || ""),
 			"advjob" = M.advjob || "",
-			"nom_de_guerre" = d["nom_de_guerre"] || "",
+			"nom_de_guerre" = html_decode(d["nom_de_guerre"] || ""),
 		))
 	return out
 
@@ -285,7 +317,7 @@
 		if("edit_merc_message")
 			if(!is_merc)
 				return
-			edit_role_message(H, mercenary_status, "Available")
+			edit_role_message(H, mercenary_status, "Available", "Mercenary")
 			return TRUE
 		if("contact_merc")
 			message_single_mercenary(H)
@@ -301,7 +333,7 @@
 		if("edit_adv_message")
 			if(!is_adv)
 				return
-			edit_role_message(H, adventurer_status, "Available")
+			edit_role_message(H, adventurer_status, "Available", "Adventurer")
 			return TRUE
 		if("leave_adv")
 			if(!is_adv)
@@ -322,7 +354,7 @@
 		if("edit_wretch_message")
 			if(!is_wretch)
 				return
-			edit_role_message(H, wretch_status, "Available")
+			edit_role_message(H, wretch_status, "Available", "Wretch")
 			return TRUE
 		if("edit_wretch_nom")
 			if(!is_wretch)

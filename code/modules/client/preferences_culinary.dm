@@ -135,27 +135,43 @@
 		var/hated_drink_quality = initial(hated_drink_instance.quality)
 		hated_drink_icon = get_cached_drink_flat_icon(hated_drink_quality)
 
-	dat += "<style>"
-	dat += ".culinary-item { display: flex; align-items: center; margin-bottom: 5px; }"
-	dat += ".culinary-icon { vertical-align: middle; }"
-	dat += ".culinary-text { vertical-align: middle; line-height: 32px; }"
-	dat += "</style>"
-
-	dat += "<div class='culinary-item'><b>Favourite Food:</b> <span class='culinary-icon'>[food_icon]</span> <span class='culinary-text'><a href='byond://?_src_=prefs;preference=choose_food;preference_type=[CULINARY_FAVOURITE_FOOD];task=change_culinary_preferences'>[encode_special_chars(food_name)]</a></span></div>"
-	dat += "<div class='culinary-item'><b>Favourite Drink:</b> <span class='culinary-icon'>[drink_icon]</span> <span class='culinary-text'><a href='byond://?_src_=prefs;preference=choose_drink;preference_type=[CULINARY_FAVOURITE_DRINK];task=change_culinary_preferences'>[encode_special_chars(drink_name)]</a></span></div>"
-	dat += "<div class='culinary-item'><b>Hated Food:</b> <span class='culinary-icon'>[hated_food_icon]</span> <span class='culinary-text'><a href='byond://?_src_=prefs;preference=choose_hated_food;preference_type=[CULINARY_HATED_FOOD];task=change_culinary_preferences'>[encode_special_chars(hated_food_name)]</a></span></div>"
-	dat += "<div class='culinary-item'><b>Hated Drink:</b> <span class='culinary-icon'>[hated_drink_icon]</span> <span class='culinary-text'><a href='byond://?_src_=prefs;preference=choose_hated_drink;preference_type=[CULINARY_HATED_DRINK];task=change_culinary_preferences'>[encode_special_chars(hated_drink_name)]</a></span></div>"
+	dat += "<p class='culinary-intro'>Choose the food and drink your character enjoys or dislikes.</p>"
+	dat += "<div class='culinary-summary'>"
+	dat += "<a class='culinary-row' href='byond://?_src_=prefs;preference=choose_food;preference_type=[CULINARY_FAVOURITE_FOOD];task=change_culinary_preferences'><span class='culinary-icon'>[food_icon]</span><span class='culinary-detail'><span class='culinary-label'>Favourite food</span><strong>[encode_special_chars(html_encode(food_name))]</strong></span><span class='culinary-action'>Change</span></a>"
+	dat += "<a class='culinary-row' href='byond://?_src_=prefs;preference=choose_drink;preference_type=[CULINARY_FAVOURITE_DRINK];task=change_culinary_preferences'><span class='culinary-icon'>[drink_icon]</span><span class='culinary-detail'><span class='culinary-label'>Favourite drink</span><strong>[encode_special_chars(html_encode(drink_name))]</strong></span><span class='culinary-action'>Change</span></a>"
+	dat += "<a class='culinary-row' href='byond://?_src_=prefs;preference=choose_hated_food;preference_type=[CULINARY_HATED_FOOD];task=change_culinary_preferences'><span class='culinary-icon'>[hated_food_icon]</span><span class='culinary-detail'><span class='culinary-label'>Disliked food</span><strong>[encode_special_chars(html_encode(hated_food_name))]</strong></span><span class='culinary-action'>Change</span></a>"
+	dat += "<a class='culinary-row' href='byond://?_src_=prefs;preference=choose_hated_drink;preference_type=[CULINARY_HATED_DRINK];task=change_culinary_preferences'><span class='culinary-icon'>[hated_drink_icon]</span><span class='culinary-detail'><span class='culinary-label'>Disliked drink</span><strong>[encode_special_chars(html_encode(hated_drink_name))]</strong></span><span class='culinary-action'>Change</span></a>"
+	dat += "</div>"
 
 	return dat
 
+/datum/preferences/proc/style_culinary_popup(datum/browser/popup)
+	popup.add_stylesheet("culinary_preferences", 'html/browser/culinary_preferences.css')
+	var/datum/asset/simple/roguefonts/culinary_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = culinary_fonts.get_url_mappings()
+	var/head = "<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>"
+	head += {"<script type='text/javascript'>
+function filterCulinaryChoices(value) {
+	var query = value.toLowerCase();
+	var rows = document.getElementById('culinary-choices').getElementsByTagName('a');
+	var visible = 0;
+	for (var i = 0; i < rows.length; i++) {
+		var row = rows.item(i);
+		var name = row.getElementsByTagName('strong').item(0);
+		var matches = (name.textContent || name.innerText || '').toLowerCase().indexOf(query) !== -1;
+		row.style.display = matches ? '' : 'none';
+		if (matches) visible++;
+	}
+	document.getElementById('culinary-empty').style.display = visible ? 'none' : 'block';
+}
+</script>"}
+	popup.add_head_content(head)
+
 /datum/preferences/proc/show_food_selection_ui(mob/user, preference_type)
 	var/list/dat = list()
-	dat += "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
-	dat += "<style>"
-	dat += ".food-item { display: flex; align-items: center; margin-bottom: 5px; }"
-	dat += ".food-icon { vertical-align: middle; }"
-	dat += ".food-text { vertical-align: middle; line-height: 32px; }"
-	dat += "</style>"
+	dat += "<p class='culinary-intro'>Select a food below. Your favourite and disliked food must be different.</p>"
+	dat += "<div class='culinary-search'><label for='culinary-search'>Find a food</label><input id='culinary-search' type='text' placeholder='Search by name...' oninput='filterCulinaryChoices(this.value)'></div>"
+	dat += "<div id='culinary-choices'>"
 
 	for(var/list/food_data in GLOB.food_with_faretypes)
 		var/food_type = food_data["type"]
@@ -164,21 +180,21 @@
 
 		var/display_name = capitalize(food_name)
 		var/food_icon = get_cached_food_flat_icon(food_type)
-		dat += "<div class='food-item'><span class='food-icon'>[food_icon]</span> <span class='food-text'><a href='byond://?_src_=prefs;preference=confirm_food;food_type=[food_type];preference_type=[preference_type];task=change_culinary_preferences'>[encode_special_chars(display_name)]</a> (Quality: [food_faretype])</span></div>"
+		var/is_current = culinary_preferences[preference_type] == food_type
+		dat += "<a class='culinary-row culinary-choice[is_current ? " culinary-current" : ""]' href='byond://?_src_=prefs;preference=confirm_food;food_type=[food_type];preference_type=[preference_type];task=change_culinary_preferences'><span class='culinary-icon'>[food_icon]</span><span class='culinary-detail'><strong>[encode_special_chars(html_encode(display_name))]</strong><span class='culinary-quality'>Quality: [food_faretype]</span></span><span class='culinary-action'>[is_current ? "Current" : "Choose"]</span></a>"
 
-	var/title = (preference_type == CULINARY_FAVOURITE_FOOD) ? "Select Favourite Food" : "Select Hated Food"
-	var/datum/browser/popup = new(user, "food_selection", "<div align='center'>[title]</div>", 400, 600)
+	dat += "</div><p id='culinary-empty' class='culinary-empty' style='display:none'>No food matches that name.</p>"
+	var/title = (preference_type == CULINARY_FAVOURITE_FOOD) ? "Select Favourite Food" : "Select Disliked Food"
+	var/datum/browser/popup = new(user, "food_selection", "<div align='center'>[title]</div>", 560, 650)
+	style_culinary_popup(popup)
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
 
 /datum/preferences/proc/show_drink_selection_ui(mob/user, preference_type)
 	var/list/dat = list()
-	dat += "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
-	dat += "<style>"
-	dat += ".drink-item { display: flex; align-items: center; margin-bottom: 5px; }"
-	dat += ".drink-icon { vertical-align: middle; }"
-	dat += ".drink-text { vertical-align: middle; line-height: 32px; }"
-	dat += "</style>"
+	dat += "<p class='culinary-intro'>Select a drink below. Your favourite and disliked drink must be different.</p>"
+	dat += "<div class='culinary-search'><label for='culinary-search'>Find a drink</label><input id='culinary-search' type='text' placeholder='Search by name...' oninput='filterCulinaryChoices(this.value)'></div>"
+	dat += "<div id='culinary-choices'>"
 
 	for(var/list/drink_data in GLOB.drink_with_qualities)
 		var/drink_type = drink_data["type"]
@@ -187,18 +203,21 @@
 
 		var/display_name = capitalize(drink_name)
 		var/drink_icon = get_cached_drink_flat_icon(drink_quality)
-		dat += "<div class='drink-item'><span class='drink-icon'>[drink_icon]</span> <span class='drink-text'><a href='byond://?_src_=prefs;preference=confirm_drink;drink_type=[drink_type];preference_type=[preference_type];task=change_culinary_preferences'>[encode_special_chars(display_name)]</a> (Quality: [drink_quality])</span></div>"
+		var/is_current = culinary_preferences[preference_type] == drink_type
+		dat += "<a class='culinary-row culinary-choice[is_current ? " culinary-current" : ""]' href='byond://?_src_=prefs;preference=confirm_drink;drink_type=[drink_type];preference_type=[preference_type];task=change_culinary_preferences'><span class='culinary-icon'>[drink_icon]</span><span class='culinary-detail'><strong>[encode_special_chars(html_encode(display_name))]</strong><span class='culinary-quality'>Quality: [drink_quality]</span></span><span class='culinary-action'>[is_current ? "Current" : "Choose"]</span></a>"
 
-	var/title = (preference_type == CULINARY_FAVOURITE_DRINK) ? "Select Favourite Drink" : "Select Hated Drink"
-	var/datum/browser/popup = new(user, "drink_selection", "<div align='center'>[title]</div>", 400, 600)
+	dat += "</div><p id='culinary-empty' class='culinary-empty' style='display:none'>No drink matches that name.</p>"
+	var/title = (preference_type == CULINARY_FAVOURITE_DRINK) ? "Select Favourite Drink" : "Select Disliked Drink"
+	var/datum/browser/popup = new(user, "drink_selection", "<div align='center'>[title]</div>", 560, 650)
+	style_culinary_popup(popup)
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
 
 /datum/preferences/proc/show_culinary_ui(mob/user)
 	var/list/dat = list()
-	dat += "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">"
 	dat += print_culinary_page(user)
-	var/datum/browser/popup = new(user, "culinary_customization", "<div align='center'>Culinary Preferences</div>", 345, 215)
+	var/datum/browser/popup = new(user, "culinary_customization", "<div align='center'>Culinary Preferences</div>", 540, 420)
+	style_culinary_popup(popup)
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
 

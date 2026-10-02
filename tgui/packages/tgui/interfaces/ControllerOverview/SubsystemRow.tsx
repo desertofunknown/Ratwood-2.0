@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import {
   Button,
   Icon,
@@ -23,6 +24,37 @@ export const SubsystemRow = (props: Props) => {
   const { act } = useBackend();
   const { max, setSelected, showBars, sortType, subsystem } = props;
   const { can_fire, doesnt_fire, initialized, name, ref } = subsystem;
+
+  const handleSelectionKey = (
+    event: KeyboardEvent<HTMLDivElement>,
+    activate: boolean,
+  ) => {
+    if (
+      event.defaultPrevented ||
+      event.target !== event.currentTarget ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      (event.key !== 'Enter' && event.key !== ' ')
+    ) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if (activate && !event.repeat) {
+      setSelected(subsystem);
+    }
+  };
+  const selectionProps = {
+    role: 'button',
+    tabIndex: 0,
+    'aria-haspopup': 'dialog' as const,
+    onClick: () => setSelected(subsystem),
+    onKeyDown: (event: KeyboardEvent<HTMLDivElement>) =>
+      handleSelectionKey(event, true),
+    onKeyUp: (event: KeyboardEvent<HTMLDivElement>) =>
+      handleSelectionKey(event, false),
+  };
 
   const { propName } = SORTING_TYPES[sortType];
   const value = subsystem[propName];
@@ -71,18 +103,20 @@ export const SubsystemRow = (props: Props) => {
           <Icon name={icon} color={color} />
         </Tooltip>
       </Table.Cell>
-      <Table.Cell onClick={() => setSelected(subsystem)}>
+      <Table.Cell>
         {showBars ? (
           <ProgressBar
+            {...selectionProps}
             value={value}
             maxValue={max}
             ranges={rangeDisplay}
             mb={0.5}
+            style={{ cursor: 'pointer' }}
           >
             {name} {valueDisplay}
           </ProgressBar>
         ) : (
-          <Button fluid mb={0.5}>
+          <Button {...selectionProps} fluid mb={0.5}>
             <Stack fill justify="space-between">
               <Stack.Item>{name}</Stack.Item>
               <Stack.Item>

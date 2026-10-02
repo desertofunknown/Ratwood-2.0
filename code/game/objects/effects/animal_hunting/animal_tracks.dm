@@ -230,9 +230,13 @@
 			if(!next_turf)
 				continue
 
+			var/obstructed = FALSE
 			for(var/turf/step in get_line(src, next_turf))
 				if(step.density)
-					continue
+					obstructed = TRUE
+					break
+			if(obstructed)
+				continue
 
 			if(validate_turf(next_turf))
 				// Let's make sure tracks replenish themselves eventually.

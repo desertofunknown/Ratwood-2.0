@@ -61,12 +61,14 @@
 
 	// The register id we use
 	var/register_id = null
+	var/mob/registered_mob
 
 
-/// The normal route for first use of this list. Returns TRUE if there is more than one advclass (need user input), FALSE - if just one (no need for select menu)
+/// Returns TRUE when class selection needs a menu; FALSE on automatic selection or failure.
 /datum/class_select_handler/proc/initial_setup()
 	if(register_id)
-		SSrole_class_handler.add_class_register_listener(register_id, linked_client.mob)
+		registered_mob = linked_client.mob
+		SSrole_class_handler.add_class_register_listener(register_id, registered_mob)
 	if(!assemble_the_CLASSES())
 		return FALSE
 	second_step()
@@ -80,8 +82,9 @@
 	browser_slop()
 
 /datum/class_select_handler/Destroy()
-	if(register_id)
-		SSrole_class_handler.remove_class_register_listener(register_id, linked_client.mob)
+	if(register_id && registered_mob)
+		SSrole_class_handler.remove_class_register_listener(register_id, registered_mob)
+	registered_mob = null
 	ForceCloseMenus() // force menus closed
 	// Cleanup anything holding references, aka these lists holding refs to class datums and the other two
 	linked_client = null
@@ -91,7 +94,7 @@
 	. = ..()
 
 // I hope to god you have a client before you call this, cause the checks on the SS
-/// Returns TRUE if there is more than one advclass, FALSE - if just one (no need for select menu)
+/// Returns TRUE when multiple eligible classes need a menu.
 /datum/class_select_handler/proc/assemble_the_CLASSES()
 	var/mob/living/carbon/human/H = linked_client.mob
 
@@ -163,6 +166,7 @@
 	if(!rolled_classes.len)
 		linked_client.mob.returntolobby()
 		message_admins("CLASS_SELECT_HANDLER HAD PERSON WITH 0 CLASS SELECT OPTIONS. THIS IS REALLY BAD! RETURNED THEM TO LOBBY")
+		return FALSE
 
 	if(rolled_classes.len == 1)
 		SSrole_class_handler.finish_class_handler(linked_client.mob, pick(rolled_classes), src, plus_power, special_selected)
@@ -203,28 +207,37 @@
 /datum/class_select_handler/proc/browser_slop()
 	if(!linked_client)
 		return
+	var/datum/asset/simple/roguefonts/menu_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	menu_fonts.send(linked_client)
+	var/list/font_urls = menu_fonts.get_url_mappings()
+	var/datum/asset/simple/namespaced/common/menu_common = get_asset_datum(/datum/asset/simple/namespaced/common)
+	menu_common.send(linked_client)
+	var/list/common_urls = menu_common.get_url_mappings()
 	//Opening tags and empty head
 	var/data = {"
 	<!DOCTYPE html>
 	<html lang='en'>
-	<html>
 		<head>
 			<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
 			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 			<style>
-				@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-				@import url('https://fonts.googleapis.com/css2?family=Jacquarda+Bastarda+9&display=swap');
+				@font-face { font-family: 'Class Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+				@font-face { font-family: 'Class Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+				@font-face { font-family: 'Class Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+				@font-face { font-family: 'Class Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+				.class-masthead { background-image: url('[common_urls["flowers.png"]]'); }
 			</style>
 			<link rel='stylesheet' type='text/css' href='slop_menustyle2.css'>
+			<script type='text/javascript' src='[common_urls["keyboard.js"]]'></script>
 		</head>
 	"}
 
 	//Body tag start
-	data += "<body>"
+	data += "<body><div class='class-sheet'>"
 
 	//Class href fill-in
-	data += "<div id='top_handwriting'> The fates giveth... </div>"
-	data += "<div id='class_select_box_div'>"
+	data += "<header class='class-masthead'><h1>Choose Background</h1></header>"
+	data += "<div id='class_select_box_div' tabindex='0'>"
 
 	var/mob/living/carbon/human/H = linked_client.mob
 	if(!H.job)
@@ -234,12 +247,7 @@
 			if(!(CTAG_ADVENTURER in datums.category_tags))
 				continue
 			var/plus_str = ""
-/*			if(rolled_classes[datums] > 0)
-				var/plus_factor = rolled_classes[datums]
-
-				for(var/i in 1 to plus_factor)
-					plus_str += "+" */
-			data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];class_selected=1;selected_class=\ref[datums];'><img class='ninetysskull' src='gragstar.gif' width=32 height=32>[datums.name]<span id='green_plussa'>[plus_str]</span><img class='ninetysskull' src='gragstar.gif' width=32 height=32></a></div>\n"
+			data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];class_selected=1;selected_class=\ref[datums];'>[datums.name]<span class='class-boost'>[plus_str]</span><span class='class-snippet'>[html_encode(copytext(strip_html_simple(datums.tutorial), 1, 141))][length(strip_html_simple(datums.tutorial)) > 140 ? "..." : ""]</span></a></div>\n"
 	else if(!showing_combat_classes)
 		var/datum/job/selected_job = SSjob.GetJob(H.job)
 		if(selected_job.class_categories == TRUE)
@@ -250,103 +258,89 @@
 					class_cat_list += class_categories.class_select_category
 
 			for(var/rolled_categories in class_cat_list)
-				data += "<details class='class_dropdown'>"
+				data += "<details class='class_dropdown' open>"
 				data += "<summary class='class_category'>[rolled_categories]</summary>\n"
 				for(var/datum/advclass/datums in rolled_classes)
 					if(datums.class_select_category == rolled_categories)
 						var/plus_str = ""
 						data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];class_selected=1;selected_class=\ref[datums];'>"
-						data += "<img class='ninetysskull' src='gragstar.gif' width=32 height=32>[datums.name]<span id='green_plussa'>[plus_str]</span><img class='ninetysskull' src='gragstar.gif' width=32 height=32>"
+						data += "[datums.name]<span class='class-boost'>[plus_str]</span><span class='class-snippet'>[html_encode(copytext(strip_html_simple(datums.tutorial), 1, 141))][length(strip_html_simple(datums.tutorial)) > 140 ? "..." : ""]</span>"
 						data += "</a></div>\n"
 				data += "</details>"
 
 		else
 			for(var/datum/advclass/datums in rolled_classes)
 				var/plus_str = ""
-				data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];class_selected=1;selected_class=\ref[datums];'><img class='ninetysskull' src='gragstar.gif' width=32 height=32>[datums.name]<span id='green_plussa'>[plus_str]</span><img class='ninetysskull' src='gragstar.gif' width=32 height=32></a></div>\n"
+				data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];class_selected=1;selected_class=\ref[datums];'>[datums.name]<span class='class-boost'>[plus_str]</span><span class='class-snippet'>[html_encode(copytext(strip_html_simple(datums.tutorial), 1, 141))][length(strip_html_simple(datums.tutorial)) > 140 ? "..." : ""]</span></a></div>\n"
 
 	if(special_session_queue && special_session_queue.len)
 		for(var/datum/advclass/datums in special_session_queue)
-			data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];special_selected=1;selected_special=\ref[datums];'><img class='ninetysskull' src='gragstar.gif' width=32 height=32>[datums.name]<img class='ninetysskull' src='gragstar.gif' width=32 height=32></a></div>\n"
+			data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];special_selected=1;selected_special=\ref[datums];'>[datums.name]<span class='class-snippet'>[html_encode(copytext(strip_html_simple(datums.tutorial), 1, 141))][length(strip_html_simple(datums.tutorial)) > 140 ? "..." : ""]</span></a></div>\n"
 
 	if(showing_combat_classes)
 		for(var/datum/advclass/datums in rolled_classes)
 			if(!(CTAG_PILGRIM in datums.category_tags))
 				continue
 			var/plus_str = ""
-/*			if(rolled_classes[datums] > 0)
-				var/plus_factor = rolled_classes[datums]
-
-				for(var/i in 1 to plus_factor)
-					plus_str += "+" */
-			data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];class_selected=1;selected_class=\ref[datums];'><img class='ninetysskull' src='gragstar.gif' width=32 height=32>[datums.name]<span id='green_plussa'>[plus_str]</span><img class='ninetysskull' src='gragstar.gif' width=32 height=32></a></div>\n"
+			data += "<div class='class_bar_div'><a class='vagrant' href='?src=\ref[src];class_selected=1;selected_class=\ref[datums];'>[datums.name]<span class='class-boost'>[plus_str]</span><span class='class-snippet'>[html_encode(copytext(strip_html_simple(datums.tutorial), 1, 141))][length(strip_html_simple(datums.tutorial)) > 140 ? "..." : ""]</span></a></div>\n"
 	data += "</div>"
 
-	//Buttondiv Segment
-	data += {"
-	<div class='footer'>
-	"}
-
 	if(H.job == "Drifter")
-		data += {"
-			<a class='mo_bottom_buttons' href='?src=\ref[src];show_combat_class=1'>[showing_combat_classes ? "Show Combat Classes" : "Show Pilgrim Classes"]</a>
-		</div>
-		"}
-	else
-		data += {"
-		</div>
-		"}
+		data += "<div class='footer'><a class='mo_bottom_buttons' href='?src=\ref[src];show_combat_class=1'>[showing_combat_classes ? "Show Combat Classes" : "Show Pilgrim Classes"]</a></div>"
 
 	//Closing Tags
 	data += {"
-		</body>
+		</div></body>
 	</html>
 	"}
 
-	linked_client << browse(data, "window=class_handler_main;size=400x520;can_close=0;can_minimize=0;can_maximize=0;can_resize=1;titlebar=1")
+	linked_client << browse(data, "window=class_handler_main;size=540x620;can_close=0;can_minimize=0;can_maximize=0;can_resize=1;titlebar=1")
 
 /datum/class_select_handler/proc/class_select_slop()
+	var/datum/asset/simple/roguefonts/menu_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	menu_fonts.send(linked_client)
+	var/list/font_urls = menu_fonts.get_url_mappings()
+	var/datum/asset/simple/namespaced/common/menu_common = get_asset_datum(/datum/asset/simple/namespaced/common)
+	menu_common.send(linked_client)
+	var/list/common_urls = menu_common.get_url_mappings()
 
 	var/data = {"
 	<!DOCTYPE html>
-	<html lang='en'>	
-	<html>
+	<html lang='en'>
 		<head>
 			<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
 			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 			<style>
-				@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-				@import url('https://fonts.googleapis.com/css2?family=Jacquarda+Bastarda+9&display=swap');
-				@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap');
+				@font-face { font-family: 'Class Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+				@font-face { font-family: 'Class Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+				@font-face { font-family: 'Class Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+				@font-face { font-family: 'Class Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+				.class-masthead { background-image: url('[common_urls["flowers.png"]]'); }
 			</style>
 			<link rel='stylesheet' type='text/css' href='slop_menustyle2.css'>
+			<script type='text/javascript' src='[common_urls["keyboard.js"]]'></script>
 		</head>
-		<body>
-			<div id="top_bloc">
-				<span class="title_shit">Class Name:</span> <span class="post_title_shit">[cur_picked_class]</span><br>
-				<span class="title_shit">Description:</span> <span class="post_title_shit">[cur_picked_class.tutorial]</span>"}
+		<body><div class='class-sheet'>
+			<header class='class-masthead'><h1>[cur_picked_class]</h1></header>
+			<div id='top_bloc' tabindex='0'><div class='class-description'>[cur_picked_class.tutorial]</div>"}
 	if(cur_picked_class.classes)
-		data += {"<br><br><span class="subclassorz">Subclasses:</span>"}
+		data += "<h2 class='subclass-heading'>Subclasses</h2>"
 		for(var/i in cur_picked_class.classes)
-			data += {"
-			<br><div class="subclass_title">[i]
-			<span class="subclasses">[cur_picked_class.classes[i]]</span></div>
-			"}
-		data += "<br>"
+			data += "<div class='subclass-entry'><h3>[i]</h3><p>[cur_picked_class.classes[i]]</p></div>"
 
 	data += {"</div>
 				<div id='button_div'>
-					<a class='class_desc_YES_LINK' href='?src=\ref[src];yes_to_class_select=1;special_class=0;'>This is my background</a><br>
-					<a class='bottom_buttons' href='?src=\ref[src];no_to_class_select=1'>I reject this background</a>
+					<a class='bottom_buttons' href='?src=\ref[src];no_to_class_select=1'>Back to backgrounds</a>
+					<a class='class_desc_YES_LINK' href='?src=\ref[src];yes_to_class_select=1;special_class=0;'>Accept background</a>
 				</div>
 			</div>
 		</body>
 	</html>
 	"}
 	if(!cur_picked_class.classes)
-		linked_client << browse(data, "window=class_select_yea;size=610x350;can_close=0;can_minimize=0;can_maximize=0;can_resize=0;titlebar=1")
+		linked_client << browse(data, "window=class_select_yea;size=640x420;can_close=0;can_minimize=0;can_maximize=0;can_resize=0;titlebar=1")
 	else
-		linked_client << browse(data, "window=class_select_yea;size=610x405;can_close=0;can_minimize=0;can_maximize=0;can_resize=0;titlebar=1")
+		linked_client << browse(data, "window=class_select_yea;size=640x520;can_close=0;can_minimize=0;can_maximize=0;can_resize=0;titlebar=1")
 
 /datum/class_select_handler/Topic(href, href_list)
 	. = ..()
@@ -398,3 +392,4 @@
 	if(linked_client)
 		linked_client << browse(null, "window=class_handler_main")
 		linked_client << browse(null, "window=class_select_yea")
+

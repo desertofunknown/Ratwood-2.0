@@ -39,6 +39,8 @@
 	var/upgrade_flags
 	var/current_cat = ""
 	var/search_query = ""
+	// Acknowledge filter actions even when the query remains empty.
+	var/search_revision = 0
 	var/static/search_result_cap = 30
 	/// When TRUE, the TGUI exposes the Cultural Stock/Harbor/Market tabs. Goldface only.
 	var/is_command_center = TRUE
@@ -348,6 +350,7 @@
 	data["categories"] = all_cats
 	data["current_category"] = current_cat
 	data["search"] = search_query
+	data["search_revision"] = search_revision
 	data["search_mode"] = (search_query != "") ? TRUE : FALSE
 	data["result_cap"] = search_result_cap
 	var/list/packs_data = list()
@@ -444,16 +447,18 @@
 	var/list/realms = list()
 	for(var/realm_id in SSmerchant_trade.realms)
 		var/datum/foreign_realm/R = SSmerchant_trade.realms[realm_id]
+		var/list/buys = partition_pool_summary(R.get_pool_ui_summary(FALSE))
+		var/list/sells = partition_pool_summary(R.get_pool_ui_summary(TRUE))
 		var/list/rrow = list(
 			"id" = R.id,
 			"name" = R.name,
 			"is_kin" = (kinship_realm_id && R.id == kinship_realm_id) ? TRUE : FALSE,
 			"cultural_goods" = R.cultural_goods ? R.cultural_goods.Copy() : list(),
 			"cultural_pack_names" = cultural_pack_names(R.cultural_stock_pool),
-			"basic_buys" = filtered_pool_summary(R, FALSE, TRUE),
-			"rare_buys" = filtered_pool_summary(R, FALSE, FALSE),
-			"basic_sells" = filtered_pool_summary(R, TRUE, TRUE),
-			"rare_sells" = filtered_pool_summary(R, TRUE, FALSE),
+			"basic_buys" = buys["basic"],
+			"rare_buys" = buys["rare"],
+			"basic_sells" = sells["basic"],
+			"rare_sells" = sells["rare"],
 			"demanded_categories" = R.demanded_categories ? R.demanded_categories.Copy() : list(),
 		)
 		var/list/condition_entries = list()
@@ -469,6 +474,7 @@
 	var/datum/foreign_realm/agent_kin_datum = agent_kin_realm ? SSmerchant_trade.realms[agent_kin_realm] : null
 	return list(
 		"ships_docked" = docked,
+		"bulk_tariff_rate" = (!(upgrade_flags & UPGRADE_NOTAX) && !bypass_tax) ? SStreasury.get_tax_rate(TAX_CATEGORY_IMPORT_TARIFF) : 0,
 		"ships_pool" = pool,
 		"realms" = realms,
 		"hails_remaining" = SSmerchant_trade.hails_remaining,
@@ -578,20 +584,18 @@
 			result += PA.name
 	return result
 
-/obj/structure/roguemachine/goldface/proc/filtered_pool_summary(datum/foreign_realm/R, want_supply, want_always)
-	var/list/result = list()
-	for(var/list/entry in R.get_pool_ui_summary(want_supply))
-		if(want_always && !entry["always"])
-			continue
-		if(!want_always && entry["always"])
-			continue
-		result += list(list(
+/obj/structure/roguemachine/goldface/proc/partition_pool_summary(list/summary)
+	var/list/basic = list()
+	var/list/rare = list()
+	for(var/list/entry as anything in summary)
+		var/list/target = entry["always"] ? basic : rare
+		target += list(list(
 			"name" = entry["name"],
 			"delta" = entry["delta_steps"],
 			"removed" = entry["removed"],
 			"added_only" = entry["added_only"],
 		))
-	return result
+	return list("basic" = basic, "rare" = rare)
 
 /obj/structure/roguemachine/goldface/proc/build_cultural_stock_data(mob/living/carbon/human/viewer)
 	var/list/result = list()
@@ -690,6 +694,7 @@
 		SSmerchant_trade.touch_merchant_activity()
 	switch(action)
 		if("changecat")
+			search_revision++
 			var/cat = "[params["category"]]"
 			if(cat == "")
 				current_cat = ""
@@ -701,9 +706,11 @@
 				search_query = ""
 			return TRUE
 		if("set_search")
+			search_revision++
 			search_query = "[params["search"]]"
 			return TRUE
 		if("clear_search")
+			search_revision++
 			search_query = ""
 			return TRUE
 		if("change")
@@ -912,7 +919,7 @@
 			var/ship_id = "[params["ship_id"]]"
 			var/good_id = "[params["good"]]"
 			var/qty = text2num(params["qty"])
-			if(!qty || qty < 1)
+			if(!qty || qty < 1 || qty != round(qty))
 				return TRUE
 			var/datum/trade_ship/source_ship = SSmerchant_trade.find_ship_by_id(ship_id)
 			if(!source_ship || source_ship.dock_state != TRADE_SHIP_STATE_DOCKED)

@@ -9,6 +9,7 @@ export const RecoveryWrit = (props: {
   fetchItem?: string | null;
   fetchCount?: number;
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -24,6 +25,7 @@ export const RecoveryWrit = (props: {
     fetchItem,
     fetchCount,
     reward,
+    deposit,
     levyRate,
     levyExempt,
     guildCutRate,
@@ -50,6 +52,7 @@ export const RecoveryWrit = (props: {
         the Contract Ledger shall be paid the bounty of{' '}
         <RewardClause
           reward={reward}
+          deposit={deposit}
           levyRate={levyRate}
           levyExempt={levyExempt}
           guildCutRate={guildCutRate}

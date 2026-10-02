@@ -8,6 +8,8 @@ import { map } from 'es-toolkit/compat';
 
 export const selectChat = (state) => state.chat;
 
+export const selectChatInitialized = (state) => state.chat.initialized;
+
 export const selectChatPages = (state) =>
   map(state.chat.pages, (id: string) => state.chat.pageById[id]);
 

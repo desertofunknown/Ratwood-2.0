@@ -1,0 +1,114 @@
+@font-face {
+  font-family: 'Nervelock Rocker';
+  src: url('~roguefont/newrocker.ttf');
+}
+
+:root .MeisterPanel {
+  color: #ded1c2;
+  background: #100d0e;
+  font: 13px/1.45 'Lora', Georgia, serif;
+
+  .Window__contentPadding { margin: 0; }
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 7px 10px;
+    border-bottom: 3px double #604247;
+    background: #1b1114;
+    h1 { margin: 0; color: #e5d7c8; font: 22px/1.2 'Nervelock Rocker', 'Pterra', Georgia, serif; }
+  }
+  &__day { color: #af9d97; font-size: 12px; }
+  &__balance { display: flex; align-items: baseline; gap: 7px; margin-left: auto; }
+  &__balance span { color: #af9d97; font-size: 12px; }
+  &__balance strong { color: #d8c198; font-size: 16px; font-variant-numeric: tabular-nums; }
+  &__balance small { font-size: 12px; margin-left: 2px; }
+  button {
+    min-height: 28px;
+    padding: 3px 7px;
+    color: #e5d7c8;
+    background: #281b1f;
+    border: 1px solid #594046;
+    border-radius: 0;
+    line-height: 1.3;
+  }
+  button:disabled { color: #a99b98; background: transparent; border-color: #382b2f; }
+  button:hover:not(:disabled) { background: #3c2026; border-color: #ae8189; }
+  button[aria-pressed='true'], button.MeisterPanel__primary:not(:disabled) { background: #42222a; border-color: #ae8189; }
+  input {
+    box-sizing: border-box;
+    min-height: 28px;
+    padding: 3px 6px;
+    color: #e7dac2;
+    background: #100d0e;
+    border: 1px solid #594046;
+    border-radius: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  &__tabs { display: flex; flex-wrap: wrap; gap: 3px; padding: 5px 10px; border-bottom: 1px solid #594046; }
+  &__tabs button { background: transparent; border-color: transparent; }
+  &__body { padding: 0 10px 10px; }
+  &__section { padding: 9px 0; border-bottom: 1px solid #594046; }
+  &__sectionTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  &__sectionTitle h2 { margin: 0; color: #e5d7c8; font: 17px/1.3 'Pterra', Georgia, serif; }
+  &__sectionTitle > span { color: #b9a6a0; font-size: 12px; }
+  &__denominations { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; }
+  &__denominations span { margin-left: 5px; color: #d8c198; font-variant-numeric: tabular-nums; }
+  &__withdrawal, &__actions { display: flex; align-items: center; gap: 10px; }
+  &__withdrawal label, &__actions label { display: flex; align-items: center; gap: 7px; color: #b9a6a0; font-size: 12px; }
+  &__withdrawal input, &__actions input { width: 86px; font-size: 13px; }
+  &__actions { margin-top: 7px; }
+  &__actions--end { justify-content: flex-end; }
+  &__total { flex: 1; display: flex; justify-content: flex-end; align-items: baseline; gap: 7px; min-width: 0; }
+  &__total span { color: #b9a6a0; font-size: 12px; }
+  &__total strong { color: #d8c198; font-size: 14px; font-variant-numeric: tabular-nums; }
+  &__help { margin: 6px 0 0; color: #b9a6a0; font-size: 12px; }
+  &__warning { color: #df9c89; font-weight: bold; }
+  p.MeisterPanel__warning { margin: 6px 0; }
+  &__empty { margin: 3px 0; color: #b9a6a0; }
+  &__entries { margin: 0 0 7px; }
+  &__entries > div { display: flex; justify-content: space-between; gap: 14px; padding: 3px 0; border-bottom: 1px solid #302327; }
+  &__entries dt { color: #b9a6a0; }
+  &__entries dd { margin: 0; color: #ded1c2; text-align: right; font-variant-numeric: tabular-nums; }
+  &__loan { padding: 5px 0; }
+  &__loan + .MeisterPanel__loan { border-top: 1px solid #302327; }
+  &__loanHeading, &__loanTerms { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  &__loanHeading > div, &__loanHeading > strong { min-width: 0; overflow-wrap: anywhere; }
+  &__loanTerms { color: #b9a6a0; font-size: 12px; }
+  &__amount { flex-shrink: 0; color: #d8c198; font-weight: bold; font-variant-numeric: tabular-nums; }
+  &__transactions { font-variant-numeric: tabular-nums; }
+  &__funds, &__choices { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+  &__funds { padding: 7px 0; border-bottom: 1px solid #594046; }
+  &__choices { margin-top: 5px; }
+  &__formRow { display: flex; align-items: baseline; gap: 10px; padding-top: 4px; }
+  &__formRow > span { flex: 0 0 72px; color: #b9a6a0; font-size: 12px; }
+  &__muted { color: #b9a6a0; }
+  &__good, &__entries dd.MeisterPanel__good { color: #b6c59a; }
+  &__entries dd.MeisterPanel__warning { color: #df9c89; }
+  &__disclosure { margin: 6px 0; }
+  &__disclosure summary { width: fit-content; color: #d8c198; cursor: pointer; }
+  &__disclosure summary:focus-visible { outline: 2px solid #d4bb8f; outline-offset: 2px; }
+  &__lore { color: #b9a6a0; white-space: pre-wrap; padding: 7px 0; }
+  &__signature { margin: 6px 0 0; text-align: right; font-style: italic; }
+  &__rosterRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid #302327; }
+  &__rosterRow > span { min-width: 0; overflow-wrap: anywhere; }
+  &__limitRow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
+  &__limitRow label { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 170px; }
+  &__limitRow input { width: 90px; }
+  &__tally { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+  &__tally th, &__tally td { padding: 4px 6px; border-bottom: 1px solid #302327; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+  &__tally th { color: #b9a6a0; font-size: 12px; font-weight: normal; }
+  &__tally th:first-child, &__tally td:first-child { width: 82px; text-align: right; }
+  &__pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; color: #b9a6a0; font-size: 12px; }
+
+  @media (max-width: 580px) {
+    &__header, &__sectionTitle, &__withdrawal, &__actions, &__loanTerms { flex-wrap: wrap; }
+    &__total { flex: 1 0 auto; }
+  }
+}

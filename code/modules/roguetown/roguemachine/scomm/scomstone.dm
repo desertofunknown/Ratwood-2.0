@@ -90,6 +90,7 @@
 		update_icon()
 
 /obj/item/scomstone/Destroy()
+	SSroguemachine.unregister_scom_number(src, scomstone_number)
 	SSroguemachine.scomm_machines -= src
 	lose_hearing_sensitivity()
 	return ..()
@@ -99,7 +100,7 @@
 	become_hearing_sensitive()
 	update_icon()
 	SSroguemachine.scomm_machines += src
-	scomstone_number = SSroguemachine.scomm_machines.len
+	scomstone_number = SSroguemachine.register_scom_number(src)
 
 /obj/item/scomstone/examine(mob/user)
 	. = ..()

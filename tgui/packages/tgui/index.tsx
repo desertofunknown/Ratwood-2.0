@@ -15,6 +15,7 @@ import { setupHotReloading } from 'tgui-dev-server/link/client';
 import { App } from './App';
 import { setGlobalStore } from './backend';
 import { captureExternalLinks } from './links';
+import { setupKeyboardFocus } from './keyboard';
 import { render } from './renderer';
 import { configureStore } from './store';
 
@@ -39,9 +40,10 @@ function setupApp() {
     // In the future you could send a winget here to get mousepos/size from the map here if it's necessary
     verbParamsFn: (verb, key) => `${verb} "${key}" 0 0 0 0`,
   });
+  setupKeyboardFocus();
   captureExternalLinks();
 
-  store.subscribe(() => render(<App />));
+  render(App, store);
 
   // Dispatch incoming messages as store actions
   Byond.subscribe((type, payload) => store.dispatch({ type, payload }));
@@ -52,7 +54,7 @@ function setupApp() {
     import.meta.webpackHot.accept(
       ['./debug', './layouts', './routes', './App'],
       () => {
-        render(<App />);
+        render(App, store);
       },
     );
   }

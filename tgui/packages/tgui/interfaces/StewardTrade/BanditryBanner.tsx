@@ -1,40 +1,24 @@
 import type { BanditryProjection } from './types';
-import {
-  bannerStyle,
-  FONT_BODY,
-  SEAL_AMBER,
-  SEAL_RED_SOFT,
-} from '../common/parchment';
 
-export const BanditryBanner = (props: { projection: BanditryProjection }) => {
-  const p = props.projection;
-  const hasProjection = !!p && p.total > 0;
-  const hasDebt = !!p && p.debt > 0;
-  if (!hasProjection && !hasDebt) {
+export const BanditryBanner = ({
+  projection,
+}: {
+  projection: BanditryProjection;
+}) => {
+  if (!projection || (projection.total <= 0 && projection.debt <= 0))
     return null;
-  }
   return (
-    <div style={bannerStyle(SEAL_RED_SOFT, true)}>
-      {hasDebt && (
-        <div>Outstanding Banditry Debt: {p.debt}m skimming all inflow</div>
-      )}
-      {hasProjection && (
-        <div>Projected Banditry Losses: -{p.total}m next dawn</div>
-      )}
-      {(p.lines || []).map((line) => (
-        <div
-          key={line}
-          style={{
-            fontWeight: 'normal',
-            fontVariant: 'normal',
-            fontSize: FONT_BODY,
-            color: SEAL_AMBER,
-            letterSpacing: 0,
-          }}
-        >
-          {line}
-        </div>
+    <details className="StewardDesk__notice StewardDesk__notice--warning">
+      <summary>
+        Banditry
+        {projection.debt > 0 &&
+          `: ${projection.debt}m debt skimming all inflow`}
+        {projection.total > 0 &&
+          `; projected losses −${projection.total}m next dawn`}
+      </summary>
+      {(projection.lines || []).map((line, index) => (
+        <p key={index}>{line}</p>
       ))}
-    </div>
+    </details>
   );
 };

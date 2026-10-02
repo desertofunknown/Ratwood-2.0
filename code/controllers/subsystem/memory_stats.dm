@@ -17,11 +17,13 @@ SUBSYSTEM_DEF(memory_stats)
 /datum/controller/subsystem/memory_stats/fire(resumed)
 	log_memory_stats()
 
-#define MEMORY_RSS_FILE "data/memory_rss.txt"
+#define MEMORY_WRITER_RETRY_DELAY (30 SECONDS)
+#define MEMORY_WRITER_MAX_ATTEMPTS 3
+#define MEMORY_SAMPLE_MAX_AGE (45 SECONDS)
 
 /// Returns the process resident set size in bytes, or null if unavailable right now.
 /// On windows a hidden background powershell writer (tools/memory_stats/mem_writer.ps1)
-/// updates MEMORY_RSS_FILE, avoiding a console window flash per sample.
+/// follows this daemon's PID and writes a fresh sample without opening a console.
 /proc/get_process_rss_bytes()
 	if(world.system_type == UNIX)
 		var/status = rustg_file_read("/proc/self/status")
@@ -30,17 +32,44 @@ SUBSYSTEM_DEF(memory_stats)
 			if(rss_regex.Find(status))
 				return text2num(rss_regex.group[1]) * 1024
 		return null
-	var/static/writer_started = FALSE
-	if(!writer_started)
-		writer_started = TRUE
-		fdel(MEMORY_RSS_FILE) // clear stale data from a previous round
-		shell("wscript //B //nologo \"tools/memory_stats/mem_writer.vbs\"")
-		return null
-	if(fexists(MEMORY_RSS_FILE))
-		var/bytes = text2num(trim(file2text(MEMORY_RSS_FILE) || ""))
-		if(bytes)
-			return bytes
+	var/static/rss_file
+	var/static/process_id
+	var/static/cleared_previous_sample = FALSE
+	var/static/process_started
+	var/static/last_sample
+	var/static/last_sample_seen = 0
+	var/static/writer_attempts = 0
+	var/static/next_writer_attempt = 0
+	if(!rss_file)
+		process_id = isnum(world.process) ? num2text(world.process, 20) : world.process
+		rss_file = "data/memory_rss_[process_id].txt"
+	if(cleared_previous_sample && fexists(rss_file))
+		var/list/sample = splittext(trim(file2text(rss_file) || ""), "|")
+		if(length(sample) == 4 && sample[1] == process_id && (!process_started || process_started == sample[2]))
+			var/bytes = text2num(sample[4])
+			if(bytes > 0 && length(sample[2]) && length(sample[3]))
+				process_started = sample[2]
+				if(sample[3] != last_sample)
+					last_sample = sample[3]
+					last_sample_seen = world.time
+					writer_attempts = 0
+				if(world.time - last_sample_seen <= MEMORY_SAMPLE_MAX_AGE)
+					return bytes
+	// A new writer holds a per-PID mutex; retries cannot accumulate live samplers.
+	if(writer_attempts < MEMORY_WRITER_MAX_ATTEMPTS && world.time >= next_writer_attempt)
+		writer_attempts++
+		next_writer_attempt = world.time + MEMORY_WRITER_RETRY_DELAY
+		if(!cleared_previous_sample)
+			if(fexists(rss_file) && !fdel(rss_file))
+				return null
+			cleared_previous_sample = TRUE
+		if(fexists("tools/memory_stats/mem_writer.vbs") && fexists("tools/memory_stats/mem_writer.ps1"))
+			shell("wscript //B //nologo \"tools/memory_stats/mem_writer.vbs\" [process_id]")
 	return null
+
+#undef MEMORY_WRITER_RETRY_DELAY
+#undef MEMORY_WRITER_MAX_ATTEMPTS
+#undef MEMORY_SAMPLE_MAX_AGE
 
 /// Logs the RSS delta and init time of one subsystem's Initialize. Returns the new baseline for the next call.
 /proc/log_subsystem_init_memory(datum/controller/subsystem/SS, rss_before, init_time_s)

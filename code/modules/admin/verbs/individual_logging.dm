@@ -579,8 +579,8 @@ GLOBAL_LIST_EMPTY(pov_player_keys)
 		<br><b>This timeline is a snapshot</b> taken when it was generated, and a clientless mob's log dies with the mob."
 
 	// both are read once then in the way, so they sit behind toggles. The All Mobs caveat stays visible
-	. = list("<center><span style='color:#7fb2d9; text-decoration:underline;' onclick=\"var e=document.getElementById('povlegend');e.style.display=(e.style.display=='none')?'block':'none';\">Legend</span>\
-		&nbsp; <span style='color:#ff6b6b; text-decoration:underline;' onclick=\"var e=document.getElementById('povcaution');e.style.display=(e.style.display=='none')?'block':'none';\">Caution</span>\
+	. = list("<center><button type='button' aria-expanded='false' aria-controls='povlegend' style='color:#7fb2d9; text-decoration:underline; background:none; border:0; padding:0; font:inherit; cursor:pointer;' onclick=\"var e=document.getElementById('povlegend');e.style.display=(e.style.display=='none')?'block':'none';this.setAttribute('aria-expanded',e.style.display!='none');\">Legend</button>\
+		&nbsp; <button type='button' aria-expanded='false' aria-controls='povcaution' style='color:#ff6b6b; text-decoration:underline; background:none; border:0; padding:0; font:inherit; cursor:pointer;' onclick=\"var e=document.getElementById('povcaution');e.style.display=(e.style.display=='none')?'block':'none';this.setAttribute('aria-expanded',e.style.display!='none');\">Caution</button>\
 		<div id='povlegend' style='display:none; text-align:left; padding:2px 8px;'>[colour_key]</div>\
 		<div id='povcaution' style='display:none; text-align:left; padding:2px 8px; color:#ffc957;'>[caution]</div></center>")
 	if(pov_mode == "all")
@@ -1078,7 +1078,7 @@ GLOBAL_LIST_EMPTY(pov_player_keys)
 		if(mark)
 			shown_name += " <font color='#8a8a8a'>[mark]</font>"
 		shown += shown_name
-	var/toggle = "<span style='color:#7fb2d9; text-decoration:underline;' onclick=\"var e=document.getElementById('[element_id]');e.style.display=(e.style.display=='none')?'inline':'none';\">(+[length(shown)])</span>"
+	var/toggle = "<button type='button' aria-expanded='false' aria-controls='[element_id]' style='color:#7fb2d9; text-decoration:underline; background:none; border:0; padding:0; font:inherit; cursor:pointer;' onclick=\"var e=document.getElementById('[element_id]');e.style.display=(e.style.display=='none')?'inline':'none';this.setAttribute('aria-expanded',e.style.display!='none');\">(+[length(shown)])</button>"
 	return " (<font color='[SEEN_LOG_WITNESS_COLOR]'>Witnesses: [toggle]<span id='[element_id]' style='display:none'> [shown.Join(", ")]</span></font>)"
 
 /// One row of log tabs. The mob row omits OOC, which only ever exists on a client record

@@ -368,7 +368,9 @@ GLOBAL_LIST_INIT(primordial_wounds, init_primordial_wounds())
 	clotting_threshold = sewn_clotting_threshold
 	woundpain = sewn_woundpain
 	whp = min(whp, sewn_whp)
-	disabling = FALSE
+	if(disabling)
+		disabling = FALSE
+		bodypart_owner?.update_disabled()
 	can_sew = FALSE
 	sleep_healing = max(sleep_healing, 1)
 	passive_healing = max(passive_healing, 1)

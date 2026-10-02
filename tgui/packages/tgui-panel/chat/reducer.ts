@@ -24,6 +24,7 @@ const mainPage = createMainPage();
 
 export const initialState = {
   version: 5,
+  initialized: false,
   currentPageId: mainPage.id,
   scrollTracking: true,
   pages: [mainPage.id],
@@ -37,7 +38,7 @@ export const chatReducer = (state = initialState, action) => {
   if (type === loadChat.type) {
     // Validate version and/or migrate state
     if (payload?.version !== state.version) {
-      return state;
+      return { ...state, initialized: true };
     }
     // Enable any filters that are not explicitly set, that are
     // enabled by default on the main page.
@@ -62,6 +63,7 @@ export const chatReducer = (state = initialState, action) => {
     return {
       ...state,
       ...payload,
+      initialized: true,
     };
   }
   if (type === changeScrollTracking.type) {
@@ -130,12 +132,17 @@ export const chatReducer = (state = initialState, action) => {
     };
   }
   if (type === importSettings.type) {
-    const pagesById: Record<string, Page>[] = payload.newPages;
-    if (!pagesById) {
+    const pagesById: Record<string, Page> = payload.newPages;
+    if (!pagesById || typeof pagesById !== 'object' || Array.isArray(pagesById)) {
       return state;
     }
     const newPageIds: string[] = Object.keys(pagesById);
-    if (!newPageIds) {
+    if (
+      !newPageIds.length ||
+      newPageIds.some(
+        (id) => !pagesById[id] || pagesById[id].id !== id || !pagesById[id].acceptedTypes,
+      )
+    ) {
       return state;
     }
 

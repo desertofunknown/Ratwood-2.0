@@ -38,6 +38,8 @@
 /proc/fill_decree_tokens(template)
 	if(!template)
 		return null
+	if(!findtext(template, "%"))
+		return template
 	var/ruler_type = SSticker?.rulertype || "Lord"
 	var/mob/living/ruler_mob = SSticker?.rulermob
 	var/ruler_name = (ruler_mob && !QDELETED(ruler_mob)) ? ruler_mob.real_name : "the Lord"

@@ -64,7 +64,20 @@ export function TitleBar(props: TitleBarProps) {
         />
       )}
       {Boolean(fancy && canClose) && (
-        <div className="TitleBar__close" onClick={onClose}>
+        <div
+          className="TitleBar__close"
+          role="button"
+          aria-label="Close window"
+          tabIndex={0}
+          onClick={onClose}
+          onKeyDown={(event) => {
+            if (event.altKey || event.ctrlKey || event.metaKey) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              if (!event.repeat) onClose?.(event);
+            }
+          }}
+        >
           <Icon className="TitleBar__close--icon" name="times" />
         </div>
       )}

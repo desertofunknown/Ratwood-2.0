@@ -18,6 +18,7 @@ export const DrowWrit = (props: {
   namePlural?: string | null;
   crimes: string[];
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -38,6 +39,7 @@ export const DrowWrit = (props: {
     namePlural,
     crimes,
     reward,
+    deposit,
     levyRate,
     levyExempt,
     guildCutRate,
@@ -100,6 +102,7 @@ export const DrowWrit = (props: {
         the bounty of{' '}
         <RewardClause
           reward={reward}
+          deposit={deposit}
           levyRate={levyRate}
           levyExempt={levyExempt}
           guildCutRate={guildCutRate}

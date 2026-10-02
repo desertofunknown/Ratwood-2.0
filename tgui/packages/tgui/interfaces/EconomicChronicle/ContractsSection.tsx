@@ -1,14 +1,5 @@
 import { SEAL_AMBER, SEAL_GREEN, SEAL_RED } from '../common/parchment';
-import {
-  Breakdown,
-  compactCardStyle,
-  dividedTwoColumnLayout,
-  dividerStyle,
-  Row,
-  SectionTitle,
-  twoColTable,
-  verticalDividerStyle,
-} from './styles';
+import { Breakdown, Row, SectionTitle } from './styles';
 import type { ContractsSnapshot, RoyalFavorsSnapshot } from './types';
 
 type Props = {
@@ -20,7 +11,7 @@ const ContractsColumn = (props: { c: ContractsSnapshot }) => {
   const { c } = props;
   return (
     <div>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Contracts Issued" value={c.generated_total} />
         </tbody>
@@ -29,7 +20,7 @@ const ContractsColumn = (props: { c: ContractsSnapshot }) => {
         Guild {c.generated_pool} &bull; Tavern {c.generated_rumor} &bull; Crown{' '}
         {c.generated_defense}
       </Breakdown>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Contracts Taken" value={c.taken_total} />
         </tbody>
@@ -38,7 +29,7 @@ const ContractsColumn = (props: { c: ContractsSnapshot }) => {
         Guild {c.taken_pool} &bull; Tavern {c.taken_rumor} &bull; Crown{' '}
         {c.taken_defense}
       </Breakdown>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row
             label="Contracts Completed"
@@ -51,7 +42,7 @@ const ContractsColumn = (props: { c: ContractsSnapshot }) => {
         Guild {c.completed_pool} &bull; Tavern {c.completed_rumor} &bull; Crown{' '}
         {c.completed_defense}
       </Breakdown>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Abandoned" value={c.abandoned} />
           <Row label="Rerolled" value={c.rerolled} />
@@ -61,11 +52,14 @@ const ContractsColumn = (props: { c: ContractsSnapshot }) => {
   );
 };
 
-const FavorsColumn = (props: { c: ContractsSnapshot; rf: RoyalFavorsSnapshot }) => {
+const FavorsColumn = (props: {
+  c: ContractsSnapshot;
+  rf: RoyalFavorsSnapshot;
+}) => {
   const { c, rf } = props;
   return (
     <div>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Mammons Paid" value={c.mammons_paid} />
           <Row label="Mammons Taxed" value={c.mammons_taxed} />
@@ -76,8 +70,8 @@ const FavorsColumn = (props: { c: ContractsSnapshot; rf: RoyalFavorsSnapshot }) 
           />
         </tbody>
       </table>
-      <div style={dividerStyle} />
-      <table style={twoColTable}>
+      <hr />
+      <table>
         <tbody>
           <Row label="Pledge Generated" value={rf.pledge_generated} />
           <Row label="Pledge Consumed" value={rf.pledge_consumed} />
@@ -101,13 +95,12 @@ const FavorsColumn = (props: { c: ContractsSnapshot; rf: RoyalFavorsSnapshot }) 
 
 export const ContractsSection = (props: Props) => {
   return (
-    <div style={compactCardStyle}>
+    <section>
       <SectionTitle>Guild Contracts &amp; Royal Favors</SectionTitle>
-      <div style={dividedTwoColumnLayout}>
+      <div className="EconomicChronicle__columns">
         <ContractsColumn c={props.c} />
-        <div style={verticalDividerStyle} />
         <FavorsColumn c={props.c} rf={props.rf} />
       </div>
-    </div>
+    </section>
   );
 };

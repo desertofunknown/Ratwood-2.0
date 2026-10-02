@@ -9,6 +9,7 @@ import {
   Stack,
 } from 'tgui-core/components';
 import { isEscape, KEY } from 'tgui-core/keys';
+import { clamp } from 'tgui-core/math';
 import type { BooleanLike } from 'tgui-core/react';
 
 import { InputButtons } from './common/InputButtons';
@@ -40,15 +41,26 @@ export function NumberInputModal(props) {
 
   const [value, setValue] = useState(init_value);
   const [isValid, setIsValid] = useState(true);
+  const step = round_value ? 1 : 0.01;
+  const adjust = (direction: number) => setValue((value) =>
+    clamp(Math.round((value + direction * step) * 100) / 100, min_value, max_value),
+  );
 
   // Dynamically changes the window height based on the message.
   const windowHeight =
-    140 +
-    (message.length > 30 ? Math.ceil(message.length / 3) : 0) +
+    205 +
+    Math.min(160, Math.ceil(message.length / 50) * 22) +
     (message.length && large_buttons ? 5 : 0);
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest('.Button')) {
+      if (isEscape(event.key)) {
+        act('cancel');
+      }
+      return;
+    }
     if (event.key === KEY.Enter && isValid) {
+      event.preventDefault();
       act('submit', { entry: value });
     }
     if (isEscape(event.key)) {
@@ -57,13 +69,13 @@ export function NumberInputModal(props) {
   }
 
   return (
-    <Window title={title} width={270} height={windowHeight}>
-      {timeout && <Loader value={timeout} />}
-      <Window.Content onKeyDown={handleKeyDown}>
+    <Window title={title} width={480} height={windowHeight}>
+      {!!timeout && <Loader value={timeout} />}
+      <Window.Content className="InputModal" onKeyDown={handleKeyDown}>
         <Section fill>
           <Stack fill vertical>
             <Stack.Item grow>
-              <Box color="label">{message}</Box>
+              <Box className="InputModal__prompt">{message}</Box>
             </Stack.Item>
             <Stack.Item>
               <Stack fill>
@@ -81,8 +93,9 @@ export function NumberInputModal(props) {
                 <Stack.Item>
                   <Button
                     icon="angle-down"
-                    disabled={value <= min_value}
-                    onClick={() => setValue((value) => value - 1)}
+                    disabled={!isValid || value <= min_value}
+                    onClick={() => adjust(-1)}
+                    tooltip={`Decrease by ${step}`}
                   />
                 </Stack.Item>
 
@@ -103,8 +116,9 @@ export function NumberInputModal(props) {
                 <Stack.Item>
                   <Button
                     icon="angle-up"
-                    disabled={value >= max_value}
-                    onClick={() => setValue((value) => value + 1)}
+                    disabled={!isValid || value >= max_value}
+                    onClick={() => adjust(1)}
+                    tooltip={`Increase by ${step}`}
                   />
                 </Stack.Item>
 
@@ -128,7 +142,7 @@ export function NumberInputModal(props) {
                 </Stack.Item>
               </Stack>
             </Stack.Item>
-            <Stack.Item>
+            <Stack.Item className="InputModal__footer">
               <InputButtons input={value} disabled={!isValid} />
             </Stack.Item>
           </Stack>

@@ -279,9 +279,9 @@ GLOBAL_VAR_INIT(normal_ooc_colour, "#002eb8")
 		if(!is_content_unlocked())
 			return
 
-	var/new_ooccolor = input(src, "Please select your OOC color.", "OOC color", prefs.ooccolor) as color|null
+	var/new_ooccolor = tgui_color_picker(src, "Please select your OOC color.", "OOC color", prefs.ooccolor)
 	if(new_ooccolor)
-		prefs.ooccolor = sanitize_ooccolor(new_ooccolor)
+		prefs.ooccolor = sanitize_ooccolor(sanitize_hexcolor(new_ooccolor, 6, 1))
 		prefs.save_preferences()
 	SSblackbox.record_feedback("tally", "admin_verb", 1, "Set OOC Color") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 	return
@@ -442,10 +442,15 @@ GLOBAL_VAR_INIT(normal_ooc_colour, "#002eb8")
 		return
 
 	var/list/body = list()
-	body += "<html><head><title>Playtime for [key]</title></head><BODY><BR>Playtime:"
+	body += "<div class='keep-panel keep-playtime'><h1>Tracked playtime</h1><div class='keep-account'>[html_encode(key)]</div><div class='keep-report'>"
 	body += get_exp_report()
-	body += "</BODY></HTML>"
-	usr << browse(body.Join(), "window=playerplaytime[ckey];size=550x615")
+	body += "</div></div>"
+	var/datum/browser/noclose/popup = new(usr, "playerplaytime[ckey]", "", 620, 650)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<title>Playtime for [html_encode(key)]</title><style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
+	popup.set_content(body.Join())
+	popup.open(FALSE)
 
 /client/proc/ignore_key(client, displayed_key)
 	var/client/C = client
@@ -477,11 +482,13 @@ GLOBAL_VAR_INIT(normal_ooc_colour, "#002eb8")
 		else
 			choices[displayed_choicename] = C
 	choices = sortList(choices)
-	var/selection = input("Please, select a player!", "Ignore", null, null) as null|anything in choices
+	var/selection = tgui_input_list(src, "Please select a player.", "Ignore", choices)
 	if(!selection || !(selection in choices))
 		return
 	displayed_choicename = selection // ckey string
 	selection = choices[selection] // client
+	if(!selection || !(selection in GLOB.clients))
+		return
 	if(selection == src)
 		to_chat(src, "You can't ignore myself.")
 		return
@@ -648,7 +655,12 @@ GLOBAL_VAR_INIT(normal_ooc_colour, "#002eb8")
 	if(!anything)
 		policytext += "No related rules found."
 
-	usr << browse(policytext.Join(""),"window=policy")
+	var/datum/browser/noclose/popup = new(usr, "policy", "", 620, 650)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<title>Related policy</title><style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
+	popup.set_content("<div class='keep-panel keep-policy'><h1>Related policy</h1><div class='keep-prose'>[policytext.Join("")]</div></div>")
+	popup.open(FALSE)
 
 /client/verb/toggle_ghost_protection()
 	set name = "Toggle Ghost Protection"

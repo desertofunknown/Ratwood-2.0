@@ -13,7 +13,7 @@ export type Reducer<State = any, ActionType extends Action = AnyAction> = (
 
 export type Store<State = any, ActionType extends Action = AnyAction> = {
   dispatch: Dispatch<ActionType>;
-  subscribe: (listener: () => void) => void;
+  subscribe: (listener: () => void) => () => void;
   getState: () => State;
 };
 
@@ -22,7 +22,7 @@ type MiddlewareAPI<State = any, ActionType extends Action = AnyAction> = {
   dispatch: Dispatch<ActionType>;
 };
 
-export type Middleware = <State = any, ActionType extends Action = AnyAction>(
+export type Middleware<State = any, ActionType extends Action = AnyAction> = (
   storeApi: MiddlewareAPI<State, ActionType>,
 ) => (next: Dispatch<ActionType>) => Dispatch<ActionType>;
 
@@ -58,18 +58,28 @@ export const createStore = <State, ActionType extends Action = AnyAction>(
   }
 
   let currentState: State;
-  const listeners: Array<() => void> = [];
+  const listeners = new Set<() => void>();
 
   const getState = (): State => currentState;
 
-  const subscribe = (listener: () => void): void => {
-    listeners.push(listener);
+  const subscribe = (listener: () => void): (() => void) => {
+    // Each subscription owns its cleanup, even when callbacks are reused.
+    const subscription = () => listener();
+    listeners.add(subscription);
+    return () => {
+      listeners.delete(subscription);
+    };
   };
 
   const dispatch = (action: ActionType): void => {
-    currentState = reducer(currentState, action);
-    for (let i = 0; i < listeners.length; i++) {
-      listeners[i]();
+    const nextState = reducer(currentState, action);
+    if (Object.is(currentState, nextState)) {
+      return;
+    }
+    currentState = nextState;
+    // Subscription changes during a notification apply to the next dispatch.
+    for (const listener of Array.from(listeners)) {
+      listener();
     }
   };
 
@@ -136,8 +146,7 @@ export const combineReducers = (
   const keys = Object.keys(reducersObj);
 
   return (prevState = {}, action) => {
-    const nextState = { ...prevState };
-    let hasChanged = false;
+    let nextState = prevState;
 
     for (const key of keys) {
       const reducer = reducersObj[key];
@@ -145,12 +154,14 @@ export const combineReducers = (
       const nextDomainState = reducer(prevDomainState, action);
 
       if (prevDomainState !== nextDomainState) {
-        hasChanged = true;
+        if (nextState === prevState) {
+          nextState = { ...prevState };
+        }
         nextState[key] = nextDomainState;
       }
     }
 
-    return hasChanged ? nextState : prevState;
+    return nextState;
   };
 };
 

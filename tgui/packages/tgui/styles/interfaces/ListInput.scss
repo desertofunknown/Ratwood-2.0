@@ -28,3 +28,166 @@
   transition-duration: var(--transition-time-slow);
   transition-timing-function: ease-out;
 }
+
+// Shared dialog geometry; colors remain supplied by the selected theme.
+.InputModal {
+  font-size: 14px;
+  line-height: 1.5;
+
+  > .Window__contentPadding {
+    margin: 12px;
+    height: calc(100% - 24px);
+  }
+
+  .Section__content {
+    padding: 12px;
+  }
+
+  .Section--fill > .Section__rest,
+  .Stack__item {
+    min-height: 0;
+  }
+
+  .InputModal__prompt {
+    font: inherit;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-bottom: 8px;
+  }
+
+  .InputModal__hint {
+    color: var(--color-label);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .InputModal__footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--section-separator-color);
+    padding-top: 12px;
+    margin-top: 8px;
+  }
+
+  .Button {
+    min-height: 34px;
+    line-height: 1.5;
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+
+  .Input {
+    min-height: 36px;
+    font: inherit;
+    padding: 6px 10px;
+  }
+
+  .RestrictedInput {
+    --restricted-input-border-color: var(--input-border-color);
+    --restricted-input-border-color-focus: var(--input-border-color-focus);
+  }
+
+  .TextArea {
+    line-height: 1.6;
+  }
+
+  .InputModal__choice {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .InputModal__alertMessage {
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+.InputButtons {
+  .Button {
+    min-width: 92px;
+    white-space: normal;
+  }
+}
+
+.InputModal .ListInput__choices {
+  min-height: 0;
+
+  .Section {
+    margin: 0;
+  }
+
+  .Section__content {
+    padding: 0 6px 0 0;
+    overflow-y: auto;
+  }
+}
+
+.InputModal .ListInput__option {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  margin-bottom: 4px;
+  border-left: 3px solid transparent;
+  padding: 7px 10px;
+  animation: none;
+  transition: none;
+
+  .Button__content {
+    display: flex;
+    align-items: baseline;
+
+    > span:last-child {
+      min-width: 0;
+    }
+  }
+
+  &.Button--selected {
+    border-left-color: var(--input-border-color-focus);
+  }
+}
+
+.InputModal .ListInput__searchToggle {
+  min-height: 28px;
+  padding: 3px 7px;
+  font-size: 12px;
+}
+
+.ListInput__marker {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 24px;
+  font-family: Georgia, serif;
+}
+
+.ListInput__empty {
+  padding: 20px 12px;
+  color: var(--color-label);
+  text-align: center;
+}
+
+// Default prompts share the folio's text scale and plain selection rows.
+.theme-azure_default:root .InputModal {
+  font-size: 13px;
+  line-height: 1.45;
+
+  .Button {
+    font-size: 13px;
+  }
+
+  .ListInput__option {
+    border: 0;
+    border-bottom: 1px solid #382b2f;
+    border-left: 3px solid transparent;
+    background: transparent;
+
+    &:hover:not(.Button--disabled) {
+      background: #281b1f;
+    }
+
+    &.Button--selected {
+      border-left-color: #ae8189;
+      background: #42222a;
+      box-shadow: none;
+    }
+  }
+}

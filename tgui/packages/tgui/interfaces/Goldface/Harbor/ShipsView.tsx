@@ -1,39 +1,19 @@
 import { useMemo } from 'react';
 
-import {
-  cardStyle,
-  FONT_BODY,
-  INK_FAINT,
-  sectionHeaderStyle,
-} from '../../common/parchment';
 import type { ActFn, HarborRealm, HarborShip } from '../types';
 import { ShipRow } from './ShipRow';
 
-const EmptyCard = (props: { children: React.ReactNode }) => (
-  <div
-    style={{
-      ...cardStyle,
-      textAlign: 'center',
-      color: INK_FAINT,
-      fontSize: FONT_BODY,
-    }}
-  >
-    {props.children}
-  </div>
-);
-
-type Props = {
+export const ShipsView = (props: {
   docked: HarborShip[];
   pool: HarborShip[];
   dockSpotsUsed: number;
   dockSpotsMax: number;
   hailsRemaining: number;
   budget: number;
+  tariffRate: number;
   act: ActFn;
   realms: HarborRealm[];
-};
-
-export const ShipsView = (props: Props) => {
+}) => {
   const {
     docked,
     pool,
@@ -41,74 +21,65 @@ export const ShipsView = (props: Props) => {
     dockSpotsMax,
     hailsRemaining,
     budget,
+    tariffRate,
     act,
     realms,
   } = props;
   const dockFull = dockSpotsUsed >= dockSpotsMax;
   const noHails = hailsRemaining <= 0;
-  const realmsById = useMemo(() => {
-    const map: Record<string, HarborRealm> = {};
-    for (const r of realms) map[r.id] = r;
-    return map;
-  }, [realms]);
+  const realmsById = useMemo(
+    () => new Map(realms.map((realm) => [realm.id, realm])),
+    [realms],
+  );
   return (
     <>
-      <div style={sectionHeaderStyle}>
-        Docked at the Pier ({docked.length})
-      </div>
+      <h3 className="GoldfaceHarbor__section">
+        Docked at the Pier <span>({docked.length})</span>
+      </h3>
       {docked.length === 0 ? (
-        <EmptyCard>
+        <p className="GoldfaceHarbor__empty">
           No vessels at the pier. Hail one from the horizon to bring her in.
-        </EmptyCard>
+        </p>
       ) : (
-        <div>
-          {docked.map((s) => (
-            <ShipRow
-              key={s.ship_id}
-              ship={s}
-              budget={budget}
-              act={act}
-              realm={realmsById[s.realm_id]}
-              onSendAway={() => act('send_away', { ship_id: s.ship_id })}
-            />
-          ))}
-        </div>
+        docked.map((ship) => (
+          <ShipRow
+            key={ship.ship_id}
+            ship={ship}
+            budget={budget}
+            tariffRate={tariffRate}
+            act={act}
+            realm={realmsById.get(ship.realm_id)}
+            onSendAway={() => act('send_away', { ship_id: ship.ship_id })}
+          />
+        ))
       )}
-
-      <div style={{ ...sectionHeaderStyle, marginTop: '16px' }}>
-        Seen on the Horizon ({pool.length})
-      </div>
+      <h3 className="GoldfaceHarbor__section">
+        Seen on the Horizon <span>({pool.length})</span>
+      </h3>
       {pool.length === 0 ? (
-        <EmptyCard>
+        <p className="GoldfaceHarbor__empty">
           No vessels on the horizon. The dawn brings new arrivals.
-        </EmptyCard>
+        </p>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '0 12px',
-          }}
-        >
-          {pool.map((s) => (
-            <ShipRow
-              key={s.ship_id}
-              ship={s}
-              budget={budget}
-              act={act}
-              realm={realmsById[s.realm_id]}
-              hailDisabled={dockFull || noHails}
-              hailDisabledReason={
-                noHails
-                  ? 'No hails left today.'
-                  : dockFull
-                    ? 'The pier is full.'
-                    : undefined
-              }
-              onHail={() => act('hail', { ship_id: s.ship_id })}
-            />
-          ))}
-        </div>
+        pool.map((ship) => (
+          <ShipRow
+            key={ship.ship_id}
+            ship={ship}
+            budget={budget}
+            tariffRate={tariffRate}
+            act={act}
+            realm={realmsById.get(ship.realm_id)}
+            hailDisabled={dockFull || noHails}
+            hailDisabledReason={
+              noHails
+                ? 'No hails left today.'
+                : dockFull
+                  ? 'The pier is full.'
+                  : undefined
+            }
+            onHail={() => act('hail', { ship_id: ship.ship_id })}
+          />
+        ))
       )}
     </>
   );

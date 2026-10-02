@@ -1,16 +1,5 @@
 import { useState } from 'react';
 
-import {
-  cardStyle,
-  fieldLabelStyle,
-  fieldRowStyle,
-  fieldValueStyle,
-  INK_FAINT,
-  INK_SOFT,
-  inkButtonStyle,
-  inkInputStyle,
-  sectionHeaderStyle,
-} from '../common/parchment';
 import { type TabProps } from './types';
 
 export const PollTaxTab = ({ data, act }: TabProps) => {
@@ -18,7 +7,7 @@ export const PollTaxTab = ({ data, act }: TabProps) => {
   const tax = data.poll_tax;
   const taxStatic = data.poll_tax_static;
   const taxUser = data.poll_tax_user;
-  const numericDays = parseInt(days, 10) || 0;
+  const numericDays = Number(days) || 0;
 
   const effectiveRate = tax.rate > 0 ? tax.rate : taxStatic.fallback_rate;
   const presumed = tax.rate <= 0;
@@ -42,70 +31,72 @@ export const PollTaxTab = ({ data, act }: TabProps) => {
     capRemaining <= 0 ||
     affordable <= 0;
   const submitDisabled =
-    advanceBlocked || numericDays < 1 || numericDays > maxDays;
+    advanceBlocked || !Number.isInteger(numericDays) ||
+    numericDays < 1 || numericDays > maxDays;
 
   return (
-    <div style={cardStyle}>
-      <div style={sectionHeaderStyle}>Poll Tax</div>
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>Class</div>
-        <div style={fieldValueStyle}>
-          {taxUser.category_label || 'No taxable class'}
+    <section className="MeisterPanel__section">
+      <div className="MeisterPanel__sectionTitle"><h2>Poll tax</h2></div>
+      <dl className="MeisterPanel__entries">
+        <div><dt>Class</dt><dd>{taxUser.category_label || 'No taxable class'}</dd></div>
+        <div><dt>Rate</dt><dd>{rateLine}</dd></div>
+        <div>
+          <dt>Held in advance</dt>
+          <dd>
+            {tax.advance_days_held} day{tax.advance_days_held === 1 ? '' : 's'}
+            {' '}(cap {taxStatic.max_advance_days})
+          </dd>
         </div>
-      </div>
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>Rate</div>
-        <div style={fieldValueStyle}>{rateLine}</div>
-      </div>
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>Held in advance</div>
-        <div style={fieldValueStyle}>
-          {tax.advance_days_held} day
-          {tax.advance_days_held === 1 ? '' : 's'} (cap {taxStatic.max_advance_days})
-        </div>
-      </div>
+      </dl>
 
-      {!!tax.exempt && (
-        <div style={{ color: INK_SOFT, marginTop: 8 }}>
-          You owe nothing. There is nothing to advance.
-        </div>
+      {!!tax.exempt && <p className="MeisterPanel__help">Exempt; no advance needed.</p>}
+      {advanceBlocked && !tax.exempt && (
+        <p className="MeisterPanel__help">
+          {!taxUser.category
+            ? 'No taxable class registered; advance unavailable.'
+            : tax.rate < 0
+              ? 'Your class receives a Crown subsidy; no advance needed.'
+              : capRemaining <= 0
+                ? 'Advance paid to the allowed limit.'
+                : 'Insufficient balance for a full day in advance.'}
+        </p>
       )}
 
       {!advanceBlocked && (
         <>
-          <div style={sectionHeaderStyle}>Advance</div>
-          <div style={fieldRowStyle}>
-            <div style={fieldLabelStyle}>Days</div>
-            <div style={fieldValueStyle}>
+          <div className="MeisterPanel__withdrawal">
+            <label>
+              Advance days
               <input
                 type="number"
                 min={1}
                 max={maxDays}
+                step={1}
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
-                style={{ ...inkInputStyle, width: 90 }}
               />
-              <span style={{ marginLeft: 6, color: INK_FAINT }}>
-                (max {maxDays}; {numericDays * effectiveRate}m
-                {presumed ? ' presumed' : ''})
-              </span>
+            </label>
+            <div className="MeisterPanel__total">
+              <span>{presumed ? 'Presumed total' : 'Total'}</span>
+              <strong>
+                {Number.isInteger(numericDays) && numericDays >= 0
+                  ? `${numericDays * effectiveRate}m` : '—'}
+              </strong>
             </div>
-          </div>
-          <div style={{ marginTop: 6, textAlign: 'right' }}>
             <button
               type="button"
-              style={inkButtonStyle({ disabled: submitDisabled })}
               disabled={submitDisabled}
               onClick={() => {
                 act('advance_poll_tax', { days: numericDays });
                 setDays('');
               }}
             >
-              Pay Forward
+              Pay forward
             </button>
           </div>
+          <p className="MeisterPanel__help">Enter 1–{maxDays} whole days.</p>
         </>
       )}
-    </div>
+    </section>
   );
 };

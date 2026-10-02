@@ -3,6 +3,7 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 
 /mob/dead/new_player
 	var/ready = 0
+	var/lobby_opened = FALSE
 	var/spawning = 0//Referenced when you want to delete the new_player later on in the code.
 	var/topjob = "Hero!"
 	flags_1 = NONE
@@ -132,6 +133,11 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 
 	if(href_list["show_preferences"])
 		client.prefs.ShowChoices(src, 4)
+		return 1
+
+	if(href_list["show_lobby"])
+		open_lobby()
+		lobby_refresh(SSlobbymenu.current_actor_list)
 		return 1
 
 	if(href_list["show_options"])
@@ -425,7 +431,7 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 	return "Error: Unknown job availability."
 
 //used for latejoining
-/mob/dead/new_player/proc/IsJobUnavailable(rank, latejoin = FALSE)
+/mob/dead/new_player/proc/IsJobUnavailable(rank, latejoin = FALSE, player_quality = null)
 	if(QDELETED(src))
 		return JOB_UNAVAILABLE_GENERIC
 	if(has_world_trait(/datum/world_trait/skeleton_siege))
@@ -466,9 +472,11 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 		return JOB_UNAVAILABLE_GENERIC
 	#ifdef USES_PQ
 	if(!job.required || latejoin)
-		if(!isnull(job.min_pq) && (get_playerquality(ckey) < job.min_pq))
+		if((!isnull(job.min_pq) || !isnull(job.max_pq)) && !isnum(player_quality))
+			player_quality = get_playerquality(ckey)
+		if(!isnull(job.min_pq) && (player_quality < job.min_pq))
 			return JOB_UNAVAILABLE_PQ
-		if(!isnull(job.max_pq) && (get_playerquality(ckey) > job.max_pq))
+		if(!isnull(job.max_pq) && (player_quality > job.max_pq))
 			return JOB_UNAVAILABLE_PQ
 	#endif
 	var/datum/species/pref_species = client.prefs.pref_species
@@ -527,7 +535,7 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 		to_chat(src, span_warning("Enslaved Adventurer is roundstart-only on Rockhill."))
 		return FALSE
 
-	var/error = IsJobUnavailable(rank)
+	var/error = IsJobUnavailable(rank, TRUE)
 	if(error != JOB_AVAILABLE)
 		to_chat(src, span_warning("[get_job_unavailable_error_message(error, rank)]"))
 		return FALSE
@@ -637,12 +645,12 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 		character.client.update_ooc_verb_visibility()
 
 /mob/dead/new_player/proc/LateChoices()
-	var/list/dat = list("<div class='notice' style='font-style: normal; font-size: 14px; margin-bottom: 2px; padding-bottom: 0px'>Round Duration: [DisplayTimeText(world.time - SSticker.round_start_time, 1)]</div>")
+	var/list/dat = list("<div class='latejoin-folio'><div class='latejoin-header'><div class='latejoin-title'><h1>Choose Class</h1><span>Round duration: [DisplayTimeText(world.time - SSticker.round_start_time, 1)]</span></div><div class='latejoin-searchbar'><label for='latejoin-search'>Find</label><input id='latejoin-search' type='text' placeholder='Class or department...' autocomplete='off'><span>Open / total &middot; ? backgrounds</span></div></div><div class='latejoin-list' id='latejoin-list' tabindex='0' aria-label='Available classes'><div class='latejoin-columns'>")
+	var/player_quality = null
+	var/displayed_jobs = 0
 	for(var/datum/job/prioritized_job in SSjob.prioritized_jobs)
 		if(prioritized_job.current_positions >= prioritized_job.total_positions)
 			SSjob.prioritized_jobs -= prioritized_job
-	dat += "<table><tr><td valign='top'>"
-	var/column_counter = 0
 
 	var/list/omegalist = list()
 	omegalist += list(GLOB.noble_positions)
@@ -666,12 +674,14 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 			var/datum/job/job_datum = SSjob.name_occupations[job]
 			if(!job_datum)
 				continue
+			#ifdef USES_PQ
+			if(!isnum(player_quality) && (!isnull(job_datum.min_pq) || !isnull(job_datum.max_pq)))
+				player_quality = get_playerquality(ckey)
+			#endif
 			// Make sure hiv+ jobs always appear on list, even if unavailable
-			var/is_job_available = (IsJobUnavailable(job_datum.title, TRUE) == JOB_AVAILABLE)
-			if(job_datum.always_show_on_latechoices)
-				is_job_available = TRUE
-			if(is_job_available)
-				available_jobs += job
+			var/job_availability = IsJobUnavailable(job_datum.title, TRUE, player_quality)
+			if(job_availability == JOB_AVAILABLE || job_datum.always_show_on_latechoices)
+				available_jobs[job] = job_availability
 
 		if (length(available_jobs))
 			var/cat_color = SSjob.name_occupations[category[1]].selection_color //use the color of the first job in the category (the department head) as the category color
@@ -698,49 +708,94 @@ GLOBAL_LIST_INIT(roleplay_readme, world.file2list("strings/rt/rp_prompt.txt"))
 				if (TRIBAL)
 					cat_name = "Tribe"
 
-			dat += "<fieldset style='width: 185px; border: 2px solid [cat_color]; display: inline'>"
-			dat += "<legend align='center' style='font-weight: bold; color: [cat_color]'>[cat_name]</legend>"
+			dat += "<div class='latejoin-group'><h2 style='border-left-color: [cat_color]'>[cat_name]</h2>"
 
 			if(has_world_trait(/datum/world_trait/skeleton_siege))
-				dat += "<a class='job command' href='byond://?src=[REF(src)];SelectedJob=Skeleton'>BECOME AN EVIL SKELETON</a>"
-				dat += "</fieldset><br>"
-				column_counter++
-				if(column_counter > 0 && (column_counter % 3 == 0))
-					dat += "</td><td valign='top'>"
+				dat += "<div class='latejoin-row' data-search='Skeleton [cat_name]'><a class='latejoin-join' href='byond://?src=[REF(src)];SelectedJob=Skeleton'>Evil Skeleton</a><span class='latejoin-availability'>Siege</span></div>"
+				displayed_jobs++
 			if(has_world_trait(/datum/world_trait/goblin_siege))
-				dat += "<a class='job command' href='byond://?src=[REF(src)];SelectedJob=Goblin'>BECOME A GOBLIN</a>"
-				dat += "</fieldset><br>"
-				column_counter++
-				if(column_counter > 0 && (column_counter % 3 == 0))
-					dat += "</td><td valign='top'>"
+				dat += "<div class='latejoin-row' data-search='Goblin [cat_name]'><a class='latejoin-join' href='byond://?src=[REF(src)];SelectedJob=Goblin'>Goblin</a><span class='latejoin-availability'>Siege</span></div>"
+				displayed_jobs++
 
 			if(has_world_trait(/datum/world_trait/skeleton_siege)|| has_world_trait(/datum/world_trait/goblin_siege))
+				dat += "</div>"
 				break
 
 			for(var/job in available_jobs)
 				var/datum/job/job_datum = SSjob.name_occupations[job]
 				var/do_elaborate = job_datum.has_limited_subclasses()
 				if(job_datum)
-					var/command_bold = FALSE
-					if(job in GLOB.noble_positions)
-						command_bold = TRUE
 					var/used_name = job_datum.display_title || job_datum.title
 					if(client.prefs.pronouns == SHE_HER && job_datum.f_title)
 						used_name = job_datum.f_title
-					if(job_datum in SSjob.prioritized_jobs)
-						dat += "<a class='job[command_bold]' href='byond://?src=[REF(src)];SelectedJob=[job_datum.title]'><span class='priority'>[used_name] ([job_datum.current_positions])</span></a>"
+					var/is_priority = (job_datum in SSjob.prioritized_jobs)
+					var/vacancies = job_datum.total_positions == -1 ? "&infin;" : "[max(0, job_datum.total_positions - job_datum.current_positions)] / [job_datum.total_positions]"
+					var/availability_text = job_datum.total_positions == -1 ? "Unlimited openings; [job_datum.current_positions] filled" : "[max(0, job_datum.total_positions - job_datum.current_positions)] open of [job_datum.total_positions]; [job_datum.current_positions] filled"
+					dat += "<div class='latejoin-row[is_priority ? " latejoin-priority" : ""][job in GLOB.noble_positions ? " latejoin-command" : ""]' data-search='[html_encode("[used_name] [job_datum.title] [cat_name]")]'>"
+					if(available_jobs[job] == JOB_AVAILABLE)
+						dat += "<a class='latejoin-join' href='byond://?src=[REF(src)];SelectedJob=[url_encode(job_datum.title)]' aria-label='[html_encode("Join as [used_name]; [availability_text]")]'>[html_encode(used_name)][is_priority ? " <span class='latejoin-priority-mark' title='Priority class' aria-label='Priority'>&#9733;</span>" : ""]</a>"
 					else
-						dat += "<font size = 3>[do_elaborate ? "<a href='?src=[REF(job_datum)];jobsubclassinfo=1'><b><font color = '#6b6743'>(!)</font></b></a>" : ""]<a href='byond://?src=[REF(src)];SelectedJob=[job_datum.title]'>[command_bold ? "<b>" : ""][used_name] ([job_datum.current_positions]/[job_datum.total_positions])[command_bold ? "</b>" : ""]</a></font>"
-						dat += "<br>"
+						dat += "<span class='latejoin-unavailable' aria-disabled='true'>[html_encode(used_name)]<small>[available_jobs[job] == JOB_UNAVAILABLE_SLOTFULL ? "Full" : "Restricted for this character"]</small></span>"
+					if(do_elaborate)
+						dat += "<a class='latejoin-subclasses' href='?src=[REF(job_datum)];jobsubclassinfo=1' title='[html_encode("Background availability for [used_name]")]' aria-label='[html_encode("Background availability for [used_name]")]'>?</a>"
+					dat += "<span class='latejoin-availability' title='[html_encode(availability_text)]' aria-label='[html_encode(availability_text)]'>[vacancies]</span></div>"
+					displayed_jobs++
 
-			dat += "</fieldset><br>"
-			column_counter++
-			if(column_counter > 0 && (column_counter % 4 == 0))
-				dat += "</td><td valign='top'>"
-	dat += "</td></tr></table></center>"
-	dat += "</div></div>"
-	var/datum/browser/popup = new(src, "latechoices", "Choose Class", 720, 580)
-	popup.add_stylesheet("playeroptions", 'html/browser/playeroptions.css')
+			dat += "</div>"
+	if(!displayed_jobs)
+		dat += "<div class='latejoin-empty'>No classes are currently available to this character.</div>"
+	dat += "<div class='latejoin-empty' id='latejoin-empty' style='display:none'>No classes match your search.</div></div></div><div class='latejoin-footer'><span>Select a class name to join. Tab / &uarr;&darr; to navigate.</span><a href='byond://?src=[REF(src)];late_join=1'>Refresh</a></div></div>"
+	dat += {"
+	<script type='text/javascript'>
+	(function() {
+		var search = document.getElementById('latejoin-search');
+		var list = document.getElementById('latejoin-list');
+		var groups = list.querySelectorAll('.latejoin-group');
+		search.oninput = function() {
+			var query = search.value.toLowerCase();
+			var total = 0;
+			for(var i = 0; i < groups.length; i++) {
+				var group = groups.item(i);
+				var rows = group.querySelectorAll('.latejoin-row');
+				var matches = 0;
+				for(var j = 0; j < rows.length; j++) {
+					var row = rows.item(j);
+					var visible = row.getAttribute('data-search').toLowerCase().indexOf(query) !== -1;
+					row.style.display = visible ? '' : 'none';
+					if(visible) { matches++; }
+				}
+				group.style.display = matches ? '' : 'none';
+				total += matches;
+			}
+			document.getElementById('latejoin-empty').style.display = !total && groups.length ? 'block' : 'none';
+			list.scrollTop = 0;
+		};
+		document.addEventListener('keydown', function(event) {
+			if(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+			if(event.keyCode !== 38 && event.keyCode !== 40) return;
+			if(event.target !== search && event.target !== list && !list.contains(event.target)) return;
+			var links = list.querySelectorAll('a');
+			var visible = \[\];
+			var current = -1;
+			for(var i = 0; i < links.length; i++) {
+				var link = links.item(i);
+				if(!link.getClientRects().length) continue;
+				if(link === document.activeElement) current = visible.length;
+				visible.push(link);
+			}
+			if(!visible.length) return;
+			event.preventDefault();
+			var next = current < 0 ? (event.keyCode === 40 ? 0 : visible.length - 1) : Math.max(0, Math.min(visible.length - 1, current + (event.keyCode === 40 ? 1 : -1)));
+			visible\[next\].focus();
+		});
+	})();
+	</script>
+	"}
+	var/datum/browser/popup = new(src, "latechoices", "", 820, 680)
+	popup.add_stylesheet("latejoin_choices", 'html/browser/latejoin_choices.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	var/list/common_urls = get_asset_datum(/datum/asset/simple/namespaced/common).get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); } .latejoin-folio { background-image: url('[common_urls["flowers.png"]]'); }</style>")
 	popup.set_content(jointext(dat, ""))
 	popup.open(FALSE) // 0 is passed to open so that it doesn't use the onclose() proc
 

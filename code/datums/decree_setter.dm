@@ -1,4 +1,5 @@
 /datum/decree_setter
+	parent_type = /datum/ruler_panel
 
 /datum/decree_setter/ui_interact(mob/user, datum/tgui/ui)
 	ui = SStgui.try_update_ui(user, src, ui)
@@ -11,6 +12,7 @@
 	// interpolates the current ruler's name into its charter - and ruler identity can
 	// change mid-round via succession.
 	var/list/decree_list = list()
+	var/list/states = list()
 	for(var/id in SStreasury.decrees)
 		var/datum/decree/D = SStreasury.decrees[id]
 		decree_list += list(list(
@@ -21,14 +23,12 @@
 			"mechanical" = D.mechanical_text,
 			"flavor" = D.get_display_flavor_text(),
 		))
-	var/list/states = list()
-	for(var/id in SStreasury.decrees)
-		var/datum/decree/D = SStreasury.decrees[id]
 		var/cooldown_left = max(0, D.cooldown_expires - world.time)
 		states += list(list(
 			"id" = D.id,
 			"active" = D.active,
 			"cooldown_left" = round(cooldown_left / 10),
+			"sequestration_locked" = !SStreasury.can_mutate_decree(D.id, !D.active),
 		))
 	return list(
 		"decrees" = decree_list,

@@ -32,6 +32,7 @@
 		var/mob_stat_level = human_mob.get_stat_level(STATKEY_STR)
 		if(mob_stat_level < weakest_stat)
 			weakest = human_mob
+			weakest_stat = mob_stat_level
 		else if(mob_stat_level == weakest_stat && prob(50))
 			weakest = human_mob
 

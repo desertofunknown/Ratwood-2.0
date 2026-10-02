@@ -145,24 +145,25 @@
 	if(!fexists("data/player_saves/[copytext(ckey,1,2)]/[ckey]/preferences.sav"))
 		to_chat(usr, span_boldwarning("User does not exist."))
 		return
-	var/popup_window_data = "<center>[ckey]</center>"
-	popup_window_data += "<center>PQ: [get_playerquality(ckey, TRUE, TRUE)] ([get_playerquality(ckey, FALSE, TRUE)])</center>"
-
-//	dat += "<table width=100%><tr><td width=33%><div style='text-align:left'><a href='?_src_=prefs;preference=playerquality;task=menu'><b>PQ:</b></a> [get_playerquality(user.ckey, text = TRUE)]</div></td><td width=34%><center><a href='?_src_=prefs;preference=triumphs;task=menu'><b>TRIUMPHS:</b></a> [user.get_triumphs() ? "\Roman [user.get_triumphs()]" : "None"]</center></td><td width=33%></td></tr></table>"
-	popup_window_data += "<center><a href='?_src_=holder;[HrefToken()];cursemenu=[ckey]'>CURSES</a></center>"
-	popup_window_data += "<table width=100%><tr><td width=33%><div style='text-align:left'>"
-	popup_window_data += "Commends: <a href='?_src_=holder;[HrefToken()];readcommends=[ckey]'>[get_commends(ckey)]</a></div></td>"
-	popup_window_data += "<td width=34%><center>Round Contributor Points: [get_roundpoints(ckey)]</center></td>"
-	popup_window_data += "<td width=33%><div style='text-align:right'>Rounds Survived: [get_roundsplayed(ckey)]</div></td></tr></table>"
+	var/popup_window_data = "<div class='pq-record'><div class='pq-heading'><a class='pq-curses' href='?_src_=holder;[HrefToken()];cursemenu=[ckey]'>Curses</a><h1>Player Quality</h1></div><div class='pq-account'>[ckey]</div>"
+	popup_window_data += "<table class='pq-summary'><tr><th scope='row'>Player Quality</th><td>[get_playerquality(ckey, TRUE, TRUE)] <span class='pq-score'>([get_playerquality(ckey, FALSE, TRUE)])</span></td></tr>"
+	popup_window_data += "<tr><th scope='row'>Commends</th><td><a href='?_src_=holder;[HrefToken()];readcommends=[ckey]'>[get_commends(ckey)]</a></td></tr>"
+	popup_window_data += "<tr><th scope='row'>Round Contributor Points</th><td>[get_roundpoints(ckey)]</td></tr>"
+	popup_window_data += "<tr><th scope='row'>Rounds Survived</th><td>[get_roundsplayed(ckey)]</td></tr></table><h2>Record &amp; History</h2><div class='pq-history'>"
 	var/list/listy = world.file2list("data/player_saves/[copytext(ckey,1,2)]/[ckey]/playerquality.txt")
 	if(!listy.len)
-		popup_window_data += span_info("No data on record. Create some.")
+		popup_window_data += "<p class='pq-empty'>No data on record. Create some.</p>"
 	else
 		for(var/i = listy.len to 1 step -1)
 			var/ya = listy[i]
 			if(ya)
-				popup_window_data += "<span class='info'>[listy[i]]</span><br>"
-	var/datum/browser/noclose/popup = new(usr, "playerquality", "", 390, 320)
+				popup_window_data += "<div class='pq-entry'>[listy[i]]</div>"
+	popup_window_data += "</div></div>"
+	var/datum/browser/noclose/popup = new(usr, "playerquality", "", 620, 560)
+	popup.add_stylesheet("player_quality", 'html/browser/player_quality.css')
+	var/datum/asset/simple/roguefonts/panel_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = panel_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(popup_window_data)
 	popup.open()
 

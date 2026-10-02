@@ -3,13 +3,13 @@ import { Button, Dropdown, Input, Section, Stack } from 'tgui-core/components';
 import { useLocalState } from '../../backend';
 import { Window } from '../../layouts';
 import { SORTING_TYPES } from './contants';
-import { FilterAction, filterReducer, FilterState } from './filters';
+import { FilterAction, filterReducer, type FilterState } from './filters';
 import { OverviewSection } from './OverviewSection';
 import { SubsystemDialog } from './SubsystemDialog';
 import { SubsystemViews } from './SubsystemViews';
-import { SortType, SubsystemData } from './types';
+import { SortType, type SubsystemData } from './types';
 
-export const ControllerOverview = (props) => {
+export const ControllerOverview = () => {
   return (
     <Window title="Controller Overview" height={600} width={500}>
       <Window.Content>
@@ -19,7 +19,7 @@ export const ControllerOverview = (props) => {
   );
 };
 
-export const ControllerContent = (props) => {
+export const ControllerContent = () => {
   const [state, setState] = useLocalState<FilterState>('controllerFilter', {
     ascending: true,
     inactive: true,
@@ -36,23 +36,23 @@ export const ControllerContent = (props) => {
   const { label, inDeciseconds } =
     SORTING_TYPES?.[state.sortType] || SORTING_TYPES[0];
 
-  const dispatch = (action: { type: FilterAction; payload: any }) => {
+  const dispatch = (action: Parameters<typeof filterReducer>[1]) => {
     setState(filterReducer(state, action));
   };
 
   const onSelectionHandler = (value: string) => {
-    const updates: Partial<FilterState> = {
-      sortType: SORTING_TYPES.findIndex((type) => type.label === value),
-    };
+    const sortType = SORTING_TYPES.findIndex((type) => type.label === value);
+    const sortingType = SORTING_TYPES[sortType];
+    if (!sortingType) return;
 
-    if (updates.sortType === undefined) return;
-
-    const { inDeciseconds } = SORTING_TYPES[updates.sortType];
-
-    updates.ascending = !inDeciseconds;
-    updates.smallValues = inDeciseconds;
-
-    dispatch({ type: FilterAction.Update, payload: updates });
+    dispatch({
+      type: FilterAction.Update,
+      payload: {
+        sortType,
+        ascending: !sortingType.inDeciseconds,
+        smallValues: sortingType.inDeciseconds,
+      },
+    });
   };
 
   return (
@@ -73,7 +73,7 @@ export const ControllerContent = (props) => {
               <Stack fill vertical>
                 <Stack.Item height="50%">
                   <Input
-                    onInput={(e, value) =>
+                    onChange={(value) =>
                       dispatch({ type: FilterAction.Query, payload: value })
                     }
                     placeholder="By name"

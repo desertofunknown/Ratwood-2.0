@@ -141,15 +141,22 @@
 */
 /obj/structure/mannequin/Topic(href, href_list)
 	..()
-	if(tipped_over || !(iscarbon(usr)) || usr.incapacitated(ignore_grab = TRUE) || !Adjacent(usr))
+	if(href_list["command"] == "close")
+		usr << browse(null, "window=mannequin[REF(src)]")
+		return
+	if(unchangeable || tipped_over || !(iscarbon(usr)) || usr.incapacitated(ignore_grab = TRUE) || !Adjacent(usr))
 		return
 	var/mob/living/carbon/user = usr
+	var/focus_id = "mannequin-turn"
 	switch(href_list["command"])
 		if("item_placement")
 			var/obj/item/item_in_hand = user.get_active_held_item()
 			var/item_slot = href_list["item_slot"]
 
 			var/targ_to_slot = MannequinEquipHelper(item_slot)
+			if(!targ_to_slot)
+				return
+			focus_id = "mannequin-[targ_to_slot]"
 			if(!item_in_hand)
 				if(clothing[targ_to_slot])
 					var/obj/item/I = clothing[targ_to_slot]
@@ -177,31 +184,39 @@
 				user << browse(null, "window=mannequin[REF(src)]")
 			return
 	update_icon()
-	ShowInventory(user)
+	ShowInventory(user, focus_id)
 
 //Mannequin Interaction UI
-/obj/structure/mannequin/proc/ShowInventory(mob/user)
-	var/dat
-
-	dat += EquippableSlots()
-	dat += "<HR>Turn Mannequin:<B><A href='byond://?src=[REF(src)];command=turn_mannequin'>[dir2text(dir)]</A></B>"
-	dat += "<BR><A href='byond://?src=[REF(src)];command=close' style='position:absolute;right:50px'>Close</A>"
-
-	var/datum/browser/noclose/popup = new(user, "mannequin[REF(src)]", "<div align='center'>Mannequin Fitting</div>", 275, 425)
-	//I don't think generating a new popup datum every ui update is a good thing, but what do I know. I'm so used to tgui.
+/obj/structure/mannequin/proc/ShowInventory(mob/user, focus_id)
+	var/dat = "<script>document.body.className += ' mannequin-window';</script><div class='mannequin-fitting'><h1>Mannequin Fitting</h1>"
+	dat += "<p class='mannequin-help'>Hold an item to fit it. With an empty hand, select an item to take it.</p>"
+	dat += "<table class='mannequin-slots'>[EquippableSlots(focus_id)]</table>"
+	dat += "<div class='mannequin-footer'><span class='mannequin-direction'>Facing [dir2text(dir)]</span><a id='mannequin-turn' href='byond://?src=[REF(src)];command=turn_mannequin'>Turn</a><a class='mannequin-close' href='byond://?src=[REF(src)];command=close'>Close</a></div></div>"
+	if(focus_id)
+		dat += "<script>var control = document.getElementById([json_encode(focus_id)]); if (control) { control.focus(); }</script>"
+	var/datum/browser/noclose/popup = new(user, "mannequin[REF(src)]", null, 340, istype(src, /obj/structure/mannequin/male) ? 600 : 460)
+	popup.add_stylesheet("mannequin", 'html/browser/mannequin.css')
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Mannequin Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Mannequin Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Mannequin Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(dat)
 	popup.open()
 
 //UI SLOTS
-/obj/structure/mannequin/proc/EquippableSlots()
-	. += "<BR><B>Head:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_HEAD]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_HEAD])]</A>"
-	. += "<BR><B>Mask:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_PRECISE_MOUTH]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_MASK])]</A>"
-	. += "<BR><B>Neck:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_PRECISE_NECK]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_NECK])]</A>"
-	. += "<BR><B>Cloak:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[SLOT_MANNEQUIN_CLOAK]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_CLOAK])]</A>" //No direct slot to equip.
-	. += "<BR><B>Armor:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_CHEST]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_ARMOR])]</A>"
-	. += "<BR><B>Shirt:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_PRECISE_STOMACH]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_SHIRT])]</A>"
-	. += "<BR><B>Belt:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_PRECISE_GROIN]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_BELT])]</A>"
-	. += "<BR><B>Ring:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[SLOT_MANNEQUIN_RING]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_RING])]</A>" //No direct slot to equip.
+/obj/structure/mannequin/proc/EquippableSlots(focus_id)
+	. += FittingRow("Head", BODY_ZONE_HEAD, SLOT_MANNEQUIN_HEAD, focus_id)
+	. += FittingRow("Mask", BODY_ZONE_PRECISE_MOUTH, SLOT_MANNEQUIN_MASK, focus_id)
+	. += FittingRow("Neck", BODY_ZONE_PRECISE_NECK, SLOT_MANNEQUIN_NECK, focus_id)
+	. += FittingRow("Cloak", SLOT_MANNEQUIN_CLOAK, SLOT_MANNEQUIN_CLOAK, focus_id)
+	. += FittingRow("Armor", BODY_ZONE_CHEST, SLOT_MANNEQUIN_ARMOR, focus_id)
+	. += FittingRow("Shirt", BODY_ZONE_PRECISE_STOMACH, SLOT_MANNEQUIN_SHIRT, focus_id)
+	. += FittingRow("Belt", BODY_ZONE_PRECISE_GROIN, SLOT_MANNEQUIN_BELT, focus_id)
+	. += FittingRow("Ring", SLOT_MANNEQUIN_RING, SLOT_MANNEQUIN_RING, focus_id)
+
+/obj/structure/mannequin/proc/FittingRow(label, target_zone, clothing_slot, focus_id)
+	var/control_id = "mannequin-[clothing_slot]"
+	var/selected_class = control_id == focus_id ? " class='selected'" : ""
+	return "<tr[selected_class]><th scope='row'>[label]</th><td><a id='[control_id]' href='byond://?src=[REF(src)];command=item_placement;item_slot=[target_zone]'>[makeStrippingButton(clothing[clothing_slot])]</a></td></tr>"
 
 /obj/structure/mannequin/attackby(obj/item/I, mob/user)
 	if(user.cmode || user.a_intent == INTENT_HARM || user.a_intent == INTENT_DISARM)
@@ -593,9 +608,9 @@
 */
 /obj/structure/mannequin/proc/makeStrippingButton(obj/item/I)
 	if(!istype(I))
-		return "<font color=grey>Empty</font>"
+		return "<span class='mannequin-empty'>Empty slot</span>"
 	else
-		return I
+		return html_encode(I.name)
 /*
 * A Little Explanation of Conversion Procs
 * EquipHelper = [Aim Targeting] --> [Item Equip Slots]
@@ -757,12 +772,12 @@
 			return ITEM_SLOT_SHOES
 	return ..()
 
-/obj/structure/mannequin/male/EquippableSlots()
+/obj/structure/mannequin/male/EquippableSlots(focus_id)
 	. = ..()
-	. += "<BR><B>Wrists:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_L_ARM]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_WRISTS])]</A>"
-	. += "<BR><B>Gloves:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_PRECISE_L_HAND]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_GLOVES])]</A>"
-	. += "<BR><B>Pants:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_L_LEG]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_PANTS])]</A>"
-	. += "<BR><B>Shoes:</B> <A href='byond://?src=[REF(src)];command=item_placement;item_slot=[BODY_ZONE_PRECISE_L_FOOT]'>[makeStrippingButton(clothing[SLOT_MANNEQUIN_FEET])]</A>"
+	. += FittingRow("Wrists", BODY_ZONE_L_ARM, SLOT_MANNEQUIN_WRISTS, focus_id)
+	. += FittingRow("Gloves", BODY_ZONE_PRECISE_L_HAND, SLOT_MANNEQUIN_GLOVES, focus_id)
+	. += FittingRow("Pants", BODY_ZONE_L_LEG, SLOT_MANNEQUIN_PANTS, focus_id)
+	. += FittingRow("Shoes", BODY_ZONE_PRECISE_L_FOOT, SLOT_MANNEQUIN_FEET, focus_id)
 
 /obj/structure/mannequin/male/bodypartsNightmare()
 	var/isfemale = (gender == FEMALE ? "f" : "m")

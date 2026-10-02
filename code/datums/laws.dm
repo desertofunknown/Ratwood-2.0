@@ -4,7 +4,35 @@
  * Supersedes the old 'make/remove law' system; however the old one is still in place for backwards compatibility (i.e. Marshal abilities).
  */
 
+/datum/ruler_panel
+	var/datum/weakref/panel_user
+	var/datum/weakref/panel_titan
+
+/datum/ruler_panel/proc/bind_panel(mob/user, obj/structure/roguemachine/titan/titan)
+	panel_user = WEAKREF(user)
+	panel_titan = WEAKREF(titan)
+
+/datum/ruler_panel/proc/can_manage(mob/user)
+	if(!ishuman(user) || user.stat != CONSCIOUS || panel_user?.resolve() != user)
+		return FALSE
+	var/obj/structure/roguemachine/titan/titan = panel_titan?.resolve()
+	return titan && titan.can_manage_realm(user)
+
+/datum/ruler_panel/ui_status(mob/user, datum/ui_state/state)
+	if(!can_manage(user))
+		return UI_CLOSE
+	return ..()
+
+/datum/ruler_panel/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
+	if(..() || !can_manage(ui.user))
+		return TRUE
+	return FALSE
+
+/datum/ruler_panel/ui_close(mob/user)
+	qdel(src)
+
 /datum/laws_menu
+	parent_type = /datum/ruler_panel
 	/// Announcement header when laws are changed
 	var/change_announcement_text = "LAWS AMENDED"
 	/// Announcement header when all laws are purged
@@ -54,8 +82,10 @@
 
 			var/list/clean_laws = list()
 			for(var/entry in new_laws)
+				if(!islist(entry))
+					continue
 				var/law_text = entry["text"]
-				if(!law_text || !length(trim(law_text)))
+				if(!istext(law_text) || !length(trim(law_text)))
 					continue
 				if(length(clean_laws) >= max_laws)
 					break

@@ -1,13 +1,5 @@
 import { SEAL_RED } from '../common/parchment';
-import {
-  Breakdown,
-  columnSubheadStyle,
-  compactCardStyle,
-  Row,
-  SectionTitle,
-  threeColumnLayout,
-  twoColTable,
-} from './styles';
+import { Breakdown, Row, SectionTitle } from './styles';
 import type { EconomySnapshot } from './types';
 
 type Props = {
@@ -18,8 +10,8 @@ const GeneralMammonsColumn = (props: Props) => {
   const { e } = props;
   return (
     <div>
-      <div style={columnSubheadStyle}>General Mammons</div>
-      <table style={twoColTable}>
+      <h3>General Mammons</h3>
+      <table>
         <tbody>
           <Row label="Mammons Circulating" value={e.mammons_held} />
           <Row label="Mammons Deposited" value={e.mammons_deposited} />
@@ -38,8 +30,8 @@ const RoyalCrownColumn = (props: Props) => {
   const { e } = props;
   return (
     <div>
-      <div style={columnSubheadStyle}>Royal &amp; Crown</div>
-      <table style={twoColTable}>
+      <h3>Royal &amp; Crown</h3>
+      <table>
         <tbody>
           <Row
             label="Merchant's Levy Collected"
@@ -53,8 +45,8 @@ const RoyalCrownColumn = (props: Props) => {
           />
         </tbody>
       </table>
-      <div style={{ ...columnSubheadStyle, marginTop: '6px' }}>Vendors</div>
-      <table style={twoColTable}>
+      <h3>Vendors</h3>
+      <table>
         <tbody>
           <Row label="GOLDFACE Imports" value={e.goldface} />
           <Row label="SILVERFACE Imports" value={e.silverface} />
@@ -70,8 +62,8 @@ const TradeMarketsColumn = (props: Props) => {
   const { e } = props;
   return (
     <div>
-      <div style={columnSubheadStyle}>Trade &amp; Markets</div>
-      <table style={twoColTable}>
+      <h3>Trade &amp; Markets</h3>
+      <table>
         <tbody>
           <Row label="Trade Value Exported" value={e.trade_exported_total} />
         </tbody>
@@ -80,7 +72,7 @@ const TradeMarketsColumn = (props: Props) => {
         Real Market {e.trade_exported_real} &bull; Black Market{' '}
         {e.trade_exported_bm}
       </Breakdown>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Trade Value Imported" value={e.trade_imported} />
           <Row label="Company Gnomes Margin" value={e.gnome_margin} />
@@ -102,13 +94,13 @@ const TradeMarketsColumn = (props: Props) => {
 
 export const EconomySection = (props: Props) => {
   return (
-    <div style={compactCardStyle}>
+    <section>
       <SectionTitle>Economy</SectionTitle>
-      <div style={threeColumnLayout}>
+      <div className="EconomicChronicle__columns EconomicChronicle__columns--three">
         <GeneralMammonsColumn e={props.e} />
         <RoyalCrownColumn e={props.e} />
         <TradeMarketsColumn e={props.e} />
       </div>
-    </div>
+    </section>
   );
 };

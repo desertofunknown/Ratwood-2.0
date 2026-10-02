@@ -942,38 +942,49 @@
 	name = "bag of dice poker dice"
 	desc = "A bag used to play Dice Poker. Activate in hand (Z) to start or join a game."
 	var/datum/dice_poker_game/active_game
-	var/static/dice_poker_rules_text = {"<div style='padding:8px;font-family:Verdana,sans-serif;'>
-	<h2 style='text-align:center;margin:0 0 6px 0;'>Dice Poker</h2>
-<br>
-<b>Objective:</b> Win 2 out of 3 rounds with the stronger hand.<br>
-<br>
-<b>Round Flow:</b><br>
-1) First roll (5d6 each).<br>
-2) Select dice to re-roll once.<br>
-3) Reveal and compare hands.<br>
-<br>
-<b>Hand Rankings (Low to High):</b><br>
-Nothing: Five mismatched dice.<br>
-Pair: Two dice of the same value.<br>
-Two Pairs: Two separate pairs.<br>
-Three-of-a-Kind: Three dice of the same value.<br>
-Five High Straight: Values 1, 2, 3, 4, 5.<br>
-Six High Straight: Values 2, 3, 4, 5, 6.<br>
-Full House: Three-of-a-kind plus a pair.<br>
-Four-of-a-Kind: Four dice of the same value.<br>
-Five-of-a-Kind: All five dice show the same value.<br>
-<br>
-<b>Nothing:</b> Any non-pair hand that is not a 5-die straight; compared by highest dice (kickers).<br>
-<br>
-<b>Tie Rule:</b><br>
-If hands are perfectly equal (including kickers), Sudden Death starts:
-forced re-roll, repeating until someone wins.<br>
+	var/static/dice_poker_rules_text = {"<div class='keep-panel keep-prose' role='main' tabindex='0'>
+	<h1>Dice Poker</h1>
+	<h2>Objective:</h2>
+	<p>Win 2 out of 3 rounds with the stronger hand.</p>
+	<h2>Round Flow:</h2>
+	<ol>
+		<li>First roll (5d6 each).</li>
+		<li>Select dice to re-roll once.</li>
+		<li>Reveal and compare hands.</li>
+	</ol>
+	<h2>Hand Rankings (Low to High):</h2>
+	<ol>
+		<li>Nothing: Five mismatched dice.</li>
+		<li>Pair: Two dice of the same value.</li>
+		<li>Two Pairs: Two separate pairs.</li>
+		<li>Three-of-a-Kind: Three dice of the same value.</li>
+		<li>Five High Straight: Values 1, 2, 3, 4, 5.</li>
+		<li>Six High Straight: Values 2, 3, 4, 5, 6.</li>
+		<li>Full House: Three-of-a-kind plus a pair.</li>
+		<li>Four-of-a-Kind: Four dice of the same value.</li>
+		<li>Five-of-a-Kind: All five dice show the same value.</li>
+	</ol>
+	<h2>Nothing:</h2>
+	<p>Any non-pair hand that is not a 5-die straight; compared by highest dice (kickers).</p>
+	<h2>Tie Rule:</h2>
+	<p>If hands are perfectly equal (including kickers), Sudden Death starts: forced re-roll, repeating until someone wins.</p>
 </div>"}
 
 /obj/item/storage/pill_bottle/dice/dice_poker/proc/show_rules(mob/living/user)
 	if(!user)
 		return
-	user << browse(dice_poker_rules_text, "window=dice_poker_rules;size=720x520")
+	var/datum/browser/noclose/popup = new(user, "dice_poker_rules", "", 720, 520)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content({"<style>
+		@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+		@font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+		@font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+		@font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+	</style>"})
+	popup.set_content(dice_poker_rules_text)
+	popup.open(FALSE)
+	winset(user, "dice_poker_rules.browser", "focus=true")
 
 /obj/item/storage/pill_bottle/dice/dice_poker/PopulateContents()
 	for(var/i in 1 to 5)

@@ -30,6 +30,8 @@
 	var/process_step // used for pie making and other similar modular foods
 	var/datum/food_recipe/active_recipe
 	var/current_step = 1
+	var/preparation_version = 0
+	var/preparing_step = FALSE
 
 /obj/item/reagent_containers/food/snacks/rogue/examine(mob/user)
 	. = ..()
@@ -62,16 +64,22 @@
 		to_chat(user, span_warning("There is no recipe currently active on [src]."))
 		return
 
+	var/datum/food_recipe/reset_recipe = active_recipe
+	var/reset_version = preparation_version
 	var/confirmation = tgui_alert(user, "Are you sure you want to reset the preparation for [active_recipe.name]?", "Reset Recipe", list("Yes", "No"))
-	if(confirmation != "Yes" || !active_recipe)
+	if(confirmation != "Yes" || QDELETED(src) || !user.Adjacent(src) || active_recipe != reset_recipe || preparation_version != reset_version)
 		return
 
 	to_chat(user, span_notice("You clear the preparation progress for [active_recipe.name] from [src]."))
 	active_recipe = null
 	current_step = 1
+	preparation_version++
 	cut_overlays()
 
 /obj/item/reagent_containers/food/snacks/rogue/attackby(obj/item/I, mob/living/user)
+	if(preparing_step)
+		to_chat(user, span_warning("Someone is already preparing [src]."))
+		return
 	if(!active_recipe)
 		var/datum/food_recipe/R = SScooking.get_recipe(src, I)
 		if(R)
@@ -102,16 +110,23 @@
 	return ..()
 
 /obj/item/reagent_containers/food/snacks/rogue/proc/do_cooking_step(obj/item/I, mob/living/user, req_reagent, req_amt)
-	if(!do_after(user, get_cooking_do_time(user, active_recipe.time_per_step), target = src))
+	if(preparing_step || !active_recipe)
+		return
+	var/datum/food_recipe/recipe = active_recipe
+	var/step = current_step
+	var/version = preparation_version
+	preparing_step = TRUE
+	var/completed = do_after(user, get_cooking_do_time(user, recipe.time_per_step), target = src)
+	preparing_step = FALSE
+	if(QDELETED(src) || active_recipe != recipe || current_step != step || preparation_version != version)
+		return
+	if(!completed)
 		if(current_step == 1)
 			active_recipe = null
 		return
+	if(QDELETED(I) || !user.is_holding(I) || !(locate(/obj/structure/table) in loc))
+		return
 
-	playsound(src, 'sound/foley/dropsound/gen_drop.ogg', 30, TRUE)
-	
-	if(ishuman(user))
-		var/mob/living/carbon/human/H = user
-		H.mind.add_sleep_experience(/datum/skill/craft/cooking, H.STAINT * active_recipe.experience_per_step)
 	if(req_reagent)
 		// Re-verify reagent exists after the timer
 		if(!I.reagents || !I.reagents.has_reagent(req_reagent, req_amt))
@@ -121,6 +136,10 @@
 	else
 		playsound(src, 'sound/foley/dropsound/gen_drop.ogg', 30, TRUE)
 		I.moveToNullspace()
+	if(ishuman(user))
+		var/mob/living/carbon/human/H = user
+		H.mind?.add_sleep_experience(/datum/skill/craft/cooking, H.STAINT * recipe.experience_per_step)
+	preparation_version++
 
 	if(current_step < active_recipe.ingredients.len || active_recipe.needs_cooking)
 		var/image/over = image(I.icon, I.icon_state)

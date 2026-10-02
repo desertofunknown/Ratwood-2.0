@@ -12,9 +12,6 @@ setInterval(() => {
 }, 5000);
 
 export const ReconnectButton = () => {
-  if (!url) {
-    return null;
-  }
   return (
     <>
       <Button
@@ -25,16 +22,18 @@ export const ReconnectButton = () => {
       >
         Reconnect
       </Button>
-      <Button
-        color="white"
-        icon="power-off"
-        tooltip="Relaunch game"
-        tooltipPosition="bottom-end"
-        onClick={() => {
-          location.href = `byond://${url}`;
-          Byond.command('.quit');
-        }}
-      />
+      {url && (
+        <Button
+          color="white"
+          icon="power-off"
+          tooltip="Relaunch game"
+          tooltipPosition="bottom-end"
+          onClick={() => {
+            location.href = `byond://${url}`;
+            Byond.command('.quit');
+          }}
+        />
+      )}
     </>
   );
 };

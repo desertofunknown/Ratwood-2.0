@@ -6,6 +6,7 @@
 	icon_state = "anvil"
 	var/hott = null
 	var/obj/item/current_workpiece
+	var/recipe_workpiece_type
 	max_integrity = 500
 	density = TRUE
 	damage_deflection = 25
@@ -166,6 +167,9 @@
 	return
 
 /obj/machinery/anvil/ui_interact(mob/user, datum/tgui/ui)
+	if(recipe_workpiece_type != current_workpiece?.type)
+		recipe_workpiece_type = current_workpiece?.type
+		update_static_data_for_all_viewers()
 	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
 		ui = new(user, src, "Anvil", "Anvil")
@@ -179,32 +183,45 @@
 /obj/machinery/anvil/ui_data(mob/user)
 	var/list/data = ..()
 	data["hingot_type"] = current_workpiece?.type
+	data["workpiece_name"] = current_workpiece?.name
 	return data
 
 /obj/machinery/anvil/ui_static_data(mob/user)
 	var/list/data = ..()
 	var/list/recipes = list()
+	data["recipes"] = recipes
+	data["recipe_workpiece_type"] = current_workpiece?.type
+	if(!current_workpiece)
+		return data
 	var/datum/asset/spritesheet/spritesheet = get_asset_datum(/datum/asset/spritesheet/anvil_recipes)
 
 	for(var/datum/anvil_recipe/R in GLOB.anvil_recipes)
 		if(R.req_trait && !HAS_TRAIT(user, R.req_trait))
 			continue
-		var/valid_recipe = FALSE
-
-		if(current_workpiece)
-			if((R.req_bar && istype(current_workpiece, R.req_bar)) || (R.req_blade && istype(current_workpiece, R.req_blade)))
-				valid_recipe = TRUE
-		if(!current_workpiece || valid_recipe || (!R.req_bar && !R.req_blade))
-			UNTYPED_LIST_ADD(recipes, list(
-				"name" = R.name,
-				"category" = R.i_type,
-				"req_bar" = R.req_bar,
-				"req_blade" = R.req_blade,
-				"ref" = REF(R),
-				"icon" = spritesheet.icon_class_name(sanitize_css_class_name("recipe_[REF(R)]"))
-			))
-	data["recipes"] = recipes
+		if(!((R.req_bar && istype(current_workpiece, R.req_bar)) || (R.req_blade && istype(current_workpiece, R.req_blade))))
+			continue
+		UNTYPED_LIST_ADD(recipes, list(
+			"name" = R.name,
+			"category" = R.i_type,
+			"ref" = REF(R),
+			"icon" = spritesheet.icon_class_name(sanitize_css_class_name("recipe_[REF(R)]"))
+		))
 	return data
+
+/obj/machinery/anvil/proc/can_choose_recipe(mob/user, datum/tgui/ui, obj/item/workpiece, datum/anvil_recipe/recipe, datum/component/forging/existing_forging)
+	if(QDELETED(src) || QDELETED(user) || QDELETED(ui) || ui.closing)
+		return FALSE
+	if(ui.user != user || ui.src_object != src || ui_status(user, ui.state) != UI_INTERACTIVE)
+		return FALSE
+	if(QDELETED(workpiece) || current_workpiece != workpiece || workpiece.loc != src || QDELETED(recipe) || !(recipe in GLOB.anvil_recipes))
+		return FALSE
+	if(!((recipe.req_bar && istype(workpiece, recipe.req_bar)) || (recipe.req_blade && istype(workpiece, recipe.req_blade))))
+		return FALSE
+	if(recipe.req_trait && !HAS_TRAIT(user, recipe.req_trait))
+		return FALSE
+	if(existing_forging && QDELETED(existing_forging))
+		return FALSE
+	return workpiece.GetComponent(/datum/component/forging) == existing_forging
 
 /obj/machinery/anvil/ui_act(action, list/params, datum/tgui/ui)
 	. = ..()
@@ -215,68 +232,54 @@
 
 	switch(action)
 		if("choose_recipe")
-			var/datum/anvil_recipe/recipe = locate(params["ref"])
-			if(!istype(recipe))
+			var/datum/anvil_recipe/recipe = locate(params["ref"]) in GLOB.anvil_recipes
+			var/obj/item/workpiece = current_workpiece
+			if(!istype(recipe) || QDELETED(workpiece))
 				return TRUE
-			var/has_required_item = FALSE
-
-			// Check both bar and blade requirements
-			if(recipe.req_bar && istype(current_workpiece, recipe.req_bar))
-				has_required_item = TRUE
-			if(recipe.req_blade && istype(current_workpiece, recipe.req_blade))
-				has_required_item = TRUE
-
-			if(!has_required_item)
-				return TRUE
-
-			if(recipe.req_trait && !HAS_TRAIT(user, recipe.req_trait))
+			var/datum/component/forging/existing_forging = workpiece.GetComponent(/datum/component/forging)
+			var/had_forging = !isnull(existing_forging)
+			if(!can_choose_recipe(user, ui, workpiece, recipe, existing_forging))
 				return TRUE
 
 			var/smith_exp = user.get_skill_level(recipe.appro_skill)
 			if(smith_exp < recipe.craftdiff)
-				if(alert(user, "This recipe needs [SSskills.level_names_plain[recipe.craftdiff]] skill.","IT'S TOO DIFFICULT!","CONFIRM","CANCEL") != "CONFIRM")
+				if(tgui_alert(user, "This recipe needs [SSskills.level_names_plain[recipe.craftdiff]] skill.", "IT'S TOO DIFFICULT!", list("CONFIRM", "CANCEL")) != "CONFIRM")
+					return TRUE
+				if((had_forging && QDELETED(existing_forging)) || !can_choose_recipe(user, ui, workpiece, recipe, existing_forging))
 					return TRUE
 
-			// Half to check this again because we alert()ed
-			if(!has_required_item)
-				return TRUE
-
-			// Add forging component to the workpiece
-			var/datum/component/forging/existing_forging = current_workpiece.GetComponent(/datum/component/forging)
-			var/recipe_reset = FALSE
 			if(existing_forging)
-				if(alert(user, "This item already has an active recipe ([existing_forging.current_recipe.name]). Change to [recipe.name]?","CHANGE RECIPE?","CONFIRM","CANCEL") != "CONFIRM")
+				if(tgui_alert(user, "This item already has an active recipe ([existing_forging.current_recipe.name]). Change to [recipe.name]?", "CHANGE RECIPE?", list("CONFIRM", "CANCEL")) != "CONFIRM")
+					return TRUE
+				if((had_forging && QDELETED(existing_forging)) || !can_choose_recipe(user, ui, workpiece, recipe, existing_forging))
 					return TRUE
 
 				// Remove existing forging component and any quenchable components
 				qdel(existing_forging)
-				var/datum/component/anvil_quenchable/existing_quench = current_workpiece.GetComponent(/datum/component/anvil_quenchable)
+				var/datum/component/anvil_quenchable/existing_quench = workpiece.GetComponent(/datum/component/anvil_quenchable)
 				if(existing_quench)
 					qdel(existing_quench)
-				recipe_reset = TRUE
 
 			// Add forging component to the workpiece
-			if(!existing_forging || recipe_reset)
-				var/datum/component/forging/forging_comp = current_workpiece.AddComponent(/datum/component/forging, recipe.type)
+			var/datum/component/forging/forging_comp = workpiece.AddComponent(/datum/component/forging, recipe.type)
 
-				var/quality_value = 1
-				if(istype(current_workpiece, /obj/item/ingot))
-					var/obj/item/ingot/ingot_ref = current_workpiece
-					quality_value = ingot_ref.item_quality
-				else if(istype(current_workpiece, /obj/item/blade))
-					var/obj/item/blade/blade_ref = current_workpiece
-					quality_value = blade_ref.quality
+			var/quality_value = 1
+			if(istype(workpiece, /obj/item/ingot))
+				var/obj/item/ingot/ingot_ref = workpiece
+				quality_value = ingot_ref.item_quality
+			else if(istype(workpiece, /obj/item/blade))
+				var/obj/item/blade/blade_ref = workpiece
+				quality_value = blade_ref.quality
 
-				forging_comp.bar_health = 50 * (quality_value + 1)
-				forging_comp.material_quality += quality_value
-				forging_comp.current_recipe?.track_input_quality(current_workpiece)
-				previous_material_quality = quality_value
-
+			forging_comp.bar_health = 50 * (quality_value + 1)
+			forging_comp.material_quality += quality_value
+			forging_comp.current_recipe?.track_input_quality(workpiece)
+			previous_material_quality = quality_value
 
 			ui.close()
 
 			// if we have a hammer in our hand, start working immediately
-			var/obj/item/rogueweapon/hammer/hammer = usr.get_active_held_item()
+			var/obj/item/rogueweapon/hammer/hammer = user.get_active_held_item()
 			if(istype(hammer))
 				attackby(hammer, user)
 

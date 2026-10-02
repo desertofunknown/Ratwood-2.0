@@ -1,4 +1,4 @@
- import { useState } from 'react';
+import { useState } from 'react';
 
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
@@ -7,19 +7,7 @@ import { ConfigPanel } from './Commissioner/ConfigPanel';
 import { ManifestTab } from './Commissioner/ManifestTab';
 import { OrdersTab } from './Commissioner/OrdersTab';
 import type { CommissionerData } from './Commissioner/types';
-import {
-  FONT_BODY,
-  INK,
-  INK_SOFT,
-  pageStyle,
-  rulerStyle,
-  SEAL_AMBER,
-  SERIF,
-  subtitleStyle,
-  tabBarStyle,
-  tabStyle,
-  titleStyle,
-} from './common/parchment';
+import { SERIF } from './common/parchment';
 
 type CommissionerTab = 'browse' | 'manifest' | 'orders' | 'config';
 
@@ -28,96 +16,50 @@ export const Commissioner = () => {
   const [tab, setTab] = useState<CommissionerTab>('browse');
   const canRead = !!data.can_read;
   const isGuildmaster = !!data.is_guildmaster;
-  const manifestCount = data.manifest.length;
-  const orderCount = data.orders.length;
-
-  let activeTab = tab;
-  if (activeTab === 'config' && !isGuildmaster) activeTab = 'browse';
+  const activeTab = tab === 'config' && !isGuildmaster ? 'browse' : tab;
+  const tabs: { id: CommissionerTab; label: string; count?: number }[] = [
+    { id: 'browse', label: 'Catalogue', count: data.catalog.length },
+    { id: 'manifest', label: 'Your manifest', count: data.my_manifest_items },
+    { id: 'orders', label: 'Posted orders', count: data.orders.length },
+  ];
+  if (isGuildmaster) tabs.push({ id: 'config', label: 'Guild settings' });
 
   return (
-    <Window width={880} height={720} theme="parchment">
-      <Window.Content scrollable>
-        <div style={pageStyle}>
-          <div style={titleStyle}>The Commissioner</div>
-          <div style={subtitleStyle}>
-            Commission smithing and engineering work. Coin held in escrow until
-            the order is fulfilled.
-          </div>
-          <div style={rulerStyle} />
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: '24px',
-              marginBottom: '8px',
-              fontFamily: SERIF,
-            }}
-          >
-            <span style={{ color: SEAL_AMBER }}>
-              Escrow held
+    <Window width={960} height={760}>
+      <Window.Content className="KeepLedger Commissioner">
+        <div className="Commissioner__folio" style={{ fontFamily: SERIF }}>
+          <header className="Commissioner__header">
+            <h1>The Commissioner</h1>
+            <span className={`Commissioner__state ${data.locked ? '' : 'Commissioner__state--closed'}`}>
+              {data.locked ? 'Open for commissions' : 'Closed for guild adjustments'}
             </span>
-            <span style={{ color: INK, fontWeight: 'bold', marginRight: 12 }}>
-              {data.budget}m
-            </span>
-            <span style={{ color: SEAL_AMBER }}>
-              Your deposit
-            </span>
-            <span style={{ color: INK, fontWeight: 'bold' }}>
-              {data.my_deposit}m
-            </span>
-            <span
-              style={{
-                marginLeft: 'auto',
-                fontSize: FONT_BODY,
-                color: INK_SOFT,
-              }}
-            >
-              Insert coins into the machine to deposit.
-            </span>
-          </div>
-
-          <div style={tabBarStyle}>
-            <div
-              style={tabStyle(activeTab === 'browse')}
-              onClick={() => setTab('browse')}
-            >
-              Browse
+            <div className="Commissioner__balances">
+              <span>Escrow held <strong>{data.budget}m</strong></span>
+              <span>Your deposit <strong>{data.my_deposit}m</strong></span>
             </div>
-            <div
-              style={tabStyle(activeTab === 'manifest')}
-              onClick={() => setTab('manifest')}
-            >
-              Manifest {manifestCount > 0 && `(${manifestCount})`}
-            </div>
-            <div
-              style={tabStyle(activeTab === 'orders')}
-              onClick={() => setTab('orders')}
-            >
-              Orders {orderCount > 0 && `(${orderCount})`}
-            </div>
-            {isGuildmaster && (
-              <div
-                style={tabStyle(activeTab === 'config')}
-                onClick={() => setTab('config')}
+          </header>
+          <details className="Commissioner__help">
+            <summary>Deposits and escrow</summary>
+            <p>Insert coins into the machine to deposit. Posted coin stays in escrow until the work is settled.</p>
+          </details>
+          <nav className="Commissioner__tabs" aria-label="Commission ledger pages">
+            {tabs.map(({ id, label, count }) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={activeTab === id}
+                onClick={() => setTab(id)}
               >
-                Guildmaster
-              </div>
-            )}
+                {label}{count !== undefined && <span className="Commissioner__tabCount">{count}</span>}
+              </button>
+            ))}
+          </nav>
+          <div className={`Commissioner__page ${activeTab === 'browse' ? 'Commissioner__page--browse' : ''}`} tabIndex={activeTab === 'browse' ? -1 : 0}>
+            {activeTab === 'browse' && <BrowseTab data={data} act={act} canRead={canRead} />}
+            {activeTab === 'manifest' && <fieldset className="Commissioner__actions" disabled={!data.locked}><ManifestTab data={data} act={act} canRead={canRead} /></fieldset>}
+            {activeTab === 'orders' && <fieldset className="Commissioner__actions" disabled={!data.locked}><OrdersTab data={data} act={act} canRead={canRead} /></fieldset>}
+            {activeTab === 'config' && isGuildmaster && <ConfigPanel data={data} act={act} />}
           </div>
-
-          {activeTab === 'browse' && (
-            <BrowseTab data={data} act={act} canRead={canRead} />
-          )}
-          {activeTab === 'manifest' && (
-            <ManifestTab data={data} act={act} canRead={canRead} />
-          )}
-          {activeTab === 'orders' && (
-            <OrdersTab data={data} act={act} canRead={canRead} />
-          )}
-          {activeTab === 'config' && isGuildmaster && (
-            <ConfigPanel data={data} act={act} />
-          )}
         </div>
       </Window.Content>
     </Window>

@@ -1,5 +1,11 @@
 import { perf } from 'common/perf';
-import type { ReactNode } from 'react';
+import type { Store } from 'common/redux';
+import {
+  type ComponentType,
+  createElement,
+  useLayoutEffect,
+  useSyncExternalStore,
+} from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
 import { createLogger } from './logging';
@@ -25,16 +31,7 @@ enum Render {
   Finish = 'render/finish',
 }
 
-export function render(component: ReactNode) {
-  perf.mark(Render.Start);
-  // Start rendering
-  if (!reactRoot) {
-    const element = document.getElementById('react-root');
-    reactRoot = createRoot(element!);
-  }
-
-  reactRoot.render(component);
-
+function reportRender() {
   perf.mark(Render.Finish);
   if (suspended) {
     return;
@@ -58,4 +55,25 @@ export function render(component: ReactNode) {
   if (initialRender) {
     initialRender = false;
   }
+}
+
+function StoreRoot({
+  component,
+  store,
+}: {
+  component: ComponentType;
+  store: Store;
+}) {
+  useSyncExternalStore(store.subscribe, store.getState);
+  perf.mark(Render.Start);
+  useLayoutEffect(reportRender);
+  return createElement(component);
+}
+
+export function render(component: ComponentType, store: Store) {
+  if (!reactRoot) {
+    const element = document.getElementById('react-root');
+    reactRoot = createRoot(element!);
+  }
+  reactRoot.render(createElement(StoreRoot, { component, store }));
 }

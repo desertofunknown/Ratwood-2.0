@@ -1,0 +1,207 @@
+.StewardRoutes {
+  color: var(--p-ink);
+  font:
+    13px/1.4 'Lora',
+    Georgia,
+    serif;
+
+  h2,
+  h3 {
+    margin: 10px 0 5px;
+    color: var(--p-title);
+    font:
+      18px/1.25 'Pterra',
+      Georgia,
+      serif;
+  }
+  h2 {
+    margin-top: 0;
+  }
+  h3 {
+    font-size: 16px;
+  }
+  p {
+    margin: 4px 0 8px;
+  }
+  button,
+  input {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    padding: 3px 7px;
+    border: 1px solid var(--p-ink-faint);
+    border-radius: 0;
+    background: var(--p-button-bg);
+    cursor: pointer;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  button:hover:enabled {
+    background: var(--p-bg-deep);
+  }
+  button:disabled,
+  input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--p-seal-blue);
+    outline-offset: 2px;
+  }
+
+  &__region {
+    border-top: 1px solid var(--p-ink-faint);
+  }
+  button.StewardRoutes__disclosure {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 0;
+    text-align: left;
+    border: 0;
+    background: transparent;
+  }
+  &__disclosure > strong {
+    flex: 1;
+    overflow-wrap: anywhere;
+  }
+  &__counts {
+    margin-left: auto;
+    color: var(--p-ink-soft);
+    text-align: right;
+  }
+  &__details {
+    padding: 0 0 9px 17px;
+  }
+  &__details > p {
+    color: var(--p-ink-soft);
+  }
+  &__flows {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 18px;
+  }
+  &__flows h3 {
+    margin-top: 3px;
+  }
+  &__actions,
+  &__floor,
+  &__categories {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 8px;
+    margin: 7px 0;
+  }
+  &__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 12px;
+  }
+  &__heading > span {
+    color: var(--p-ink-soft);
+  }
+  &__floor label,
+  &__imports label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  &__floor input {
+    width: 86px;
+    padding: 2px 4px;
+    border: 1px solid var(--p-ink-faint);
+    background: var(--p-button-bg);
+  }
+  &__floor input[aria-invalid='true'] {
+    border-color: var(--p-seal-red);
+  }
+  &__imports input {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+  &__categories button {
+    border-color: transparent;
+    background: transparent;
+    padding: 3px 5px;
+  }
+  &__categories button[aria-pressed='true'] {
+    border-bottom-color: var(--p-ink);
+    font-weight: bold;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+    overflow-wrap: anywhere;
+  }
+  th {
+    font-weight: normal;
+  }
+  thead th {
+    border-bottom-color: var(--p-ink-faint);
+    color: var(--p-ink-soft);
+  }
+  th:first-child,
+  td:first-child {
+    padding-left: 0;
+  }
+  th:last-child,
+  td:last-child {
+    padding-right: 0;
+  }
+  &__category th {
+    padding-top: 7px;
+    padding-bottom: 2px;
+    color: var(--p-ink-soft);
+    font-style: italic;
+  }
+  th.StewardRoutes__number,
+  td.StewardRoutes__number {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  &__status {
+    width: 95px;
+  }
+  &__imports th[scope='row'] {
+    font-weight: bold;
+  }
+  &__history th[scope='row'] {
+    width: 65px;
+  }
+  &__danger {
+    color: var(--p-seal-red);
+  }
+  &__muted {
+    color: var(--p-ink-soft);
+    font-style: italic;
+  }
+
+  @media (max-width: 640px) {
+    &__flows {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+    &__counts {
+      max-width: 130px;
+    }
+    &__details {
+      padding-left: 0;
+    }
+  }
+}

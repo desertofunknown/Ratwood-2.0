@@ -1,0 +1,136 @@
+body {
+	margin: 0;
+	padding: 0;
+	background: #181413;
+	color: #e7dac2;
+	font: 14px/1.5 'Keep Lora', Georgia, serif;
+	scrollbar-face-color: #65503c;
+	scrollbar-track-color: #181413;
+	scrollbar-arrow-color: #d7bb87;
+}
+
+.uiWrapper .uiTitle {
+	padding: 14px 18px;
+	border-top: 3px solid #a68a59;
+	border-bottom: 1px solid #65503c;
+	background: #241c19;
+	color: #e7dac2;
+	font-family: 'Keep Pterra', Georgia, serif !important;
+	font-size: 26px;
+	line-height: 1.2;
+}
+
+.uiWrapper .uiContent {
+	padding: 14px;
+	font-family: 'Keep Lora', Georgia, serif;
+}
+
+.culinary-intro {
+	margin: 0 0 12px;
+	color: #b9a88e;
+}
+
+.uiContent a.culinary-row {
+	display: table;
+	table-layout: fixed;
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0 0 6px;
+	padding: 8px 10px;
+	border: 1px solid #65503c;
+	background: #241c19;
+	color: #e7dac2;
+	font-family: 'Keep Lora', Georgia, serif !important;
+	font-size: 14px;
+	line-height: 1.4;
+	text-decoration: none;
+}
+
+.uiContent a.culinary-row:hover,
+.uiContent a.culinary-row:focus {
+	background: #592c28;
+	border-color: #a68a59;
+	color: #fff2d9;
+	outline: 1px solid #a68a59;
+}
+
+.uiContent a.culinary-current {
+	background: #453622;
+	border-color: #a68a59;
+}
+
+.culinary-icon,
+.culinary-detail,
+.culinary-action {
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.culinary-icon {
+	width: 40px;
+}
+
+.culinary-icon img {
+	width: 32px;
+	height: 32px;
+	vertical-align: middle;
+	image-rendering: pixelated;
+}
+
+.culinary-detail {
+	word-wrap: break-word;
+}
+
+.culinary-detail strong,
+.culinary-label,
+.culinary-quality {
+	display: block;
+}
+
+.culinary-label,
+.culinary-quality {
+	color: #b9a88e;
+	font-size: 12px;
+}
+
+.culinary-action {
+	width: 62px;
+	padding-left: 8px;
+	color: #d7bb87;
+	text-align: right;
+}
+
+.culinary-search {
+	margin: 0 0 14px;
+	padding: 10px 12px;
+	border: 1px solid #65503c;
+	background: #241c19;
+}
+
+.culinary-search label {
+	display: block;
+	margin-bottom: 5px;
+	color: #d7bb87;
+}
+
+.culinary-search input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 7px 9px;
+	border: 1px solid #65503c;
+	background: #181413;
+	color: #e7dac2;
+	font: 14px/1.5 'Keep Lora', Georgia, serif;
+}
+
+.culinary-search input:focus {
+	border-color: #a68a59;
+	outline: 1px solid #a68a59;
+}
+
+.culinary-empty {
+	padding: 16px;
+	border: 1px solid #65503c;
+	color: #b9a88e;
+	text-align: center;
+}

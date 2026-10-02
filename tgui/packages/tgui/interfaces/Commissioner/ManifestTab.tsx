@@ -144,6 +144,7 @@ export const ManifestTab = (props: {
             </div>
             <button
               type="button"
+              aria-label={`Remove one ${starsIf(line.name, canRead)} from manifest`}
               style={inkButtonStyle()}
               onClick={() =>
                 act('manifest_dec', { ref: line.ref, delta: 1 })
@@ -164,6 +165,7 @@ export const ManifestTab = (props: {
             </span>
             <button
               type="button"
+              aria-label={`Add one ${starsIf(line.name, canRead)} to manifest`}
               style={inkButtonStyle()}
               onClick={() =>
                 act('manifest_inc', { ref: line.ref, delta: 1 })
@@ -187,6 +189,7 @@ export const ManifestTab = (props: {
               style={inkButtonStyle()}
               onClick={() => act('manifest_remove', { ref: line.ref })}
               title="Remove this line"
+              aria-label={`Remove ${starsIf(line.name, canRead)} from manifest`}
             >
               x
             </button>
@@ -299,7 +302,7 @@ export const ManifestTab = (props: {
             color: INK_SOFT,
           }}
         >
-          Note to the smith (optional):
+          Note to the craftsperson (optional):
         </span>
         <Input
           value={note}
@@ -348,7 +351,7 @@ export const ManifestTab = (props: {
         }}
       >
         Insert coins into the machine to build your deposit. Posting locks the
-        coin in escrow; the smith collects it on completion.
+        coin in escrow; the craftsperson collects it on completion.
       </div>
 
       <div

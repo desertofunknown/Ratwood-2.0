@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "tgui-workspace",
@@ -94,6 +95,9 @@
         "terser": "^5.39.0",
       },
     },
+  },
+  "patchedDependencies": {
+    "tgui-core@4.3.3": "patches/tgui-core@4.3.3.patch",
   },
   "packages": {
     "@bufbuild/protobuf": ["@bufbuild/protobuf@2.6.0", "", {}, "sha512-6cuonJVNOIL7lTj5zgo/Rc2bKAo4/GvN+rKCrUj7GdEHRzCk8zKOfFwUsL9nAVk5rSIsRmlgcpLzTRysopEeeg=="],

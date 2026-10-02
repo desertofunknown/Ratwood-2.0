@@ -1,0 +1,169 @@
+@use '../base';
+
+:root .StewardTradeModal {
+  display: flex;
+  flex-direction: column;
+  width: 430px;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: var(--p-bg);
+  border: 3px double var(--p-seal-amber);
+  box-shadow: 0 6px 24px rgba(28, 18, 8, 0.5);
+  color: var(--p-ink);
+  font:
+    13px/1.4 'Lora',
+    Georgia,
+    serif;
+
+  &__overlay {
+    position: fixed;
+    inset: base.rem(32px) 0 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 12px;
+    background: rgba(28, 18, 8, 0.55);
+  }
+
+  &__header {
+    flex: 0 0 auto;
+    padding: 8px 12px 6px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+
+    h2 {
+      margin: 0;
+      color: var(--p-title);
+      font:
+        21px/1.2 'Trade Rocker',
+        'Pterra',
+        Georgia,
+        serif;
+      overflow-wrap: anywhere;
+    }
+
+    p {
+      margin: 3px 0 0;
+      color: var(--p-ink-soft);
+    }
+  }
+
+  &__body {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 12px;
+  }
+  &__quantity > label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+  }
+  &__stepper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+  }
+
+  button,
+  input {
+    min-height: 28px;
+    box-sizing: border-box;
+    border: 1px solid var(--p-bg-shadow);
+    border-radius: 0;
+    background: var(--p-button-bg);
+    color: var(--p-ink);
+    font: inherit;
+  }
+
+  button {
+    padding: 3px 7px;
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--p-seal-blue);
+    outline-offset: 1px;
+  }
+  input {
+    width: 66px;
+    padding: 3px;
+    text-align: center;
+    background: var(--p-bg-deep);
+  }
+  input[aria-invalid='true'] {
+    border-color: var(--p-seal-red);
+  }
+  &__note {
+    margin: 5px 0;
+    color: var(--p-ink-soft);
+    font-size: 12px;
+  }
+  &__capacity {
+    margin: 6px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  &__account {
+    margin: 0;
+  }
+  &__account > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 2px 0;
+  }
+  dt {
+    color: var(--p-ink-soft);
+  }
+  dd {
+    margin: 0;
+    font-weight: bold;
+    text-align: right;
+    white-space: nowrap;
+  }
+  &__account > &__total {
+    margin-top: 4px;
+    padding-top: 5px;
+    border-top: 1px solid var(--p-bg-shadow);
+    font-size: 15px;
+  }
+  &__total dt,
+  &__total dd {
+    color: var(--p-seal-amber);
+    font-weight: bold;
+  }
+  &__warning,
+  &__warning dt {
+    color: var(--p-seal-red);
+  }
+  p.StewardTradeModal__warning {
+    margin: 6px 0 0;
+  }
+  &__footer {
+    flex: 0 0 auto;
+    padding: 6px 12px 8px;
+    border-top: 1px solid var(--p-bg-shadow);
+  }
+  &__footer p {
+    margin: 0 0 5px;
+    color: var(--p-ink-soft);
+  }
+  &__footer > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  &__confirm {
+    font-weight: bold;
+  }
+}

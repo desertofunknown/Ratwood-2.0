@@ -8,13 +8,13 @@ import { createLogger } from 'tgui/logging';
 
 const logger = createLogger('AudioPlayer');
 
-type AudioOptions = {
-  pitch?: number;
-  start?: number;
-  end?: number;
+export type AudioOptions = {
+  pitch?: number | null;
+  start?: number | null;
+  end?: number | null;
 };
 
-function isProtectedError(error: ErrorEvent): boolean {
+function isProtectedError(error: Event | string): boolean {
   return (
     typeof error === 'object' &&
     error !== null &&
@@ -24,93 +24,110 @@ function isProtectedError(error: ErrorEvent): boolean {
 }
 
 export class AudioPlayer {
-  element: HTMLAudioElement | null;
-  options: AudioOptions;
-  volume: number;
-
-  onPlaySubscribers: { (): void }[];
-  onStopSubscribers: { (): void }[];
-
-  constructor() {
-    this.element = null;
-
-    this.onPlaySubscribers = [];
-    this.onStopSubscribers = [];
-  }
-
-  destroy(): void {
-    this.element = null;
-  }
+  private element: HTMLAudioElement | null = null;
+  private volume = 0.5;
+  private onPlaySubscribers: (() => void)[] = [];
+  private onStopSubscribers: (() => void)[] = [];
 
   play(url: string, options: AudioOptions = {}): void {
-    if (this.element) {
-      this.stop();
-    }
-
-    this.options = options;
+    this.stop();
 
     const audio = new Audio(url);
-    if (!audio) {
-      logger.log('failed to create audio element');
-      return;
-    }
     this.element = audio;
-
     audio.volume = this.volume;
-    audio.playbackRate = this.options.pitch || 1;
+    const { pitch, start, end } = options;
+
+    const fail = (error: unknown) => {
+      if (this.element !== audio) {
+        return;
+      }
+      logger.log('playback failed:', error);
+      this.stop();
+    };
 
     logger.log('playing', url, options);
 
-    audio.addEventListener('ended', () => {
+    audio.onended = () => {
+      if (this.element !== audio) {
+        return;
+      }
       logger.log('ended');
       this.stop();
-    });
+    };
 
-    audio.addEventListener('error', (error) => {
+    audio.onerror = (error) => {
+      if (this.element !== audio) {
+        return;
+      }
       if (isProtectedError(error)) {
         Byond.sendMessage('audio/protected');
       }
-      logger.log('playback error:', JSON.stringify(error));
-      this.stop();
-    });
+      fail(audio.error);
+    };
 
-    if (this.options.end) {
-      audio.addEventListener('timeupdate', () => {
-        if (
-          this.options.end &&
-          this.options.end > 0 &&
-          audio.currentTime >= this.options.end
-        ) {
-          this.stop();
+    if (typeof start === 'number' && Number.isFinite(start) && start > 0) {
+      audio.onloadedmetadata = () => {
+        if (this.element !== audio) {
+          return;
         }
-      });
+        try {
+          audio.currentTime = start;
+        } catch (error) {
+          fail(error);
+        }
+      };
     }
 
-    audio.play()?.catch(() => {
-      // no error is passed here, it's sent to the event listener
-      logger.log('playback failed');
-    });
+    if (typeof end === 'number' && Number.isFinite(end) && end > 0) {
+      audio.ontimeupdate = () => {
+        if (this.element === audio && audio.currentTime >= end) {
+          this.stop();
+        }
+      };
+    }
 
-    this.onPlaySubscribers.forEach((subscriber) => subscriber());
+    try {
+      audio.playbackRate =
+        typeof pitch === 'number' && Number.isFinite(pitch) && pitch > 0
+          ? pitch
+          : 1;
+      audio.play()?.catch(fail);
+    } catch (error) {
+      fail(error);
+    }
+
+    // Keep Stop available while the media is still loading.
+    if (this.element === audio) {
+      this.onPlaySubscribers.forEach((subscriber) => subscriber());
+    }
   }
 
   stop(): void {
-    if (!this.element) return;
+    const audio = this.element;
+    if (!audio) return;
 
     logger.log('stopping');
 
-    this.element.pause();
-    this.destroy();
+    // Relinquish ownership before aborting playback and its pending promises.
+    this.element = null;
+    audio.onended = null;
+    audio.onerror = null;
+    audio.onloadedmetadata = null;
+    audio.ontimeupdate = null;
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
 
     this.onStopSubscribers.forEach((subscriber) => subscriber());
   }
 
   setVolume(volume: number): void {
-    this.volume = volume;
+    if (!Number.isFinite(volume)) return;
+    this.volume = Math.min(1, Math.max(0, volume));
 
     if (!this.element) return;
 
-    this.element.volume = volume;
+    this.element.volume = this.volume;
   }
 
   onPlay(subscriber: () => void): void {

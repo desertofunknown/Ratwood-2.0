@@ -58,7 +58,7 @@ type ContentProps = Partial<{
   BoxProps;
 
 function LayoutContent(props: ContentProps) {
-  const { className, scrollable, children, ...rest } = props;
+  const { className, scrollable, children, onKeyDown, onKeyUp, ...rest } = props;
   const node = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -84,7 +84,23 @@ function LayoutContent(props: ContentProps) {
         computeBoxClassName(rest),
       ])}
       ref={node}
+      tabIndex={scrollable ? 0 : undefined}
       {...computeBoxProps(rest)}
+      onKeyDown={(event) => {
+        onKeyDown?.(event);
+        if (scrollable && event.target === event.currentTarget &&
+          ['PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
+          // Let the browser scroll without forwarding diagonal movement to BYOND.
+          event.stopPropagation();
+        }
+      }}
+      onKeyUp={(event) => {
+        onKeyUp?.(event);
+        if (scrollable && event.target === event.currentTarget &&
+          ['PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
+          event.stopPropagation();
+        }
+      }}
     >
       {children}
     </div>

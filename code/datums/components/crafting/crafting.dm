@@ -124,31 +124,55 @@
 
 
 /datum/component/personal_crafting/proc/check_contents(datum/crafting_recipe/R, list/contents)
-	contents = contents["other"]
-	main_loop:
-		for(var/A in R.reqs)
-			var/needed_amount = R.reqs[A]
-			for(var/B in contents)
-				if(ispath(B, A))
-					if(!R.subtype_reqs && (B in subtypesof(A)))
-						continue
-					if (R.blacklist.Find(B))
-						testing("foundinblacklist")
-						continue
-					if(contents[B] >= R.reqs[A])
-						continue main_loop
-					else
-						testing("removecontent")
-						needed_amount -= contents[B]
-						if(needed_amount <= 0)
-							continue main_loop
-						else
-							continue
-			return FALSE
-	for(var/A in R.chem_catalysts)
-		if(contents[A] < R.chem_catalysts[A])
-			return FALSE
-	return TRUE
+	return !isnull(select_requirements(R, contents))
+
+/// Select exact eligible instances and quantities before consuming any ingredient.
+/datum/component/personal_crafting/proc/select_requirements(datum/crafting_recipe/R, list/contents)
+	var/list/available = contents["resources"]
+	var/list/remaining = available.Copy()
+	var/list/selected = list()
+	var/list/requirements = list()
+	// Reserve narrower requirements first so broad types cannot take their only matches.
+	for(var/requirement in R.reqs)
+		var/insert_at = length(requirements) + 1
+		for(var/i in 1 to length(requirements))
+			if(ispath(requirement, requirements[i]))
+				insert_at = i
+				break
+		requirements.Insert(insert_at, requirement)
+	for(var/requirement in requirements)
+		var/needed = R.reqs[requirement]
+		for(var/datum/resource as anything in remaining)
+			if(QDELETED(resource))
+				continue
+			var/material_type = crafting_material_type(resource)
+			if((resource.type in R.blacklist) || (material_type in R.blacklist))
+				continue
+			if(material_type != requirement && (!R.subtype_reqs || !ispath(material_type, requirement)))
+				continue
+			var/taken = min(remaining[resource], needed)
+			if(taken <= 0)
+				continue
+			selected[resource] += taken
+			remaining[resource] -= taken
+			needed -= taken
+			if(needed <= 0)
+				break
+		if(needed > 0)
+			return null
+	for(var/catalyst in R.chem_catalysts)
+		if(contents["other"][catalyst] < R.chem_catalysts[catalyst])
+			return null
+	return selected
+
+/datum/component/personal_crafting/proc/crafting_material_type(datum/resource)
+	if(istype(resource, /obj/item/natural/bundle))
+		var/obj/item/natural/bundle/bundle = resource
+		return bundle.stacktype
+	if(istype(resource, /obj/item/construction/bundle))
+		var/obj/item/construction/bundle/bundle = resource
+		return bundle.stacktype
+	return resource.type
 
 /datum/component/personal_crafting/proc/get_environment(mob/user)
 	. = list()
@@ -176,36 +200,33 @@
 	return TRUE
 
 /datum/component/personal_crafting/proc/get_surroundings(mob/user)
-	. = list()
-	.["tool_behaviour"] = list()
-	.["other"] = list()
+	. = list("tool_behaviour" = list(), "other" = list(), "resources" = list())
 	for(var/obj/item/I in get_environment(user))
-		if(!I.can_craft_with())
+		if(QDELETED(I) || !I.can_craft_with() || (I.flags_1 & HOLOGRAM_1))
 			continue
-		if(I.flags_1 & HOLOGRAM_1)
+		if(I in .["resources"])
 			continue
-		else if(istype(I, /obj/item/natural/bundle))
+		if(I.tool_behaviour)
+			.["tool_behaviour"] |= I.tool_behaviour
+		if(istype(I, /obj/item/natural/bundle))
 			var/obj/item/natural/bundle/B = I
 			.["other"][B.stacktype] += B.amount
+			.["resources"][B] = B.amount
 		else if(istype(I, /obj/item/construction/bundle))
 			var/obj/item/construction/bundle/B = I
 			.["other"][B.stacktype] += B.amount
-		else if(I.tool_behaviour)
-			.["tool_behaviour"] += I.tool_behaviour
-			.["other"][I.type] += 1
+			.["resources"][B] = B.amount
 		else
 			if(istype(I, /obj/item/reagent_containers))
 				var/obj/item/reagent_containers/RC = I
 				if(RC.is_drainable())
-					for(var/datum/reagent/A in RC.reagents.reagent_list)
-						.["other"][A.type] += A.volume
-				if(istype(RC, /obj/item/reagent_containers/glass)) // Only count glass bottles themselves as a valid crafting item if it's empty
-					if(RC.reagents.total_volume == 0)
-						.["other"][I.type] += 1
-				else
-					.["other"][I.type] += 1
-			else
-				.["other"][I.type] += 1
+					for(var/datum/reagent/reagent in RC.reagents.reagent_list)
+						.["other"][reagent.type] += reagent.volume
+						.["resources"][reagent] = reagent.volume
+				if(istype(RC, /obj/item/reagent_containers/glass) && RC.reagents.total_volume > 0)
+					continue
+			.["other"][I.type] += 1
+			.["resources"][I] = 1
 
 /datum/component/personal_crafting/proc/check_tools(mob/user, datum/crafting_recipe/R, list/contents)
 	if(!R.tools.len)
@@ -380,6 +401,9 @@
 						continue
 					var/list/quality_capture = R.skip_quality ? list() : null
 					var/list/parts = del_reqs(R, user, quality_capture)
+					if(isnull(parts))
+						to_chat(user, span_warning("The required ingredients are no longer available."))
+						return FALSE
 					var/inherited_quality = quality_capture?["min_quality"]
 					if(islist(R.result))
 						var/list/L = R.result
@@ -462,170 +486,85 @@
 	return FALSE
 
 
-/*Del reqs works like this:
-
-	Loop over reqs var of the recipe
-	Set var amt to the value current cycle req is pointing to, its amount of type we need to delete
-	Get var/surroundings list of things accessable to crafting by get_environment()
-	Check the type of the current cycle req
-		If its reagent then do a while loop, inside it try to locate() reagent containers, inside such containers try to locate needed reagent, if there isnt remove thing from surroundings
-			If there is enough reagent in the search result then delete the needed amount, create the same type of reagent with the same data var and put it into deletion list
-			If there isnt enough take all of that reagent from the container, put into deletion list, substract the amt var by the volume of reagent, remove the container from surroundings list and keep searching
-			While doing above stuff check deletion list if it already has such reagnet, if yes merge instead of adding second one
-		If its stack check if it has enough amount
-			If yes create new stack with the needed amount and put in into deletion list, substract taken amount from the stack
-			If no put all of the stack in the deletion list, substract its amount from amt and keep searching
-			While doing above stuff check deletion list if it already has such stack type, if yes try to merge them instead of adding new one
-		If its anything else just locate() in in the list in a while loop, each find --s the amt var and puts the found stuff in deletion loop
-
-	Then do a loop over parts var of the recipe
-		Do similar stuff to what we have done above, but now in deletion list, until the parts conditions are satisfied keep taking from the deletion list and putting it into parts list for return
-
-	After its done loop over deletion list and delete all the shit that wasnt taken by parts loop
-
-	del_reqs return the list of parts resulting object will receive as argument of CheckParts proc, on the atom level it will add them all to the contents, on all other levels it calls ..() and does whatever is needed afterwards but from contents list already
-*/
-
+/// Commit a complete ingredient allocation, returning retained recipe parts or null on failure.
 /datum/component/personal_crafting/proc/del_reqs(datum/crafting_recipe/R, mob/user, list/quality_out = null)
-	var/list/surroundings
-	var/list/Deletion = list()
-	. = list()
-	var/data
-	var/amt
-	main_loop:
-		for(var/A in R.reqs)
-			amt = R.reqs[A]
-			surroundings = get_environment(user)
-			for(var/atom/movable/IS in surroundings)
-				if(!R.subtype_reqs && (IS.type in subtypesof(A)))
-					surroundings.Remove(IS)
-			surroundings -= Deletion
-			if(ispath(A, /datum/reagent))
-				var/datum/reagent/RG = new A
-				var/datum/reagent/RGNT
-				while(amt > 0)
-					var/obj/item/reagent_containers/RC = locate() in surroundings
-					if(!RC)
-						break
-					if(!RC.reagents)
-						surroundings -= RC
-						continue
-					RG = RC.reagents.get_reagent(A)
-					if(RG)
-						if(!locate(RG.type) in Deletion)
-							Deletion += new RG.type()
-						if(RG.volume > amt)
-							RG.volume -= amt
-							data = RG.data
-							RC.reagents.conditional_update(RC)
-							RG = locate(RG.type) in Deletion
-							RG.volume = amt
-							RG.data += data
-							continue main_loop
-						else
-							surroundings -= RC
-							amt -= RG.volume
-							RC.reagents.reagent_list -= RG
-							RC.reagents.conditional_update(RC)
-							RGNT = locate(RG.type) in Deletion
-							RGNT.volume += RG.volume
-							RGNT.data += RG.data
-							qdel(RG)
-						RC.on_reagent_change()
-					else
-						surroundings -= RC
-			else if(ispath(A, /obj/item/natural) || A == /obj/item/grown/log/tree/stick)
-				while(amt > 0)
-					for(var/obj/item/natural/bundle/B in get_environment(user))
-						if(B.stacktype == A)
-							if(B.amount > amt)
-								B.amount -= amt
-								B.update_bundle()
-								switch(B.amount)
-									if(1)
-										var/mob/living/carbon/old_loc = B.loc
-										qdel(B)
-										var/new_item = new B.stacktype(old_loc)
-										// Put in the person's hands if there were holding it.
-										if(ishuman(old_loc))
-											old_loc.put_in_hands(new_item)
-									if(0)
-										qdel(B)
-								amt = 0
-								continue main_loop
-							else
-								qdel(B)
-								amt -= B.amount
-						else
-							continue
-					var/atom/movable/I
-					while(amt > 0)
-						I = locate(A) in surroundings
-						Deletion += I
-						surroundings -= I
-						amt--
-			else if(ispath(A, /obj/item/reagent_containers/glass)) //Don't eat bottles with reagents in them
-				var/atom/movable/I
-				while(amt > 0)
-					I = locate(A) in surroundings
-					var/obj/item/reagent_containers/glass/RC = I
-					if(RC.reagents?.total_volume > 0)
-						surroundings -= I
-						continue
-					Deletion += I
-					surroundings -= I
-					amt--
+	var/list/selected = select_requirements(R, get_surroundings(user))
+	if(isnull(selected))
+		return null
+	var/list/consumed = list()
+	var/min_quality
+	// Remove chemicals before any containers that are also ingredients.
+	for(var/datum/reagent/reagent in selected)
+		var/datum/reagent/portion = new reagent.type()
+		portion.volume = selected[reagent]
+		portion.data = islist(reagent.data) ? reagent.data.Copy() : reagent.data
+		consumed += portion
+		reagent.holder.remove_reagent(reagent.type, selected[reagent], TRUE)
+	for(var/obj/item/ingredient in selected)
+		if(ingredient.has_item_quality && (isnull(min_quality) || ingredient.item_quality < min_quality))
+			min_quality = ingredient.item_quality
+		var/material_type = crafting_material_type(ingredient)
+		var/amount = selected[ingredient]
+		if(istype(ingredient, /obj/item/natural/bundle) || istype(ingredient, /obj/item/construction/bundle))
+			// Only materialize consumed bundle units if the result retains them as parts.
+			for(var/part_type in R.parts)
+				if(ispath(material_type, part_type))
+					for(var/i in 1 to amount)
+						var/obj/item/part = new material_type(null)
+						part.inherit_trade_provenance(ingredient)
+						consumed += part
+					break
+			if(istype(ingredient, /obj/item/natural/bundle))
+				var/obj/item/natural/bundle/bundle = ingredient
+				bundle.amount -= amount
+				if(bundle.amount == 1)
+					var/atom/destination = bundle.loc
+					var/obj/item/remainder = bundle.create_single_material(destination)
+					qdel(bundle)
+					if(ismob(destination))
+						var/mob/holder = destination
+						holder.put_in_hands(remainder)
+				else if(bundle.amount <= 0)
+					qdel(bundle)
+				else
+					bundle.update_bundle()
 			else
-				var/atom/movable/I
-				while(amt > 0)
-					I = locate(A) in surroundings
-					Deletion += I
-					surroundings -= I
-					amt--
-	var/list/partlist = list(R.parts.len)
-	for(var/M in R.parts)
-		partlist[M] = R.parts[M]
-	for(var/A in R.parts)
-		if(istype(A, /datum/reagent))
-			var/datum/reagent/RG = locate(A) in Deletion
-			if(RG.volume > partlist[A])
-				RG.volume = partlist[A]
-			. += RG
-			Deletion -= RG
-			continue
+				var/obj/item/construction/bundle/bundle = ingredient
+				bundle.amount -= amount
+				if(bundle.amount == 1)
+					var/atom/destination = bundle.loc
+					var/obj/item/remainder = new bundle.stacktype(destination)
+					remainder.inherit_trade_provenance(bundle)
+					qdel(bundle)
+					if(ismob(destination))
+						var/mob/holder = destination
+						holder.put_in_hands(remainder)
+				else if(bundle.amount <= 0)
+					qdel(bundle)
+				else
+					bundle.update_bundle()
 		else
-			while(partlist[A] > 0)
-				var/atom/movable/AM = locate(A) in Deletion
-				. += AM
-				Deletion -= AM
-				partlist[A] -= 1
+			consumed += ingredient
+	. = list()
+	for(var/part_type in R.parts)
+		var/needed = R.parts[part_type]
+		for(var/datum/part as anything in consumed.Copy())
+			if(!istype(part, part_type))
+				continue
+			if(istype(part, /datum/reagent))
+				var/datum/reagent/reagent = part
+				reagent.volume = min(reagent.volume, needed)
+				needed -= reagent.volume
+			else
+				needed--
+			. += part
+			consumed -= part
+			if(needed <= 0)
+				break
 	if(quality_out)
-		var/min_q = null
-		for(var/atom/movable/AM in Deletion)
-			if(!isitem(AM))
-				continue
-			var/obj/item/IT = AM
-			if(!IT.has_item_quality)
-				continue
-			if(isnull(min_q) || IT.item_quality < min_q)
-				min_q = IT.item_quality
-		for(var/atom/movable/AM in .)
-			if(!isitem(AM))
-				continue
-			var/obj/item/IT = AM
-			if(!IT.has_item_quality)
-				continue
-			if(isnull(min_q) || IT.item_quality < min_q)
-				min_q = IT.item_quality
-		quality_out["min_quality"] = min_q
-	while(Deletion.len)
-		var/DL = Deletion[Deletion.len]
-		Deletion.Cut(Deletion.len)
-		if(DL)
-			var/atom/movable/A = DL
-			if(R.blacklist.Find(A.type))
-				continue
-		qdel(DL)
+		quality_out["min_quality"] = min_quality
+	for(var/datum/unused as anything in consumed)
+		qdel(unused)
 
 /datum/component/personal_crafting/proc/component_ui_interact(atom/movable/screen/craft/image, location, control, params, user)
 	if(user == parent)

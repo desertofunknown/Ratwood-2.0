@@ -1,8 +1,9 @@
 // Taxation 2 rate-setting panel, ported from AP #6849. Opened from the Titan by the Lord.
 // Drives SStreasury.apply_rate_adjustments (category levies) and apply_poll_rate_adjustments
-// (per-class poll tax / subsidy) - both live in treasury_poll_tax.dm.
+// (per-class poll tax / subsidy).
 
 /datum/taxsetter
+	parent_type = /datum/ruler_panel
 	var/mob/living/requesting_steward
 	var/good_announcement_text = "The Generous Lord Decrees"
 	var/bad_announcement_text = "The Tyrannical Lord Dictates"
@@ -14,6 +15,11 @@
 	if(bad_announcement_text)
 		src.bad_announcement_text = bad_announcement_text
 
+/datum/taxsetter/can_manage(mob/user)
+	if(requesting_steward)
+		return user == requesting_steward && user.stat == CONSCIOUS && user.job == "Steward"
+	return ..()
+
 /datum/taxsetter/ui_interact(mob/user, datum/tgui/ui)
 	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
@@ -21,20 +27,13 @@
 		ui.open()
 
 /datum/taxsetter/ui_data(mob/user)
-	var/list/projection = SStreasury.get_poll_tax_projection()
-	return list(
-		"levyCooldown" = (GLOB.dayspassed <= SStreasury.levy_rates_changed_day),
-		"pollCooldown" = (GLOB.dayspassed <= SStreasury.poll_rates_changed_day),
-		"pollProjection" = projection,
-	)
-
-/datum/taxsetter/ui_static_data(mob/user)
 	var/list/category_rates = list()
 	for(var/category in SStreasury.tax_rates)
 		if(category == TAX_CATEGORY_FINE)
 			continue
 		category_rates += list(list(
 			"category" = category,
+			"label" = SStreasury.get_tax_category_pretty_name(category),
 			"rate" = round(SStreasury.tax_rates[category] * 100),
 		))
 	// Poll tax - flat mammon per head per day. Fixed order matches the civic-priority
@@ -59,9 +58,18 @@
 			"label" = SStreasury.get_poll_tax_category_pretty_name(category),
 			"rate" = SStreasury.poll_tax_rates[category] || 0,
 		))
+	var/datum/decree/concordat = SStreasury.get_decree(DECREE_ZENITSTADT_CONCORDAT)
 	return list(
 		"categoryRates" = category_rates,
 		"pollTaxRates" = poll_tax_rates_out,
+		"levySubmissionMin" = concordat?.active ? round(CONCORDAT_TITHE_RATE * 100) : 0,
+		"levyCooldown" = (GLOB.dayspassed <= SStreasury.levy_rates_changed_day),
+		"pollCooldown" = (GLOB.dayspassed <= SStreasury.poll_rates_changed_day),
+		"pollProjection" = SStreasury.get_poll_tax_projection(),
+	)
+
+/datum/taxsetter/ui_static_data(mob/user)
+	return list(
 		"pollTaxMax" = POLL_TAX_MAX_RATE,
 		"pollTaxMin" = -POLL_TAX_MAX_SUBSIDY,
 	)
@@ -71,18 +79,22 @@
 		return TRUE
 	switch(action)
 		if("set_rates")
+			if(!islist(params["categoryRates"]))
+				return FALSE
 			var/lord = find_lord()
-			if(lord)
+			if(lord && requesting_steward)
 				INVOKE_ASYNC(GLOBAL_PROC, GLOBAL_PROC_REF(lord_tax_rates_requested), requesting_steward, lord, params["categoryRates"], good_announcement_text, bad_announcement_text)
 			else
-				SStreasury.apply_rate_adjustments(params["categoryRates"], requesting_steward, good_announcement_text, bad_announcement_text)
+				SStreasury.apply_rate_adjustments(params["categoryRates"], ui.user, good_announcement_text, bad_announcement_text)
 			return TRUE
 		if("set_poll_rates")
+			if(!islist(params["pollTaxRates"]))
+				return FALSE
 			var/lord = find_lord()
-			if(lord)
+			if(lord && requesting_steward)
 				INVOKE_ASYNC(GLOBAL_PROC, GLOBAL_PROC_REF(lord_poll_tax_rates_requested), requesting_steward, lord, params["pollTaxRates"], good_announcement_text, bad_announcement_text)
 			else
-				SStreasury.apply_poll_rate_adjustments(params["pollTaxRates"], requesting_steward, good_announcement_text, bad_announcement_text)
+				SStreasury.apply_poll_rate_adjustments(params["pollTaxRates"], ui.user, good_announcement_text, bad_announcement_text)
 			return TRUE
 
 /datum/taxsetter/ui_state(mob/user)

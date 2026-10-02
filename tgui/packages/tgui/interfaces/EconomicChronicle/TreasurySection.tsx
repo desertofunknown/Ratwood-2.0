@@ -1,31 +1,17 @@
-import {
-  FONT_BODY,
-  SEAL_GREEN,
-  SEAL_RED,
-  subtitleStyle,
-} from '../common/parchment';
-import {
-  Breakdown,
-  compactCardStyle,
-  dividerStyle,
-  formatPct,
-  Row,
-  SectionTitle,
-  twoColTable,
-  twoColumnLayout,
-} from './styles';
+import { SEAL_GREEN, SEAL_RED } from '../common/parchment';
+import { Breakdown, formatPct, Row, SectionTitle } from './styles';
 import type { TreasurySnapshot } from './types';
 
 type Props = {
   t: TreasurySnapshot;
-  balance: number;
 };
 
 const RevenueColumn = (props: { t: TreasurySnapshot }) => {
   const { t } = props;
   return (
     <div>
-      <table style={twoColTable}>
+      <h3>Revenue</h3>
+      <table>
         <tbody>
           <Row label="Starting Treasury" value={t.starting} />
           <Row label="Rural Taxes Collected" value={t.rural_taxes} />
@@ -40,7 +26,7 @@ const RevenueColumn = (props: { t: TreasurySnapshot }) => {
         {t.poll.adventurer} &bull; Mercenary {t.poll.mercenary} &bull; Peasant{' '}
         {t.poll.peasant}
       </Breakdown>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Royal Fines Collected" value={t.fines_income} />
           <Row label="Royal Taxes Collected" value={t.royal.total} />
@@ -49,17 +35,15 @@ const RevenueColumn = (props: { t: TreasurySnapshot }) => {
       <Breakdown>
         Contract Levy {t.royal.contract_levy} &bull; Headeater Levy{' '}
         {t.royal.headeater_levy} &bull; Import Tariff {t.royal.import_tariff}{' '}
-        &bull; Export Duty {t.royal.export_duty} &bull; Other{' '}
+        &bull; Export Duty {t.royal.export_duty} &bull; Recovered Spoils{' '}
+        {t.royal.recovered_spoils} &bull; Other{' '}
         {t.royal.other_fees}
       </Breakdown>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Stockpile Exports" value={t.stockpile_exports} />
           <Row label="Bought from Stockpile" value={t.stockpile_revenue} />
-          <Row
-            label="Direct Imports"
-            value={t.stockpile_direct_imports}
-          />
+          <Row label="Direct Imports" value={t.stockpile_direct_imports} />
           <Row label="Standing Order Revenue" value={t.standing.revenue} />
         </tbody>
       </table>
@@ -68,15 +52,19 @@ const RevenueColumn = (props: { t: TreasurySnapshot }) => {
         &bull; {t.standing.petitioned} petitioned (
         {t.standing.petition_pledge_spent}p spent)
       </Breakdown>
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Shortages Ended Early" value={t.shortages_ended} />
         </tbody>
       </table>
-      <div style={dividerStyle} />
-      <table style={twoColTable}>
+      <hr />
+      <table>
         <tbody>
-          <Row label="Total Revenue" value={t.total_revenue} color={SEAL_GREEN} />
+          <Row
+            label="Total Revenue"
+            value={t.total_revenue}
+            color={SEAL_GREEN}
+          />
         </tbody>
       </table>
     </div>
@@ -86,7 +74,7 @@ const RevenueColumn = (props: { t: TreasurySnapshot }) => {
 const ExpensesColumn = (props: { t: TreasurySnapshot }) => {
   const { t } = props;
   const debtLabel = t.bankruptcy_count > 0 ? 'Receivership' : 'Arrears';
-  const debtColor = t.bankruptcy_count > 0 ? '#c0392b' : '#e07b39';
+  const debtColor = t.bankruptcy_count > 0 ? SEAL_RED : 'var(--p-seal-amber)';
   const debtPieces = [
     t.arrears_count > 0 ? `${t.arrears_count}x arrears` : '',
     t.bankruptcy_count > 0 ? `${t.bankruptcy_count}x bankruptcy` : '',
@@ -100,7 +88,8 @@ const ExpensesColumn = (props: { t: TreasurySnapshot }) => {
   const showForfeiture = t.forfeiture_amount > 0 || t.forfeiture_count > 0;
   return (
     <div>
-      <table style={twoColTable}>
+      <h3>Expenses &amp; Exemptions</h3>
+      <table>
         <tbody>
           <Row label="Salary Payments" value={t.wages_paid} />
           <Row label="Treasury Transfers" value={t.treasury_transfers} />
@@ -116,7 +105,7 @@ const ExpensesColumn = (props: { t: TreasurySnapshot }) => {
         <Breakdown>{t.banditry_owed} still owed</Breakdown>
       )}
       {showDebtRow && (
-        <table style={twoColTable}>
+        <table>
           <tbody>
             <Row label={debtLabel} value={debtValue} color={debtColor} />
           </tbody>
@@ -131,7 +120,7 @@ const ExpensesColumn = (props: { t: TreasurySnapshot }) => {
       )}
       {showForfeiture && (
         <>
-          <table style={twoColTable}>
+          <table>
             <tbody>
               <Row label="Forfeitures" value={`${t.forfeiture_amount}m`} />
             </tbody>
@@ -144,20 +133,24 @@ const ExpensesColumn = (props: { t: TreasurySnapshot }) => {
           )}
         </>
       )}
-      <table style={twoColTable}>
+      <table>
         <tbody>
           <Row label="Forgone Revenue" value={t.exempt.total} />
         </tbody>
       </table>
       <Breakdown>
         Contract {t.exempt.contract} &bull; Headeater {t.exempt.headeater}{' '}
-        &bull; Import {t.exempt.import} &bull; Export {t.exempt.export}{' '}
-        &bull; Fines {t.exempt.fines} &bull; Poll Tax {t.exempt.poll_tax}
+        &bull; Import {t.exempt.import} &bull; Export {t.exempt.export} &bull;
+        Fines {t.exempt.fines} &bull; Poll Tax {t.exempt.poll_tax}
       </Breakdown>
-      <div style={dividerStyle} />
-      <table style={twoColTable}>
+      <hr />
+      <table>
         <tbody>
-          <Row label="Total Expenses" value={t.total_expenses} color={SEAL_RED} />
+          <Row
+            label="Total Expenses"
+            value={t.total_expenses}
+            color={SEAL_RED}
+          />
         </tbody>
       </table>
     </div>
@@ -171,16 +164,8 @@ const RealmInsight = (props: { t: TreasurySnapshot }) => {
   const netSign = t.net_treasury >= 0 ? '+' : '';
   const tradeSign = t.trade_balance >= 0 ? '+' : '';
   return (
-    <div
-      style={{
-        ...subtitleStyle,
-        marginTop: '6px',
-        marginBottom: 0,
-        textAlign: 'left',
-        fontSize: FONT_BODY,
-      }}
-    >
-      <table style={twoColTable}>
+    <div className="EconomicChronicle__insight">
+      <table>
         <tbody>
           <Row
             label="Net Treasury Result"
@@ -205,15 +190,15 @@ const RealmInsight = (props: { t: TreasurySnapshot }) => {
 };
 
 export const TreasurySection = (props: Props) => {
-  const { t, balance } = props;
+  const { t } = props;
   return (
-    <div style={compactCardStyle}>
-      <SectionTitle>Realm&apos;s Treasury - balance: {balance}</SectionTitle>
-      <div style={twoColumnLayout}>
+    <section>
+      <SectionTitle>Realm&apos;s Treasury</SectionTitle>
+      <div className="EconomicChronicle__columns">
         <RevenueColumn t={t} />
         <ExpensesColumn t={t} />
       </div>
       <RealmInsight t={t} />
-    </div>
+    </section>
   );
 };

@@ -276,34 +276,43 @@
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
 	var/canread = user.can_read(src, TRUE)
-	var/contents
-	if(canread)
-		contents = "<center>POTION SELLER, FIRST ITERATION<BR>"
-		if(!locked)
-			contents += "UNLOCKED<BR><a href='?src=[REF(src)];setbottleprice=1'>SET BOTTLE PRICE:</a> [bottle_price ? bottle_price : "FREE"]<HR>"
-		else if(!inserted)
-			contents += "No container inserted<BR><a href='?src=[REF(src)];buybottle=1'>[bottle_price ? "Buy bottle for [bottle_price] mammons" : "Take a FREE bottle"]</a><HR>"
-		else
-			contents += "Container: <a href='?src=[REF(src)];eject=1'>[inserted]</a> ([round(inserted.reagents.total_volume)]/[round(inserted.reagents.maximum_volume)] DRAMS)<HR>"
-		if(locked)
-			contents += "<a href='?src=[REF(src)];change=1'>Stored Mammon:</a> [budget]<BR>"
-		else
-			contents += "<a href='?src=[REF(src)];withdrawgain=1'>Stored Profits:</a> [wgain]<BR>"
+	var/list/labels = list(
+		"title" = "Potion Seller",
+		"edition" = "First iteration",
+		"mode" = locked ? "Customer" : "Operator / Unlocked",
+		"help" = locked ? "Insert coins and a bottle, then choose a potion to pour." : "Insert bottled potions to stock the machine. Select a name or price to edit it.",
+		"item" = "Potions",
+		"quantity" = "Stock",
+		"price" = "Mammon",
+		"action" = "Action",
+		"buy" = "Buy",
+		"take" = "Take",
+		"free" = "Free",
+		"unit" = "per dram",
+		"empty" = "No potions are available.",
+		"balance" = locked ? "Stored Mammon" : "Stored Profits",
+		"withdraw" = locked ? "Return change" : "Withdraw profits",
+		"bottleprice" = "Bottle price",
+		"nobottle" = "No container inserted",
+		"buybottle" = bottle_price ? "Buy bottle for [bottle_price] mammons" : "Take a free bottle",
+		"container" = "Container",
+		"eject" = "Eject bottle",
+		"drams" = "drams"
+	)
+	if(!canread)
+		for(var/label in labels)
+			labels[label] = stars(labels[label])
+	var/list/contents = list("<div class='merchant-folio'><div class='merchant-heading'><div class='merchant-edition'>[labels["edition"]]</div><h1>[labels["title"]]</h1><div class='merchant-mode'>[labels["mode"]]</div><p>[labels["help"]]</p></div><div class='merchant-container'>")
+	if(!locked)
+		contents += "<span>[labels["bottleprice"]]</span><a href='?src=[REF(src)];setbottleprice=1'>[bottle_price ? bottle_price : labels["free"]]</a>"
+	else if(!inserted)
+		contents += "<span>[labels["nobottle"]]</span><a href='?src=[REF(src)];buybottle=1'>[labels["buybottle"]]</a>"
 	else
-		contents = "<center>[stars("POTION SELLER, FIRST ITERATION")]<BR>"
-		if(!locked)
-			contents += "[stars("UNLOCKED")]<BR><a href='?src=[REF(src)];setbottleprice=1'>[stars("SET BOTTLE PRICE:")]</a> [bottle_price ? bottle_price : stars("FREE")]<HR>"
-		else if(!inserted)
-			contents += "[stars("No container inserted")]<BR><a href='?src=[REF(src)];buybottle=1'>[bottle_price ? stars("Buy bottle for [bottle_price] mammons") : stars("Take a FREE bottle")]</a><HR>"
-		else
-			contents += "[stars("Container")]: <a href='?src=[REF(src)];eject=1'>[stars("[inserted]")]</a> ([round(inserted.reagents.total_volume)]/[round(inserted.reagents.maximum_volume)] [stars("DRAMS")])<HR>"
-		if(locked)
-			contents += "<a href='?src=[REF(src)];change=1'>[stars("Stored Mammon:")]</a> [budget]<BR>"
-		else
-			contents += "<a href='?src=[REF(src)];withdrawgain=1'>[stars("Stored Profits:")]</a> [wgain]<BR>"
-
-	contents += "</center>"
-
+		var/container_name = html_encode(canread ? "[inserted]" : stars("[inserted]"))
+		contents += "<div class='merchant-container-details'><span>[labels["container"]]: [container_name]</span><strong>[round(inserted.reagents.total_volume)] / [round(inserted.reagents.maximum_volume)] [labels["drams"]]</strong></div><a href='?src=[REF(src)];eject=1'>[labels["eject"]]</a>"
+	contents += "</div><div class='merchant-stock'><table class='merchant-table'><thead><tr><th scope='col'>[labels["item"]]</th><th scope='col' class='merchant-quantity'>[labels["quantity"]]</th><th scope='col' class='merchant-price'>[labels["price"]]</th><th scope='col' class='merchant-action'>[labels["action"]]</th></tr></thead><tbody>"
+	var/potion_icon
+	var/visible_stock = 0
 	for(var/I in held_items)
 		var/price = held_items[I]["PRICE"]
 		var/namer = held_items[I]["NAME"]
@@ -313,22 +322,29 @@
 		if(!namer)
 			held_items[I]["NAME"] = "thing"
 			namer = "thing"
+		if(!potion_icon)
+			potion_icon = icon2html(icon('icons/roguetown/items/cooking.dmi', "clear_bottle1"), user)
+		visible_stock++
+		var/display_name = html_encode(canread ? namer : stars(namer))
+		var/display_quantity = canread ? "[volume]<small>[UNIT_FORM_STRING(volume)]</small>" : "&mdash;"
+		var/display_price = price ? "[price]" : labels["free"]
+		if(locked && !canread && price)
+			display_price = stars("[price]")
+		contents += "<tr><td class='merchant-product'><span class='merchant-icon'>[potion_icon]</span><div class='merchant-name'>"
 		if(locked)
-			var/buy = !price ? "TAKE" : "BUY"
-			price = !price ? "FREE" : "[price] per dram"
-			if(canread)
-				contents += "[namer] ([volume] [UNIT_FORM_STRING(volume)]) - [price] <a href='?src=[REF(src)];buy=[REF(I)]'>[buy]</a>"
-			else
-				contents += "[stars(namer)] - [stars(price)] <a href='?src=[REF(src)];buy=[REF(I)]'>[stars("[buy]")]</a>"
+			contents += "[display_name]</div></td><td class='merchant-quantity'>[display_quantity]</td><td class='merchant-price'>[display_price]<small>[labels["unit"]]</small></td><td class='merchant-action'><a href='?src=[REF(src)];buy=[REF(I)]'>[price ? labels["buy"] : labels["take"]]</a></td></tr>"
 		else
-			if(canread)
-				contents += "<a href='?src=[REF(src)];setname=[REF(I)]'>[namer]</a> ([volume] [UNIT_FORM_STRING(volume)]) - <a href='?src=[REF(src)];setprice=[REF(I)]'>[price] per dram</a> <a href='?src=[REF(src)];retrieve=[REF(I)]'>TAKE</a>"
-			else
-				contents += "<a href='?src=[REF(src)];setname=[REF(I)]'>[stars(namer)]</a> - <a href='?src=[REF(src)];setprice=[REF(I)]'>[price] [stars("per dram")]</a> <a href='?src=[REF(src)];retrieve=[REF(I)]'>[stars("TAKE")]</a>"
-		contents += "<BR>"
+			contents += "<a class='merchant-edit' href='?src=[REF(src)];setname=[REF(I)]'>[display_name]</a></div></td><td class='merchant-quantity'>[display_quantity]</td><td class='merchant-price'><a class='merchant-edit' href='?src=[REF(src)];setprice=[REF(I)]'>[display_price]<small>[labels["unit"]]</small></a></td><td class='merchant-action'><a href='?src=[REF(src)];retrieve=[REF(I)]'>[labels["take"]]</a></td></tr>"
+	if(!visible_stock)
+		contents += "<tr><td colspan='4' class='merchant-empty'>[labels["empty"]]</td></tr>"
+	contents += "</tbody></table></div><div class='merchant-footer'><div class='merchant-balance'><span>[labels["balance"]]</span><strong>[locked ? (budget ? budget : 0) : wgain]</strong></div><a href='?src=[REF(src)];[locked ? "change" : "withdrawgain"]=1'>[labels["withdraw"]]</a></div></div>"
 
-	var/datum/browser/popup = new(user, "VENDORTHING", "", 370, 300)
-	popup.set_content(contents)
+	var/datum/browser/popup = new(user, "VENDORTHING", "", 640, 600)
+	popup.add_stylesheet("merchant", 'html/browser/merchant.css')
+	var/datum/asset/simple/roguefonts/merchant_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = merchant_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Merchant Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Merchant Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Merchant Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+	popup.set_content(contents.Join())
 	popup.open()
 
 /obj/structure/roguemachine/potionseller/obj_break(damage_flag)

@@ -1,5 +1,17 @@
 // Clients aren't datums so we have to define these procs indpendently.
 // These verbs are called for all key press and release events
+/client/var/list/active_keybindings = list()
+
+/client/proc/release_keybindings(released_key)
+	for(var/full_key in active_keybindings.Copy())
+		var/list/active = active_keybindings[full_key]
+		if(released_key && !(released_key in active["keys"]))
+			continue
+		active_keybindings -= full_key
+		for(var/kb_name in active["bindings"])
+			var/datum/keybinding/kb = GLOB.keybindings_by_name[kb_name]
+			kb?.up(src)
+
 /client/verb/keyDown(_key as text)
 	set instant = TRUE
 	set hidden = TRUE
@@ -65,10 +77,22 @@
 		else
 			full_key = "[AltMod][CtrlMod][ShiftMod][_key]"
 	var/keycount = 0
+	var/list/binding_keys = list(_key)
+	if(AltMod)
+		binding_keys |= "Alt"
+	if(CtrlMod)
+		binding_keys |= "Ctrl"
+	if(ShiftMod)
+		binding_keys |= "Shift"
 	for(var/kb_name in prefs.key_bindings[full_key])
 		keycount++
 		var/datum/keybinding/kb = GLOB.keybindings_by_name[kb_name]
 		if(kb)
+			if(!active_keybindings[full_key])
+				active_keybindings[full_key] = list("keys" = binding_keys, "bindings" = list())
+			var/list/active = active_keybindings[full_key]
+			var/list/bindings = active["bindings"]
+			bindings |= kb_name
 			if(kb.down(src) && keycount >= MAX_COMMANDS_PER_KEY)
 				break
 
@@ -120,13 +144,7 @@
 		if(!movement_locked && !(next_move_dir_add & movement))
 			next_move_dir_sub |= movement
 
-	// We don't do full key for release, because for mod keys you
-	// can hold different keys and releasing any should be handled by the key binding specifically
-	for (var/kb_name in prefs.key_bindings[_key])
-		var/datum/keybinding/kb = GLOB.keybindings_by_name[kb_name]
-		if(kb)
-			if(kb.up(src))
-				break
+	release_keybindings(_key)
 	holder?.key_up(_key, src)
 	mob.focus?.key_up(_key, src)
 	mob.update_mouse_pointer()

@@ -341,11 +341,10 @@ SUBSYSTEM_DEF(treasury)
 	return mint(account, amt, "Savings")
 
 /datum/controller/subsystem/treasury/proc/give_money_account(amt, target, source, mint_new = FALSE, mint_label, is_salary = FALSE)
-	if(!amt)
-		return
+	if(!isnum(amt) || !amt || abs(amt) >= INFINITY)
+		return FALSE
 	if(!target)
-		return
-	amt = min(amt, 10000) //No exponentials, please!
+		return FALSE
 	var/target_name = target
 	if(istype(target,/mob/living/carbon/human))
 		var/mob/living/carbon/human/H = target

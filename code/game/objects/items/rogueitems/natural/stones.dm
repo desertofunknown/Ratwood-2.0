@@ -589,23 +589,8 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 		return
 	to_chat(user, span_warning("I start to collect [src]..."))
 	if(move_after(user, bundling_time, target = src))
-		var/stackcount = 0
-		for(var/obj/item/natural/stoneblock/F in get_turf(src))
-			stackcount++
-		while(stackcount > 0)
-			if(stackcount == 1)
-				var/obj/item/natural/stoneblock/S = new(get_turf(user))
-				user.put_in_hands(S)
-				stackcount--
-			else if(stackcount >= 2)
-				var/obj/item/natural/bundle/stoneblock/B = new(get_turf(user))
-				B.amount = clamp(stackcount, 2, 4)
-				B.update_bundle()
-				stackcount -= clamp(stackcount, 2, 4)
-				user.put_in_hands(B)
-		for(var/obj/item/natural/stoneblock/F in get_turf(src))
-			playsound(get_turf(user.loc), 'sound/foley/stone_scrape.ogg', 100)
-			qdel(F)
+		if(collect_material_bundles(user, /obj/item/natural/stoneblock, /obj/item/natural/bundle/stoneblock, TRUE, TRUE))
+			playsound(get_turf(user), 'sound/foley/stone_scrape.ogg', 100)
 
 //................ Stone block stack	............... //
 /obj/item/natural/bundle/stoneblock

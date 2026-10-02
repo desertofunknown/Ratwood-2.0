@@ -12,12 +12,16 @@
 	..()
 
 /datum/clan_hierarchy_interface/proc/can_manage_hierarchy()
+	if(QDELETED(user) || QDELETED(user_clan) || user.clan != user_clan || !(user in user_clan.clan_members))
+		return FALSE
+	if(user == user_clan.clan_leader)
+		return TRUE
 	if(!user.clan_position)
-		return user == user_clan.clan_leader
-	return user.clan_position.can_assign_positions
+		return FALSE
+	return (user.clan_position in user_clan.all_positions) && user.clan_position.assigned_member == user && user.clan_position.can_assign_positions
 
 /datum/clan_hierarchy_interface/proc/can_manage_position(datum/clan_hierarchy_node/target_position)
-	if(!target_position)
+	if(!can_manage_hierarchy() || QDELETED(target_position) || !(target_position in user_clan.all_positions))
 		return FALSE
 
 	// Clan leader can manage any position
@@ -33,7 +37,7 @@
 	return (target_position in manageable_positions)
 
 /datum/clan_hierarchy_interface/proc/can_create_position_under(datum/clan_hierarchy_node/superior_position)
-	if(!superior_position)
+	if(!can_manage_hierarchy() || QDELETED(superior_position) || !(superior_position in user_clan.all_positions))
 		return FALSE
 
 	// Clan leader can create anywhere
@@ -62,7 +66,7 @@
 		<div class="parallax-layer parallax-stars-1" id="parallax-stars-1"></div>
 		<div class="parallax-layer parallax-neb" id="parallax-neb"></div>
 	</div>
-	<div class="research-container" id="container">
+	<div class="research-container" id="container" tabindex="0" aria-label="Clan hierarchy viewport. Arrow keys pan, plus and minus zoom, zero resets.">
 		<div class="research-canvas" id="canvas">
 			[generate_hierarchy_connections_html()]
 			[generate_hierarchy_nodes_html()]
@@ -71,6 +75,63 @@
 	<div class="tooltip" id="tooltip" style="display: none; position: absolute; background: rgba(0,0,0,0.9); color: white; padding: 8px; border-radius: 4px; font-size: 12px; z-index: 1001; max-width: 200px; border: 1px solid #444; box-shadow: 0 2px 8px rgba(0,0,0,0.5);"></div>
 	[generate_hierarchy_sidebar()]
 	[can_manage_hierarchy() ? generate_management_modal() : ""]
+	<script>
+		var selectedPosition = "[selected_position ? REF(selected_position) : ""]";
+
+		function showNodeTooltip(event, nodeDataJson) {
+		try {
+			var nodeData = JSON.parse(nodeDataJson);
+			var tooltip = document.getElementById('tooltip');
+
+			if(tooltip) {
+				tooltip.innerHTML = `
+					<strong>${nodeData.name}</strong><br>
+					<em>${nodeData.desc}</em><br>
+					<strong>Member:</strong> ${nodeData.member}<br>
+					<strong>Rank Level:</strong> ${nodeData.rank_level}<br>
+					<strong>Subordinates:</strong> ${nodeData.subordinates}<br>
+					<strong>Can Assign:</strong> ${nodeData.can_assign ? 'Yes' : 'No'}
+				`;
+
+				tooltip.style.display = 'block';
+				var parent = tooltip.offsetParent;
+				var bounds = parent.getBoundingClientRect();
+				var left = event.clientX - bounds.left + 10;
+				var top = event.clientY - bounds.top + 10;
+				tooltip.style.left = Math.max(0, Math.min(left, parent.clientWidth - tooltip.offsetWidth)) + 'px';
+				tooltip.style.top = Math.max(0, Math.min(top, parent.clientHeight - tooltip.offsetHeight)) + 'px';
+			}
+		} catch(e) {
+			console.error('Error parsing tooltip data:', e);
+		}
+	}
+
+	function hideNodeTooltip() {
+		var tooltip = document.getElementById('tooltip');
+		if(tooltip) {
+			tooltip.style.display = 'none';
+		}
+	}
+
+		function selectHierarchyPosition(positionRef) {
+			// Remove previous selection
+			var prevSelected = document.querySelector('.hierarchy-node.selected');
+			if(prevSelected) {
+				prevSelected.classList.remove('selected');
+			}
+
+			// Add selection to clicked node
+			var clickedNode = document.querySelector('\[data-node-id=\"' + positionRef + '\"\]');
+			if(clickedNode) {
+				clickedNode.classList.add('selected');
+				selectedPosition = positionRef;
+
+				// Trigger server-side selection update
+				window.location.href = '?src=[REF(src)];action=select_position;position_id=' + positionRef;
+			}
+		}
+
+	</script>
 	"}
 
 	return hierarchy_html
@@ -200,18 +261,18 @@
 		if(position.cloned_look)
 			icon_html = ma2html(position.cloned_look, user)
 
-		html += {"<div class="[node_classes]"
+		html += {"<button type="button" id="hierarchy-node-[REF(position)]" aria-label="[html_encode(position.name)]: [html_encode(member_name)]" class="[node_classes]"
 			style="left: [position.node_x]px; top: [position.node_y]px; border-color: [position.position_color]; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 120px; height: 80px;"
 			data-node-id="[REF(position)]"
 			data-user-ref="[REF(user)]"
 			data-node-data='[escaped_node_data_json]'
 			onclick="selectHierarchyPosition('[REF(position)]')"
 			onmouseover="showNodeTooltip(event, '[escaped_node_data_json]')"
-			onmouseout="hideNodeTooltip()">
+			onmouseout="if(document.activeElement !== this) hideNodeTooltip()">
 
 			[icon_html]
-			<div style="font-size: 12px; font-weight: bold; color: white; margin-top: 4px;">[position.name]</div>
-		</div>"}
+			<span style="font-size: 12px; font-weight: bold; color: white; margin-top: 4px;">[position.name]</span>
+		</button>"}
 
 	return html
 
@@ -221,7 +282,7 @@
 	<div class="hierarchy-sidebar" id="hierarchy-sidebar">
 		<div class="sidebar-header">
 			<h3>Position Details</h3>
-			[can_manage_hierarchy() ? "<button onclick='createNewPosition()' class='btn-primary'>Create Position</button>" : ""]
+			[can_manage_hierarchy() ? "<button type='button' id='hierarchy-create' onclick='createNewPosition()' class='btn-primary'>Create Position</button>" : ""]
 		</div>
 		<div class="sidebar-content" id="sidebar-content">
 			[selected_position ? generate_position_details_html() : "<p>Select a position to view details</p>"]
@@ -361,10 +422,10 @@
 
 		[can_modify ? {"
 		<div class="position-actions" style="margin-top: 15px;">
-			<button onclick='editPosition("[REF(selected_position)]")' class='btn-primary' style='width: 100%; margin-bottom: 5px; padding: 6px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;'>Edit Position</button>
-			<button onclick='assignMember("[REF(selected_position)]")' class='btn-secondary' style='width: 100%; margin-bottom: 5px; padding: 6px; background: #666; color: white; border: none; border-radius: 3px; cursor: pointer;'>Assign Member</button>
-			<button onclick='toggleAssignPermission("[REF(selected_position)]")' class='btn-secondary' style='width: 100%; margin-bottom: 5px; padding: 6px; background: #006600; color: white; border: none; border-radius: 3px; cursor: pointer;'>[selected_position.can_assign_positions ? "Remove" : "Grant"] Assign Permission</button>
-			[selected_position != user_clan.hierarchy_root ? "<button onclick='removePosition(\"[REF(selected_position)]\")' class='btn-danger' style='width: 100%; margin-bottom: 5px; padding: 6px; background: #cc0000; color: white; border: none; border-radius: 3px; cursor: pointer;'>Remove Position</button>" : ""]
+			<button type='button' id='hierarchy-edit' onclick='editPosition("[REF(selected_position)]")' class='btn-primary' style='width: 100%; margin-bottom: 5px; padding: 6px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;'>Edit Position</button>
+			<button type='button' id='hierarchy-assign' onclick='assignMember("[REF(selected_position)]")' class='btn-secondary' style='width: 100%; margin-bottom: 5px; padding: 6px; background: #666; color: white; border: none; border-radius: 3px; cursor: pointer;'>Assign Member</button>
+			<button type='button' id='hierarchy-permission' onclick='toggleAssignPermission("[REF(selected_position)]")' class='btn-secondary' style='width: 100%; margin-bottom: 5px; padding: 6px; background: #006600; color: white; border: none; border-radius: 3px; cursor: pointer;'>[selected_position.can_assign_positions ? "Remove" : "Grant"] Assign Permission</button>
+			[selected_position != user_clan.hierarchy_root ? "<button type='button' id='hierarchy-remove' onclick='removePosition(\"[REF(selected_position)]\")' class='btn-danger' style='width: 100%; margin-bottom: 5px; padding: 6px; background: #cc0000; color: white; border: none; border-radius: 3px; cursor: pointer;'>Remove Position</button>" : ""]
 		</div>
 		"} : can_manage_hierarchy() ? {"
 		<div class="position-actions" style="margin-top: 15px;">
@@ -378,9 +439,15 @@
 
 /datum/clan_hierarchy_interface/proc/generate_management_modal()
 	return {"
-	<div id="management-modal" class="modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+	<style>
+		#hierarchy-modal-close:focus {
+			outline: 2px solid #ffe3a3;
+			outline-offset: 2px;
+		}
+	</style>
+	<div id="management-modal" class="modal" role="dialog" aria-modal="true" aria-label="Manage clan position" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
 		<div class="modal-content" style="background-color: #2a2a2a; margin: 10% auto; padding: 20px; border: 1px solid #444; border-radius: 5px; width: 500px; color: #ccc;">
-			<span class="close" onclick="closeHierarchyModal()" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+			<button type="button" id="hierarchy-modal-close" class="close" aria-label="Close position dialog" onclick="closeHierarchyModal()" style="color: #aaa; float: right; font-family: inherit; font-size: 28px; font-weight: bold; line-height: inherit; cursor: pointer; background: transparent; border: none; padding: 0; margin: 0;">&times;</button>
 			<h3 id="modal-title" style="color: #fff;">Manage Position</h3>
 			<div id="modal-body">
 				<!-- Dynamic content goes here -->
@@ -389,57 +456,6 @@
 	</div>
 
 	<script>
-		var selectedPosition = null;
-
-		function showNodeTooltip(event, nodeDataJson) {
-		try {
-			var nodeData = JSON.parse(nodeDataJson);
-			var tooltip = document.getElementById('tooltip');
-
-			if(tooltip) {
-				tooltip.innerHTML = `
-					<strong>${nodeData.name}</strong><br>
-					<em>${nodeData.desc}</em><br>
-					<strong>Member:</strong> ${nodeData.member}<br>
-					<strong>Rank Level:</strong> ${nodeData.rank_level}<br>
-					<strong>Subordinates:</strong> ${nodeData.subordinates}<br>
-					<strong>Can Assign:</strong> ${nodeData.can_assign ? 'Yes' : 'No'}
-				`;
-
-				tooltip.style.display = 'block';
-				tooltip.style.left = (event.pageX + 10) + 'px';
-				tooltip.style.top = (event.pageY + 10) + 'px';
-			}
-		} catch(e) {
-			console.error('Error parsing tooltip data:', e);
-		}
-	}
-
-	function hideNodeTooltip() {
-		var tooltip = document.getElementById('tooltip');
-		if(tooltip) {
-			tooltip.style.display = 'none';
-		}
-	}
-
-		function selectHierarchyPosition(positionRef) {
-			// Remove previous selection
-			var prevSelected = document.querySelector('.hierarchy-node.selected');
-			if(prevSelected) {
-				prevSelected.classList.remove('selected');
-			}
-
-			// Add selection to clicked node
-			var clickedNode = document.querySelector('\[data-node-id=\"' + positionRef + '\"\]');
-			if(clickedNode) {
-				clickedNode.classList.add('selected');
-				selectedPosition = positionRef;
-
-				// Trigger server-side selection update
-				window.location.href = '?src=[REF(src)];action=select_position;position_id=' + positionRef;
-			}
-		}
-
 		function createNewPosition() {
 			window.location.href = '?src=[REF(src)];action=create_position';
 		}
@@ -459,10 +475,6 @@
 			if(confirm('Are you sure you want to remove this position?')) {
 				window.location.href = '?src=[REF(src)];action=remove_position;position_id=' + positionRef;
 			}
-		}
-
-		function closeHierarchyModal() {
-			document.getElementById('management-modal').style.display = 'none';
 		}
 
 		function submitCreatePosition() {
@@ -543,7 +555,6 @@
 	<script>
 		document.getElementById('management-modal').style.display = 'block';
 		document.getElementById('modal-title').textContent = '';
-		document.getElementById('modal-body').innerHTML = document.querySelector('.dialog-content').outerHTML;
 
 		function submitEditPosition() {
 			const form = document.getElementById('edit-position-form');
@@ -567,7 +578,10 @@
 		user << browse(menu.generate_combined_html(updated_html), "window=clan_menu")
 
 /datum/clan_hierarchy_interface/Topic(href, href_list)
-	if(!user || !user_clan)
+	if(QDELETED(user) || usr != user || QDELETED(user_clan) || user.clan != user_clan)
+		return
+	var/datum/clan_menu_interface/menu = user.clan_menu_interface
+	if(QDELETED(menu) || menu.hierarchy_interface != src || !menu.is_current_user(usr))
 		return
 
 	switch(href_list["action"])
@@ -721,7 +735,6 @@
 	<script>
 		document.getElementById('management-modal').style.display = 'block';
 		document.getElementById('modal-title').textContent = 'Create New Position';
-		document.getElementById('modal-body').innerHTML = document.querySelector('.dialog-content').outerHTML;
 	</script>
 	"}
 
@@ -779,7 +792,6 @@
 	<script>
 		document.getElementById('management-modal').style.display = 'block';
 		document.getElementById('modal-title').textContent = '';
-		document.getElementById('modal-body').innerHTML = document.querySelector('.dialog-content').outerHTML;
 	</script>
 	"}
 

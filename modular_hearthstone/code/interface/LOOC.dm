@@ -11,7 +11,7 @@
 	return TRUE
 
 /client/proc/get_looc()
-	var/msg = input(src, "", "looc") as text|null
+	var/msg = tgui_input_text(mob, "Local out-of-character chat. Enter sends; Escape cancels.", "LOOC", max_length = MAX_MESSAGE_LEN, encode = FALSE)
 	do_looc(msg, FALSE)
 
 

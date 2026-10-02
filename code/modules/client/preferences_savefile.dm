@@ -263,6 +263,8 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	S["hide_tongue_noise_warnings"] >> hide_tongue_noise_warnings
 	S["crt"]				>> crt
 	S["grain"]				>> grain
+	if(isnull(grain))
+		grain = initial(grain)
 	S["sexable"]			>> sexable
 	S["erp_visuals"]		>> erp_visuals
 	S["chastenable"]		>> chastenable
@@ -447,6 +449,7 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	WRITE_FILE(S["hide_unavailable_emotes"], hide_unavailable_emotes)
 	WRITE_FILE(S["hide_tongue_noise_warnings"], hide_tongue_noise_warnings)
 	WRITE_FILE(S["crt"], crt)
+	WRITE_FILE(S["grain"], grain)
 	WRITE_FILE(S["sexable"], sexable)
 	WRITE_FILE(S["erp_visuals"], erp_visuals)
 	WRITE_FILE(S["chastenable"], chastenable)
@@ -542,40 +545,22 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 /datum/preferences/proc/_load_flaw(S)
 	var/charflaw_type
 	S["charflaw"]			>> charflaw_type
-	if(charflaw_type && ispath(charflaw_type))
-		charflaw = new charflaw_type()
-	else
-		charflaw = pick(GLOB.character_flaws)
-		charflaw = GLOB.character_flaws[charflaw]
-		charflaw = new charflaw()
-
-	// Load new vice system
-	var/vice1_type, vice2_type, vice3_type, vice4_type, vice5_type, vice6_type
-	S["vice1"] >> vice1_type
-	S["vice2"] >> vice2_type
-	S["vice3"] >> vice3_type
-	S["vice4"] >> vice4_type
-	S["vice5"] >> vice5_type
-	S["vice6"] >> vice6_type
-
-	// Vice1 is required - use charflaw as fallback for old characters, only randomize if both are missing
-	if(vice1_type && ispath(vice1_type))
-		vice1 = new vice1_type()
-	else if(charflaw_type && ispath(charflaw_type))
-		// Old character without vice1 saved - use their charflaw
-		vice1 = new charflaw_type()
-	else
-		// Truly new/corrupted save - pick random
-		var/random_vice = pick(GLOB.character_flaws)
-		var/random_vice_path = GLOB.character_flaws[random_vice]
-		vice1 = new random_vice_path()
-
-	// Other vices are optional
-	vice2 = (vice2_type && ispath(vice2_type)) ? new vice2_type() : null
-	vice3 = (vice3_type && ispath(vice3_type)) ? new vice3_type() : null
-	vice4 = (vice4_type && ispath(vice4_type)) ? new vice4_type() : null
-	vice5 = (vice5_type && ispath(vice5_type)) ? new vice5_type() : null
-	vice6 = (vice6_type && ispath(vice6_type)) ? new vice6_type() : null
+	charflaw = null
+	var/has_modern_vices = FALSE
+	for(var/i in 1 to 6)
+		var/vice_type
+		S["vice[i]"] >> vice_type
+		vars["vice[i]"] = ispath(vice_type, /datum/charflaw) ? new vice_type() : null
+		if(vars["vice[i]"])
+			has_modern_vices = TRUE
+	if(!has_modern_vices)
+		// Migrate a legacy character without inventing an extra hidden vice.
+		if(ispath(charflaw_type, /datum/charflaw))
+			vice1 = new charflaw_type()
+		else
+			var/random_vice = pick(GLOB.character_flaws)
+			var/random_vice_path = GLOB.character_flaws[random_vice]
+			vice1 = new random_vice_path()
 	S["redolent_type"] >> redolent_type
 	S["redolent_scent"] >> redolent_scent
 	if(isnull(redolent_type)) // legacy savefile key from when this was named malodorous
@@ -632,6 +617,9 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 			quirks += new quirk_type()
 
 /datum/preferences/proc/_load_loadout(S)
+	prefer_loadout_wearables = FALSE
+	S["prefer_loadout_wearables"] >> prefer_loadout_wearables
+	prefer_loadout_wearables = !!prefer_loadout_wearables
 	var/loadout_type
 	S["loadout"] >> loadout_type
 	loadout = (loadout_type && ispath(loadout_type)) ? new loadout_type() : null
@@ -1257,6 +1245,7 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 	_save_loadout_presets(S)
 
 
+	WRITE_FILE(S["prefer_loadout_wearables"], prefer_loadout_wearables)
 	WRITE_FILE(S["loadout_1_hex"], loadout_1_hex)
 	WRITE_FILE(S["loadout_2_hex"], loadout_2_hex)
 	WRITE_FILE(S["loadout_3_hex"], loadout_3_hex)

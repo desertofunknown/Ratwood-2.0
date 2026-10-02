@@ -18,21 +18,21 @@ const withTimestamp = (action) => ({
 });
 
 export const gameMiddleware = (store) => {
-  let lastPingedAt;
+  // Loading is not a lost connection until the server has acknowledged us.
+  let lastPingedAt = null;
 
   setInterval(() => {
+    if (lastPingedAt === null) {
+      return;
+    }
     const state = store.getState();
     if (!state) {
       return;
     }
     const game = selectGame(state);
-    const pingsAreFailing =
-      lastPingedAt && Date.now() >= lastPingedAt + CONNECTION_LOST_AFTER;
+    const pingsAreFailing = Date.now() >= lastPingedAt + CONNECTION_LOST_AFTER;
     if (!game.connectionLostAt && pingsAreFailing) {
       store.dispatch(withTimestamp(connectionLost()));
-    }
-    if (game.connectionLostAt && !pingsAreFailing) {
-      store.dispatch(withTimestamp(connectionRestored()));
     }
   }, 1000);
 
@@ -41,6 +41,10 @@ export const gameMiddleware = (store) => {
 
     if (type === pingSuccess.type || type === pingSoft.type) {
       lastPingedAt = Date.now();
+      const game = selectGame(store.getState());
+      if (game.connectionLostAt || game.roundRestartedAt) {
+        store.dispatch(withTimestamp(connectionRestored()));
+      }
       return next(action);
     }
 

@@ -169,6 +169,11 @@ export const AdminTicketPanel = (props) => {
                   tickets.map((ticket) => (
                     <Box
                       key={ticket.id}
+                      {...{
+                        role: 'button',
+                        tabIndex: 0,
+                        'aria-pressed': selected_ticket?.ticket_id === ticket.id,
+                      }}
                       className="candystripe"
                       p={1}
                       mb={0.5}
@@ -179,6 +184,25 @@ export const AdminTicketPanel = (props) => {
                       }
                       style={{ cursor: 'pointer' }}
                       onClick={() => handleSelectTicket(ticket.id)}
+                      onKeyDown={(event) => {
+                        if (
+                          event.target !== event.currentTarget || event.defaultPrevented ||
+                          event.altKey || event.ctrlKey || event.metaKey ||
+                          (event.key !== 'Enter' && event.key !== ' ')
+                        ) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (!event.repeat) event.currentTarget.click();
+                      }}
+                      onKeyUp={(event) => {
+                        if (
+                          event.target === event.currentTarget &&
+                          (event.key === 'Enter' || event.key === ' ')
+                        ) {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }
+                      }}
                     >
                       <Stack>
                         <Stack.Item grow>

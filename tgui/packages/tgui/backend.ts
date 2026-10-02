@@ -11,8 +11,8 @@
  * @license MIT
  */
 
-import { perf } from 'common/perf';
-import { createAction } from 'common/redux';
+import { createAction, type Store } from 'common/redux';
+import type { SetStateAction } from 'react';
 import type { BooleanLike } from 'tgui-core/react';
 
 import { setupDrag } from './drag';
@@ -22,9 +22,9 @@ import { resumeRenderer, suspendRenderer } from './renderer';
 
 const logger = createLogger('backend');
 
-export let globalStore;
+export let globalStore: Store;
 
-export const setGlobalStore = (store) => {
+export const setGlobalStore = (store: Store) => {
   globalStore = store;
 };
 
@@ -49,13 +49,15 @@ export const backendSuspendSuccess = () => ({
   },
 });
 
+type PayloadQueue = { chunks: string[]; nextIndex: number };
+
 const initialState = {
   config: {},
   data: {},
   shared: {},
-  outgoingPayloadQueues: {} as Record<string, string[]>,
+  outgoingPayloadQueues: {} as Record<string, PayloadQueue>,
   // Start as suspended
-  suspended: Date.now(),
+  suspended: Date.now() as number | false,
   suspending: false,
 };
 
@@ -64,18 +66,15 @@ export const backendReducer = (state = initialState, action) => {
 
   if (type === 'backend/update') {
     // Merge config
-    const config = {
-      ...state.config,
-      ...payload.config,
-    };
+    const config = payload.config
+      ? { ...state.config, ...payload.config }
+      : state.config;
     // Merge data
-    const data = {
-      ...state.data,
-      ...payload.static_data,
-      ...payload.data,
-    };
+    const data = payload.static_data || payload.data
+      ? { ...state.data, ...payload.static_data, ...payload.data }
+      : state.data;
     // Merge shared states
-    const shared = { ...state.shared };
+    const shared = payload.shared ? { ...state.shared } : state.shared;
     if (payload.shared) {
       for (const key of Object.keys(payload.shared)) {
         const value = payload.shared[key];
@@ -98,6 +97,9 @@ export const backendReducer = (state = initialState, action) => {
 
   if (type === 'backend/setSharedState') {
     const { key, nextState } = payload;
+    if (Object.is(state.shared[key], nextState) && key in state.shared) {
+      return state;
+    }
     return {
       ...state,
       shared: {
@@ -120,6 +122,7 @@ export const backendReducer = (state = initialState, action) => {
       ...state,
       data: {},
       shared: {},
+      outgoingPayloadQueues: {},
       config: {
         ...state.config,
         title: '',
@@ -137,7 +140,7 @@ export const backendReducer = (state = initialState, action) => {
       ...state,
       outgoingPayloadQueues: {
         ...outgoingPayloadQueues,
-        [id]: chunks,
+        [id]: { chunks, nextIndex: 0 },
       },
     };
   }
@@ -145,14 +148,17 @@ export const backendReducer = (state = initialState, action) => {
   if (type === 'backend/dequeuePayloadQueue') {
     const { id } = payload;
     const { outgoingPayloadQueues } = state;
+    if (!Object.hasOwn(outgoingPayloadQueues, id)) {
+      return state;
+    }
     const { [id]: targetQueue, ...otherQueues } = outgoingPayloadQueues;
-    const [_, ...rest] = targetQueue;
+    const nextIndex = targetQueue.nextIndex + 1;
     return {
       ...state,
-      outgoingPayloadQueues: rest.length
+      outgoingPayloadQueues: nextIndex < targetQueue.chunks.length
         ? {
             ...otherQueues,
-            [id]: rest,
+            [id]: { ...targetQueue, nextIndex },
           }
         : otherQueues,
     };
@@ -161,6 +167,9 @@ export const backendReducer = (state = initialState, action) => {
   if (type === 'backend/removePayloadQueue') {
     const { id } = payload;
     const { outgoingPayloadQueues } = state;
+    if (!Object.hasOwn(outgoingPayloadQueues, id)) {
+      return state;
+    }
     const { [id]: _, ...otherQueues } = outgoingPayloadQueues;
     return {
       ...state,
@@ -174,6 +183,20 @@ export const backendReducer = (state = initialState, action) => {
 export const backendMiddleware = (store) => {
   let fancyState;
   let suspendInterval;
+  const payloadTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+  const clearPayloadTimeout = (id: string) => {
+    clearTimeout(payloadTimeouts.get(id));
+    payloadTimeouts.delete(id);
+  };
+  const resetPayloadTimeout = (id: string) => {
+    clearPayloadTimeout(id);
+    payloadTimeouts.set(
+      id,
+      setTimeout(() => {
+        store.dispatch(backendRemovePayloadQueue({ id }));
+      }, 10000),
+    );
+  };
 
   return (next) => (action) => {
     const { suspended, outgoingPayloadQueues } = selectBackend(
@@ -206,16 +229,26 @@ export const backendMiddleware = (store) => {
     }
 
     if (type === 'backend/suspendSuccess') {
+      const hadFocus = document.hasFocus();
       suspendRenderer();
       clearInterval(suspendInterval);
       suspendInterval = undefined;
+      for (const id of payloadTimeouts.keys()) {
+        clearPayloadTimeout(id);
+      }
       Byond.winset(Byond.windowId, {
         'is-visible': false,
       });
-      setTimeout(() => focusMap());
+      // Background windows may close while the player is typing in another UI.
+      if (hadFocus) {
+        setTimeout(() => focusMap());
+      }
     }
 
-    if (type === 'backend/update') {
+    if (
+      type === 'backend/update' &&
+      payload.config?.window?.fancy !== undefined
+    ) {
       const fancy = payload.config?.window?.fancy;
       // Initialize fancy state
       if (fancyState === undefined) {
@@ -240,27 +273,13 @@ export const backendMiddleware = (store) => {
       resumeRenderer();
       // Setup drag
       setupDrag();
-      // We schedule this for the next tick here because resizing and unhiding
-      // during the same tick will flash with a white background.
-      setTimeout(() => {
-        perf.mark('resume/start');
-        // Doublecheck if we are not re-suspended.
-        const { suspended } = selectBackend(store.getState());
-        if (suspended) {
-          return;
-        }
-        Byond.winset(Byond.windowId, {
-          'is-visible': true,
-        });
-        Byond.sendMessage('visible');
-        perf.mark('resume/finish');
-        if (process.env.NODE_ENV !== 'production') {
-          logger.log(
-            'visible in',
-            perf.measure('render/finish', 'resume/finish'),
-          );
-        }
-      });
+    }
+
+    if (type === 'backend/createPayloadQueue') {
+      resetPayloadTimeout(payload.id);
+    }
+    if (type === 'backend/removePayloadQueue') {
+      clearPayloadTimeout(payload.id);
     }
 
     if (type === 'oversizePayloadResponse') {
@@ -279,7 +298,13 @@ export const backendMiddleware = (store) => {
 
     if (type === 'nextPayloadChunk') {
       const { id } = payload;
-      const chunk = outgoingPayloadQueues[id][0];
+      if (!Object.hasOwn(outgoingPayloadQueues, id)) {
+        clearPayloadTimeout(id);
+        return;
+      }
+      const queue = outgoingPayloadQueues[id];
+      const chunk = queue.chunks[queue.nextIndex];
+      resetPayloadTimeout(id);
       Byond.sendMessage('payloadChunk', {
         id,
         chunk,
@@ -290,58 +315,29 @@ export const backendMiddleware = (store) => {
   };
 };
 
-const encodedLengthBinarySearch = (haystack: string[], length: number) => {
-  const haystackLength = haystack.length;
-  let high = haystackLength - 1;
-  let low = 0;
-  let mid = 0;
-  while (low < high) {
-    mid = Math.round((low + high) / 2);
-    const substringLength = encodeURIComponent(
-      haystack.slice(0, mid).join(''),
-    ).length;
-    if (substringLength === length) {
-      break;
+const splitPayload = (text: string): string[] => {
+  const chunks: string[] = [];
+  let start = 0;
+  let offset = 0;
+  let encodedLength = 0;
+  // Walk code points so a chunk never splits a surrogate pair.
+  for (const character of text) {
+    const length = encodeURIComponent(character).length;
+    if (encodedLength + length > 1024) {
+      chunks.push(text.slice(start, offset));
+      start = offset;
+      encodedLength = 0;
     }
-    if (substringLength < length) {
-      low = mid + 1;
-    } else {
-      high = mid - 1;
-    }
+    encodedLength += length;
+    offset += character.length;
   }
-  return mid;
+  if (offset > start) {
+    chunks.push(text.slice(start));
+  }
+  return chunks;
 };
 
-const chunkSplitter = {
-  [Symbol.split]: (string: string) => {
-    const charSeq = string[Symbol.iterator]().toArray();
-    const length = charSeq.length;
-    const chunks: string[] = [];
-    let startIndex = 0;
-    let endIndex = 1024;
-    while (startIndex < length) {
-      const cut = charSeq.slice(
-        startIndex,
-        endIndex < length ? endIndex : undefined,
-      );
-      const cutString = cut.join('');
-      if (encodeURIComponent(cutString).length > 1024) {
-        const splitIndex = startIndex + encodedLengthBinarySearch(cut, 1024);
-        chunks.push(
-          charSeq
-            .slice(startIndex, splitIndex < length ? splitIndex : undefined)
-            .join(''),
-        );
-        startIndex = splitIndex;
-      } else {
-        chunks.push(cutString);
-        startIndex = endIndex;
-      }
-      endIndex = startIndex + 1024;
-    }
-    return chunks;
-  },
-};
+let nextPayloadId = 0;
 
 /**
  * Sends an action to `ui_act` on `src_object` that this tgui window
@@ -374,8 +370,8 @@ export const sendAct = (action: string, payload: object = {}) => {
     '',
   ).length;
   if (urlSize > 2048) {
-    const chunks: string[] = stringifiedPayload.split(chunkSplitter);
-    const id = `${Date.now()}`;
+    const chunks = splitPayload(stringifiedPayload);
+    const id = `${Date.now()}-${nextPayloadId++}`;
     globalStore?.dispatch(backendCreatePayloadQueue({ id, chunks }));
     Byond.sendMessage('oversizedPayloadRequest', {
       type: `act/${action}`,
@@ -417,9 +413,9 @@ type BackendState<TData> = {
   };
   data: TData;
   shared: Record<string, any>;
-  outgoingPayloadQueues: Record<string, any[]>;
+  outgoingPayloadQueues: Record<string, PayloadQueue>;
   suspending: boolean;
-  suspended: boolean;
+  suspended: number | false;
 };
 
 /**
@@ -445,7 +441,7 @@ export const useBackend = <TData>() => {
 /**
  * A tuple that contains the state and a setter function for it.
  */
-type StateWithSetter<T> = [T, (nextState: T) => void];
+type StateWithSetter<T> = [T, (nextState: SetStateAction<T>) => void];
 
 /**
  * Allocates state on Redux store without sharing it with other clients.
@@ -471,12 +467,14 @@ export const useLocalState = <T>(
   return [
     sharedState,
     (nextState) => {
+      const current = globalStore.getState().backend.shared;
+      const previous = key in current ? current[key] : initialState;
       globalStore.dispatch(
         backendSetSharedState({
           key,
           nextState:
             typeof nextState === 'function'
-              ? nextState(sharedState)
+              ? (nextState as (value: T) => T)(previous)
               : nextState,
         }),
       );
@@ -508,13 +506,15 @@ export const useSharedState = <T>(
   return [
     sharedState,
     (nextState) => {
+      const current = globalStore.getState().backend.shared;
+      const previous = key in current ? current[key] : initialState;
       Byond.sendMessage({
         type: 'setSharedState',
         key,
         value:
           JSON.stringify(
             typeof nextState === 'function'
-              ? nextState(sharedState)
+              ? (nextState as (value: T) => T)(previous)
               : nextState,
           ) || '',
       });

@@ -110,6 +110,9 @@
 
 	if(!S)
 		S = sound(get_sfx(soundin))
+	else if(istype(repeat, /datum/looping_sound))
+		// Each listener retains and updates their own volume, position and mute state.
+		S = sound(S)
 
 	S.wait = 0 //No queue
 	S.channel = channel
@@ -199,6 +202,7 @@
 
 	if(repeat && istype(repeat, /datum/looping_sound))
 		var/datum/looping_sound/D = repeat
+		S.repeat = D.repeat_sound ? 1 : 0
 		var/datum/weakref/our_ref = WEAKREF(src)
 		if(our_ref in D.thingshearing) //we are already hearing this loop
 			if(client.played_loops[D])
@@ -220,7 +224,6 @@
 			client.played_loops[D]["SOUND"] = S
 			client.played_loops[D]["VOL"] = S.volume
 			client.played_loops[D]["MUTESTATUS"] = null
-			S.repeat = D.repeat_sound ? 1 : 0
 
 	SEND_SOUND(src, S)
 
@@ -280,16 +283,17 @@
 	S.status &= ~SOUND_UPDATE
 
 /mob/proc/update_sound_volume(sound/S, vol)
-	if(!client)
-		return
-	if(!S)
-		return
-	if(vol)
-		S.volume = vol
-		S.status |= SOUND_UPDATE
+	if(!client || !S || isnull(vol))
+		return FALSE
+	S.volume = CLAMP(vol, 0, 100)
+	S.status |= SOUND_UPDATE
+	if(S.volume > 0)
 		S.status &= ~SOUND_MUTE
-		SEND_SOUND(src, S)
-		S.status &= ~SOUND_UPDATE
+	else
+		S.status |= SOUND_MUTE
+	SEND_SOUND(src, S)
+	S.status &= ~SOUND_UPDATE
+	return TRUE
 
 /mob/proc/update_music_volume(chan, vol)
 	if(client)

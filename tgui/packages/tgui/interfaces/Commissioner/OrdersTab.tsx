@@ -366,11 +366,7 @@ export const OrdersTab = (props: {
   }
   return (
     <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-        gap: '6px',
-      }}
+      className="Commissioner__orders"
     >
       {data.orders.map((order) => (
         <OrderCard

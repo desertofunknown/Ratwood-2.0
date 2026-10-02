@@ -75,7 +75,7 @@ GLOBAL_LIST_INIT(LIGHTING_CORNER_DIAGONAL, list(NORTHEAST, SOUTHEAST, SOUTHWEST,
 // God that was a mess, now to do the rest of the corner code! Hooray!
 /datum/lighting_corner/proc/update_lumcount(delta_r, delta_g, delta_b)
 
-	if (!delta_r || !delta_g || !delta_b)
+	if (!delta_r && !delta_g && !delta_b)
 		return
 
 	lum_r += delta_r
@@ -88,6 +88,10 @@ GLOBAL_LIST_INIT(LIGHTING_CORNER_DIAGONAL, list(NORTHEAST, SOUTHEAST, SOUTHWEST,
 
 /datum/lighting_corner/proc/update_objects()
 	// Cache these values a head of time so 4 individual lighting objects don't all calculate them individually.
+	var/old_r = cache_r
+	var/old_g = cache_g
+	var/old_b = cache_b
+	var/old_mx = cache_mx
 	var/lum_r = src.lum_r
 	var/lum_g = src.lum_g
 	var/lum_b = src.lum_b
@@ -109,6 +113,7 @@ GLOBAL_LIST_INIT(LIGHTING_CORNER_DIAGONAL, list(NORTHEAST, SOUTHEAST, SOUTHWEST,
 	cache_b  = round(lum_b * ., LIGHTING_ROUND_VALUE)
 	#endif
 	cache_mx = round(mx, LIGHTING_ROUND_VALUE)
+	var/cache_changed = cache_r != old_r || cache_g != old_g || cache_b != old_b || cache_mx != old_mx
 
 	for (var/TT in masters)
 		var/turf/T = TT
@@ -117,7 +122,7 @@ GLOBAL_LIST_INIT(LIGHTING_CORNER_DIAGONAL, list(NORTHEAST, SOUTHEAST, SOUTHWEST,
 			if (SSlighting.initialized && T.has_dynamic_lighting())
 				new /datum/lighting_object(T)
 			continue
-		if (!lighting_object.needs_update)
+		if (cache_changed && !lighting_object.needs_update)
 			lighting_object.needs_update = TRUE
 			SSlighting.objects_queue += lighting_object
 

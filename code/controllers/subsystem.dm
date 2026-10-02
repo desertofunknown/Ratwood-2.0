@@ -57,8 +57,9 @@
 	/// Running average of the amount of tick usage (in percents of a game tick) the subsystem has spent past its allocated time without pausing
 	var/tick_overrun = 0
 
-	/// Flat list of usage and time, every odd index is a log time, every even index is a usage
+	/// Flat pairs of world.time and milliseconds spent processing.
 	var/list/rolling_usage = list()
+	var/rolling_usage_total = 0
 
 	/// Tracks the current execution state of the subsystem. Used to handle subsystems that sleep in fire so the mc doesn't run them again while they are sleeping
 	var/state = SS_IDLE
@@ -84,7 +85,7 @@
 	/// Time the subsystem entered the queue, (for timing and priority reasons)
 	var/queued_time = 0
 
-	/// Priority at the time the subsystem entered the queue. Needed to avoid changes in priority (by admins and the like) from breaking things.
+	/// Priority at enqueue time; null when not queued.
 	var/queued_priority
 
 	/// How many times we suspect a subsystem type has crashed the MC, 3 strikes and you're out!
@@ -145,6 +146,8 @@
 //	(we loop thru a linked list until we get to the end or find the right point)
 //	(this lets us sort our run order correctly without having to re-sort the entire already sorted list)
 /datum/controller/subsystem/proc/enqueue()
+	if(!isnull(queued_priority))
+		return
 	var/SS_priority = priority
 	var/SS_flags = flags
 	var/datum/controller/subsystem/queue_node
@@ -204,6 +207,12 @@
 
 
 /datum/controller/subsystem/proc/dequeue()
+	if(isnull(queued_priority))
+		return
+	if(flags & SS_BACKGROUND)
+		Master.queue_priority_count_bg -= queued_priority
+	else
+		Master.queue_priority_count -= queued_priority
 	if (queue_next)
 		queue_next.queue_prev = queue_prev
 	if (queue_prev)
@@ -212,6 +221,9 @@
 		Master.queue_tail = queue_prev
 	if (src == Master.queue_head)
 		Master.queue_head = queue_next
+	queue_next = null
+	queue_prev = null
+	queued_priority = null
 	queued_time = 0
 	if (state == SS_QUEUED)
 		state = SS_IDLE
@@ -274,14 +286,27 @@
 	if(next_fire - world.time < wait)
 		next_fire += (wait*cycles)
 
-/// Prunes out of date entries in our rolling usage list
+/// Accumulate resumed work in the same tick without adding another sample.
+/datum/controller/subsystem/proc/record_rolling_usage(usage_ms)
+	prune_rolling_usage()
+	var/sample_count = length(rolling_usage)
+	if(sample_count && rolling_usage[sample_count - 1] == world.time)
+		rolling_usage[sample_count] += usage_ms
+	else
+		rolling_usage.Add(world.time, usage_ms)
+	rolling_usage_total += usage_ms
+
+/// Prunes out of date entries in our rolling usage list.
 /datum/controller/subsystem/proc/prune_rolling_usage()
 	var/list/rolling_usage = src.rolling_usage
 	var/cut_to = 0
-	while(cut_to + 2 <= length(rolling_usage) && rolling_usage[cut_to + 1] < DS2TICKS(world.time - Master.rolling_usage_length))
+	var/cutoff = world.time - Master.rolling_usage_length
+	while(cut_to + 2 <= length(rolling_usage) && rolling_usage[cut_to + 1] < cutoff)
+		rolling_usage_total -= rolling_usage[cut_to + 2]
 		cut_to += 2
 	if(cut_to)
 		rolling_usage.Cut(1, cut_to + 1)
+		rolling_usage_total = length(rolling_usage) ? max(0, rolling_usage_total) : 0
 
 //usually called via datum/controller/subsystem/New() when replacing a subsystem (i.e. due to a recurring crash)
 //should attempt to salvage what it can from the old instance of subsystem

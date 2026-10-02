@@ -107,16 +107,16 @@ SUBSYSTEM_DEF(atoms)
 	initialized = INITIALIZATION_INNEW_REGULAR
 
 	if(late_loaders.len)
-		for(var/I in late_loaders)
-			var/atom/A = I
-			// An atom can be deleted between queueing and this pass, by a duplicate cull or by
-			// self-qdel in another atom's LateInitialize. Skip it: running LateInitialize on the
-			// corpse schedules timers on a qdeleted object.
-			if(QDELETED(A))
-				continue
-			A.LateInitialize()
-		testing("Late initialized [late_loaders.len] atoms")
-		late_loaders.Cut()
+		// Another template can initialize while this batch yields.
+		var/list/current_late_loaders = late_loaders
+		late_loaders = list()
+		var/late_loader_count = length(current_late_loaders)
+		for(var/i in 1 to late_loader_count)
+			var/atom/A = current_late_loaders[i]
+			if(!QDELETED(A))
+				A.LateInitialize()
+			CHECK_TICK
+		testing("Late initialized [late_loader_count] atoms")
 
 /datum/controller/subsystem/atoms/proc/InitAtom(atom/A, list/arguments)
 	var/the_type = A.type

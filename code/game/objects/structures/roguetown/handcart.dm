@@ -21,7 +21,8 @@
 
 /obj/structure/handcart/examine(mob/user)
 	. = ..()
-	. += span_info("Clicking and dragging an item onto the handcart from the tile you are on will put every items from the tile you can into the cart.")
+	. += span_notice("Load: [current_capacity] / [maximum_capacity] capacity. [length(stuff_shit)] things aboard.")
+	. += span_info("Left-click the cart with an empty hand to load loose items from your tile. Drag an item onto it to load that item. Right-click to unload everything.")
 	if(upgrade_level == 1)
 		. += span_notice("This cart has a <i>level 1</i> woodcutters wheelbrace installed.")
 	else if(upgrade_level == 2)
@@ -73,7 +74,7 @@
 		if(!(user.mobility_flags & MOBILITY_STAND))
 			if(!do_after(user, 20, target = src))
 				return FALSE
-			if(put_in(O))
+			if(put_in(O, feedback_user = user))
 				playsound(loc, 'sound/foley/cartadd.ogg', 100, FALSE, -1)
 			return TRUE
 		return ..()
@@ -85,7 +86,7 @@
 			var/list/targets = list(O, src)
 			if(!do_after_mob(user, targets, 20))
 				return FALSE
-		if(put_in(O))
+		if(put_in(O, feedback_user = user))
 			playsound(loc, 'sound/foley/cartadd.ogg', 100, FALSE, -1)
 		return TRUE
 
@@ -144,26 +145,34 @@
 	var/turf/T = get_turf(user)
 	if(isturf(T))
 		user.changeNext_move(CLICK_CD_MELEE)
-		var/fou
+		var/loaded = 0
+		var/left = 0
 		for(var/obj/item/I in T)
 			if(!insertion_allowed(I))
 				continue
-			put_in(I)
-			fou = TRUE
-		if(fou)
+			if(put_in(I))
+				loaded++
+			else
+				left++
+		if(loaded)
 			playsound(loc, 'sound/foley/cartadd.ogg', 100, FALSE, -1)
+		to_chat(user, span_notice("Loaded [loaded] item[loaded == 1 ? "" : "s"]; [left] left behind. Load: [current_capacity] / [maximum_capacity]."))
 
-/obj/structure/handcart/proc/put_in(atom/movable/O, mob/user)
+/obj/structure/handcart/proc/put_in(atom/movable/O, mob/user, mob/feedback_user)
+	if(QDELETED(O) || O.loc == src)
+		return FALSE
+	if(!feedback_user)
+		feedback_user = user
 	var/weight = 0
 	if(isitem(O))
 		var/obj/item/I = O
-		if((current_capacity + I.w_class) > maximum_capacity)
-			return FALSE
 		weight = I.w_class
 	if(isliving(O))
-		if((current_capacity + arbitrary_living_creature_weight) > maximum_capacity)
-			return FALSE
 		weight = arbitrary_living_creature_weight
+	if(current_capacity + weight > maximum_capacity)
+		if(feedback_user)
+			to_chat(feedback_user, span_warning("[src] cannot fit [O]. Load: [current_capacity] / [maximum_capacity]; [O] needs [weight]."))
+		return FALSE
 	if(user && !user.transferItemToLoc(O, src))
 		return FALSE
 	else

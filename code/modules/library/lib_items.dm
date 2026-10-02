@@ -60,17 +60,25 @@
 		return
 	if(!istype(user))
 		return
-	if(contents.len)
-		var/obj/item/book/choice = input(user, "Which book would you like to remove from the shelf?") as null|obj in contents.Copy()
-		if(choice)
-			if(!(user.mobility_flags & MOBILITY_USE) || user.stat || user.restrained() || !in_range(loc, user))
-				return
-			if(ishuman(user))
-				if(!user.get_active_held_item())
-					user.put_in_hands(choice)
-			else
-				choice.forceMove(drop_location())
-			update_icon()
+	var/list/choices = list()
+	// A bookcase can also contain someone hiding inside it.
+	for(var/obj/book in contents)
+		choices += book
+	if(!length(choices))
+		return
+	var/obj/choice = tgui_input_list(user, "Which book would you like to remove from the shelf?", "Bookcase", choices)
+	if(!choice || QDELETED(src) || QDELETED(user) || QDELETED(choice) || choice.loc != src)
+		return
+	if(!(user.mobility_flags & MOBILITY_USE) || user.stat || user.restrained() || !in_range(loc, user))
+		return
+	if(ishuman(user))
+		if(!user.get_active_held_item())
+			user.put_in_hands(choice)
+		else
+			to_chat(user, span_notice("I need to empty my active hand first."))
+	else
+		choice.forceMove(drop_location())
+	update_icon()
 
 /obj/structure/bookcase/deconstruct(disassembled = TRUE)
 	for(var/obj/item/book/B in contents)

@@ -1,10 +1,8 @@
 import {
   compactButtonStyle,
   denseRowStyle,
-  ellipsisCellStyle,
-  FONT_LEAD,
+  FONT_BODY,
   FONT_SMALL,
-  FONT_TITLE,
   INK,
   INK_FAINT,
   INK_SOFT,
@@ -30,31 +28,37 @@ export const PackRow = (props: Props) => {
     ? `${pack.price_base}m + ${pack.price_tariff}m tariff = ${pack.price}m`
     : `${pack.price}m`;
   return (
-    <div style={denseRowStyle}>
+    <div style={{ ...denseRowStyle, padding: '4px 0', gap: '8px' }}>
       <div
         style={{
-          ...ellipsisCellStyle,
-          fontSize: FONT_TITLE,
+          flex: 1,
+          minWidth: 0,
+          overflowWrap: 'anywhere',
+          fontSize: FONT_BODY,
           color: INK,
         }}
-        title={showCategory ? `${pack.name} - ${pack.category}` : pack.name}
+        title={starsIfIlliterate(pack.name, canRead)}
       >
         {pack.qty > 1 && (
           <span
             style={{
               color: INK_SOFT,
               marginRight: '4px',
-              fontSize: FONT_LEAD,
+              fontSize: FONT_SMALL,
             }}
           >
             x{pack.qty}
           </span>
         )}
         {starsIfIlliterate(pack.name, canRead)}
+        {showCategory && (
+          <div style={{ fontSize: FONT_SMALL, color: INK_SOFT }}>
+            {starsIfIlliterate(pack.category, canRead)}
+          </div>
+        )}
       </div>
       <PriceTag
         price={pack.price}
-        tariff={pack.price_tariff}
         cantAfford={cantAfford}
         title={priceTitle}
       />
@@ -74,7 +78,8 @@ export const PackRow = (props: Props) => {
             style={compactButtonStyle({ disabled: cantAfford })}
             disabled={cantAfford}
             onClick={() => act('buy', { ref: pack.ref })}
-            title={`Buy ${pack.name} for ${pack.price}m`}
+            aria-label={`Buy ${starsIfIlliterate(pack.name, canRead)} for ${pack.price}m`}
+            title={cantAfford ? 'Insert more mammons to buy this item' : priceTitle}
           >
             Buy
           </button>

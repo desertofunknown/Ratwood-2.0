@@ -448,21 +448,36 @@ And it also helps for the character set panel
 		clan_leader = H
 
 
-/datum/clan/proc/add_coven_to_clan(datum/coven/new_coven, give_to_all = TRUE)
-	if(!new_coven)
+/datum/clan/proc/can_select_coven(datum/coven/new_coven)
+	if(!ispath(new_coven, /datum/coven) || new_coven == /datum/coven)
 		return FALSE
 	if(new_coven in clane_covens)
-		return FALSE // Already have this coven
+		return FALSE
+	return !initial(new_coven.clan_restricted)
 
-	clane_covens += new_coven
+/datum/clan/proc/select_covens(mob/living/carbon/human/choosing_member, list/choices)
+	if(QDELETED(choosing_member) || choosing_member != clan_leader || choosing_member.clan != src || !(choosing_member in clan_members))
+		return FALSE
+	if(!length(choices) || length(choices) > covens_to_select)
+		return FALSE
 
-	if(give_to_all)
-		// Give the coven to all current clan members
+	var/list/validated_choices = list()
+	for(var/datum/coven/new_coven as anything in choices)
+		if(!can_select_coven(new_coven) || (new_coven in validated_choices))
+			return FALSE
+		validated_choices += new_coven
+
+	// Commit the complete selection before granting powers or notifying members.
+	for(var/datum/coven/new_coven as anything in validated_choices)
+		clane_covens += new_coven
+		covens_to_select--
+
+	for(var/datum/coven/new_coven as anything in validated_choices)
 		for(var/mob/living/carbon/human/member in clan_members)
 			if(member in non_vampire_members)
 				continue
 			member.give_coven(new_coven)
-			to_chat(member, "<span class='notice'>Your clan has gained access to the [new_coven.name] coven!</span>")
+			to_chat(member, "<span class='notice'>Your clan has gained access to the [initial(new_coven.name)] coven!</span>")
 
 	return TRUE
 

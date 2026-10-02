@@ -15,11 +15,11 @@
 /datum/round_event/wild_crops/start()
 	. = ..()
 	var/list/turfs = get_area_turfs(/area/rogue/outdoors/woods, subtypes = TRUE)
+	var/list/eligible_turfs = list()
+	for(var/turf/candidate as anything in turfs)
+		if(istype(candidate, /turf/open/floor/rogue/dirt) || istype(candidate, /turf/open/floor/rogue/grass) || istype(candidate, /turf/open/floor/rogue/snow))
+			eligible_turfs += candidate
+	if(!length(eligible_turfs))
+		return
 	for(var/i = 1 to rand(2, 12))
-		var/failing = TRUE
-		while(failing)
-			var/turf/turf = pick(turfs) ///sometimes the dumber ways are the more efficent
-			if(!istype(turf, /turf/open/floor/rogue/dirt) && !istype(turf, /turf/open/floor/rogue/grass) && !istype(turf, /turf/open/floor/rogue/snow))
-				continue
-			new /obj/structure/wild_plant(turf)
-			failing = FALSE
+		new /obj/structure/wild_plant(pick(eligible_turfs))

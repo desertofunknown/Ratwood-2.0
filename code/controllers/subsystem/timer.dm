@@ -109,14 +109,13 @@ SUBSYSTEM_DEF(timer)
 	if (next_clienttime_timer_index)
 		clienttime_timers.Cut(1, next_clienttime_timer_index+1)
 		next_clienttime_timer_index = 0
-	for (next_clienttime_timer_index in 1 to length(clienttime_timers))
+	while(next_clienttime_timer_index < length(clienttime_timers))
 		if (MC_TICK_CHECK)
-			next_clienttime_timer_index--
 			break
-		var/datum/timedevent/ctime_timer = clienttime_timers[next_clienttime_timer_index]
+		var/datum/timedevent/ctime_timer = clienttime_timers[next_clienttime_timer_index + 1]
 		if (ctime_timer.timeToRun > REALTIMEOFDAY)
-			next_clienttime_timer_index--
 			break
+		next_clienttime_timer_index++
 
 		var/datum/callback/callBack = ctime_timer.callBack
 		if (!callBack)
@@ -133,11 +132,14 @@ SUBSYSTEM_DEF(timer)
 		callBack.InvokeAsync()
 
 		if(ctime_timer.flags & TIMER_LOOP) // Re-insert valid looping client timers into the client timer list.
+			// Remove the old entry before changing its key in the sorted queue.
+			clienttime_timers.Cut(1, next_clienttime_timer_index + 1)
+			next_clienttime_timer_index = 0
 			if (QDELETED(ctime_timer)) // Don't re-insert timers deleted inside their callbacks.
 				continue
 			ctime_timer.spent = 0
 			ctime_timer.timeToRun = REALTIMEOFDAY + ctime_timer.wait
-			BINARY_INSERT(ctime_timer, clienttime_timers, /datum/timedevent, ctime_timer, timeToRun, COMPARE_KEY)
+			ctime_timer.bucketJoin()
 		else
 			qdel(ctime_timer)
 
@@ -145,6 +147,10 @@ SUBSYSTEM_DEF(timer)
 	if (next_clienttime_timer_index)
 		clienttime_timers.Cut(1, next_clienttime_timer_index+1)
 		next_clienttime_timer_index = 0
+
+	// Client callbacks share the budget with bucket callbacks and maintenance.
+	if (MC_TICK_CHECK)
+		return
 
 	// Check for when we need to loop the buckets, this occurs when
 	// the head_offset is approaching BUCKET_LEN ticks in the past
@@ -181,45 +187,48 @@ SUBSYSTEM_DEF(timer)
 				last_invoke_tick = world.time
 
 			if (timer.flags & TIMER_LOOP) // Prepare valid looping timers to re-enter the queue
-				if(QDELETED(timer)) // If a loop is deleted in its callback, we need to avoid re-inserting it.
-					continue
-				timer.spent = 0
-				timer.timeToRun = world.time + timer.wait
-				timer.bucketJoin()
+				if(!QDELETED(timer)) // If a loop is deleted in its callback, we need to avoid re-inserting it.
+					timer.spent = 0
+					timer.timeToRun = world.time + timer.wait
+					timer.bucketJoin()
 			else
 				qdel(timer)
 
 			if (MC_TICK_CHECK)
-				break
+				return
 
 		if (!bucket_list[practical_offset])
 			// Empty the bucket, check if anything in the secondary queue should be shifted to this bucket
 			bucket_list[practical_offset] = null // Just in case
 			practical_offset++
-			var/i = 0
-			for (i in 1 to length(second_queue))
-				var/datum/timedevent/queue_timer = second_queue[i]
-				if (queue_timer.timeToRun >= TIMER_MAX(src))
-					i--
+			var/promoted_count = 0
+			var/max_time = TIMER_MAX(src)
+			var/min_time = head_offset + TICKS2DS(practical_offset - 1)
+			while(promoted_count < length(second_queue))
+				var/datum/timedevent/queue_timer = second_queue[promoted_count + 1]
+				if (queue_timer.timeToRun >= max_time)
 					break
 
 				// Check for timers that are scheduled to run in the past
 				if (queue_timer.timeToRun < head_offset)
 					bucket_resolution = null // force bucket recreation
-					stack_trace("[i] Invalid timer state: Timer in long run queue with a time to run less then head_offset. \
+					stack_trace("[promoted_count + 1] Invalid timer state: Timer in long run queue with a time to run less then head_offset. \
 						[get_timer_debug_string(queue_timer)] world.time: [world.time], head_offset: [head_offset], practical_offset: [practical_offset]")
 					break
 
 				// Check for timers that are not capable of being scheduled to run without rebuilding buckets
-				if (queue_timer.timeToRun < head_offset + TICKS2DS(practical_offset - 1))
+				if (queue_timer.timeToRun < min_time)
 					bucket_resolution = null // force bucket recreation
-					stack_trace("[i] Invalid timer state: Timer in long run queue that would require a backtrack to transfer to \
+					stack_trace("[promoted_count + 1] Invalid timer state: Timer in long run queue that would require a backtrack to transfer to \
 						short run queue. [get_timer_debug_string(queue_timer)] world.time: [world.time], head_offset: [head_offset], practical_offset: [practical_offset]")
 					break
 
 				queue_timer.bucketJoin()
-			if (i)
-				second_queue.Cut(1, i+1)
+				promoted_count++
+			if (promoted_count)
+				second_queue.Cut(1, promoted_count + 1)
+			if(isnull(bucket_resolution))
+				return
 		if (MC_TICK_CHECK)
 			break
 
@@ -534,6 +543,13 @@ SUBSYSTEM_DEF(timer)
 	else if (timeToRun >= TIMER_MAX(timer_subsystem))
 		L = timer_subsystem.second_queue
 	if(L)
+		if(!length(L))
+			L += src
+			return
+		var/datum/timedevent/last_timer = L[length(L)]
+		if(last_timer.timeToRun <= timeToRun)
+			L += src
+			return
 		BINARY_INSERT(src, L, /datum/timedevent, src, timeToRun, COMPARE_KEY)
 		return
 

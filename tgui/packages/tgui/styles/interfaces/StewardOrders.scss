@@ -1,0 +1,239 @@
+:root .StewardOrders,
+:root .StewardPetition {
+  --writ-ink: var(--p-ink, #281a07);
+  --writ-muted: var(--p-ink-soft, #4a3416);
+  --writ-rule: var(--p-bg-shadow, #8a7444);
+  --writ-accent: var(--p-seal-amber, #7a5616);
+
+  min-width: 0;
+  color: var(--writ-ink);
+  font:
+    13px/1.45 'Lora',
+    Georgia,
+    serif;
+
+  h2 {
+    margin: 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--writ-rule);
+    font:
+      18px/1.3 'Pterra',
+      Georgia,
+      serif;
+  }
+  h3 {
+    margin: 0;
+    font:
+      16px/1.3 'Pterra',
+      Georgia,
+      serif;
+  }
+  p {
+    margin: 4px 0;
+  }
+  button {
+    min-height: 27px;
+    max-width: 100%;
+    padding: 3px 7px;
+    border: 1px solid var(--writ-rule);
+    border-radius: 0;
+    background: var(--p-button-bg, rgba(244, 231, 198, 0.35));
+    color: inherit;
+    font: inherit;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  button:focus-visible {
+    outline: 2px solid var(--writ-accent);
+    outline-offset: 2px;
+  }
+}
+
+:root .StewardOrders,
+:root .StewardPetition {
+  &__muted {
+    color: var(--writ-muted);
+  }
+  &__accent {
+    color: var(--writ-accent);
+  }
+  &__good {
+    color: var(--p-seal-green, #3b6a35);
+  }
+  &__bad {
+    color: var(--p-seal-red, #8b2020);
+  }
+  &__cool {
+    color: var(--p-seal-blue, #2e4a78);
+  }
+}
+
+:root .StewardOrders {
+  button.StewardOrders__accent {
+    color: var(--writ-accent);
+  }
+  button.StewardOrders__good {
+    color: var(--p-seal-green, #3b6a35);
+  }
+  button.StewardOrders__bad {
+    color: var(--p-seal-red, #8b2020);
+  }
+  button.StewardOrders__cool {
+    color: var(--p-seal-blue, #2e4a78);
+  }
+  p[title] {
+    cursor: help;
+  }
+  &__entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px 16px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--writ-rule);
+  }
+  &__details {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  &__annotations,
+  &__pairHeading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 3px 12px;
+  }
+  &__annotations {
+    color: var(--writ-muted);
+  }
+  &__settlement {
+    flex: 0 0 225px;
+    text-align: right;
+    button {
+      margin-top: 5px;
+    }
+  }
+  &__pair {
+    border-left: 2px solid var(--writ-rule);
+    padding-left: 9px;
+  }
+  &__pairHeading {
+    padding: 6px 0 4px;
+    color: var(--writ-accent);
+    border-bottom: 1px solid var(--writ-rule);
+    span,
+    strong {
+      font:
+        13px/1.45 'Lora',
+        Georgia,
+        serif;
+    }
+    strong {
+      font-weight: bold;
+    }
+  }
+}
+
+:root .StewardPetition {
+  &__cost {
+    margin-left: 8px;
+    color: var(--writ-accent);
+    font:
+      13px/1.45 'Lora',
+      Georgia,
+      serif;
+  }
+  &__status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 24px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--writ-rule);
+  }
+  &__body {
+    display: flex;
+    gap: 14px;
+    padding: 8px 0;
+  }
+  &__categories {
+    flex: 0 0 185px;
+    min-width: 0;
+    button {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      padding: 5px 0;
+      border-width: 0 0 1px;
+      background: transparent;
+      text-align: left;
+    }
+    button[aria-pressed='true'] {
+      font-weight: bold;
+      background: var(--p-tab-active-bg, rgba(120, 90, 40, 0.1));
+    }
+  }
+  &__destinations {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  &__register {
+    width: 100%;
+    border-collapse: collapse;
+    color: inherit;
+    font: inherit;
+    th,
+    td {
+      padding: 5px 6px;
+      border-bottom: 1px solid var(--writ-rule);
+      text-align: left;
+      vertical-align: top;
+    }
+    th:first-child {
+      padding-left: 0;
+    }
+    thead th {
+      color: var(--writ-muted);
+      font-weight: normal;
+    }
+    th[scope='row'] {
+      width: 38%;
+      overflow-wrap: anywhere;
+    }
+    th:last-child,
+    td:last-child {
+      width: 80px;
+      text-align: right;
+      white-space: nowrap;
+      button {
+        white-space: nowrap;
+      }
+    }
+  }
+  &__notes {
+    padding-top: 6px;
+    border-top: 1px solid var(--writ-rule);
+    color: var(--writ-muted);
+  }
+}
+
+@media (max-width: 620px) {
+  :root .StewardOrders__entry {
+    flex-direction: column;
+  }
+  :root .StewardOrders__settlement {
+    flex-basis: auto;
+    text-align: left;
+  }
+  :root .StewardPetition__body {
+    flex-direction: column;
+  }
+  :root .StewardPetition__categories {
+    flex-basis: auto;
+  }
+}

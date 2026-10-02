@@ -44,6 +44,9 @@
 	beltr = /obj/item/storage/hip/orestore/bronze
 	backl = /obj/item/storage/backpack/rogue/backpack
 	backpack_contents = list(
+						/obj/item/field_map = 1,
+						/obj/item/prospecting_kit = 1,
+						/obj/item/natural/feather = 1,
 						/obj/item/flint = 1,
 						/obj/item/flashlight/flare/torch = 1,
 						/obj/item/rogueweapon/chisel = 1,

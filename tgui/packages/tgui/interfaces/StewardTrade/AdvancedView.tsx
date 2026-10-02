@@ -1,85 +1,45 @@
 import { useBackend } from '../../backend';
-import {
-  cardStyle,
-  FONT_BODY,
-  INK,
-  INK_SOFT,
-  inkButtonStyle,
-  SEAL_AMBER,
-  SEAL_GREEN,
-  SEAL_RED,
-  SERIF,
-  sectionHeaderStyle,
-} from '../common/parchment';
 import type { Data } from './types';
 
-export const AdvancedView = (props: { data: Data }) => {
+export const AdvancedView = ({ data }: { data: Data }) => {
   const { act } = useBackend<Data>();
-  const { data } = props;
-  const aldermanActing = !!data.is_alderman_acting;
-  const blockTitle =
-    "Reserved to the Steward's office.";
-  const barred = data.autoexport_barred;
-  const shortageOpen = data.shortage_goods_open;
+  const alderman = !!data.is_alderman_acting;
   return (
-    <div
-      style={{
-        ...cardStyle,
-        fontFamily: SERIF,
-        fontSize: FONT_BODY,
-        color: INK,
-      }}
-    >
-      <div style={sectionHeaderStyle}>Autoexport</div>
-      <div style={{ color: INK_SOFT, marginBottom: '8px' }}>
-        Every dae, goods above the export threshold is shipped away daily. If you bar them, they will be hoarded. And deposit into a full stock while auto-export is disabled will hoard the good. This can be useful to save the arbitrage profit for the Crown and prevent overbuying. Exporting a good under
-        shortage counts toward ending that shortage early.
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          flexWrap: 'wrap',
-          marginBottom: '8px',
-        }}
-      >
+    <section className="StewardDesk__advanced">
+      <h2>Autoexport</h2>
+      <p>
+        Every day, stock above the export threshold is shipped away. Barred
+        goods are hoarded, including deposits into full stockpiles. This can
+        preserve arbitrage profit for the Crown and prevent overbuying.
+        Exporting goods under shortage counts toward ending that shortage early.
+      </p>
+      <div className="StewardDesk__toolbar">
         <button
           type="button"
-          style={inkButtonStyle({
-            color: SEAL_RED,
-            disabled: aldermanActing || shortageOpen <= 0,
-          })}
-          disabled={aldermanActing || shortageOpen <= 0}
-          onClick={() => act('bar_autoexport_shortages')}
+          disabled={alderman || data.shortage_goods_open <= 0}
           title={
-            aldermanActing
-              ? blockTitle
+            alderman
+              ? "Reserved to the Steward's office."
               : 'Bar autoexport on every good currently under a shortage, so the sweep cannot sell off the scarcity or shorten the shortage.'
           }
+          onClick={() => act('bar_autoexport_shortages')}
         >
-          Bar Autoexport On Shortages ({shortageOpen})
+          Bar Autoexport On Shortages ({data.shortage_goods_open})
         </button>
         <button
           type="button"
-          style={inkButtonStyle({
-            color: SEAL_GREEN,
-            disabled: aldermanActing || barred <= 0,
-          })}
-          disabled={aldermanActing || barred <= 0}
-          onClick={() => act('allow_autoexport_all')}
+          disabled={alderman || data.autoexport_barred <= 0}
           title={
-            aldermanActing
-              ? blockTitle
+            alderman
+              ? "Reserved to the Steward's office."
               : 'Clear every autoexport bar across the whole warehouse.'
           }
+          onClick={() => act('allow_autoexport_all')}
         >
           Allow Autoexport On All
         </button>
-        <span style={{ color: barred > 0 ? SEAL_AMBER : INK_SOFT }}>
-          {barred} barred
-        </span>
+        <span>{data.autoexport_barred} barred</span>
       </div>
-    </div>
+    </section>
   );
 };

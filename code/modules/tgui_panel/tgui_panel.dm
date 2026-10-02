@@ -12,6 +12,7 @@
 	var/datum/tgui_window/window
 	var/broken = FALSE
 	var/initialized_at
+	var/initialization_id = 0
 	/// Each client notifies on protected playback, so this prevents spamming admins.
 	var/static/admins_warned = FALSE
 
@@ -40,8 +41,11 @@
  */
 /datum/tgui_panel/proc/initialize(force = FALSE)
 	set waitfor = FALSE
+	var/current_initialization = ++initialization_id
 	// Minimal sleep to defer initialization to after client constructor
 	sleep(1 TICKS)
+	if(!client || client.tgui_panel != src || current_initialization != initialization_id)
+		return
 	initialized_at = world.time
 	// Perform a clean initialization
 	window.initialize(
@@ -49,13 +53,15 @@
 		assets = list(
 			get_asset_datum(/datum/asset/simple/tgui_panel),
 		))
+	if(!client || client.tgui_panel != src || current_initialization != initialization_id)
+		return
 	window.send_asset(get_asset_datum(/datum/asset/simple/namespaced/fontawesome))
 	window.send_asset(get_asset_datum(/datum/asset/simple/namespaced/tgfont))
 	window.send_asset(get_asset_datum(/datum/asset/simple/roguefonts))
 	// window.send_asset(get_asset_datum(/datum/asset/spritesheet_batched/chat))
 	// Other setup
 	request_telemetry()
-	addtimer(CALLBACK(src, PROC_REF(on_initialize_timed_out)), 5 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(on_initialize_timed_out), current_initialization), 5 SECONDS)
 	window.send_message("testTelemetryCommand")
 
 /**
@@ -63,7 +69,9 @@
  *
  * Called when initialization has timed out.
  */
-/datum/tgui_panel/proc/on_initialize_timed_out()
+/datum/tgui_panel/proc/on_initialize_timed_out(current_initialization)
+	if(!client || client.tgui_panel != src || current_initialization != initialization_id || is_ready())
+		return
 	// Currently does nothing but sending a message to old chat.
 	SEND_TEXT(client, span_userdanger("Failed to load fancy chat, click <a href='byond://?src=[REF(src)];reload_tguipanel=1'>HERE</a> to attempt to reload it."))
 

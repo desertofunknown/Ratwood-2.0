@@ -18,7 +18,8 @@ mkdir -p \
     $1/strings \
     $1/modular/code/modules/slave_collar/strings \
     $1/modular/code/game/objects/items/lewd/chastity/strings \
-    $1/tgui/public 
+    $1/tgui/public \
+    "$1/tools/memory_stats"
 
 if [ -d ".git" ]; then
   mkdir -p $1/.git/logs
@@ -36,6 +37,7 @@ cp -r strings/* $1/strings/
 cp -r modular/code/modules/slave_collar/strings/* $1/modular/code/modules/slave_collar/strings/
 cp -r modular/code/game/objects/items/lewd/chastity/strings/* $1/modular/code/game/objects/items/lewd/chastity/strings/
 cp -r tgui/public/* $1/tgui/public/
+cp tools/memory_stats/mem_writer.ps1 tools/memory_stats/mem_writer.vbs "$1/tools/memory_stats/"
 
 #remove .dm files from _maps
 

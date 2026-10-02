@@ -84,6 +84,8 @@ SUBSYSTEM_DEF(soundloopers)
 	mob.playsound_local(parent_turf, PS.cursound, PS.volume, PS.vary, PS.frequency, PS.falloff, PS.channel, FALSE, our_sound, repeat = PS)
 
 /client/proc/update_sounds()
+	if(!mob)
+		return
 	//Now we check how far away etc we are
 	for(var/datum/looping_sound/loop in played_loops)
 		if (!loop)
@@ -113,19 +115,6 @@ SUBSYSTEM_DEF(soundloopers)
 			played_loops -= loop
 			continue
 
-		if(mob && loop_parent == mob) //the sound's coming from inside the house!
-			// Skip distance-based attenuation for your own instrument, but still
-			// clear MUTESTATUS if it got stuck TRUE (e.g. playsound() missed the
-			// musician during a z-level transition and muted them in play()).
-			var/list/self_loop = played_loops[loop]
-			if(self_loop && self_loop["MUTESTATUS"])
-				self_loop["MUTESTATUS"] = FALSE
-				self_loop["VOL"] = loop.volume
-				var/sound/self_sound = self_loop["SOUND"]
-				if(self_sound)
-					mob.unmute_sound(self_sound)
-			continue
-
 		var/max_distance = world.view + loop.extra_range
 		var/turf/source_turf = get_turf(loop_parent)
 		var/distance_between = get_dist(mob, loop_parent)
@@ -136,7 +125,7 @@ SUBSYSTEM_DEF(soundloopers)
 			continue
 
 		var/list/found_loop = played_loops[loop]
-		var/sound/found_sound = found_loop["SOUND"]
+		var/sound/found_sound = found_loop?["SOUND"]
 
 		if(!found_loop || !istype(found_sound)) //somethin fucky goin on. lets ignore it
 			played_loops -= loop
@@ -184,29 +173,20 @@ SUBSYSTEM_DEF(soundloopers)
 
 			new_volume = new_volume * (prefs.mastervol * 0.01) //Modify it at the end by the player's volume setting
 
-			// Always clear MUTESTATUS when in range, regardless of whether volume changed.
-			// Previously this was inside if(old_volume != new_volume), meaning a sound that
-			// was muted and came back in range at an equal volume would stay permanently muted
-			// (e.g. after a z-level transition where volume calculations produce the same value).
-			if(loop.persistent_loop && found_loop["MUTESTATUS"] == TRUE)
-				found_loop["MUTESTATUS"] = FALSE
-				mob.unmute_sound(found_sound)
-
-			if(old_volume != new_volume)
-				var/turf/T = get_turf(mob)
-				var/dx = source_turf.x - T.x
-				if(dx <= 1 && dx >= -1)
-					found_sound.x = 0
-				else
-					found_sound.x = dx
-				var/dz = source_turf.y - T.y
-				if(dz <= 1 && dz >= -1)
-					found_sound.z = 0
-				else
-					found_sound.z = dz
-//				var/dy = source_turf.z - T.z
-//				found_sound.y = dy
-
-				found_loop["VOL"] = new_volume
-				mob.update_sound_volume(played_loops[loop]["SOUND"], new_volume)
-
+			var/turf/listener_turf = get_turf(mob)
+			if(!listener_turf)
+				continue
+			var/dx = source_turf.x - listener_turf.x
+			var/dz = source_turf.y - listener_turf.y
+			var/new_x = abs(dx) <= 1 ? 0 : dx
+			var/new_z = abs(dz) <= 1 ? 0 : dz
+			var/new_y = source_turf.z - listener_turf.z
+			var/position_changed = found_sound.x != new_x || found_sound.y != new_y || found_sound.z != new_z
+			var/should_mute = new_volume <= 0
+			if(old_volume != new_volume || position_changed || !!found_loop["MUTESTATUS"] != should_mute)
+				found_sound.x = new_x
+				found_sound.y = new_y
+				found_sound.z = new_z
+				if(mob.update_sound_volume(found_sound, new_volume))
+					found_loop["VOL"] = new_volume
+					found_loop["MUTESTATUS"] = should_mute

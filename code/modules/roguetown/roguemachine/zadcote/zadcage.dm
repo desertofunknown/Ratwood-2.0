@@ -151,12 +151,14 @@
 	var/list/items = list()
 	if(sender && payload_ref)
 		var/obj/item/active = sender.get_active_held_item()
-		if(active && active != src && !istype(active, /obj/item/zadcage) && "\ref[active]" == payload_ref)
-			var/max_weight = zad_max_weight_for_tier(current_occupancy.zads_capacity)
-			if(active.w_class > max_weight)
-				to_chat(sender, span_warning("[active] is too heavy for the [current_occupancy.zads_capacity] zad return tier."))
-				return FALSE
-			items += active
+		if(!active || active == src || istype(active, /obj/item/zadcage) || "\ref[active]" != payload_ref)
+			to_chat(sender, span_warning("Hold the selected return parcel in your active hand."))
+			return FALSE
+		var/max_weight = zad_max_weight_for_tier(current_occupancy.zads_capacity)
+		if(active.w_class > max_weight)
+			to_chat(sender, span_warning("[active] is too heavy for the [current_occupancy.zads_capacity] zad return tier."))
+			return FALSE
+		items += active
 	var/datum/zad_flight/return_flight = new(cote, link, current_occupancy.zads_capacity, current_occupancy.reply_message, items, 0)
 	return_flight.direction = "return"
 	return_flight.launch_time = world.time
@@ -245,12 +247,13 @@
 	data["allow_summons"] = link ? link.allow_summons : FALSE
 	data["pending_flight"] = (link && link.resolve_flight()) ? TRUE : FALSE
 	data["occupied"] = current_occupancy ? TRUE : FALSE
+	data["flight_ref"] = current_occupancy ? REF(current_occupancy) : ""
 	if(current_occupancy)
 		data["time_remaining"] = round(current_occupancy.time_remaining() / 10)
 		data["warning_tail"] = current_occupancy.in_warning_tail()
 		data["capacity"] = current_occupancy.zads_capacity
 		data["has_bombs"] = current_occupancy.has_bombs
-		data["reply_message"] = current_occupancy.reply_message
+		data["reply_message"] = html_decode(current_occupancy.reply_message)
 	var/list/payload = list()
 	if(user)
 		var/obj/item/active = user.get_active_held_item()
@@ -272,17 +275,24 @@
 			open_economy_guidebook(usr, "Common", /datum/book_entry/treasury_general/zadcote)
 			return TRUE
 		if("set_reply_message")
-			if(!current_occupancy)
+			if(!current_occupancy || params["flight_ref"] != REF(current_occupancy) || current_occupancy.time_remaining() <= 0)
 				return TRUE
 			var/msg = params["message"] || ""
 			current_occupancy.reply_message = copytext(sanitize(msg), 1, 501)
 			return TRUE
 		if("send_reply")
-			if(!current_occupancy)
+			var/datum/zad_occupancy/occupancy = current_occupancy
+			if(!occupancy || params["flight_ref"] != REF(occupancy) || occupancy.time_remaining() <= 0)
 				return TRUE
+			var/mob/sender = usr
 			var/payload_ref = params["payload_ref"]
-			if(do_after(usr, ZAD_MANUAL_SEND_DOAFTER, target = src))
-				dispatch_return(usr, payload_ref)
+			var/message = copytext(sanitize(params["message"] || ""), 1, 501)
+			if(!do_after(sender, ZAD_MANUAL_SEND_DOAFTER, target = src))
+				return TRUE
+			if(QDELETED(src) || QDELETED(sender) || current_occupancy != occupancy || occupancy.time_remaining() <= 0 || GLOB.hands_state.can_use_topic(src, sender) != UI_INTERACTIVE)
+				return TRUE
+			occupancy.reply_message = message
+			dispatch_return(sender, payload_ref)
 			return TRUE
 		if("retrieve")
 			retrieve_payload(usr)
@@ -292,7 +302,11 @@
 			var/obj/item/roguemachine/zadcote/cote = resolve_cote()
 			if(!link || !cote)
 				return TRUE
+			var/mob/requester = usr
 			var/zads = text2num(params["zads"]) || ZAD_CAPACITY_TIER_1
-			if(do_after(usr, ZAD_MANUAL_SEND_DOAFTER, target = src))
-				cote.request_summon(link, usr, zads)
+			if(!do_after(requester, ZAD_MANUAL_SEND_DOAFTER, target = src))
+				return TRUE
+			if(QDELETED(src) || QDELETED(requester) || QDELETED(cote) || resolve_cote() != cote || resolve_link() != link || link.resolve_cage() != src || GLOB.hands_state.can_use_topic(src, requester) != UI_INTERACTIVE)
+				return TRUE
+			cote.request_summon(link, requester, zads)
 			return TRUE

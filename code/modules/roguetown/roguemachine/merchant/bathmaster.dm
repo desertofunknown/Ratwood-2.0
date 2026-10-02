@@ -17,6 +17,8 @@
 	var/upgrade_flags
 	var/current_cat = ""
 	var/search_query = ""
+	// Acknowledge filter actions even when the query remains empty.
+	var/search_revision = 0
 	var/static/search_result_cap = 30
 	lockid = "nightman"
 	/// Motto displayed at the top of the TGUI interface.
@@ -146,6 +148,7 @@
 	data["categories"] = all_cats
 	data["current_category"] = current_cat
 	data["search"] = search_query
+	data["search_revision"] = search_revision
 	data["search_mode"] = (search_query != "") ? TRUE : FALSE
 	data["result_cap"] = search_result_cap
 	var/tariff_active = !(upgrade_flags & UPGRADE_NOTAX)
@@ -201,6 +204,7 @@
 	var/mob/living/carbon/human/H = usr
 	switch(action)
 		if("changecat")
+			search_revision++
 			var/cat = "[params["category"]]"
 			if(cat == "")
 				current_cat = ""
@@ -209,9 +213,11 @@
 				search_query = ""
 			return TRUE
 		if("set_search")
+			search_revision++
 			search_query = "[params["search"]]"
 			return TRUE
 		if("clear_search")
+			search_revision++
 			search_query = ""
 			return TRUE
 		if("change")

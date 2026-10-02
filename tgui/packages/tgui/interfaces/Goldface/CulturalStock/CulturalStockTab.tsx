@@ -1,24 +1,5 @@
-import { useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 
-import {
-  cardStyle,
-  compactButtonStyle,
-  denseRowStyle,
-  ellipsisCellStyle,
-  FONT_BODY,
-  FONT_LEAD,
-  FONT_SMALL,
-  FONT_TITLE,
-  INK,
-  INK_SOFT,
-  pageStyle,
-  PriceTag,
-  SEAL_GREEN,
-  SEAL_RED,
-  sectionHeaderStyle,
-  SERIF,
-  titleStyle,
-} from '../../common/parchment';
 import type {
   ActFn,
   CatalogData,
@@ -36,219 +17,131 @@ type Props = {
   act: ActFn;
 };
 
-const StockCard = (props: {
-  entry: CulturalStockEntry;
-  budget: number;
-  act: ActFn;
+const ManifestSection = (props: {
+  name: string;
+  summary: string;
+  defaultExpanded: boolean;
+  children: ReactNode;
 }) => {
-  const { entry, budget, act } = props;
-  const cantAfford = budget < entry.price;
-  const hasTariff = entry.price_tariff > 0;
-  const hasKin =
-    !!entry.is_kin &&
-    entry.price_base_pre_kin !== undefined &&
-    entry.price_base_pre_kin > entry.price_base;
-  const kinSaving = hasKin
-    ? (entry.price_base_pre_kin as number) - entry.price_base
-    : 0;
-  const preKinPrice = hasKin
-    ? (entry.price_base_pre_kin as number) + entry.price_tariff
-    : 0;
-  const priceTitle = hasKin
-    ? `${entry.price_base}m + ${entry.price_tariff}m Crown duty = ${entry.price}m (Kinship -${kinSaving}m off base cost ${entry.base_cost}m)`
-    : hasTariff
-      ? `${entry.price_base}m + ${entry.price_tariff}m Crown duty = ${entry.price}m (was ${entry.base_cost}m)`
-      : `${entry.price}m (was ${entry.base_cost}m)`;
+  const { name, summary, defaultExpanded, children } = props;
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const contentId = useId();
   return (
-    <div style={denseRowStyle}>
-      <div
-        style={{
-          ...ellipsisCellStyle,
-          color: INK,
-          fontSize: FONT_TITLE,
-        }}
-        title={`${entry.name} - ${entry.qty} in stock`}
-      >
-        {entry.pack_qty > 1 && (
-          <span
-            style={{
-              color: INK_SOFT,
-              marginRight: '4px',
-              fontSize: FONT_LEAD,
-            }}
-          >
-            x{entry.pack_qty}
-          </span>
-        )}
-        {entry.name}
-        <span
-          style={{
-            color: INK_SOFT,
-            marginLeft: '6px',
-            fontSize: FONT_SMALL,
-          }}
-        >
-          ({entry.qty})
-        </span>
-      </div>
-      <PriceTag
-        price={entry.price}
-        tariff={entry.price_tariff}
-        cantAfford={cantAfford}
-        title={priceTitle}
-        strikethrough={hasKin ? preKinPrice : undefined}
-      />
-      <div style={{ flexShrink: 0 }}>
+    <section className="GoldfaceCultural__section">
+      <h3>
         <button
           type="button"
-          style={compactButtonStyle({ disabled: cantAfford })}
-          disabled={cantAfford}
-          onClick={() =>
-            act('cultural_buy', {
-              pack: entry.pack,
-              ship_id: entry.ship_id,
-            })
-          }
-          title={`Buy ${entry.name} for ${entry.price}m`}
+          className="GoldfaceCultural__disclosure"
+          aria-expanded={expanded}
+          aria-controls={contentId}
+          onClick={() => setExpanded((value) => !value)}
+          onKeyDown={(event) => {
+            if (event.repeat && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault();
+            }
+          }}
         >
-          Buy
+          <span aria-hidden="true">{expanded ? '▾' : '▸'}</span>
+          <span>{name}</span>
+          <small>{summary}</small>
         </button>
+      </h3>
+      <div id={contentId} hidden={!expanded}>
+        {expanded && children}
       </div>
-    </div>
+    </section>
   );
 };
 
-const ShipSection = (props: {
-  shipId: string;
-  shipName: string;
-  entries: CulturalStockEntry[];
+const StockRow = (props: {
+  entry: CulturalStockEntry | CatalogEntry;
   budget: number;
-  act: ActFn;
-  defaultExpanded: boolean;
+  onBuy: () => void;
 }) => {
-  const { shipName, entries, budget, act, defaultExpanded } = props;
-  const [expanded, setExpanded] = useState(defaultExpanded);
-  return (
-    <div style={{ marginBottom: '8px' }}>
-      <div
-        style={{
-          ...sectionHeaderStyle,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          marginTop: '4px',
-        }}
-        onClick={() => setExpanded((e) => !e)}
-      >
-        <span style={{ color: INK_SOFT, fontSize: FONT_BODY }}>
-          {expanded ? '▾' : '▸'}
-        </span>
-        <span>{shipName}</span>
-        <span
-          style={{
-            color: INK_SOFT,
-            fontSize: FONT_BODY,
-            textTransform: 'none',
-            fontVariant: 'normal',
-            fontWeight: 'normal',
-            marginLeft: '6px',
-          }}
-        >
-          ({entries.length} wares)
-        </span>
-      </div>
-      {expanded && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: '0 12px',
-          }}
-        >
-          {entries.map((entry) => (
-            <StockCard
-              key={entry.pack}
-              entry={entry}
-              budget={budget}
-              act={act}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const CatalogStockCard = (props: {
-  catalogId: string;
-  entry: CatalogEntry;
-  budget: number;
-  act: ActFn;
-}) => {
-  const { catalogId, entry, budget, act } = props;
+  const { entry, budget, onBuy } = props;
   const soldOut = entry.qty <= 0;
   const cantAfford = budget < entry.price;
-  const disabled = soldOut || cantAfford;
-  const hasTariff = entry.price_tariff > 0;
-  const hasKin = entry.price_base_pre_kin > entry.price_base;
-  const kinSaving = hasKin ? entry.price_base_pre_kin - entry.price_base : 0;
-  const preKinPrice = hasKin ? entry.price_base_pre_kin + entry.price_tariff : 0;
-  const priceTitle = hasKin
-    ? `${entry.price_base}m + ${entry.price_tariff}m Crown duty = ${entry.price}m (Kinship -${kinSaving}m)`
-    : hasTariff
-      ? `${entry.price_base}m + ${entry.price_tariff}m Crown duty = ${entry.price}m`
-      : `${entry.price}m`;
+  const isCatalog = 'stock_max' in entry;
+  const kinSaving =
+    (isCatalog || entry.is_kin) &&
+    entry.price_base_pre_kin !== undefined &&
+    entry.price_base_pre_kin > entry.price_base
+      ? entry.price_base_pre_kin - entry.price_base
+      : 0;
   return (
-    <div style={denseRowStyle}>
-      <div
-        style={{ ...ellipsisCellStyle, color: INK, fontSize: FONT_TITLE }}
-        title={entry.name}
-      >
-        {entry.pack_qty > 1 && (
-          <span
-            style={{ color: INK_SOFT, marginRight: '4px', fontSize: FONT_LEAD }}
-          >
-            x{entry.pack_qty}
-          </span>
-        )}
+    <tr>
+      <th scope="row" className="GoldfaceCultural__name">
         {entry.name}
-        <span
-          style={{
-            color: soldOut ? SEAL_RED : INK_SOFT,
-            marginLeft: '6px',
-            fontSize: FONT_SMALL,
-          }}
-          title={`${entry.qty} of ${entry.stock_max} in stock - restocks to full each day`}
+        {kinSaving > 0 && (
+          <small className="GoldfaceCultural__kin">
+            Kinship −{kinSaving}m off base
+          </small>
+        )}
+      </th>
+      <td className="GoldfaceCultural__quantity">×{entry.pack_qty}</td>
+      <td
+        className={`GoldfaceCultural__quantity${soldOut ? ' GoldfaceCultural__unavailable' : ''}`}
+        title={
+          isCatalog
+            ? `${entry.qty} of ${entry.stock_max} in stock; restocks to full each day`
+            : `${entry.qty} in stock`
+        }
+      >
+        {entry.qty}
+        {isCatalog && ` / ${entry.stock_max}`}
+      </td>
+      <td
+        className="GoldfaceCultural__price"
+        title={!isCatalog ? `Regular base ${entry.base_cost}m` : undefined}
+      >
+        <strong
+          className={cantAfford ? 'GoldfaceCultural__unavailable' : undefined}
         >
-          ({entry.qty}/{entry.stock_max})
-        </span>
-      </div>
-      <PriceTag
-        price={entry.price}
-        tariff={entry.price_tariff}
-        cantAfford={cantAfford}
-        title={priceTitle}
-        strikethrough={hasKin ? preKinPrice : undefined}
-      />
-      <div style={{ flexShrink: 0 }}>
+          {entry.price}m
+        </strong>
+        <small>
+          {entry.price_base}m + {entry.price_tariff}m duty
+        </small>
+      </td>
+      <td className="GoldfaceCultural__action">
         <button
           type="button"
-          style={compactButtonStyle({ disabled })}
-          disabled={disabled}
-          onClick={() => act('catalog_buy', { catalog: catalogId, pack: entry.pack })}
+          disabled={soldOut || cantAfford}
+          aria-label={
+            soldOut
+              ? `${entry.name} is out of stock`
+              : `Buy ${entry.name} for ${entry.price}m`
+          }
           title={
             soldOut
-              ? `${entry.name} is out of stock - the caravan restocks to full each day`
-              : `Order ${entry.name} for ${entry.price}m`
+              ? 'Out of stock'
+              : `Buy ${entry.name} for ${entry.price}m including Crown duty`
           }
+          onClick={onBuy}
         >
           {soldOut ? 'Out' : 'Buy'}
         </button>
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 };
+
+const Manifest = (props: { label: string; children: ReactNode }) => (
+  <table className="GoldfaceCultural__manifest" aria-label={props.label}>
+    <thead>
+      <tr>
+        <th scope="col">Goods</th>
+        <th scope="col">Pack</th>
+        <th scope="col">Stock</th>
+        <th scope="col">Total</th>
+        <th scope="col">
+          <span className="GoldfaceCultural__srOnly">Purchase</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>{props.children}</tbody>
+  </table>
+);
 
 const CatalogSection = (props: {
   catalog: CatalogData;
@@ -257,259 +150,148 @@ const CatalogSection = (props: {
 }) => {
   const { catalog, budget, act } = props;
   const accessible = !!catalog.accessible;
-  const [expanded, setExpanded] = useState(accessible);
   return (
-    <div style={{ marginBottom: '8px' }}>
-      <div
-        style={{
-          ...sectionHeaderStyle,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          marginTop: '4px',
-        }}
-        onClick={() => setExpanded((e) => !e)}
-      >
-        <span style={{ color: INK_SOFT, fontSize: FONT_BODY }}>
-          {expanded ? '▾' : '▸'}
-        </span>
-        <span>{catalog.name}</span>
-        <span
-          style={{
-            color: accessible ? SEAL_GREEN : INK_SOFT,
-            fontSize: FONT_BODY,
-            textTransform: 'none',
-            fontVariant: 'normal',
-            fontWeight: 'normal',
-            marginLeft: '6px',
-          }}
-        >
-          {catalog.origin_access
-            ? `(open to you - ${catalog.discount_pct}% off)`
-            : catalog.unlocked
-              ? '(agreement signed)'
-              : `(sealed - ${catalog.favor_cost} favor to sign)`}
-        </span>
-      </div>
-      {expanded && (
+    <ManifestSection
+      name={catalog.name}
+      summary={
+        catalog.origin_access
+          ? `Open to you, ${catalog.discount_pct}% off`
+          : catalog.unlocked
+            ? 'Agreement signed'
+            : `Sealed, ${catalog.favor_cost} favor to sign`
+      }
+      defaultExpanded={accessible}
+    >
+      <p className="GoldfaceCultural__note">{catalog.desc}</p>
+      {accessible ? (
         <>
-          <div
-            style={{
-              ...noteStyleItalic,
-              padding: '2px 0 6px',
-            }}
-          >
-            {catalog.desc}
-          </div>
-          {accessible && (
-            <div
-              style={{
-                ...noteStyleItalic,
-                fontStyle: 'normal',
-                padding: '0 0 6px',
-              }}
-            >
-              The caravan restocks to its full load each day.
-            </div>
-          )}
-          {accessible ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: '0 12px',
-              }}
-            >
+          <p className="GoldfaceCultural__note">
+            The caravan restocks to its full load each day.
+          </p>
+          {catalog.entries.length ? (
+            <Manifest label={`${catalog.name} stock`}>
               {catalog.entries.map((entry) => (
-                <CatalogStockCard
+                <StockRow
                   key={entry.pack}
-                  catalogId={catalog.id}
                   entry={entry}
                   budget={budget}
-                  act={act}
+                  onBuy={() =>
+                    act('catalog_buy', {
+                      catalog: catalog.id,
+                      pack: entry.pack,
+                    })
+                  }
                 />
               ))}
-            </div>
+            </Manifest>
           ) : (
-            // TODO: flavor
-            <div style={{ ...cardStyle, color: INK_SOFT, textAlign: 'center' }}>
-              This charter is sealed. Open it in Management for{' '}
-              {catalog.favor_cost} favor.
-            </div>
+            <p className="GoldfaceCultural__note">
+              No goods are listed for this charter.
+            </p>
           )}
         </>
+      ) : (
+        <p className="GoldfaceCultural__note">
+          This charter is sealed. Open it in Management for {catalog.favor_cost}{' '}
+          favor.
+        </p>
       )}
-    </div>
+    </ManifestSection>
   );
 };
-
-const noteStyleItalic = {
-  color: INK_SOFT,
-  fontStyle: 'italic' as const,
-  fontSize: FONT_BODY,
-  lineHeight: 1.4,
-};
-
-const KinshipBanner = (props: { children: React.ReactNode }) => (
-  <div
-    style={{
-      margin: '6px 0 8px',
-      padding: '6px 10px',
-      border: `1px dashed ${SEAL_GREEN}`,
-      color: INK,
-      fontFamily: SERIF,
-      fontSize: FONT_BODY,
-      lineHeight: 1.4,
-    }}
-  >
-    {props.children}
-  </div>
-);
 
 export const CulturalStockTab = (props: Props) => {
   const { stock, catalogs = [], kinship, budget, isAgent, act } = props;
-
-  const catalogSections = catalogs.length > 0 && (
-    <>
-      <div
-        style={{
-          ...sectionHeaderStyle,
-          marginTop: '12px',
-        }}
-      >
-        Trade Agreements
-      </div>
-      {catalogs.map((catalog) => (
-        <CatalogSection
-          key={catalog.id}
-          catalog={catalog}
-          budget={budget}
-          act={act}
-        />
-      ))}
-    </>
-  );
-
-  const banners = (
-    <>
-      {!!isAgent && (
-        <KinshipBanner>
-          <span
-            style={{
-              color: SEAL_GREEN,
-              fontWeight: 'bold',
-              marginRight: '6px',
-            }}
-          >
-            Chartered Agent
-          </span>
-          <span style={{ color: INK_SOFT }}>
-            As an agent of the Ferentian Trading Company, you are allowed to
-            access, view, and purchase the Cultural Stock of any docked ships,
-            and view and hail ships on behalf of the Factor.
-          </span>
-        </KinshipBanner>
-      )}
-      {kinship?.realm_name && (
-        <KinshipBanner>
-          <span
-            style={{
-              color: SEAL_GREEN,
-              fontWeight: 'bold',
-              marginRight: '6px',
-            }}
-          >
-            Kinship: {kinship.realm_name}
-          </span>
-          <span style={{ color: INK_SOFT }}>
-            Cultural stock from {kinship.realm_name} ships costs{' '}
-            {kinship.buy_pct}% less.
-          </span>
-        </KinshipBanner>
-      )}
-      {kinship?.agent_realm_name && (
-        <KinshipBanner>
-          <span
-            style={{
-              color: SEAL_GREEN,
-              fontWeight: 'bold',
-              marginRight: '6px',
-            }}
-          >
-            Agent Kinship: {kinship.agent_realm_name}
-          </span>
-          <span style={{ color: INK_SOFT }}>
-            As an Agent, your buys from {kinship.agent_realm_name} ships cost{' '}
-            {kinship.buy_pct}% less.
-          </span>
-        </KinshipBanner>
-      )}
-    </>
-  );
-
-  if (!stock.length) {
-    return (
-      <div style={pageStyle}>
-        <div style={titleStyle}>Cultural Stock</div>
-        {banners}
-        <div
-          style={{
-            ...cardStyle,
-            textAlign: 'center',
-            color: INK_SOFT,
-            marginTop: '12px',
-          }}
-        >
-          No foreign vessel is at the pier. Hail one to access her cultural
-          stores.
-        </div>
-        {catalogSections}
-      </div>
-    );
-  }
-
-  const byShip = new Map<string, { name: string; entries: CulturalStockEntry[] }>();
+  const byShip = new Map<
+    string,
+    { name: string; entries: CulturalStockEntry[] }
+  >();
   for (const entry of stock) {
     const existing = byShip.get(entry.ship_id);
     if (existing) {
       existing.entries.push(entry);
     } else {
-      byShip.set(entry.ship_id, {
-        name: entry.ship_name,
-        entries: [entry],
-      });
+      byShip.set(entry.ship_id, { name: entry.ship_name, entries: [entry] });
     }
   }
   const ships = Array.from(byShip.entries());
 
   return (
-    <div style={pageStyle}>
-      <div style={titleStyle}>Cultural Stock</div>
-      {banners}
-      <div
-        style={{
-          textAlign: 'center',
-          color: INK_SOFT,
-          fontSize: FONT_BODY,
-          marginBottom: '8px',
-        }}
-      >
-        Goods of distinction unloaded by docked vessels. They depart when she
-        sails.
-      </div>
+    <div className="GoldfaceCultural">
+      {(isAgent || kinship?.realm_name || kinship?.agent_realm_name) && (
+        <details className="GoldfaceCultural__terms">
+          <summary>
+            Trade privileges
+            {isAgent && <span>Chartered Agent</span>}
+            {kinship?.realm_name && <span>Kinship: {kinship.realm_name}</span>}
+            {kinship?.agent_realm_name && (
+              <span>Agent Kinship: {kinship.agent_realm_name}</span>
+            )}
+          </summary>
+          {isAgent && (
+            <p>
+              As an agent of the Ferentian Trading Company, you are allowed to
+              access, view, and purchase the Cultural Stock of any docked ships,
+              and view and hail ships on behalf of the Factor.
+            </p>
+          )}
+          {kinship?.realm_name && (
+            <p>
+              Cultural stock from {kinship.realm_name} ships costs{' '}
+              {kinship.buy_pct}% less.
+            </p>
+          )}
+          {kinship?.agent_realm_name && (
+            <p>
+              As an Agent, your buys from {kinship.agent_realm_name} ships cost{' '}
+              {kinship.buy_pct}% less.
+            </p>
+          )}
+        </details>
+      )}
+      <h2>Dockside cargo</h2>
+      <p className="GoldfaceCultural__note">
+        {ships.length
+          ? 'Goods of distinction unloaded by docked vessels. They depart when she sails.'
+          : 'No cultural stock is available at the pier. Hail a vessel to access her cultural stores.'}
+      </p>
       {ships.map(([shipId, info]) => (
-        <ShipSection
+        <ManifestSection
           key={shipId}
-          shipId={shipId}
-          shipName={info.name}
-          entries={info.entries}
-          budget={budget}
-          act={act}
+          name={info.name}
+          summary={`${info.entries.length} wares`}
           defaultExpanded={ships.length === 1}
-        />
+        >
+          <Manifest label={`${info.name} cargo`}>
+            {info.entries.map((entry) => (
+              <StockRow
+                key={entry.pack}
+                entry={entry}
+                budget={budget}
+                onBuy={() =>
+                  act('cultural_buy', {
+                    pack: entry.pack,
+                    ship_id: entry.ship_id,
+                  })
+                }
+              />
+            ))}
+          </Manifest>
+        </ManifestSection>
       ))}
-      {catalogSections}
+      {catalogs.length > 0 && (
+        <>
+          <h2>Trade agreements</h2>
+          {catalogs.map((catalog) => (
+            <CatalogSection
+              key={catalog.id}
+              catalog={catalog}
+              budget={budget}
+              act={act}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 };

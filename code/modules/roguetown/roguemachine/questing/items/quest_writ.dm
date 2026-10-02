@@ -209,13 +209,10 @@ GLOBAL_LIST_EMPTY(quest_scrolls)
 	data["fetch_item"] = Q.target_item_type ? initial(Q.target_item_type.name) : null
 	data["fetch_count"] = Q.progress_required
 	data["recovery_shipment"] = Q.get_recovery_shipment_name()
-	data["levy_rate"] = SStreasury.get_tax_rate(TAX_CATEGORY_CONTRACT_LEVY)
-	data["guild_cut_rate"] = (Q.source == QUEST_SOURCE_DEFENSE || Q.guild_cut_exempt) ? 0 : GUILD_REFERRAL_FEE_PCT
 	data["progress_required"] = Q.progress_required
 	data["is_rumor"] = Q.source == QUEST_SOURCE_RUMOR
 	data["is_defense"] = Q.source == QUEST_SOURCE_DEFENSE
 	data["is_towner"] = Q.source == QUEST_SOURCE_TOWNER
-	data["guild_cut_exempt"] = Q.guild_cut_exempt
 	Q.populate_scroll_ui_static_data(data)
 	return data
 
@@ -228,6 +225,10 @@ GLOBAL_LIST_EMPTY(quest_scrolls)
 	data["z_hint"] = last_z_level_hint
 	data["objective"] = assigned_quest.get_objective_text()
 	data["reward"] = assigned_quest.reward_amount
+	data["deposit"] = assigned_quest.calculate_deposit()
+	data["levy_rate"] = SStreasury.get_tax_rate(TAX_CATEGORY_CONTRACT_LEVY)
+	data["guild_cut_exempt"] = assigned_quest.source == QUEST_SOURCE_DEFENSE || assigned_quest.guild_cut_exempt
+	data["guild_cut_rate"] = data["guild_cut_exempt"] ? 0 : GUILD_REFERRAL_FEE_PCT
 	data["progress_current"] = assigned_quest.progress_current
 	data["complete"] = assigned_quest.complete
 	data["levy_exempt"] = assigned_quest.levy_exempt

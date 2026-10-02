@@ -1,0 +1,147 @@
+html,
+body,
+.uiWrapper,
+.uiWrapper .uiContent {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: #0d090a;
+	color: #d9ccba;
+	font: 13px/1.35 'Keep Lora', Georgia, serif;
+	scrollbar-face-color: #574043;
+	scrollbar-track-color: #110c0d;
+	scrollbar-arrow-color: #c7b5a4;
+	overflow: hidden;
+}
+
+.latejoin-folio {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	font-family: 'Keep Lora', Georgia, serif;
+}
+
+.latejoin-header,
+.latejoin-footer {
+	flex: 0 0 auto;
+	background: rgba(18, 10, 12, .65);
+}
+
+.latejoin-header {
+	padding: 8px 12px;
+	border-bottom: 3px double #604247;
+}
+
+.latejoin-title,
+.latejoin-searchbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.latejoin-title { margin-bottom: 7px; }
+.latejoin-title > span { color: #af9d97; font-size: 12px; margin-left: 12px; }
+
+.latejoin-folio h1,
+.latejoin-folio h2 {
+	font-family: 'Keep Rocker', 'Keep Pterra', Georgia, serif !important;
+	font-weight: normal;
+	color: #e2d5c4;
+	line-height: 1.2;
+}
+
+.latejoin-folio h1 { margin: 0; padding: 0; font-size: 25px; }
+.latejoin-searchbar label { margin-right: 8px; }
+.latejoin-searchbar > span { color: #af9d97; font-size: 11px; margin-left: 12px; white-space: nowrap; }
+.latejoin-header input {
+	flex: 1;
+	min-width: 0;
+	box-sizing: border-box;
+	height: 27px;
+	padding: 3px 7px;
+	border: 1px solid #604247;
+	border-radius: 0;
+	background: #100c0d;
+	color: #e2d5c4;
+	font: 13px 'Keep Lora', Georgia, serif;
+}
+.latejoin-header input:focus { border-color: #be9595; outline: 1px solid #be9595; }
+
+.latejoin-list {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 10px 12px;
+	background: rgba(12, 9, 10, .92);
+}
+.latejoin-list:focus { outline: 1px solid #be9595; outline-offset: -2px; }
+.latejoin-columns { column-count: 3; column-gap: 14px; }
+.latejoin-group { display: inline-block; width: 100%; margin: 0 0 12px; vertical-align: top; break-inside: avoid; page-break-inside: avoid; }
+.latejoin-group h2 {
+	margin: 0 0 3px;
+	padding: 3px 6px 4px;
+	border-left: 3px solid #604247;
+	border-bottom: 3px double #483336;
+	font-size: 18px;
+}
+.latejoin-row {
+	display: flex;
+	align-items: center;
+	min-height: 28px;
+	border-bottom: 1px solid #2b2022;
+}
+.latejoin-row:hover { background: #24171a; }
+.latejoin-command .latejoin-join { font-weight: bold; }
+.latejoin-priority { border-left: 2px solid #a18e59; }
+.latejoin-priority-mark { color: #d2b772; font: 11px Georgia, serif; }
+.latejoin-availability {
+	flex: 0 0 48px;
+	text-align: right;
+	padding-right: 3px;
+	color: #b6a999;
+	font-size: 11px;
+	white-space: nowrap;
+}
+.latejoin-folio a,
+.latejoin-folio a:link,
+.latejoin-folio a:visited {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 3px 5px;
+	border: 1px solid transparent;
+	border-radius: 0;
+	background: transparent;
+	color: #dfc6be;
+	font: 15px/1.3 'Keep Pterra', Georgia, serif !important;
+	text-decoration: none;
+	white-space: normal;
+	word-wrap: break-word;
+}
+.latejoin-folio a.latejoin-join { flex: 1; min-width: 0; }
+.latejoin-folio a.latejoin-subclasses { flex: 0 0 22px; text-align: center; color: #bca887; }
+.latejoin-folio a:hover,
+.latejoin-folio a:focus {
+	background: #3c2026;
+	color: #fff0dd;
+	border-color: #98656d;
+	outline: 1px solid #be9595;
+}
+.latejoin-unavailable { flex: 1; min-width: 0; padding: 3px 5px; color: #928385; font: 15px/1.25 'Keep Pterra', Georgia, serif; }
+.latejoin-unavailable small { display: block; color: #a18e90; font: 10px/1.25 'Keep Lora', Georgia, serif; }
+.latejoin-empty { padding: 12px 4px; color: #af9d97; }
+.latejoin-footer { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px; border-top: 1px solid #604247; color: #af9d97; font-size: 11px; }
+.latejoin-folio .latejoin-footer a { flex: 0 0 auto; border-color: #604247; margin-left: 12px; }
+
+@media (max-width: 670px) {
+	.latejoin-columns { column-count: 2; }
+	.latejoin-searchbar > span { display: none; }
+}
+@media (max-width: 420px) {
+	.latejoin-columns { column-count: 1; }
+	.latejoin-title { flex-wrap: wrap; }
+	.latejoin-title > span { margin: 3px 0 0; }
+}

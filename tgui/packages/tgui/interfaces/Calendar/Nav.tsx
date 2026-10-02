@@ -1,73 +1,59 @@
-import type { CSSProperties } from 'react';
-
-import {
-  FONT_BODY,
-  INK,
-  INK_FAINT,
-  inkButtonStyle,
-  SERIF,
-} from '../common/parchment';
-
-const navRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: '8px',
-  margin: '6px 0 4px 0',
-};
-
-const monthTitleStyle: CSSProperties = {
-  flex: 1,
-  textAlign: 'center',
-  fontFamily: SERIF,
-  letterSpacing: '3px',
-  fontSize: '18px',
-  color: INK,
-};
-
-const monthSubStyle: CSSProperties = {
-  textAlign: 'center',
-  color: INK_FAINT,
-  fontStyle: 'italic',
-  fontSize: FONT_BODY,
-  marginBottom: '8px',
-};
-
-const returnRowStyle: CSSProperties = {
-  textAlign: 'center',
-  marginBottom: '8px',
-};
+import { useId } from 'react';
+import type { MonthMeta } from './shared';
 
 type NavProps = {
-  monthName: string;
   seasonLine: string;
+  year: number;
+  months: MonthMeta[];
+  viewMonth: number;
   showReturn: boolean;
   onPrev: () => void;
   onNext: () => void;
   onReturn: () => void;
+  onJump: (month: number) => void;
 };
 
 export const Nav = (props: NavProps) => {
-  const { monthName, seasonLine, showReturn, onPrev, onNext, onReturn } = props;
+  const id = useId();
   return (
-    <>
-      <div style={navRowStyle}>
-        <button type="button" style={inkButtonStyle({})} onClick={onPrev}>
+    <header className="Calendar__nav">
+      <div>
+        <div className="Calendar__month">
+          <label htmlFor={id}>Month</label>
+          <select
+            id={id}
+            value={props.viewMonth}
+            onChange={(event) =>
+              props.onJump(Number(event.currentTarget.value))
+            }
+          >
+            {props.months.map((month) => (
+              <option key={month.number} value={month.number}>
+                {month.name}
+              </option>
+            ))}
+          </select>
+          <span>{props.year} AP</span>
+        </div>
+        <p className="Calendar__season">{props.seasonLine}</p>
+      </div>
+      <div className="Calendar__navButtons">
+        <button
+          type="button"
+          aria-label="Previous month"
+          onClick={props.onPrev}
+        >
           {'< Prev'}
         </button>
-        <div style={monthTitleStyle}>{monthName}</div>
-        <button type="button" style={inkButtonStyle({})} onClick={onNext}>
+        <button type="button" aria-label="Next month" onClick={props.onNext}>
           {'Next >'}
         </button>
-      </div>
-      <div style={monthSubStyle}>{seasonLine}</div>
-      {showReturn && (
-        <div style={returnRowStyle}>
-          <button type="button" style={inkButtonStyle({})} onClick={onReturn}>
+        {props.showReturn && (
+          <button type="button" onClick={props.onReturn}>
             Return to Today
           </button>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </header>
   );
 };

@@ -1,0 +1,54 @@
+html, body, .uiWrapper, .uiWrapper .uiContent {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: #100d0e;
+	color: #ded1c2;
+	font: 13px/1.45 'Keep Lora', Georgia, serif;
+	overflow: hidden;
+	scrollbar-color: #594046 #100d0e;
+}
+
+.uiWrapper .uiContent { font: inherit; }
+.role-preferences { display: flex; flex-direction: column; height: 100%; }
+.role-preferences header { flex: 0 0 auto; padding: 8px 12px; border-bottom: 1px solid #594046; }
+.role-preferences h1 {
+	margin: 0;
+	padding: 0;
+	color: #ded1c2;
+	font: normal 22px/1.2 'Keep Rocker', Georgia, serif !important;
+}
+.role-preferences header p { margin: 5px 0 0; color: #b9a6a0; }
+.role-preferences main { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 12px 8px; scroll-padding: 4px 0; }
+.role-preferences table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.role-preferences th, .role-preferences td { padding: 3px 0; border-bottom: 1px solid #382b2f; text-align: left; overflow-wrap: anywhere; }
+.role-preferences th { font-weight: normal; }
+.role-preferences thead th { font-size: 12px; color: #b9a6a0; padding-top: 8px; }
+.role-preferences tbody th { padding-right: 12px; }
+.role-preferences .role-state { width: 108px; text-align: right; }
+.role-preferences a, .role-preferences a:link, .role-preferences a:visited {
+	display: inline-block;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 3px 8px;
+	border: 1px solid #594046;
+	background: #281b1f;
+	color: #ded1c2;
+	font: inherit !important;
+	line-height: 1.3;
+	text-decoration: none;
+	scroll-margin: 4px 0;
+}
+.role-state a { min-width: 84px; text-align: center; }
+.role-preferences a:hover { background: #42222a; border-color: #ae8189; }
+.role-preferences a:focus { outline: 2px solid #ae8189; outline-offset: 1px; }
+.role-state .role-enabled { background: #42222a; border-color: #ae8189; }
+.role-state .role-disabled, .role-waiting { color: #b9a6a0; }
+.role-state .role-banned { color: #df9c89; }
+.role-notice { margin: 8px 0; padding: 6px 0; color: #df9c89; border-bottom: 1px solid #594046; }
+.role-preferences footer { flex: 0 0 auto; text-align: right; padding: 7px 12px; border-top: 1px solid #594046; }
+.role-preferences footer a { min-width: 60px; text-align: center; background: #42222a; }

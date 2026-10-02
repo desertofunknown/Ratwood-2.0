@@ -4,6 +4,7 @@
  * @license MIT
  */
 
+import type { AnyAction } from 'common/redux';
 import { clamp01, scale } from 'tgui-core/math';
 
 import { pingFail, pingSuccess } from './actions';
@@ -20,15 +21,26 @@ type PingState = {
   networkQuality: number;
 };
 
-export const pingReducer = (state = {} as PingState, action) => {
+const initialState: PingState = {
+  roundtrip: undefined,
+  roundtripAvg: undefined,
+  failCount: 0,
+  networkQuality: 0,
+};
+
+export const pingReducer = (
+  state: PingState = initialState,
+  action: AnyAction,
+): PingState => {
   const { type, payload } = action;
 
   if (type === pingSuccess.type) {
-    const { roundtrip } = payload;
-    const prevRoundtrip = state.roundtripAvg || roundtrip;
+    const { roundtrip }: { roundtrip: number } = payload;
+    const prevRoundtrip = state.roundtripAvg ?? roundtrip;
     const roundtripAvg = Math.round(prevRoundtrip * 0.4 + roundtrip * 0.6);
-    const networkQuality =
-      1 - scale(roundtripAvg, PING_ROUNDTRIP_BEST, PING_ROUNDTRIP_WORST);
+    const networkQuality = clamp01(
+      1 - scale(roundtripAvg, PING_ROUNDTRIP_BEST, PING_ROUNDTRIP_WORST),
+    );
     return {
       roundtrip,
       roundtripAvg,
@@ -38,16 +50,14 @@ export const pingReducer = (state = {} as PingState, action) => {
   }
 
   if (type === pingFail.type) {
-    const { failCount = 0 } = state;
-    const networkQuality = clamp01(
-      state.networkQuality - failCount / PING_MAX_FAILS,
-    );
+    const failCount = Math.min(state.failCount + 1, PING_MAX_FAILS);
+    const networkQuality = clamp01(state.networkQuality - 1 / PING_MAX_FAILS);
     const nextState: PingState = {
       ...state,
-      failCount: failCount + 1,
+      failCount,
       networkQuality,
     };
-    if (failCount > PING_MAX_FAILS) {
+    if (failCount >= PING_MAX_FAILS) {
       nextState.roundtrip = undefined;
       nextState.roundtripAvg = undefined;
     }

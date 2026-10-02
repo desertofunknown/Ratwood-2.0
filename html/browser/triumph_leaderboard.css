@@ -1,0 +1,68 @@
+body {
+	margin: 0;
+	padding: 0;
+	background: #100d0e;
+	color: #ded1c2;
+	font: 13px/1.45 'Triumph Lora', Georgia, serif;
+	scrollbar-color: #594046 #100d0e;
+}
+
+.uiWrapper .uiContent {
+	padding: 0;
+	font-family: 'Triumph Lora', Georgia, serif;
+}
+
+.triumph-leaderboard {
+	padding: 10px;
+	word-wrap: break-word;
+}
+
+.triumph-leaderboard h1 {
+	margin: 0;
+	padding: 0;
+	color: #ded1c2;
+	font: normal 20px/1.25 'Triumph Rocker', 'Triumph Pterra', Georgia, serif !important;
+}
+
+.triumph-season {
+	margin: 4px 0 8px;
+	color: #b9a6a0;
+}
+
+.triumph-leaderboard table {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+.triumph-leaderboard th,
+.triumph-leaderboard td {
+	padding: 5px 4px;
+	border-bottom: 1px solid #594046;
+	text-align: left;
+	vertical-align: top;
+	word-wrap: break-word;
+}
+
+.triumph-leaderboard th {
+	border-top: 1px solid #594046;
+	color: #b9a6a0;
+	font: normal 15px/1.3 'Triumph Pterra', Georgia, serif;
+}
+
+.triumph-leaderboard .triumph-rank {
+	width: 34px;
+	color: #b9a6a0;
+}
+
+.triumph-leaderboard .triumph-total {
+	width: 66px;
+	text-align: right;
+}
+
+.triumph-empty {
+	margin: 0;
+	padding: 8px 0;
+	border-top: 1px solid #594046;
+	color: #b9a6a0;
+}

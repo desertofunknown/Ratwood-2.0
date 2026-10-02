@@ -350,6 +350,8 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 		prefs.parent = src
 	else
 		prefs = new /datum/preferences(src)
+		if(!src || GLOB.directory[ckey] != src)
+			return null
 		GLOB.preferences_datums[ckey] = prefs
 	if(!holder)
 		prefs.chat_toggles &= ~CHAT_GHOSTEARS
@@ -406,6 +408,8 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 
 
 	. = ..()	//calls mob.Login()
+	if(!src || GLOB.directory[ckey] != src)
+		return null
 	if (length(GLOB.stickybanadminexemptions))
 		GLOB.stickybanadminexemptions -= ckey
 		if (!length(GLOB.stickybanadminexemptions))
@@ -417,6 +421,7 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 			add_system_note("Spoofed-Byond-Version", "Detected as using a spoofed byond version.")
 			log_access("Failed Login: [key] - Spoofed byond version")
 			qdel(src)
+			return null
 
 		if (num2text(byond_build) in GLOB.blacklisted_builds)
 			log_access("Failed login: [key] - blacklisted byond version")
@@ -490,19 +495,21 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 		add_admin_verbs()
 		to_chat(src, get_message_output("memo"))
 		adminGreet()
-	if(mob && reconnecting)
-		var/area/joined_area = get_area(mob.loc)
-		if(joined_area)
-			joined_area.reconnect_game(mob)
-	else if(!BC_IsKeyAllowedToConnect(ckey))
+	if(!BC_IsKeyAllowedToConnect(ckey))
 		src << "Sorry, but the server is currently only accepting whitelisted players.  Please see the discord to be whitelisted."
 		message_admins("[ckey] was denied a connection due to not being whitelisted.")
 		log_admin("[ckey] was denied a connection due to not being whitelisted.")
 		qdel(src)
 		return 0
+	if(mob && reconnecting)
+		var/area/joined_area = get_area(mob.loc)
+		if(joined_area)
+			joined_area.reconnect_game(mob)
 
 	add_verbs_from_config()
 	var/cached_player_age = set_client_age_from_db(tdata) //we have to cache this because other shit may change it and we need it's current value now down below.
+	if(!src || GLOB.directory[ckey] != src)
+		return null
 	if (isnum(cached_player_age) && cached_player_age == -1) //first connection
 		player_age = 0
 	var/nnpa = CONFIG_GET(number/notify_new_player_age)
@@ -522,6 +529,8 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 	get_message_output("watchlist entry", ckey)
 	check_ip_intel()
 	validate_key_in_db()
+	if(!src || GLOB.directory[ckey] != src)
+		return null
 
 	send_resources()
 
@@ -598,7 +607,7 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 /client/Del()
 	log_access("Logout: [key_name(src)]")
 
-	if(holder)
+	if(holder && holder.owner == src)
 		for(var/I in GLOB.clients)
 			if(!I || I == src)
 				continue
@@ -608,7 +617,6 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 					to_chat(C, "Admin Logout: [ckey]")
 		adminGreet(1)
 		holder.owner = null
-		GLOB.admins -= src
 /*		if (!GLOB.admins.len && SSticker.IsRoundInProgress()) //Only report this stuff if we are currently playing.
 			var/cheesy_message = pick(
 				"I have no admins online!",\
@@ -630,11 +638,19 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 	if(player_details)
 		player_details.achievements.save()
 
-	GLOB.ahelp_tickets.ClientLogout(src)
-	GLOB.directory -= ckey
+	GLOB.admins -= src
+	if(current_ticket?.initiator == src)
+		GLOB.ahelp_tickets.ClientLogout(src)
+	else
+		current_ticket = null
+	// A replacement connection may already own the persistent player state.
+	if(GLOB.directory[ckey] == src)
+		GLOB.directory -= ckey
+	if(prefs?.parent == src)
+		prefs.parent = null
 	GLOB.clients -= src
 	QDEL_LIST_ASSOC_VAL(char_render_holders)
-	if(movingmob != null)
+	if(movingmob != null && mob?.canon_client == src)
 		movingmob.client_mobs_in_contents -= mob
 		UNSETEMPTY(movingmob.client_mobs_in_contents)
 	Master.UpdateTickRate()
@@ -644,7 +660,7 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 	. = ..() //Even though we're going to be hard deleted there are still some things that want to know the destroy is happening
 	QDEL_NULL(droning_sound)
 	last_droning_sound = null
-	if(mob)
+	if(mob?.canon_client == src)
 		mob.become_uncliented()
 	return QDEL_HINT_HARDDEL_NOW
 
@@ -929,7 +945,7 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 
 	//check to see if we noted them in the last day.
 	var/datum/DBQuery/query_get_notes = SSdbcore.NewQuery(
-		"SELECT id FROM [format_table_name("messages")] WHERE type = 'note' AND targetckey = :targetckey AND adminckey = :adminckey AND timestamp + INTERVAL 1 DAY < NOW() AND deleted = 0 AND (expire_timestamp > NOW() OR expire_timestamp IS NULL)",
+		"SELECT id FROM [format_table_name("messages")] WHERE type = 'note' AND targetckey = :targetckey AND adminckey = :adminckey AND timestamp > NOW() - INTERVAL 1 DAY AND deleted = 0 AND (expire_timestamp > NOW() OR expire_timestamp IS NULL)",
 		list("targetckey" = ckey, "adminckey" = system_ckey)
 	)
 	if(!query_get_notes.Execute())
@@ -1160,26 +1176,20 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 	var/pos = 0
 
 	var/atom/movable/screen/char_preview/background = LAZYACCESS(char_render_holders, "bg")
-	if(background)
-		screen -= background
-		char_render_holders -= background
-		qdel(background)
-	background = new()
-	LAZYSET(char_render_holders, "bg", background)
-	screen += background
+	if(!background)
+		background = new()
+		LAZYSET(char_render_holders, "bg", background)
+	screen |= background
 	background.screen_loc = "character_preview_map:0,0 to 3,3"
 
 	// not cardinal anymore, makes taurs more clear
 	for(var/D in GLOB.cardinals)
 		pos++
 		var/atom/movable/screen/char_preview/O = LAZYACCESS(char_render_holders, "[D]")
-		if(O)
-			screen -= O
-			char_render_holders -= O
-			qdel(O)
-		O = new
-		LAZYSET(char_render_holders, "[D]", O)
-		screen += O
+		if(!O)
+			O = new
+			LAZYSET(char_render_holders, "[D]", O)
+		screen |= O
 		O.appearance = MA
 		O.dir = D
 		switch(pos)
@@ -1193,8 +1203,8 @@ GLOBAL_LIST_EMPTY(external_rsc_urls)
 				O.screen_loc = "character_preview_map:2,1"
 
 /client/proc/clear_character_previews()
-	for(var/atom/movable/screen/S in char_render_holders)
-//		var/atom/movable/screen/S = char_render_holders[index]
+	for(var/index in char_render_holders)
+		var/atom/movable/screen/S = char_render_holders[index]
 		screen -= S
 		qdel(S)
 	char_render_holders = list()

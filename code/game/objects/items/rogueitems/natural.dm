@@ -21,6 +21,7 @@
 		var/obj/item/natural/bundle/B = W
 		if(istype(src, B.stacktype))
 			if(B.amount < B.maxamount)
+				B.inherit_trade_provenance(src)
 				B.amount++
 				B.update_bundle()
 				user.visible_message("[user] adds [src] to [W].")
@@ -32,6 +33,8 @@
 		var/obj/item/natural/B = W
 		if(B.bundletype == src.bundletype && src.bundletype != null)
 			var/obj/item/natural/bundle/N = new bundletype(src.loc)
+			N.inherit_trade_provenance(src)
+			N.inherit_trade_provenance(B)
 			to_chat(user, "You tie the [N.stackname] into a bundle.")
 			qdel(B)
 			qdel(src)
@@ -64,12 +67,50 @@
 /obj/item/natural/bundle/burn()
 	. = ..(amount)
 
+// Mixed bundles retain every restriction on their contents, including after splitting.
+/obj/item/proc/inherit_trade_provenance(obj/item/source)
+	atc_sealed = atc_sealed || source.atc_sealed
+	stockpile_withdrawn = stockpile_withdrawn || source.stockpile_withdrawn
+
+/obj/item/natural/bundle/proc/create_single_material(atom/destination)
+	var/obj/item/material = new stacktype(destination)
+	material.inherit_trade_provenance(src)
+	return material
+
+/obj/item/proc/collect_material_bundles(mob/user, material_type, bundle_type, pickup_single = FALSE, pickup_bundles = TRUE)
+	var/list/materials = list()
+	for(var/obj/item/material in get_turf(src))
+		if(material.type == material_type && !QDELETED(material))
+			materials += material
+	var/collected = length(materials)
+	var/atom/destination = user.drop_location()
+	while(length(materials) > 1)
+		var/obj/item/natural/bundle/bundle = new bundle_type(destination)
+		bundle.amount = min(length(materials), bundle.maxamount)
+		for(var/i in 1 to bundle.amount)
+			var/obj/item/material = materials[i]
+			bundle.inherit_trade_provenance(material)
+			qdel(material)
+		materials.Cut(1, bundle.amount + 1)
+		bundle.update_bundle()
+		if(pickup_bundles)
+			user.put_in_hands(bundle)
+	if(length(materials))
+		var/obj/item/material = materials[1]
+		material.forceMove(destination)
+		if(pickup_single)
+			user.put_in_hands(material)
+	return collected
+
 /obj/item/natural/bundle/attackby(obj/item/W, mob/living/user)
 	if(item_flags & IN_STORAGE)
 		return
 	if(istype(W, /obj/item/natural/bundle))
 		var/obj/item/natural/bundle/B = W
 		if(src.stacktype == B.stacktype)
+			if(src == B || amount >= maxamount)
+				return
+			inherit_trade_provenance(B)
 			if(src.amount + B.amount > maxamount)
 				B.amount = (src.amount + B.amount) - maxamount
 				src.amount = maxamount
@@ -77,7 +118,7 @@
 				B.update_bundle()
 				to_chat(user, "There's not enough space in [src].")
 				if(B.amount == 1)
-					var/obj/H = new stacktype(src.loc)
+					var/obj/item/H = B.create_single_material(B.loc)
 					user.put_in_hands(H)
 					qdel(B)
 			else
@@ -89,6 +130,7 @@
 		if(item_flags & IN_STORAGE)
 			return
 		if(src.amount < src.maxamount)
+			inherit_trade_provenance(W)
 			to_chat(user, "I add the [W] to the [src].")
 			src.amount++
 			update_bundle()
@@ -99,12 +141,14 @@
 		return ..()
 
 /obj/item/natural/bundle/use(used)
+	if(used <= 0)
+		return FALSE
 	if(src.amount >= used)
 		src.amount -= used
 		src.update_bundle()
 		switch(src.amount)
 			if(1)
-				new src.stacktype(src.loc)
+				create_single_material(loc)
 				qdel(src)
 			if(0)
 				qdel(src)
@@ -117,16 +161,20 @@
 		return
 	var/mob/living/carbon/human/H = user
 	switch(amount)
+		if(1)
+			H.put_in_hands(create_single_material(loc))
+			qdel(src)
+			return
 		if(2)
-			var/obj/F = new stacktype(src.loc)
-			var/obj/I = new stacktype(src.loc)
+			var/obj/item/F = create_single_material(loc)
+			var/obj/item/I = create_single_material(loc)
 			H.put_in_hands(F)
 			H.put_in_hands(I)
 			qdel(src)
 			return
 		else
 			amount -= 1
-			var/obj/F = new stacktype(src.loc)
+			var/obj/item/F = create_single_material(loc)
 			H.put_in_hands(F)
 			user.visible_message("[user] removes [F] from [src].", "I remove [F] from [src].")
 	update_bundle()
@@ -141,14 +189,15 @@
 			to_chat(user, span_info("[src] can't hold any more without falling apart."))
 			return
 		to_chat(user, span_info("I begin filling [src]..."))
-		for(var/obj/I in stackables)
+		for(var/obj/item/I in stackables)
 			if(amount >= maxamount)
 				break
 			if(I.type == stacktype)
 				if(!do_after(user, 5, TRUE, src))
 					break
-				if(!(I in T.contents))
+				if(QDELETED(I) || !(I in T.contents) || amount >= maxamount)
 					continue
+				inherit_trade_provenance(I)
 				qdel(I)
 				src.amount++
 				update_bundle()

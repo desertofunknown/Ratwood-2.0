@@ -112,8 +112,10 @@ const SubTabBar = (props: {
   return (
     <div className="ContractLedger__InnkeeperSubTabBar">
       {tabs.map((t) => (
-        <div
+        <button
+          type="button"
           key={t.id}
+          aria-pressed={t.id === props.active}
           className={
             'ContractLedger__InnkeeperSubTab' +
             (t.id === props.active
@@ -123,7 +125,7 @@ const SubTabBar = (props: {
           onClick={() => props.onSelect(t.id)}
         >
           {t.label}
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -169,7 +171,7 @@ const ComposeView = () => {
   const regionsForType = data.rumor_regions_by_type?.[type] || [];
   const baseCost = data.rumor_costs?.[type] ?? 0;
   const lucrativeMult = data.rumor_lucrative_mult ?? 1.5;
-  const cost = lucrative ? Math.round(baseCost * lucrativeMult) : baseCost;
+  const cost = lucrative ? Math.floor(baseCost * lucrativeMult) : baseCost;
   const needsDestination = type === RECOVERY_TYPE;
 
   const onTypeChange = (next: string) => {
@@ -269,7 +271,7 @@ const ComposeView = () => {
               style={{
                 fontSize: '11px',
                 fontStyle: 'italic',
-                color: '#6b4e2a',
+                color: 'var(--p-ink-soft)',
                 padding: '2px 0 6px 0',
                 marginLeft: '6px',
               }}
@@ -314,7 +316,7 @@ const ComposeView = () => {
             checked={lucrative}
             onChange={(e) => setLucrative(e.target.checked)}
           />
-          &nbsp;Spend {pts(Math.round(baseCost * lucrativeMult))} instead of{' '}
+          &nbsp;Spend {pts(Math.floor(baseCost * lucrativeMult))} instead of{' '}
           {pts(baseCost)} for a x{lucrativeMult} reward. Your referral cut grows
           with the payout.
         </label>
@@ -328,8 +330,7 @@ const ComposeView = () => {
           title={disabledReason}
           onClick={dispatch}
         >
-          Whisper Rumor ({pts(cost)})
-          {lucrative ? ' - lucrative' : ''}
+          Whisper Rumor ({pts(cost)}){lucrative ? ' - lucrative' : ''}
         </button>
       </div>
     </>

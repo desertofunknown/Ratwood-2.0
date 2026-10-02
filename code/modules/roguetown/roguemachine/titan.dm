@@ -327,22 +327,28 @@ GLOBAL_VAR_INIT(last_crown_announcement_time, -1000)
 	return I
 
 /obj/structure/roguemachine/titan/proc/give_tax_popup(mob/living/carbon/human/user)
-	if(!Adjacent(user))
+	if(!can_manage_realm(user))
 		return
 	var/datum/taxsetter/taxsetter = new("The Generous Lord Decrees")
+	taxsetter.bind_panel(user, src)
 	taxsetter.ui_interact(user)
 
 /obj/structure/roguemachine/titan/proc/give_law_popup(mob/living/carbon/human/user)
-	if(!Adjacent(user))
+	if(!can_manage_realm(user))
 		return
 	var/datum/laws_menu/lawmenu = new
+	lawmenu.bind_panel(user, src)
 	lawmenu.ui_interact(user)
 
 /obj/structure/roguemachine/titan/proc/give_decree_popup(mob/living/carbon/human/user)
-	if(!Adjacent(user))
+	if(!can_manage_realm(user))
 		return
 	var/datum/decree_setter/panel = new
+	panel.bind_panel(user, src)
 	panel.ui_interact(user)
+
+/obj/structure/roguemachine/titan/proc/can_manage_realm(mob/living/carbon/human/user)
+	return !obj_broken && istype(user) && user.stat == CONSCIOUS && Adjacent(user) && (SSticker.rulermob == user || SSticker.regentmob == user) && istype(user.head, /obj/item/clothing/head/roguetown/crown/serpcrown)
 
 /obj/structure/roguemachine/titan/proc/make_announcement(mob/living/user, raw_message)
 	if(!SScommunications.can_announce(user))

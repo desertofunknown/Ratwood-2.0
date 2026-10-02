@@ -56,53 +56,56 @@ INITIALIZE_IMMEDIATE(/mob/dead)
 		return
 
 	var/time_remaining = SSticker.GetTimeLeft()
-	if(SSticker.HasRoundStarted() || time_remaining <= 0)
+	if(SSticker.current_state >= GAME_STATE_SETTING_UP)
 		client << browse(null, "window=lobby_window")
 		return
-	if(!winexists(client, "lobby_window"))
-		open_lobby()  // creates window + browser control
-		sleep(0)
-		if(!client) // client vanished while we slept
-			return
-	var/lobby_visible = winget(client, "lobby_window", "is-visible")
-	if(lobby_visible == "false") // winget returns a string...
-		client << browse(null, "window=lobby_window")
+	if(!lobby_opened)
 		open_lobby()
 		sleep(0)
-		if(!client) // client vanished while we slept
+		if(!client)
 			return
+	// A closed lobby stays closed until the player opens it from their character sheet.
+	if(!winexists(client, "lobby_window") || winget(client, "lobby_window", "is-visible") == "false")
+		return
 
 	// UPDATE TIMER -- Script in html\lobby\lobby.html / .js
 	var/timer_text
 	if (time_remaining > 0)
-		timer_text = "Time To Start: [round(time_remaining/10)]s"
-	else if (time_remaining == -10)
-		timer_text = "Time To Start: DELAYED"
+		timer_text = "[round(time_remaining/10)]s"
+	else if (time_remaining < 0)
+		timer_text = "Delayed"
 	else
-		timer_text = "Time To Start: SOON"
-		client << browse(null, "window=lobby_window")
-		return
+		timer_text = "Soon"
 	client << output(timer_text, "lobby_window.browser:update_timer")
 
 	// Update players ready!!
 	client << output(
-	"Total players ready: [SSticker.totalPlayersReady]",
+	"[SSticker.totalPlayersReady]",
 	"lobby_window.browser:update_ready_count"
 	)
 	// Ready bonus
 	var/bonus_html
-	if (src.ready)
-		bonus_html = span_good("Ready Bonus!")
+	if (ready == PLAYER_READY_TO_PLAY)
+		bonus_html = span_good("Ready &mdash; bonus eligible")
 	else
-		bonus_html = span_highlight("No bonus! Ready up!")
-	client << output(bonus_html, "lobby_window.browser:update_ready_bonus")
-	client << output(actor_list, "lobby_window.browser:update_jobs")
+		bonus_html = span_highlight("Not ready &mdash; no bonus")
+	client << output(url_encode(bonus_html), "lobby_window.browser:update_ready_bonus")
+	client << output(url_encode(actor_list), "lobby_window.browser:update_jobs")
 
 /mob/dead/new_player/proc/open_lobby()
-	if (!client)
+	if (!client || client.is_new_player() || SSticker.current_state >= GAME_STATE_SETTING_UP)
 		return
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	fonts.send(src)
+	var/list/font_urls = fonts.get_url_mappings()
+	var/lobby_html = file2text('html/lobby/lobby.html')
+	lobby_html = replacetext(lobby_html, "{{lora_regular}}", font_urls["lora-regular.ttf"])
+	lobby_html = replacetext(lobby_html, "{{lora_bold}}", font_urls["lora-bold.ttf"])
+	lobby_html = replacetext(lobby_html, "{{pterra}}", font_urls["pterra.ttf"])
+	lobby_html = replacetext(lobby_html, "{{newrocker}}", font_urls["newrocker.ttf"])
+	lobby_opened = TRUE
 	client << browse(
-		file("html/lobby/lobby.html"),
+		lobby_html,
 		"window=lobby_window;size=330x430"
 	)
 /mob/dead/proc/server_hop()

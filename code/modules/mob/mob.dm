@@ -799,7 +799,7 @@ GLOBAL_VAR_INIT(mobids, 1)
 	// && check_rights(R_ADMIN,0)
 	var/time_left = SSgamemode.round_ends_at - world.time
 	var/days = "TWILIGHT"
-	switch(GLOB.dayspassed)
+	switch(get_current_day_of_week())
 		if(1)
 			days = "MOON'S DAE"
 		if(2)

@@ -79,50 +79,50 @@
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	playsound(loc, 'sound/misc/keyboard_enter.ogg', 100, FALSE, -1)
 	var/canread = user.can_read(src, TRUE)
-	var/contents
+	var/list/contents = list("<div class='crier-folio'><div class='crier-heading'><div class='crier-edition'>The crier's ledger</div><h1>Rous Master</h1><p>Broadcasts, streetpipes &amp; collected mammon</p></div><div class='crier-tabs'>")
+	contents += "<a class='[current_tab == TAB_ROUSMAIN ? "crier-selected" : ""]' href='?src=\ref[src];switchtab=[TAB_ROUSMAIN]'[current_tab == TAB_ROUSMAIN ? " aria-current='page'" : ""]>Overview</a>"
+	contents += "<a class='[current_tab == TAB_SCOMLOG ? "crier-selected" : ""]' href='?src=\ref[src];switchtab=[TAB_SCOMLOG]'[current_tab == TAB_SCOMLOG ? " aria-current='page'" : ""]>Broadcast Log</a>"
+	contents += "<a class='[current_tab == TAB_MANAGESCOMS ? "crier-selected" : ""]' href='?src=\ref[src];switchtab=[TAB_MANAGESCOMS]'[current_tab == TAB_MANAGESCOMS ? " aria-current='page'" : ""]>Broadcasters</a></div><div class='crier-content' tabindex='0' role='region' aria-label='Crier ledger'>"
 	switch(current_tab)
 		if(TAB_ROUSMAIN)
-			contents += "<center>ROUS MASTER<BR>"
-			contents += "Total stored mammon: [total_payments]<br><br>"
-			contents += "<a href='?src=\ref[src];withdraw=1'>Withdraw All</a><br>"
-			contents += "--------------<BR>"
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_SCOMLOG]'>\[Broadcast Log\]</a><BR>"
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_MANAGESCOMS]'>\[Manage Broadcasters\]</a><BR>"
-			contents += "</center>"
+			contents += "<h2>Collected payments</h2><div class='crier-payments'><span>Total stored mammon</span><strong>[total_payments]</strong>"
+			if(total_payments > 0)
+				contents += "<a class='crier-button' href='?src=\ref[src];withdraw=1'>Withdraw All</a>"
+			else
+				contents += "<span class='crier-empty-payment'>No mammon to withdraw.</span>"
+			contents += "</div><div class='crier-note'>Payments collected by the broadcasters are stored here.</div>"
 
 		if(TAB_SCOMLOG)
-			contents += "<center><b>BROADCAST LOG</b></center><hr>"
+			contents += "<div class='crier-section-heading'><h2>Broadcast Log</h2><span>Most recent first</span></div>"
 			if(!length(GLOB.broadcast_list))
-				contents += "<i>No broadcasts logged yet.</i><br>"
+				contents += "<div class='crier-empty'>No broadcasts logged yet.</div>"
 			else
-				// Show most recent first
+				// Show most recent first, preserving the recorded message markup.
 				for(var/i = length(GLOB.broadcast_list), i > 0, i--)
 					var/entry = GLOB.broadcast_list[i]
 					var/msg = entry["message"]
 					var/tag = entry["tag"]
 					var/time = entry["timestamp"]
-
-					contents += "[tag ? " ( [tag] )" : ""] broadcasted at [time]:<br>"
-					contents += "[msg]<br><hr>"
-
-			contents += "<br><a href='?src=\ref[src];switchtab=[TAB_ROUSMAIN]'>\[Back\]</a>"
+					contents += "<div class='crier-broadcast'><div class='crier-broadcast-meta'>[tag ? " ( [tag] )" : ""] broadcasted at [time]:</div><div class='crier-message'>[msg]</div></div>"
 
 		if(TAB_MANAGESCOMS)
-			contents += "<center><b>Manage Broadcasters</b></center><hr>"
-
+			contents += "<h2>Manage Broadcasters</h2>"
 			if(!length(SSroguemachine.broadcaster_machines))
-				contents += "<i>No broadcasters found.</i><br>"
+				contents += "<div class='crier-empty'>No broadcasters found.</div>"
 			else
 				for(var/obj/structure/broadcast_horn/paid/H in SSroguemachine.broadcaster_machines)
 					var/locked_text = H.is_locked ? "Locked" : "Unlocked"
-					contents += "Streetpipe [H.broadcaster_tag ? " ( [H.broadcaster_tag] )" : ""] "
-					contents += "<span style='float:right;'>[locked_text] <a href='?src=\ref[src];togglehorn=\ref[H]'>\[Toggle\]</a></span><br>"
-			contents += "<br><a href='?src=\ref[src];switchtab=[TAB_ROUSMAIN]'>\[Back\]</a>"
-
+					contents += "<div class='crier-broadcaster'><div class='crier-broadcaster-name'>Streetpipe [H.broadcaster_tag ? " ( [H.broadcaster_tag] )" : ""]<span class='crier-status'>[locked_text]</span></div>"
+					contents += "<a class='crier-button' href='?src=\ref[src];togglehorn=\ref[H]'>[H.is_locked ? "Unlock" : "Lock"]</a></div>"
+	contents += "</div></div>"
 	if(!canread)
-		contents = stars(contents)
-	var/datum/browser/popup = new(user, "VENDORTHING", "", 400, 500)
-	popup.set_content(contents)
+		contents = list("<div class='crier-unreadable'>[html_encode(stars(contents.Join()))]</div>")
+	var/datum/browser/popup = new(user, "crier_control", "", 680, 680)
+	popup.add_stylesheet("crier", 'html/browser/crier.css')
+	var/datum/asset/simple/roguefonts/crier_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = crier_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Crier Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Crier Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Crier Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+	popup.set_content(contents.Join())
 	popup.open()
 
 #undef TAB_ROUSMAIN

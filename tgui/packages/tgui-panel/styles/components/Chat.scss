@@ -9,6 +9,49 @@
   color: var(--chat-text-color);
 }
 
+.ChatTabs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.3em;
+
+  &__list {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  &__page {
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+
+    .Tab__text {
+      max-width: 12em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__close {
+    appearance: none;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0 0.4em;
+    border: 0;
+    background: transparent;
+    color: #bfb7ae;
+    font: inherit;
+    cursor: pointer;
+
+    &:hover { background: #382622; color: #fff; }
+  }
+
+  &__add { flex-shrink: 0; }
+}
+
 .Chat__badge {
   display: inline-block;
   min-width: 0.5em;

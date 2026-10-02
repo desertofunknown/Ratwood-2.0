@@ -221,6 +221,7 @@
 
 /obj/item/roguemachine/zadcote/ui_data(mob/user)
 	var/list/data = list()
+	data["can_operate"] = is_operator(user) ? TRUE : FALSE
 	data["faction"] = faction
 	data["motto"] = motto
 	data["reserve"] = reserve
@@ -258,6 +259,7 @@
 			"label" = link.get_label(),
 			"severed" = link.severed,
 			"bonded" = cage ? TRUE : FALSE,
+			"bond_ref" = cage ? REF(cage) : "",
 			"in_flight" = flight ? TRUE : FALSE,
 			"cage_occupied" = (cage && cage.current_occupancy) ? TRUE : FALSE,
 			"cage_has_payload" = (cage && length(cage.held_payload)) ? TRUE : FALSE,
@@ -325,6 +327,10 @@
 			var/list/refs = params["payload_refs"] || list()
 			var/datum/zadlink/link = find_slot_by_index(slot_idx)
 			if(!link)
+				return TRUE
+			var/obj/item/zadcage/cage = link.resolve_cage()
+			if(!cage || params["bond_ref"] != REF(cage))
+				to_chat(H, span_warning("The cage bonded to that zadlink has changed. Check the destination before dispatching."))
 				return TRUE
 			msg = copytext(sanitize(msg), 1, 501)
 			caw = copytext(sanitize(caw), 1, 41)

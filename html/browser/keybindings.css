@@ -1,0 +1,79 @@
+body {
+	margin: 0;
+	padding: 0;
+	background: #100d0e;
+	color: #ded1c2;
+	font: 13px/1.45 'Keep Lora', Georgia, serif;
+	scrollbar-color: #594046 #100d0e;
+	scrollbar-face-color: #594046;
+	scrollbar-track-color: #100d0e;
+	scrollbar-arrow-color: #ded1c2;
+}
+
+.uiWrapper .uiContent { padding: 0; font: inherit; }
+.keep-keybindings { display: flex; flex-direction: column; height: 100%; }
+.keep-key-heading { flex-shrink: 0; padding: 8px 12px 0; }
+.keep-keybindings h1, .keep-keycapture h1 {
+	margin: 0;
+	padding: 0;
+	color: #ded1c2;
+	font: normal 22px/1.2 'Keep Rocker', 'Keep Pterra', Georgia, serif !important;
+}
+.keep-key-heading p { margin: 5px 0 0; color: #b9a6a0; }
+.keep-key-search { flex-shrink: 0; padding: 8px 12px; border-bottom: 1px solid #594046; }
+.keep-key-search label { display: block; margin-bottom: 3px; color: #b9a6a0; font-size: 12px; }
+.keep-key-search input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 4px 7px;
+	border: 1px solid #594046;
+	border-radius: 0;
+	color: #ded1c2;
+	background: #100d0e;
+	font: inherit;
+}
+.keep-key-search input:focus { outline: 2px solid #ae8189; outline-offset: 1px; }
+.keep-key-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 8px 12px; }
+.keep-key-group + .keep-key-group { margin-top: 14px; }
+.keep-key-group h2, .keep-keycapture h2 {
+	margin: 0;
+	padding: 0 0 4px;
+	border-bottom: 1px solid #594046;
+	color: #ded1c2;
+	font: normal 16px/1.3 'Keep Pterra', Georgia, serif !important;
+}
+.keep-key-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #382b2f; }
+.keep-key-command { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
+.keep-key-command small { display: block; color: #b9a6a0; font-size: 12px; line-height: 1.4; margin-top: 2px; }
+.keep-key-values { display: flex; flex: 0 1 42%; min-width: 0; flex-wrap: wrap; gap: 3px; justify-content: flex-end; }
+.keep-keybindings a, .keep-keybindings a:link, .keep-keybindings a:visited {
+	display: inline-block;
+	box-sizing: border-box;
+	max-width: 100%;
+	padding: 3px 7px;
+	border: 1px solid #594046;
+	background: #281b1f;
+	color: #ded1c2;
+	font: inherit !important;
+	line-height: 1.3;
+	text-decoration: none;
+	overflow-wrap: anywhere;
+}
+.keep-keybindings a:hover { background: #42222a; border-color: #ae8189; }
+.keep-keybindings a:focus { outline: 2px solid #ae8189; outline-offset: 1px; }
+.keep-key-values .keep-key-unbound, .keep-key-values .keep-key-secondary { color: #b9a6a0; }
+.keep-key-footer { display: flex; justify-content: space-between; gap: 8px; flex-shrink: 0; border-top: 1px solid #594046; padding: 7px 12px; }
+.keep-key-footer .keep-key-done { background: #42222a; min-width: 60px; text-align: center; }
+.keep-empty { margin: 6px 0; color: #b9a6a0; }
+.keep-keycapture { padding: 10px 12px; outline: 0; overflow-wrap: anywhere; }
+.keep-keycapture:focus { outline: none !important; }
+.keep-keycapture header { padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid #594046; }
+.keep-keycapture h2 { border: 0; }
+.keep-keycapture p { margin: 4px 0 12px; color: #b9a6a0; }
+.keep-keycapture .keep-notice { padding: 8px 0; border-top: 1px solid #594046; }
+
+@media (max-width: 380px) {
+	.keep-key-row { flex-wrap: wrap; }
+	.keep-key-command { flex-basis: 100%; }
+	.keep-key-values { flex-basis: 100%; justify-content: flex-start; }
+}

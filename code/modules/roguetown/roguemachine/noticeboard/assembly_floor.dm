@@ -32,6 +32,8 @@
 		"recall_threshold_pct" = ASSEMBLY_RECALL_THRESHOLD_PCT,
 		"censure_threshold_pct" = ASSEMBLY_CENSURE_THRESHOLD_PCT,
 		"nae_veto_pct" = ASSEMBLY_NAE_VETO_PCT,
+		"removal_voters" = ASSEMBLY_REMOVAL_MOB_FLOOR,
+		"removal_weight_doubled" = ASSEMBLY_REMOVAL_WEIGHT_FLOOR,
 	)
 
 /datum/city_assembly_panel/ui_data(mob/user)
@@ -47,6 +49,7 @@
 	data["is_censured"] = HAS_TRAIT(user, TRAIT_ALDERMAN_CENSURED) ? TRUE : FALSE
 	data["is_outlaw"] = HAS_TRAIT(user, TRAIT_OUTLAW) ? TRUE : FALSE
 	data["my_weight_doubled"] = SScity_assembly?.get_vote_weight(user) || 0
+	data["can_stand"] = (SScity_assembly?.current_session && SScity_assembly.can_hold_office(user)) ? TRUE : FALSE
 
 	var/datum/assembly_warrant/W = SScity_assembly?.current_warrant
 	if(W)

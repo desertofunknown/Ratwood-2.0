@@ -685,7 +685,11 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 	fix_duplicate_vices()
 	
 	var/html_content = generate_vices_html(user)
-	user << browse(html_content, "window=character_custom;size=750x500")
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	fonts.send(user)
+	var/datum/asset/simple/namespaced/common/common_asset = get_asset_datum(/datum/asset/simple/namespaced/common)
+	common_asset.send(user)
+	user << browse(html_content, "window=character_custom;size=900x680")
 
 /datum/preferences/proc/fix_duplicate_vices()
 	// Remove duplicate vices across slots
@@ -700,314 +704,170 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 				seen_vices += vice.type
 
 /datum/preferences/proc/generate_vices_html(mob/user)
-	// Use same colors as main character creation menu
-	var/list/theme = list(
-		"bg" = "#100000",
-		"text" = "#aa8f8f",
-		"label" = "#aa8f8f",
-		"border" = "#7b5353",
-		"panel" = "#00000066",
-		"panel_dark" = "#00000044",
-		"button_hover" = "rgba(123, 83, 83, 0.3)"
-	)
-	
+	var/datum/asset/simple/namespaced/common/common_asset = get_asset_datum(/datum/asset/simple/namespaced/common)
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = fonts.get_url_mappings()
+
 	var/html = {"
 		<!DOCTYPE html>
 		<html lang="en">
 		<meta charset='UTF-8'>
 		<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'/>
+		<script type='text/javascript' src='[common_asset.get_url_mappings()["keyboard.js"]]'></script>
 		<style>
-			body {
-				font-family: Verdana, Arial, sans-serif;
-				background: #100000 url('flowers.png') repeat;
-				color: [theme["text"]];
-				margin: 0;
-				padding: 0;
-			}
-			.header {
-				text-align: center;
-				padding: 5px;
-				background: [theme["panel_dark"]];
-				border-bottom: 2px solid [theme["border"]];
-			}
-			.header h1 {
-				margin: 0;
-				color: [theme["text"]];
-				font-size: 1.0em;
-			}
-			.header p {
-				margin: 2px 0;
-				font-size: 0.65em;
-				color: [theme["label"]];
-			}
-			.tabs {
-				display: flex;
-				background: [theme["panel"]];
-				border-bottom: 1px solid [theme["border"]];
-				padding: 0;
-				margin: 0;
-			}
-			.tab {
-				flex: 1;
-				padding: 6px 10px;
-				text-align: center;
-				background: [theme["panel_dark"]];
-				border-right: 1px solid [theme["border"]];
-				color: [theme["label"]];
-				cursor: pointer;
-				text-decoration: none;
-				display: block;
-				font-size: 0.7em;
-			}
-			.tab:hover {
-				background: [theme["button_hover"]];
-				color: [theme["text"]];
-			}
-			.tab.active {
-				background: [theme["button_hover"]];
-				color: [theme["text"]];
-			}
-			.tab-content {
-				padding: 8px;
-				display: none;
-			}
-			.tab-content.active {
-				display: block;
-			}
-			.vices-grid {
-				display: grid;
-				grid-template-columns: repeat(2, 1fr);
-				gap: 5px;
-			}
-			.vice-slot {
-				background: [theme["panel_dark"]];
-				border: 1px solid [theme["border"]];
-				padding: 6px;
-			}
-			.vice-slot:hover {
-				border-color: [theme["border"]];
-			}
-			.slot-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin-bottom: 4px;
-				padding-bottom: 3px;
-				border-bottom: 1px solid [theme["border"]];
-			}
-			.slot-number {
-				font-weight: bold;
-				color: [theme["text"]];
-				font-size: 0.7em;
-			}
-			.slot-required {
-				background: [theme["border"]];
-				color: [theme["bg"]];
-				padding: 1px 5px;
-				font-size: 0.6em;
-				font-weight: bold;
-			}
-			.slot-cost {
-				background: #4CAF50;
-				color: #1C0000;
-				padding: 1px 5px;
-				font-size: 0.65em;
-				font-weight: bold;
-			}
-			.vice-display {
-				display: flex;
-				align-items: flex-start;
-				margin-bottom: 4px;
-			}
-			.vice-info {
-				flex: 1;
-			}
-			.vice-name {
-				font-weight: bold;
-				color: [theme["text"]];
-				margin-bottom: 2px;
-				font-size: 0.75em;
-			}
-			.vice-desc {
-				font-size: 0.65em;
-				color: [theme["label"]];
-				line-height: 1.2;
-			}
-			.btn {
-				padding: 3px 6px;
-				border: 1px solid [theme["border"]];
-				background: [theme["panel_dark"]];
-				color: [theme["text"]];
-				cursor: pointer;
-				font-family: Verdana, Arial, sans-serif;
-				font-size: 0.6em;
-				text-decoration: none;
-				display: inline-block;
-				margin: 1px;
-			}
-			.btn:hover {
-				background: [theme["button_hover"]];
-				border-color: [theme["border"]];
-			}
-			.btn-select {
-				background: rgba(76, 175, 80, 0.3);
-				border-color: #4CAF50;
-				color: #4CAF50;
-			}
-			.btn-select:hover {
-				background: rgba(76, 175, 80, 0.5);
-			}
-			.btn-clear {
-				background: rgba(244, 67, 54, 0.3);
-				border-color: #f44336;
-				color: #f44336;
-			}
-			.btn-clear:hover {
-				background: rgba(244, 67, 54, 0.5);
-			}
-			.btn-customize {
-				background: rgba(33, 150, 243, 0.3);
-				border-color: #2196F3;
-				color: #2196F3;
-			}
-			.btn-customize:hover {
-				background: rgba(33, 150, 243, 0.5);
-			}
-			.btn-color {
-				background: rgba(156, 39, 176, 0.3);
-				border-color: #9C27B0;
-				color: #9C27B0;
-			}
-			.btn-color:hover {
-				background: rgba(156, 39, 176, 0.5);
-			}
-			.empty-slot {
-				text-align: center;
-				padding: 8px;
-				color: [theme["label"]];
-				font-style: italic;
-				font-size: 0.7em;
-			}
-			.actions {
-				margin-top: 4px;
-				display: flex;
-				flex-wrap: wrap;
-				gap: 3px;
-			}
-			.statpack-section {
-				background: [theme["button_hover"]];
-				border: 2px solid [theme["border"]];
-				padding: 10px;
-				margin-bottom: 10px;
-			}
-			.statpack-section h2 {
-				margin: 0 0 6px 0;
-				color: [theme["text"]];
-				font-size: 1.05em;
-				border-bottom: 1px solid [theme["border"]];
-				padding-bottom: 6px;
-			}
-			.statpack-current {
-				background: [theme["panel_dark"]];
-				padding: 8px;
-				margin: 6px 0;
-				border: 1px solid [theme["border"]];
-			}
-			.statpack-name {
-				font-weight: bold;
-				color: [theme["text"]];
-				font-size: 0.95em;
-				margin-bottom: 4px;
-			}
-			.statpack-desc {
-				color: [theme["label"]];
-				line-height: 1.3;
-				margin-bottom: 5px;
-				font-size: 0.8em;
-			}
-			.statpack-stats {
-				color: #4CAF50;
-				font-style: italic;
-				font-size: 0.75em;
-			}
-			.quirk-warning {
-				color: #f44336;
-				font-style: normal;
-				font-size: 0.75em;
-			}
+			@font-face { font-family: Pterra; src: url('[font_urls["pterra.ttf"]]'); }
+			@font-face { font-family: Lora; src: url('[font_urls["lora-regular.ttf"]]'); }
+			@font-face { font-family: Lora; font-weight: bold; src: url('[font_urls["lora-bold.ttf"]]'); }
+			@font-face { font-family: NewRocker; src: url('[font_urls["newrocker.ttf"]]'); }
+			* { box-sizing: border-box; }
+			html, body { height: 100%; overflow: hidden; }
+			body { font: 13px/1.4 Lora, Georgia, serif; background: #100d0e; color: #ded1c2; margin: 0; scrollbar-face-color: #42222a; scrollbar-track-color: #100d0e; scrollbar-arrow-color: #b4a29b; }
+			.folio { display: flex; flex-direction: column; height: 100%; background: #100d0e; }
+			.header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-bottom: 1px solid #584047; background: #191114; }
+			.header h1 { display: inline; font: normal 22px NewRocker, Georgia, serif; margin: 0; }
+			.character-name { margin-left: 12px; color: #b4a29b; }
+			.header-actions { margin-left: 12px; text-align: right; flex-shrink: 0; }
+			.tabs { flex: 0 0 auto; display: flex; padding: 5px 10px; border-bottom: 1px solid #584047; }
+			.tab { padding: 4px 9px; margin-right: 5px; color: #ded1c2; cursor: pointer; border: 1px solid transparent; text-decoration: none; }
+			.tab:hover { background: #281b1f; border-color: #584047; }
+			.tab.active { background: #42222a; border-color: #936773; }
+			.tab:focus, .btn:focus, .disclosure:focus { outline: 1px solid #b88b98; outline-offset: 1px; }
+			.folio-content { flex: 1 1 auto; height: 0; min-height: 0; overflow: auto; }
+			.folio-content, #preset-details { scrollbar-color: #594046 #100d0e; scrollbar-face-color: #594046; scrollbar-track-color: #100d0e; scrollbar-arrow-color: #ded1c2; scrollbar-shadow-color: #38282e; scrollbar-highlight-color: #594046; scrollbar-3dlight-color: #594046; scrollbar-darkshadow-color: #100d0e; }
+			.folio-content:focus { outline: 1px solid #936773; outline-offset: -2px; }
+			.tab-content { padding: 10px; display: none; }
+			.tab-content.active { display: block; }
+			.traits-columns { display: flex; align-items: flex-start; margin: 0 -8px; }
+			.trait-column { width: 50%; padding: 0 8px; min-width: 0; }
+			.trait-column + .trait-column { border-left: 1px solid #38282e; }
+			.vices-grid { display: flex; flex-wrap: wrap; align-items: flex-start; margin: 0 -8px; }
+			.vices-grid > .vice-slot { width: calc(50% - 16px); margin: 0 8px; }
+			.vice-slot { padding: 6px 0; border-bottom: 1px solid #38282e; }
+			.slot-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+			.slot-number { color: #b4a29b; }
+			.slot-required, .slot-cost { color: #c7a6b0; font-size: 12px; }
+			.vice-display, .item-display { display: flex; align-items: flex-start; margin-bottom: 4px; }
+			.vice-info, .item-info { flex: 1; min-width: 0; }
+			.vice-name { font-weight: bold; margin-bottom: 3px; word-wrap: break-word; }
+			.vice-desc { color: #b4a29b; word-wrap: break-word; }
+			.btn { display: inline-block; padding: 3px 7px; margin: 1px 2px; font: 13px/1.4 Lora, Georgia, serif; border: 1px solid #584047; color: #ded1c2; background: #281b1f; cursor: pointer; text-decoration: none; }
+			.btn:hover { background: #42222a; border-color: #936773; }
+			.btn-select { background: #352029; border-color: #76525e; }
+			.btn-select:hover { background: #42222a; }
+			.btn-clear { color: #bfa5aa; background: transparent; border-color: #38282e; }
+			.empty-slot { color: #b4a29b; }
+			.vices-grid .empty-slot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+			.actions { display: flex; flex-wrap: wrap; margin: 4px -2px 0; }
+			.statpack-section { margin-bottom: 12px; }
+			.statpack-section h2, .tab-content > h2 { font: normal 16px Pterra, Georgia, serif; margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid #584047; }
+			.statpack-current { padding: 3px 0; margin: 4px 0; }
+			.statpack-current + .statpack-current { border-top: 1px solid #38282e; padding-top: 6px; }
+			.statpack-name { font-weight: bold; margin-bottom: 3px; }
+			.statpack-desc { color: #b4a29b; margin-bottom: 4px; }
+			.statpack-stats { line-height: 1.5; color: #c7a6b0; }
+			.quirk-warning { color: #d69da5; }
+			.section-note { color: #b4a29b; margin: 0 0 7px; }
+			.quirk-ledger { color: #b4a29b; margin-bottom: 4px; }
+			.quirk-ledger strong { color: #ded1c2; }
+			.quirk-rules { padding: 5px 0; color: #b4a29b; }
+			.loadout-slot { display: flex; flex-wrap: wrap; align-items: center; padding: 3px 0; border-bottom: 1px solid #38282e; }
+			.loadout-slot .slot-header { flex: 0 0 76px; display: block; margin: 0; }
+			.loadout-slot .slot-cost { display: block; }
+			.loadout-slot .item-display { flex: 1 1 220px; margin: 0 10px 0 0; align-items: center; }
+			.loadout-slot .vice-name { margin: 0; }
+			.loadout-slot .empty-slot { flex: 1; display: flex; justify-content: space-between; align-items: center; min-width: 0; }
+			.loadout-slot .empty-slot .btn { margin: 0 0 0 8px; }
+			.loadout-slot .actions { margin: 0 8px 0 0; }
+			.loadout-slot .item-details { flex: 0 0 100%; margin-top: 5px; padding: 6px 0 2px 76px; border-top: 1px solid #38282e; }
+			.loadout-slot .item-details .actions { margin-top: 5px; }
+			.item-icon { width: 34px; height: 34px; flex-shrink: 0; margin-right: 8px; display: flex; align-items: center; justify-content: center; }
+			.item-icon img { max-width: 32px; max-height: 32px; image-rendering: pixelated; }
+			.item-note { font-size: 12px; color: #b4a29b; margin-top: 1px; }
+			.disclosure { display: inline-block; color: #c7a6b0; text-decoration: none; padding: 3px 0; cursor: pointer; }
+			.disclosure:hover { color: #ded1c2; text-decoration: underline; }
+			.detail-panel { display: none; }
+			.loadout-summary, .language-summary { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #584047; }
+			.point-ledger { display: flex; flex-wrap: wrap; align-items: baseline; color: #b4a29b; }
+			.point-ledger strong { color: #ded1c2; margin-right: 9px; }
+			.point-ledger .over-budget { color: #d69da5; }
+			.loadout-policy { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-top: 5px; }
+			.loadout-policy .btn { margin-left: 0; }
+			.equipment-rules { padding: 5px 0; margin-top: 4px; color: #b4a29b; }
+			.equipment-rules p { margin: 3px 0 6px; }
+			.language-grid > .vice-slot { display: flex; flex-wrap: wrap; align-items: center; padding: 8px 0; }
+			.language-grid .slot-header { flex: 0 0 150px; display: block; margin: 0; }
+			.language-grid .slot-cost { display: block; }
+			.language-grid .vice-display { flex: 1 1 240px; margin: 0 10px 0 0; }
+			.language-grid .empty-slot { flex: 1; display: flex; align-items: center; justify-content: space-between; }
+			.language-grid .section-note, .language-grid .actions { margin: 0; }
+			.presets { flex: 0 0 auto; padding: 4px 10px; border-top: 1px solid #584047; background: #191114; }
+			.preset-heading { display: flex; align-items: baseline; justify-content: space-between; }
+			.preset-heading .disclosure { font: normal 16px Pterra, Georgia, serif; }
+			.preset-heading span { font-size: 12px; color: #b4a29b; }
+			#preset-details { max-height: 156px; overflow: auto; padding-top: 4px; }
+			.preset { display: flex; flex-wrap: wrap; align-items: baseline; padding: 4px 0; border-top: 1px solid #38282e; }
+			.preset b { flex: 0 0 76px; font-size: 13px; }
+			.preset p { flex: 1; min-width: 0; margin: 0 10px 0 0; font-size: 12px; color: #b4a29b; word-wrap: break-word; }
+			.preset .btn { padding: 2px 7px; }
+			@media (max-width: 680px) { .traits-columns { display: block; } .trait-column { width: 100%; } .trait-column + .trait-column { border: 0; } .header { flex-wrap: wrap; } .header-actions { margin: 4px 0 0; } .character-name { display: block; margin: 2px 0 0; } .loadout-slot .item-display { flex-basis: calc(100% - 86px); } .loadout-slot > .actions { margin: 4px 8px 0 76px; } .language-grid .slot-header { flex-basis: 120px; } .language-grid .actions { margin: 4px 0 0 120px; } }
+			@media (max-width: 500px) { .vices-grid > .vice-slot { width: calc(100% - 16px); } .tab { padding-left: 5px; padding-right: 5px; } .preset-heading span { display: none; } .preset b { flex-basis: 60px; } .preset p { flex-basis: calc(100% - 70px); margin-right: 0; } .preset .btn { margin-top: 4px; } .language-grid .empty-slot { flex-wrap: wrap; } }
 		</style>
 		<script>
+			function toggleDetails(id, link) {
+				var panel = document.getElementById(id);
+				var opening = panel.style.display !== 'block';
+				panel.style.display = opening ? 'block' : 'none';
+				link.setAttribute('aria-expanded', opening ? 'true' : 'false');
+				link.innerHTML = (opening ? '&#8722; ' : '+ ') + link.getAttribute('data-label');
+				return false;
+			}
 			function showTab(tabName) {
-				// Hide all tab contents
+				if(tabName !== 'traits' && tabName !== 'loadout' && tabName !== 'languages') return;
 				var contents = document.getElementsByClassName('tab-content');
-				for(var i = 0; i < contents.length; i++) {
-					contents\[i\].classList.remove('active');
-				}
-				
-				// Remove active from all tabs
 				var tabs = document.getElementsByClassName('tab');
-				for(var i = 0; i < tabs.length; i++) {
-					tabs\[i\].classList.remove('active');
+				for(var i = 0; i < contents.length; i++) {
+					contents\[i\].className = 'tab-content' + (contents\[i\].id === tabName ? ' active' : '');
 				}
-				
-				// Show selected tab content
-				document.getElementById(tabName).classList.add('active');
-				event.target.classList.add('active');
-				
-				// Save current tab to cookie
+				for(var i = 0; i < tabs.length; i++) {
+					var selected = tabs\[i\].getAttribute('data-tab') === tabName;
+					tabs\[i\].className = 'tab' + (selected ? ' active' : '');
+					tabs\[i\].setAttribute('aria-selected', selected ? 'true' : 'false');
+				}
+				document.getElementById('folio-content').scrollTop = 0;
 				document.cookie = 'vices_menu_tab=' + tabName + '; path=/';
 			}
-			
-			// Restore active tab on load
 			window.onload = function() {
 				var cookies = document.cookie.split(';');
-				var activeTab = 'traits';
 				for(var i = 0; i < cookies.length; i++) {
 					var cookie = cookies\[i\].trim();
-					if(cookie.indexOf('vices_menu_tab=') == 0) {
-						activeTab = cookie.substring('vices_menu_tab='.length);
+					if(cookie.indexOf('vices_menu_tab=') === 0) {
+						showTab(cookie.substring('vices_menu_tab='.length));
 						break;
 					}
-				}
-				
-				// Activate the saved tab
-				if(activeTab && document.getElementById(activeTab)) {
-					var contents = document.getElementsByClassName('tab-content');
-					for(var i = 0; i < contents.length; i++) {
-						contents\[i\].classList.remove('active');
-					}
-					
-					var tabs = document.getElementsByClassName('tab');
-					for(var i = 0; i < tabs.length; i++) {
-						tabs\[i\].classList.remove('active');
-						if(tabs\[i\].getAttribute('onclick') && tabs\[i\].getAttribute('onclick').indexOf(activeTab) >= 0) {
-							tabs\[i\].classList.add('active');
-						}
-					}
-					
-					document.getElementById(activeTab).classList.add('active');
 				}
 			};
 		</script>
 		<body>
+		<div class="folio">
 			<div class="header">
-				<h1>Character Customization</h1>
-				<p>Configure all your character features</p>
-				<div style="margin-top: 10px;">
-					<a class='btn' href='byond://?src=\ref[src];undo_action=undo' style='font-size: 0.85em;'>⟲ Undo Last Change ([customization_history.len] available)</a>
+				<div><h1>Character Folio</h1><span class="character-name">[html_encode(real_name)]</span></div>
+				<div class="header-actions">
+					<a class='btn' href='byond://?src=\ref[src];undo_action=undo'>Undo Last Change ([customization_history.len])</a>
 				</div>
 			</div>
 			
 			<div class="tabs">
-				<a class="tab active" onclick="showTab('traits')">Traits & Virtues</a>
-				<a class="tab" onclick="showTab('loadout')">Loadout Items</a>
-				<a class="tab" onclick="showTab('languages')">Languages</a>
+				<a class="tab active" href="#traits" data-tab="traits" onclick="showTab('traits'); return false;">Traits &amp; Virtues</a>
+				<a class="tab" href="#loadout" data-tab="loadout" onclick="showTab('loadout'); return false;">Belongings</a>
+				<a class="tab" href="#languages" data-tab="languages" onclick="showTab('languages'); return false;">Languages</a>
 			</div>
 			
+			<div id="folio-content" class="folio-content" tabindex="0" aria-label="Character folio contents">
 			<div id="traits" class="tab-content active">
+			<div class="traits-columns"><div class="trait-column">
 			
 		<div class="statpack-section">
-			<h2>Statpack Selection</h2>
+			<h2>Nature &amp; Abilities</h2>
 			<div class="statpack-current">"}
 	
 	// Build statpack name with stats inline
@@ -1027,7 +887,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		</div>
 	</div>
 		<div class="statpack-section">
-			<h2>Virtue Selection</h2>
+			<h2>Virtues</h2>
 			<div class="statpack-current">"}
 	
 	var/virtue_name = virtue ? virtue.name : "None"
@@ -1123,8 +983,9 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 	html += {"
 			</div>
 		</div>
+		</div><div class="trait-column">
 		<div class="statpack-section">
-			<h2>Quirk Selection</h2>
+			<h2>Quirks</h2>
 	"}
 
 	var/quirk_points_earned = get_quirk_points_earned()
@@ -1133,12 +994,12 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 	var/triumph_collateral = get_triumph_collateral()
 
 	html += {"
-			<div style='font-size: 0.85em; margin-bottom: 8px;'>
-				<span style='color: [quirk_points_remaining < 0 ? "#f44336" : "#4CAF50"];'>Points Available: [quirk_points_remaining][triumph_collateral ? " ([triumph_collateral] TRIUMPHS)" : ""]</span> |
-				<span style='color: [theme["text"]];'>Spent: [quirk_points_spent]</span> |
-				<span>Earned from vices: [quirk_points_earned]</span>
+			<div class='quirk-ledger'>
+				<strong style='color: [quirk_points_remaining < 0 ? "#d99c93" : "#cdb58c"];'>[quirk_points_remaining] Q-Points available</strong>[triumph_collateral ? " ([triumph_collateral] TRIUMPHS)" : ""]<br>
+				[quirk_points_spent] spent &middot; [quirk_points_earned] earned from vices
 			</div>
-			<div style='color: [theme["label"]]; font-size: 0.8em; margin-bottom: 8px;'>Quirk points (Q-Points) are granted by taking vices and can be spent on quirks.<br>Anything points can't afford will be purchased with TRIUMPH at 2 TRI per 1 point.<br>Leftover quirk points will be converted 1-to-1 into TRIUMPH at the end of a round so long as you survived.</div>
+			<a class='disclosure' href='#quirk-rules' aria-expanded='false' aria-controls='quirk-rules' data-label='Quirk point rules' onclick=\"return toggleDetails('quirk-rules', this);\">+ Quirk point rules</a>
+			<div id='quirk-rules' class='quirk-rules detail-panel'>Vices grant Q-Points to spend on quirks. Costs beyond your points use 2 Triumphs per point. If you survive the round, unspent Q-Points become Triumphs at a 1-to-1 rate.</div>
 	"}
 
 	if(!length(quirks))
@@ -1200,8 +1061,10 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 			</div>
 		</div>
 		
-		<h2 style='color: [theme["text"]]; padding: 0 20px; margin: 20px 0 10px 0; border-bottom: 1px solid [theme["border"]]; padding-bottom: 10px;'>Vice Selection</h2>
-		<p style='color: [theme["label"]]; padding: 0 20px; margin: 0 0 15px 0; font-size: 0.9em;'>Select up to 6 vices. Each selected vice grants +1 loadout point <span style='color: #4CAF50;'>(you have [get_total_points()] total)</span>.<br>Your <b>first</b> vice is required but grants no Q-Points.<br>Additional vices after it grant at least one each.</p>			<div class="vices-grid">
+		</div></div>
+		<h2>Vices</h2>
+		<p class='section-note'>Up to six vices; each selected vice grants +1 loadout point ([get_total_points()] total). Your first vice is required and grants no Q-Points. Additional vices grant at least one each.</p>
+		<div class="vices-grid">
 	"}
 	
 	// Generate 6 vice slots
@@ -1250,7 +1113,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		else
 			// Empty slot
 			html += "<div class='empty-slot'>"
-			html += "Empty Slot<br><br>"
+			html += "<span>No vice selected</span>"
 			html += "<a class='btn btn-select' href='byond://?src=\ref[src];vice_action=select;slot=[i]'>Select Vice</a>"
 			html += "</div>"
 
@@ -1261,7 +1124,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 			</div>
 			
 		<div id="loadout" class="tab-content">
-			<h2 style='color: [theme["text"]]; margin: 0 0 10px 0; font-size: 1.1em;'>Loadout Selection</h2>
+			<h2>Personal Belongings</h2>
 	"}
 	
 	// Calculate point costs for loadout
@@ -1276,25 +1139,22 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 	var/loadout_remaining = total_points - loadout_spent
 	
 	html += {"
-			<div class='statpack-section'>
-				<div style='font-size: 0.85em; margin-bottom: 5px;'>
-					<span style='color: #4CAF50;'>Available Points: [loadout_remaining]</span> | 
-					<span style='color: [theme["text"]];'>Spent (Loadout): [loadout_spent]</span> / 
-					<span>Total Points: [total_points]</span>
+			<div class='loadout-summary'>
+				<div class='point-ledger'><strong class='[loadout_remaining < 0 ? "over-budget" : ""]'>[loadout_remaining] points available</strong><span>[loadout_spent] spent / [total_points] total &middot; 10 slots, earlier slots take priority</span></div>
+				<div class='loadout-policy'>
+					<a class='btn' href='byond://?src=\ref[src];toggle_loadout_priority=1'>Starting wearables: [prefer_loadout_wearables ? "Loadout first" : "Role outfit first"]</a>
+					<a class='disclosure' href='#equipment-rules' aria-expanded='false' aria-controls='equipment-rules' data-label='Equipment rules' onclick=\"return toggleDetails('equipment-rules', this);\">+ Equipment rules</a>
 				</div>
-				<div style='background: rgba(123, 83, 83, 0.2); border: 1px solid [theme["border"]]; padding: 8px; margin-top: 8px; font-size: 0.7em;'>
-					<div style='font-weight: bold; color: [theme["text"]]; margin-bottom: 4px;'>⚠ Loadout Item Modifications:</div>
-					<div style='color: [theme["label"]]; line-height: 1.4;'>
-						<b>ARMOR:</b> Set to armour minor protection (15 armor to all damage types) • Crit prevention removed • Armor class set to Light<br>
-						<b>WEAPONS:</b> Damage reduced by 30% • Weapon defense reduced by 50%<br>
-						<b>ALL ITEMS:</b> Sell price set to 0
-					</div>
+				<div id='equipment-rules' class='equipment-rules detail-panel'>
+					<p>With loadout priority enabled, compatible wearables replace role gear. Replaced gear is placed at your feet intact. Backpack contents stay unchanged; other selections remain in your stash. Earlier slots take priority.</p>
+					<strong>Armour:</strong> minor protection (15 armour), light class, no critical protection.<br>
+					<strong>Weapons:</strong> 30% less damage and 50% less defence. Loadout items cannot be sold.
 				</div>
 			</div>
-			<div style='display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;'>
+			<div class='loadout-grid'>
 	"}
 	
-	// Generate loadout slots with original styling
+	// Loadout slot order also determines wearable priority.
 	for(var/i = 1 to 10)
 		var/slot_var = i == 1 ? "loadout" : "loadout[i]"
 		var/datum/loadout_item/current_item = vars[slot_var]
@@ -1302,7 +1162,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		var/custom_desc = vars["loadout_[i]_desc"]
 		var/item_color = vars["loadout_[i]_hex"]
 		
-		html += "<div class='vice-slot'>"
+		html += "<div class='loadout-slot'>"
 		html += "<div class='slot-header'>"
 		html += "<span class='slot-number'>Slot [i]</span>"
 		
@@ -1318,8 +1178,8 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 			var/icon_state = initial(sample.icon_state)
 			var/item_desc = initial(sample.desc)
 			
-			html += "<div style='display: flex; align-items: center; margin-bottom: 6px;'>"
-			html += "<div style='width: 48px; height: 48px; background: rgba(0,0,0,0.6); border: 1px solid #444; margin-right: 8px; display: flex; align-items: center; justify-content: center;'>"
+			html += "<div class='item-display'>"
+			html += "<div class='item-icon'>"
 			
 			// Use the item's icon with caching
 			if(icon_file && icon_state)
@@ -1330,33 +1190,37 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 						GLOB.cached_loadout_icons.Cut(1, 50) // Remove oldest 50 entries
 					GLOB.cached_loadout_icons[cache_key] = icon(icon_file, icon_state)
 				user << browse_rsc(GLOB.cached_loadout_icons[cache_key], "loadout_icon_[i].png")
-				html += "<img src='loadout_icon_[i].png' style='max-width: 46px; max-height: 46px;' />"
+				html += "<img src='loadout_icon_[i].png' alt='' />"
 			
 			html += "</div>"
-			html += "<div style='flex: 1;'>"
-			html += "<div class='vice-name'>[custom_name ? custom_name : current_item.name]</div>"
-			html += "<div class='vice-desc'>[custom_desc ? custom_desc : (item_desc ? item_desc : current_item.desc)]</div>"
+			html += "<div class='item-info'>"
+			html += "<div class='vice-name'>[html_encode(custom_name ? custom_name : current_item.name)]</div>"
 			
 			if(custom_name || custom_desc)
-				html += "<div style='margin-top: 3px; font-size: 0.7em; color: [theme["label"]];'>✎ Customized</div>"
+				html += "<div class='item-note'>Customized</div>"
 			
 			if(item_color)
 				var/color_hex = clothing_color2hex(item_color)
-				html += "<div style='margin-top: 3px; font-size: 0.7em; display: flex; align-items: center;'><span style='color: [color_hex];'>●</span> <span style='color: [theme["label"]]; margin-left: 3px;'>Color: [item_color]</span></div>"
+				html += "<div class='item-note'><span style='color: [color_hex];'>&#9679;</span> Color: [html_encode(item_color)]</div>"
 			
 			html += "</div>"
 			html += "</div>"
 			
 			html += "<div class='actions'>"
 			html += "<a class='btn btn-select' href='byond://?src=\ref[src];loadout_action=item;slot=[i]'>Change Item</a>"
+			html += "<a class='btn btn-clear' href='byond://?src=\ref[src];loadout_action=clear;slot=[i]'>Clear</a>"
+			html += "</div>"
+			html += "<a class='disclosure' href='#item-details-[i]' aria-expanded='false' aria-controls='item-details-[i]' data-label='Details &amp; tailoring' onclick=\"return toggleDetails('item-details-[i]', this);\">+ Details &amp; tailoring</a>"
+			html += "<div id='item-details-[i]' class='item-details detail-panel'>"
+			html += "<div class='vice-desc'>[html_encode(custom_desc ? custom_desc : (item_desc ? item_desc : current_item.desc))]</div>"
+			html += "<div class='actions'>"
 			html += "<a class='btn btn-customize' href='byond://?src=\ref[src];loadout_action=rename;slot=[i]'>Rename</a>"
 			html += "<a class='btn btn-customize' href='byond://?src=\ref[src];loadout_action=describe;slot=[i]'>Description</a>"
 			html += "<a class='btn btn-color' href='byond://?src=\ref[src];loadout_action=color;slot=[i]'>Color</a>"
-			html += "<a class='btn btn-clear' href='byond://?src=\ref[src];loadout_action=clear;slot=[i]'>Clear</a>"
-			html += "</div>"
+			html += "</div></div>"
 		else
 			html += "<div class='empty-slot'>"
-			html += "Empty Slot<br><br>"
+			html += "<span>Nothing packed</span>"
 			html += "<a class='btn btn-select' href='byond://?src=\ref[src];loadout_action=item;slot=[i]'>Select Item</a>"
 			html += "</div>"
 		
@@ -1367,7 +1231,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		</div>
 		
 		<div id="languages" class="tab-content">
-			<h2 style='color: [theme["text"]]; margin: 0 0 20px 0;'>📜 Additional Language Selection 📜</h2>
+			<h2>Languages</h2>
 	"}
 	
 	// Calculate language costs using actual player TRIUMPHS (slot 1 = 2 triumphs, slot 2 = 4 triumphs)
@@ -1382,15 +1246,11 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 	var/lang_remaining = total_triumphs - lang_spent
 	
 	html += {"
-			<div class='statpack-section' style='background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; padding: 15px; margin-bottom: 20px;'>
-				<p style='margin: 0 0 10px 0;'>ℹ You get <b>one free language</b> from background, plus up to 2 additional languages. Slot 1 costs 2 Triumphs, Slot 2 costs 4 Triumphs. Your race may grant languages by default.</p>
-				<div style='font-size: 1em;'>
-					<span style='color: #4CAF50;'>Available Triumphs: [lang_remaining]</span> | 
-					<span style='color: [theme["text"]];'>Spent (Languages): [lang_spent]</span> / 
-					<span>Total Triumphs: [total_triumphs]</span>
-				</div>
+			<div class='language-summary'>
+				<p class='section-note'>One language comes from your background. Two additional languages cost Triumphs. Your race may grant other languages.</p>
+				<div class='point-ledger'><strong class='[lang_remaining < 0 ? "over-budget" : ""]'>[lang_remaining] Triumphs available</strong><span>[lang_spent] spent / [total_triumphs] total</span></div>
 			</div>
-			<div style='display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;'>
+			<div class='language-grid'>
 	"}
 	
 	// FREE LANGUAGE SLOT
@@ -1401,21 +1261,21 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		free_lang = new extra_language()
 
 	if(origin_lang)
-		html += "<div class='vice-slot' style='border-color: #7b5353;'>"
+		html += "<div class='vice-slot'>"
 		html += "<div class='slot-header'>"
 		html += "<span class='slot-number'>Free Language</span>"
-		html += "<span class='slot-cost' style='background: #7b5353; color: #ffcccc;'>LOCKED BY ORIGIN</span>"
+		html += "<span class='slot-cost'>From origin</span>"
 		html += "</div>"
 		html += "<div class='vice-display'>"
 		html += "<div class='vice-info'>"
-		html += "<div class='vice-name'>LOCKED</div>"
+		html += "<div class='vice-name'>[origin.name]</div>"
 		html += "<div class='vice-desc'>Granted by your origin ([origin.name]). Cannot be changed.</div>"
 		html += "</div></div></div>"
 	else
-		html += "<div class='vice-slot' style='border-color: #4CAF50;'>"
+		html += "<div class='vice-slot'>"
 		html += "<div class='slot-header'>"
 		html += "<span class='slot-number'>Free Language</span>"
-		html += "<span class='slot-cost' style='background: #4CAF50; color: [theme["bg"]];'>FREE</span>"
+		html += "<span class='slot-cost'>Free</span>"
 		html += "</div>"
 		if(free_lang)
 			html += "<div class='vice-display'>"
@@ -1429,7 +1289,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 			qdel(free_lang)
 		else
 			html += "<div class='empty-slot'>"
-			html += "No Language Selected<br><br>"
+			html += "<p class='section-note'>No language selected</p>"
 			html += "<a class='btn btn-select' href='byond://?src=\ref[src];language_action=free_select'>Select Language</a>"
 			html += "</div>"
 		html += "</div>"
@@ -1443,8 +1303,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		html += "<div class='vice-slot'>"
 		html += "<div class='slot-header'>"
 		html += "<span class='slot-number'>Language Slot [i]</span>"
-		if(current_lang_path && current_lang_path != "None")
-			html += "<span class='slot-cost'>[slot_cost] Triumphs</span>"
+		html += "<span class='slot-cost'>[slot_cost] Triumphs</span>"
 		html += "</div>"
 		
 		if(current_lang_path && current_lang_path != "None")
@@ -1466,7 +1325,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 			qdel(lang)
 		else
 			html += "<div class='empty-slot'>"
-			html += "No Language Selected<br><br>"
+			html += "<p class='section-note'>No language selected</p>"
 			html += "<a class='btn btn-select' href='byond://?src=\ref[src];language_action=select;slot=[i]'>Select Language</a>"
 			html += "</div>"
 		html += "</div>"
@@ -1476,33 +1335,27 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 	html += {"
 		</div>
 		
-		<div style='margin-top: 20px; padding: 10px; background: [theme["panel"]]; border: 1px solid [theme["border"]];'>
-			<div style='font-weight: bold; margin-bottom: 8px; color: [theme["text"]];'>📋 LOADOUT PRESETS</div>
-			<div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;'>
-				<div style='padding: 8px; background: [theme["panel_dark"]]; border: 1px solid [theme["border"]];'>
-					<div style='font-weight: bold; margin-bottom: 3px;'>Preset 1</div>
-					<div style='font-size: 0.75em; color: [theme["label"]]; margin-bottom: 5px; min-height: 30px;'>[get_preset_summary(1)]</div>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=save;slot=1' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>💾 Save</a>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=load;slot=1' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>📂 Load</a>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=clear;slot=1' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>🗑️ Clear</a>
-				</div>
-				<div style='padding: 8px; background: [theme["panel_dark"]]; border: 1px solid [theme["border"]];'>
-					<div style='font-weight: bold; margin-bottom: 3px;'>Preset 2</div>
-					<div style='font-size: 0.75em; color: [theme["label"]]; margin-bottom: 5px; min-height: 30px;'>[get_preset_summary(2)]</div>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=save;slot=2' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>💾 Save</a>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=load;slot=2' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>📂 Load</a>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=clear;slot=2' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>🗑️ Clear</a>
-				</div>
-				<div style='padding: 8px; background: [theme["panel_dark"]]; border: 1px solid [theme["border"]];'>
-					<div style='font-weight: bold; margin-bottom: 3px;'>Preset 3</div>
-					<div style='font-size: 0.75em; color: [theme["label"]]; margin-bottom: 5px; min-height: 30px;'>[get_preset_summary(3)]</div>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=save;slot=3' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>💾 Save</a>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=load;slot=3' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>📂 Load</a>
-					<a class='btn' href='byond://?src=\ref[src];preset_action=clear;slot=3' style='font-size: 0.7em; padding: 3px 6px; margin: 2px;'>🗑️ Clear</a>
-				</div>
-			</div>
 		</div>
-		
+		<div class='presets'>
+			<div class='preset-heading'><a class='disclosure' href='#preset-details' aria-expanded='false' aria-controls='preset-details' data-label='Character Presets' onclick=\"return toggleDetails('preset-details', this);\">+ Character Presets</a><span>Three slots to save &amp; recall</span></div>
+			<div id='preset-details' class='detail-panel'><div class='preset-grid'>
+			<div class='preset'><b>Preset 1</b><p>[html_encode(get_preset_summary(1))]</p>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=save;slot=1'>Save</a>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=load;slot=1'>Load</a>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=clear;slot=1'>Clear</a>
+			</div>
+			<div class='preset'><b>Preset 2</b><p>[html_encode(get_preset_summary(2))]</p>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=save;slot=2'>Save</a>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=load;slot=2'>Load</a>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=clear;slot=2'>Clear</a>
+			</div>
+			<div class='preset'><b>Preset 3</b><p>[html_encode(get_preset_summary(3))]</p>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=save;slot=3'>Save</a>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=load;slot=3'>Load</a>
+				<a class='btn' href='byond://?src=\ref[src];preset_action=clear;slot=3'>Clear</a>
+			</div>
+		</div></div></div>
+		</div>
 	</body>
 	</html>
 	"}
@@ -1511,6 +1364,13 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 
 /datum/preferences/Topic(href, href_list)
 	. = ..()
+	if(usr?.client?.prefs != src)
+		return
+	if(href_list["toggle_loadout_priority"])
+		prefer_loadout_wearables = !prefer_loadout_wearables
+		save_character()
+		open_vices_menu(usr)
+		return
 	
 	// Handle loadout item selection from icon menu
 	if(href_list["select_loadout_item"])
@@ -1524,7 +1384,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		var/list/items = selection_data["items"]
 		var/datum/loadout_item/selected = items[item_id]
 		
-		if(!selected || !slot)
+		if(!selected || slot < 1 || slot > 10 || !selected.available_to(usr.client))
 			temp_loadout_selection = null
 			usr << browse(null, "window=loadout_select")
 			return
@@ -1771,6 +1631,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 			
 			// Build statpack list
 			var/list/statpacks_available = list()
+			var/current_statpack
 			for (var/path as anything in GLOB.statpacks)
 				var/datum/statpack/SP = GLOB.statpacks[path]
 				if (!SP.name)
@@ -1781,9 +1642,11 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 				if(stats)
 					display_name = "[SP.name] [stats]"
 				statpacks_available[display_name] = SP
+				if(SP == statpack)
+					current_statpack = display_name
 			
 			statpacks_available = sort_list(statpacks_available)
-			var/choice = tgui_input_list(usr, "Choose your statpack:", "Statpack Selection", statpacks_available)
+			var/choice = tgui_input_list(usr, "Choose your statpack:", "Statpack Selection", statpacks_available, current_statpack)
 			
 			if(choice)
 				var/datum/statpack/selected = statpacks_available[choice]
@@ -2029,7 +1892,9 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 				choices[a_language.name] = language
 				qdel(a_language)
 			
-			var/chosen_language = input(usr, "Choose your character's extra language:", "EXTRA LANGUAGE") as null|anything in choices
+			var/chosen_language = tgui_input_list(usr, "Choose your character's extra language:", "Extra Language", choices)
+			if(usr?.client?.prefs != src)
+				return
 			if(chosen_language)
 				if(chosen_language == "None")
 					extra_language = "None"
@@ -2091,7 +1956,9 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 					choices[a_language.name] = language
 					qdel(a_language)
 				
-				var/chosen_language = input(usr, "Choose a language (Slot 1: 2 Triumphs, Slot 2: 4 Triumphs):", "Language Selection") as null|anything in choices
+				var/chosen_language = tgui_input_list(usr, "Choose a language (Slot 1: 2 Triumphs, Slot 2: 4 Triumphs):", "Language Selection", choices)
+				if(usr?.client?.prefs != src)
+					return
 				
 				if(chosen_language)
 					if(chosen_language == "None")

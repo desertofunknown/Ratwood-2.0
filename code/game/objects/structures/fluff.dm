@@ -627,7 +627,7 @@
 	if(obj_broken)
 		return
 	var/day = "... actually, WHAT dae is it?"
-	switch(GLOB.dayspassed)
+	switch(get_current_day_of_week())
 		if(1)
 			day = "Moon's dae."
 		if(2)
@@ -682,20 +682,7 @@
 	metalizer_result = /obj/item/roguegear/bronze
 
 /obj/structure/fluff/wallclock/attack_right(mob/user)
-	if(user.mind && isliving(user))
-		var/area/rogue/user_area = get_area(user)
-		if(user_area?.no_special_item_retrieval) //area does not allow fetching special items, return
-			return
-		if(user.mind.special_items && user.mind.special_items.len)
-			var/item = input(user, "What will I take?", "STASH") as null|anything in user.mind.special_items
-			if(item)
-				if(user.Adjacent(src))
-					if(user.mind.special_items[item])
-						var/path2item = user.mind.special_items[item]
-						user.mind.special_items -= item
-						var/obj/item/I = new path2item(user.loc)
-						user.put_in_hands(I)
-			return
+	handle_special_items_retrieval(user, src)
 
 /obj/structure/fluff/wallclock/Destroy()
 	if(soundloop)
@@ -707,7 +694,7 @@
 	if(obj_broken)
 		return
 	var/day = "... actually, WHAT dae is it?"
-	switch(GLOB.dayspassed)
+	switch(get_current_day_of_week())
 		if(1)
 			day = "Moon's dae."
 		if(2)

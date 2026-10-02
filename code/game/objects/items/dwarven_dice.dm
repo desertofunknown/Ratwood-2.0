@@ -411,23 +411,35 @@
 	name = "bag of dwarven dice"
 	desc = "A bag used to play Dwarven Dice. Activate in hand (Z) to start or join a game."
 	var/datum/dwarven_dice_game/active_game
-	var/static/dwarven_rules_text = {"<div style='padding:8px;font-family:Verdana,sans-serif;'>
-	<h2 style='text-align:center;margin:0 0 6px 0;'>Dwarven Dice</h2>
-<br>
-<b>Objective:</b> Be the player with the highest total after all players have rolled three dice.<br>
-<br>
-<b>Rules:</b><br>
-- One at a time, each player rolls a d6 three times.<br>
-- Highest total wins after everyone has rolled.<br>
-- One pair doubles your total.<br>
-- Instant WIN: 4-5-6 sequence OR any triple same number.<br>
-- Instant LOSE: 1-2-3 sequence OR any paired same number combined with a (1).<br>
+	var/static/dwarven_rules_text = {"<div class='keep-panel keep-prose' role='main' tabindex='0'>
+	<h1>Dwarven Dice</h1>
+	<h2>Objective:</h2>
+	<p>Be the player with the highest total after all players have rolled three dice.</p>
+	<h2>Rules:</h2>
+	<ul>
+		<li>One at a time, each player rolls a d6 three times.</li>
+		<li>Highest total wins after everyone has rolled.</li>
+		<li>One pair doubles your total.</li>
+		<li>Instant WIN: 4-5-6 sequence OR any triple same number.</li>
+		<li>Instant LOSE: 1-2-3 sequence OR any paired same number combined with a (1).</li>
+	</ul>
 </div>"}
 
 /obj/item/storage/pill_bottle/dice/dwarven/proc/show_rules(mob/living/user)
 	if(!user)
 		return
-	user << browse(dwarven_rules_text, "window=dwarven_dice_rules;size=700x450")
+	var/datum/browser/noclose/popup = new(user, "dwarven_dice_rules", "", 700, 450)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content({"<style>
+		@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+		@font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+		@font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+		@font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+	</style>"})
+	popup.set_content(dwarven_rules_text)
+	popup.open(FALSE)
+	winset(user, "dwarven_dice_rules.browser", "focus=true")
 
 /obj/item/storage/pill_bottle/dice/dwarven/PopulateContents()
 	for(var/i in 1 to 3)

@@ -127,6 +127,8 @@
 		B.amount -= 4
 		if(B.amount <= 0)
 			qdel(B)
+		else
+			B.update_bundle()
 
 	// Handle single loose bones
 	else if(istype(sacrifice, /obj/item/natural/bone))
@@ -136,7 +138,6 @@
 
 	var/mob/living/carbon/human/species/skeleton/npc/summoned/S = new /mob/living/carbon/human/species/skeleton/npc/summoned(T)
 
-	qdel(sacrifice)
 	S.caster = user
 	if(user.faction)
 		S.faction |= list("[user.mind.current.real_name]_faction")
@@ -381,6 +382,13 @@
 		to_chat(user, "<span class='warning'>You have no undead under your control nearby.</span>")
 		return
 
+	// A stance change affects only the selected lesser minion.
+	if(istype(target, /mob/living/simple_animal))
+		var/mob/living/simple_animal/minion = target
+		if((faction_tag in minion.faction) || (faction_ordering && user.faction_check_mob(minion)))
+			process_minions(caster = user, order_type = "toggle_stance", target = minion, faction_tag = faction_tag)
+			return
+
 	// Determine command type
 	var/command_type
 	if(ismob(target))
@@ -412,43 +420,38 @@
 	// -----------------------------------------------------------------
 
 	var/mob/caster = user
-	// Target is one of our own minions
-	if(ismob(target) && istype(target, /mob/living/simple_animal))
-		var/mob/living/simple_animal/minion = target
-		if(faction_tag in minion.faction)
-			src.process_minions(order_type = "toggle_stance", target = minion, faction_tag = faction_tag)
-			return
 
 	// Minions goto turf
 	if(isturf(target))
-		src.process_minions(order_type = "goto", target_location = target, faction_tag = faction_tag)
+		src.process_minions(caster = caster, order_type = "goto", target_location = target, faction_tag = faction_tag)
 		return
 
 	// Target is the caster (set minions to passive and follow)
 	else if(target == caster)
-		src.process_minions(order_type = "follow", target = caster, faction_tag = faction_tag)
+		src.process_minions(caster = caster, order_type = "follow", target = caster, faction_tag = faction_tag)
 		return
 
 	// Target is another mob
 	else if(ismob(target))
 		var/mob/living/mob_target = target
 		if(faction_tag in mob_target.faction)//We're only checking for faction tagged individuals. Potential issue may arise with commanded mobs attacking mobs with same faction leading to cheese circumstances, but most mobs are retaliatory.
-			src.process_minions(order_type = "aggressive", target = target, faction_tag = faction_tag)
+			src.process_minions(caster = caster, order_type = "aggressive", target = target, faction_tag = faction_tag)
 			return
 		else
 			// Set all minions to focus on the enemy target
-			src.process_minions(order_type = "attack", target = target, faction_tag = faction_tag)
+			src.process_minions(caster = caster, order_type = "attack", target = target, faction_tag = faction_tag)
 			return
 	to_chat(user, "<span class='notice'>You issue an order to your minions.</span>")
 
 //AI processing orders for simple mob undead
-/obj/effect/proc_holder/spell/invoked/command_undead/proc/process_minions(order_type, turf/target_location = null, mob/living/target = null, faction_tag = null)
-	var/mob/caster = usr
+/obj/effect/proc_holder/spell/invoked/command_undead/proc/process_minions(mob/caster, order_type, turf/target_location = null, mob/living/target = null, faction_tag = null)
 	var/count = 0
 
 	for (var/mob/other_mob in oview(12, caster))
 		if (istype(other_mob, /mob/living/simple_animal) && !other_mob.client) // Only simple_mobs for now
 			var/mob/living/simple_animal/minion = other_mob
+			if(!minion.ai_controller || (order_type == "toggle_stance" && minion != target))
+				continue
 
 			if ((faction_ordering && caster.faction_check_mob(minion)) || (!faction_ordering && faction_tag && (faction_tag in minion.faction)))
 				minion.ai_controller.CancelActions()	//this should immediately halt present actions/orders given.

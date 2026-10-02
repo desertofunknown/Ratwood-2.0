@@ -1,0 +1,240 @@
+:root .MigrantPanel {
+  min-width: 0;
+  padding: 8px 12px 12px;
+  color: var(--p-ink);
+  font:
+    13px/1.4 'Lora',
+    Georgia,
+    serif;
+
+  h2,
+  h3,
+  h4,
+  h5,
+  p,
+  ul {
+    margin: 0;
+  }
+  h2 {
+    margin: 7px 0 4px;
+    font:
+      18px/1.3 'Pterra',
+      Georgia,
+      serif;
+  }
+  h3,
+  h4 {
+    font:
+      16px/1.3 'Pterra',
+      Georgia,
+      serif;
+    overflow-wrap: anywhere;
+  }
+  h5 {
+    margin-top: 6px;
+    font: inherit;
+    font-weight: bold;
+  }
+  ul {
+    padding: 0;
+    list-style: none;
+  }
+  button {
+    min-height: 24px;
+    max-width: 100%;
+    padding: 2px 7px;
+    border: 1px solid var(--p-bg-shadow);
+    border-radius: 0;
+    background: var(--p-button-bg);
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+  }
+  button:hover:not(:disabled) {
+    background: var(--p-tab-active-bg);
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  button[aria-pressed='true'] {
+    border-color: var(--p-ink);
+    background: var(--p-tab-active-bg);
+    font-weight: bold;
+  }
+  button:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--p-seal-amber);
+    outline-offset: 2px;
+  }
+  summary {
+    cursor: pointer;
+  }
+  &__intro {
+    color: var(--p-ink-soft);
+  }
+  &__status,
+  &__queue,
+  &__waveHeading,
+  &__pledge > header,
+  &__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+  }
+  &__status {
+    justify-content: space-between;
+    padding: 5px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  &__queue {
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+    button {
+      color: var(--p-seal-green);
+      text-align: left;
+    }
+    > span {
+      overflow-wrap: anywhere;
+    }
+  }
+  &__tracks {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px 20px;
+  }
+  &__track {
+    min-width: 0;
+    padding-bottom: 5px;
+    > h3 {
+      padding-bottom: 3px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid var(--p-bg-shadow);
+    }
+  }
+  &__waveHeading {
+    gap: 2px 10px;
+    h4 {
+      flex-basis: 100%;
+    }
+  }
+  &__role {
+    display: flex;
+    align-items: baseline;
+    gap: 6px 10px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  &__roleText {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    > span.MigrantPanel__required,
+    > span.MigrantPanel__optional {
+      display: block;
+    }
+  }
+  &__roleActions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+    button[aria-pressed='true'] {
+      color: var(--p-seal-green);
+      border-color: var(--p-seal-green);
+    }
+  }
+  p.MigrantPanel__description {
+    margin: 4px 0;
+    white-space: pre-wrap;
+    color: var(--p-ink-soft);
+  }
+  &__tabs {
+    padding: 7px 0;
+    margin-top: 6px;
+    border-top: 1px solid var(--p-bg-shadow);
+    border-bottom: 1px solid var(--p-bg-shadow);
+    gap: 4px;
+  }
+  p.MigrantPanel__pledgeNote {
+    margin: 5px 0;
+    color: var(--p-ink-soft);
+  }
+  &__pledge {
+    padding: 7px 0;
+    border-bottom: 1px solid var(--p-bg-shadow);
+    > header {
+      h3 {
+        flex: 1;
+        min-width: 0;
+      }
+      button {
+        flex-shrink: 0;
+      }
+    }
+  }
+  &__pledgeProgress {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 8px;
+    margin: 4px 0;
+    color: var(--p-ink-soft);
+    font-variant-numeric: tabular-nums;
+    progress {
+      width: 110px;
+      height: 6px;
+      appearance: none;
+      border: 0;
+      background: var(--p-bg-shadow);
+      accent-color: var(--p-seal-blue);
+      &::-webkit-progress-bar {
+        background: var(--p-bg-shadow);
+      }
+      &::-webkit-progress-value {
+        background: var(--p-seal-blue);
+      }
+    }
+  }
+  &__catalogRoles {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 20px;
+    .MigrantPanel__role {
+      border: 0;
+      padding: 3px 0;
+    }
+  }
+  &__required,
+  &__stars {
+    color: var(--p-seal-amber);
+  }
+  &__optional {
+    color: var(--p-seal-blue);
+  }
+  &__arrival {
+    color: var(--p-seal-green);
+    font-variant-numeric: tabular-nums;
+  }
+  &__muted {
+    color: var(--p-ink-soft);
+  }
+  @media (max-width: 720px) {
+    &__tracks,
+    &__catalogRoles {
+      column-gap: 12px;
+    }
+  }
+  @media (max-width: 520px) {
+    &__tracks,
+    &__catalogRoles {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    &__pledge > header h3 {
+      flex-basis: 100%;
+    }
+  }
+}

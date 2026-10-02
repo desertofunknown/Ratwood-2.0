@@ -1,0 +1,213 @@
+:root .CityAssembly {
+  min-width: 0;
+  padding: 8px 12px 12px;
+  color: var(--p-ink);
+  font:
+    13px/1.4 'Lora',
+    Georgia,
+    serif;
+  overflow-wrap: anywhere;
+
+  h1,
+  h2,
+  p {
+    margin: 0;
+  }
+  h1 {
+    font:
+      20px/1.3 'Pterra',
+      Georgia,
+      serif;
+  }
+  h2 {
+    font-size: 14px;
+  }
+
+  &__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+
+    h1 {
+      flex: 1;
+      min-width: 0;
+    }
+    p {
+      flex-basis: 100%;
+      color: var(--p-ink-soft);
+    }
+  }
+
+  &__session {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 3px 12px;
+    padding: 6px 0 3px;
+    font-variant-numeric: tabular-nums;
+  }
+  &__quorum {
+    padding-bottom: 8px;
+  }
+  &__motion {
+    min-width: 0;
+    margin: 0;
+    padding: 5px 0 9px;
+    border: 0;
+    border-top: 1px solid var(--p-bg-shadow);
+
+    legend {
+      padding: 0 8px 0 0;
+      font-weight: bold;
+    }
+  }
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
+  }
+  &__candidate {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 3px 0 6px;
+
+    > button {
+      flex-shrink: 0;
+    }
+  }
+  &__candidate-copy {
+    flex: 1;
+    min-width: 0;
+  }
+  &__candidate-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 6px;
+
+    span {
+      color: var(--p-ink-soft);
+    }
+  }
+  &__pledge {
+    white-space: pre-wrap;
+    color: var(--p-ink-soft);
+  }
+  &__preview {
+    padding-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  &__hint {
+    color: var(--p-ink-soft);
+    padding-top: 2px;
+  }
+  &__candidacy {
+    margin-top: 6px;
+  }
+  &__editor {
+    margin-top: 6px;
+    textarea {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 62px;
+      margin-bottom: 4px;
+      padding: 4px 6px;
+      resize: vertical;
+      border: 1px solid var(--p-ink-faint);
+      background: var(--p-button-bg);
+      color: inherit;
+      font: inherit;
+    }
+  }
+  &__writ {
+    padding: 6px 0 9px;
+    border-top: 1px solid var(--p-bg-shadow);
+    h2 {
+      color: var(--p-seal-amber);
+    }
+    dl {
+      margin: 4px 0;
+    }
+    dl > div {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 12px;
+    }
+    dt {
+      min-width: 115px;
+    }
+    dd {
+      margin: 0;
+    }
+  }
+  &__record {
+    border-top: 1px solid var(--p-bg-shadow);
+    padding-top: 7px;
+    article,
+    p {
+      margin-top: 8px;
+    }
+    h2 {
+      color: var(--p-ink-soft);
+      font-size: 13px;
+    }
+  }
+
+  button {
+    max-width: 100%;
+    min-height: 24px;
+    padding: 2px 6px;
+    border: 1px solid var(--p-bg-shadow);
+    border-radius: 0;
+    background: var(--p-button-bg);
+    color: inherit;
+    font: inherit;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+
+    span {
+      color: var(--p-ink-soft);
+    }
+    &:hover:not(:disabled) {
+      background: var(--p-tab-active-bg);
+    }
+    &[aria-pressed='true'] {
+      border-color: var(--p-seal-amber);
+      box-shadow: inset 0 -2px var(--p-seal-amber);
+      font-weight: bold;
+    }
+    &:disabled {
+      color: var(--p-ink-faint);
+      cursor: default;
+    }
+  }
+  button:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--p-seal-amber);
+    outline-offset: 2px;
+  }
+  .CityAssembly__good {
+    color: var(--p-seal-green);
+  }
+  .CityAssembly__bad {
+    color: var(--p-seal-red);
+  }
+  .CityAssembly__amber {
+    color: var(--p-seal-amber);
+  }
+
+  @media (max-width: 520px) {
+    &__heading h1 {
+      flex-basis: 100%;
+    }
+    &__session {
+      justify-content: flex-start;
+    }
+  }
+}

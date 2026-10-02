@@ -21,10 +21,11 @@ SUBSYSTEM_DEF(dungeon_generator)
 	unlinked_dungeon_length = length(GLOB.unlinked_dungeon_entries)
 	while(length(markers))
 		for(var/obj/effect/dungeon_directional_helper/helper as anything in markers)
-			if(!get_turf(helper))
-				continue
-			find_soulmate(helper.dir, get_turf(helper), helper)
+			var/turf/helper_turf = QDELETED(helper) ? null : get_turf(helper)
+			if(helper_turf)
+				find_soulmate(helper.dir, helper_turf, helper)
 			markers -= helper
+			CHECK_TICK
 	return ..()
 
 /datum/controller/subsystem/dungeon_generator/fire(resumed)
@@ -33,13 +34,13 @@ SUBSYSTEM_DEF(dungeon_generator)
 		for(var/obj/effect/dungeon_directional_helper/helper as anything in markers)
 			if(current_run >= 4)
 				return
-			if(!get_turf(helper))
-				continue
-			find_soulmate(helper.dir, get_turf(helper), helper)
+			var/turf/helper_turf = QDELETED(helper) ? null : get_turf(helper)
+			if(helper_turf)
+				find_soulmate(helper.dir, helper_turf, helper)
+				current_run++
 			markers -= helper
 			if(TICK_CHECK_LOW)
 				return
-			current_run++
 
 /datum/controller/subsystem/dungeon_generator/proc/find_soulmate(direction, turf/creator, obj/effect/dungeon_directional_helper/looking_for_love)
 	creator = get_step(creator, direction)

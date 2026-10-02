@@ -97,21 +97,29 @@
 /datum/preferences/proc/print_descriptors_page()
 	var/static/list/custom_descriptor_types = CUSTOM_DESCRIPTOR_TYPE_LIST
 	var/list/dat = list()
+	dat += "<div class='appearance-card'><h2>Features</h2><div class='appearance-fields'>"
 	for(var/choice_type in pref_species.descriptor_choices)
 		var/datum/descriptor_choice/choice = DESCRIPTOR_CHOICE(choice_type)
 		var/datum/descriptor_entry/entry = get_descriptor_entry_for_choice(choice_type)
 		var/datum/mob_descriptor/descriptor = MOB_DESCRIPTOR(entry.descriptor_type)
-		dat += "<b>[choice.name]:</b> <a href='?_src_=prefs;descriptor_choice=[choice_type];preference=choose_descriptor;task=change_descriptor'>[descriptor.name]</a><br>"
+		dat += "<div class='appearance-field'><span class='appearance-field-label'>[choice.name]</span><span class='appearance-field-value'><a href='?_src_=prefs;descriptor_choice=[choice_type];preference=choose_descriptor;task=change_descriptor'>[descriptor.name]</a></span></div>"
+	dat += "</div></div>"
+	var/has_custom_descriptors = FALSE
 
 	for(var/i in 1 to CUSTOM_DESCRIPTOR_AMOUNT)
 		if(!has_descriptor_type_in_entries(custom_descriptor_types[i]))
 			continue
 		var/list/custom_data = print_custom_descriptor_customization(i)
 		if(custom_data)
+			if(!has_custom_descriptors)
+				dat += "<div class='appearance-card'><h2>Custom descriptions</h2><div class='appearance-fields'>"
+				has_custom_descriptors = TRUE
 			dat += custom_data
+	if(has_custom_descriptors)
+		dat += "</div></div>"
 
-	dat += "<br><br><center>Descriptors can vary based on gender<br>Some don't appear if you don't match a requirement<center>"
-	dat += "<br><center><a href='?_src_=prefs;preference=preview_descriptors;task=change_descriptor'><b>Preview All Descriptors</b></a></center>"
+	dat += "<p class='appearance-intro'>Descriptors can vary based on gender. Some do not appear unless you meet their requirements.</p>"
+	dat += "<div class='appearance-preview'><a href='?_src_=prefs;preference=preview_descriptors;task=change_descriptor'>Preview All Descriptors</a></div>"
 	return dat
 
 /datum/preferences/proc/print_custom_descriptor_customization(index)
@@ -132,13 +140,18 @@
 		var/translation = is_article_only ? article_translation : full_translation
 		prefix_html = "<a href='?_src_=prefs;index=[index];preference=custom_descriptor_prefix;task=change_descriptor'>[translation["[custom_entry.prefix_type]"]]</a>"
 
-	dat += "<br><b>[descriptor.name]:</b> [prefix_html]<a href='?_src_=prefs;index=[index];preference=custom_descriptor_content;task=change_descriptor'>[custom_entry.content_text]</a>"
+	var/content_label = length(custom_entry.content_text) ? custom_entry.content_text : "Describe feature"
+	dat += "<div class='appearance-field'><span class='appearance-field-label'>[descriptor.name]</span><span class='appearance-field-value'>[prefix_html]<a href='?_src_=prefs;index=[index];preference=custom_descriptor_content;task=change_descriptor'>[content_label]</a></span></div>"
 	return dat
 
 /datum/preferences/proc/show_descriptors_ui(mob/user)
 	var/list/dat = list()
 	dat += print_descriptors_page()
-	var/datum/browser/popup = new(user, "descriptors_customization", "<div align='center'>Describe myself</div>", 350, 510)
+	var/datum/browser/popup = new(user, "descriptors_customization", "Describe myself", 470, 610)
+	popup.add_stylesheet("appearance_editor", 'html/browser/appearance_editor.css')
+	var/datum/asset/simple/roguefonts/appearance_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = appearance_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
 

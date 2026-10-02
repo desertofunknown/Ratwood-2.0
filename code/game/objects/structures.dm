@@ -21,7 +21,8 @@
 	. = ..()
 	if(smooth)
 		queue_smooth(src)
-		queue_smooth_neighbors(src)
+		if(!mapload || SSicon_smooth.initialized)
+			queue_smooth_neighbors(src)
 		icon_state = ""
 	if(redstone_id)
 		GLOB.redstone_objs += src

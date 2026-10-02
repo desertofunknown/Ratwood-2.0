@@ -75,6 +75,19 @@
 /mob/living/proc/can_do_sex()
 	return TRUE
 
+/client/proc/set_erp_participation(enabled)
+	if(!prefs)
+		return
+	prefs.sexable = !!enabled
+	prefs.save_preferences()
+	if(prefs.sexable)
+		to_chat(src, "ERP participation enabled.")
+		return
+	for(var/mob/living/carbon/human/participant as anything in GLOB.human_list)
+		if(participant == mob || participant.sexcon?.target == mob)
+			participant.sexcon?.try_stop_current_action()
+	to_chat(src, "ERP participation disabled. Pending interactions have been stopped.")
+
 /// Shared helper to describe pits, load bearing code (worst proc in the codebase)
 /datum/sex_controller/proc/get_armpit_description(mob/living/carbon/human/described)
 	var/datum/bodypart_feature/pits/pit_hair = described?.get_bodypart_feature_of_slot(BODYPART_FEATURE_PITS)

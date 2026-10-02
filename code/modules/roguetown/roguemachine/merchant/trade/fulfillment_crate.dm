@@ -64,7 +64,7 @@
 	if(SSmerchant_trade.current_kinship_realm)
 		var/datum/foreign_realm/KR = SSmerchant_trade.realms[SSmerchant_trade.current_kinship_realm]
 		if(KR)
-			. += span_info("Bulk demand payouts from <b>[KR.name]</b> ships are +[round((KINSHIP_SELL_MULT - 1) * 100)]% due to Kinship.")
+			. += span_info("Demand payouts from <b>[KR.name]</b> ships are +[round((KINSHIP_SELL_MULT - 1) * 100)]% due to Kinship.")
 
 /obj/structure/roguemachine/ship_fulfillment/ui_state(mob/user)
 	return GLOB.human_adjacent_state
@@ -106,6 +106,9 @@
 	var/list/manifests = list()
 	var/kin_realm = SSmerchant_trade ? SSmerchant_trade.current_kinship_realm : null
 	var/kin_sell_mult = SSmerchant_trade ? SSmerchant_trade.get_kinship_sell_mult(kin_realm) : 1
+	var/levy_percent = SSmerchant_trade ? SSmerchant_trade.merchant_levy_percent : TRADE_MERCHANT_LEVY_DEFAULT_PERCENT
+	var/duty_rate = SStreasury ? SStreasury.get_tax_rate(TAX_CATEGORY_EXPORT_DUTY) : 0
+	var/can_manage_crate = can_manage(user)
 	if(SSmerchant_trade)
 		for(var/datum/trade_ship/ship in SSmerchant_trade.all_ships)
 			if(ship.dock_state != TRADE_SHIP_STATE_DOCKED)
@@ -114,13 +117,18 @@
 			var/list/lines = list()
 			for(var/list/line in ship.bulk_demands)
 				var/op = line["offered_price"]
+				var/gross = is_kin ? round(op * kin_sell_mult) : op
+				// Public estimate uses posted duty; settlement also accounts for quality, bundles and fractional carry.
+				var/estimated_net = max(0, gross - round(gross * duty_rate) - round(gross * levy_percent / 100))
 				lines += list(list(
 					"good" = line["good"] || line["typepath"] || "",
 					"good_name" = line["good_name"],
 					"qty_target" = line["qty_target"],
 					"qty_fulfilled" = line["qty_fulfilled"],
 					"offered_price" = op,
-					"kin_offered_price" = is_kin ? round(op * kin_sell_mult) : op,
+					"kin_offered_price" = gross,
+					"producer_payout" = estimated_net,
+					"by_bottle" = line["by_bottle"] ? TRUE : FALSE,
 					"tag" = line["tag"] || "",
 				))
 			if(length(lines))
@@ -129,18 +137,19 @@
 					"ship_id" = ship.ship_id,
 					"ship_name" = ship.ship_name,
 					"realm_id" = ship.realm_id,
+					"realm_name" = realm ? realm.name : ship.realm_id,
 					"is_kin" = is_kin,
 					"typical_provisions" = realm ? realm.typical_provisions() : "",
 					"lines" = lines,
 				))
 	data["manifests"] = manifests
-	data["middleman_cut_percent"] = SSmerchant_trade ? SSmerchant_trade.merchant_levy_percent : TRADE_MERCHANT_LEVY_DEFAULT_PERCENT
+	data["middleman_cut_percent"] = levy_percent
 	data["kinship_sell_pct"] = round((KINSHIP_SELL_MULT - 1) * 100)
-	data["can_manage"] = can_manage(user) ? TRUE : FALSE
-	data["duty_suspended"] = duty_suspended
-	data["duty_rate_pct"] = round(SStreasury.get_tax_rate(TAX_CATEGORY_EXPORT_DUTY) * 100)
-	data["duty_collected_here"] = duty_collected_here
-	data["duty_evaded_here"] = duty_evaded_here
+	data["can_manage"] = can_manage_crate
+	data["duty_suspended"] = can_manage_crate ? duty_suspended : FALSE
+	data["duty_rate_pct"] = round(duty_rate * 100)
+	data["duty_collected_here"] = can_manage_crate ? duty_collected_here : 0
+	data["duty_evaded_here"] = can_manage_crate ? duty_evaded_here : 0
 	return data
 
 /obj/structure/roguemachine/ship_fulfillment/attackby(obj/item/P, mob/user, params)
@@ -169,7 +178,7 @@
 		return
 	if(!SSmerchant_trade)
 		return
-	if(!(user in SStreasury.bank_accounts))
+	if(!SStreasury.get_account(user))
 		say("No account found for [user]. Submit your fingers to a Nervelock for inspection.")
 		return
 	var/list/tally = list("total_producer" = 0, "total_gross" = 0, "total_duty" = 0, "total_cut" = 0, "total_kin_bonus" = 0, "total_quality_delta" = 0, "lines" = list())
@@ -243,7 +252,7 @@
 		if(sound)
 			playsound(loc, 'sound/misc/hiss.ogg', 100, FALSE, -1)
 		return
-	if(!(user in SStreasury.bank_accounts))
+	if(!SStreasury.get_account(user))
 		if(message)
 			say("No account found for [user]. Submit your fingers to a Nervelock for inspection.")
 		return
@@ -306,7 +315,7 @@
 		if(B.amount <= 0)
 			qdel(B)
 		else
-			B.update_icon()
+			B.update_bundle()
 		settle_payout(line["offered_price"] * take, user, ship, line["good_name"], take, message, sound, tally)
 		return
 	var/potion_good_id = identify_potion_trade_good(I)
@@ -358,7 +367,7 @@
 /obj/structure/roguemachine/ship_fulfillment/proc/attempt_deposit_keg(obj/structure/fermentation_keg/keg, mob/user)
 	if(!SSmerchant_trade)
 		return
-	if(!(user in SStreasury.bank_accounts))
+	if(!SStreasury.get_account(user))
 		say("No account found for [user]. Submit your fingers to a Nervelock for inspection.")
 		return
 	if(keg.anchored)
@@ -464,6 +473,8 @@
 			continue
 		if(TG.accept_subtypes ? istype(P, TG.item_type) : P.type == TG.item_type)
 			return id
+		if(P.type in TG.alt_item_types)
+			return id
 	return null
 
 /obj/structure/roguemachine/ship_fulfillment/proc/identify_potion_trade_good(obj/item/P)
@@ -480,7 +491,7 @@
 /obj/structure/roguemachine/ship_fulfillment/proc/identify_trade_good_for_type(item_type)
 	for(var/id in GLOB.trade_goods)
 		var/datum/trade_good/TG = GLOB.trade_goods[id]
-		if(TG.item_type == item_type)
+		if(TG.item_type == item_type || (item_type in TG.alt_item_types))
 			return id
 	return null
 

@@ -9,6 +9,7 @@
 	chargetime = 0
 	skipcharge = TRUE
 	var/static/list/spell_icon_cache = list()
+	var/list/spell_catalogue_paths
 
 /obj/effect/proc_holder/spell/self/learnspell/ui_state(mob/user)
 	return GLOB.always_state
@@ -27,6 +28,20 @@
 	return TRUE
 
 /obj/effect/proc_holder/spell/self/learnspell/ui_interact(mob/user, datum/tgui/ui)
+	// Detect in-place edits and reordering of the global spell list.
+	if(isnull(spell_catalogue_paths))
+		spell_catalogue_paths = GLOB.learnable_spells ? GLOB.learnable_spells.Copy() : list()
+	else
+		var/catalogue_changed = (length(spell_catalogue_paths) != length(GLOB.learnable_spells))
+		if(!catalogue_changed)
+			for(var/index in 1 to length(spell_catalogue_paths))
+				if(spell_catalogue_paths[index] != GLOB.learnable_spells[index])
+					catalogue_changed = TRUE
+					break
+		if(catalogue_changed)
+			spell_catalogue_paths = GLOB.learnable_spells ? GLOB.learnable_spells.Copy() : list()
+			update_static_data_for_all_viewers()
+
 	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
 		ui = new(user, src, "SpellLibrary", name)
@@ -62,6 +77,25 @@
 		var/tier_locked = (spell_tier > user_spell_tier)
 		var/evil_locked = (zizo_req > user_evil)
 		var/can_afford = (!is_known && !tier_locked && !evil_locked && (points_avail >= cost))
+
+		spells_data += list(list(
+			"path" = "[spell_path]",
+			"is_known" = is_known,
+			"can_afford" = can_afford,
+			"tier_locked" = tier_locked,
+			"evil_locked" = evil_locked
+		))
+
+	data["spells"] = spells_data
+	return data
+
+/obj/effect/proc_holder/spell/self/learnspell/ui_static_data(mob/user)
+	var/list/spell_catalogue = list()
+	for(var/spell_path in GLOB.learnable_spells)
+		var/obj/effect/proc_holder/spell/S = spell_path
+		if(!S)
+			continue
+
 		var/img64 = spell_icon_cache[spell_path]
 		if(!img64)
 			var/icon_file = initial(S.action_icon) || 'icons/mob/actions/roguespells.dmi'
@@ -85,26 +119,21 @@
 
 			spell_icon_cache[spell_path] = img64
 
-		spells_data += list(list(
+		spell_catalogue += list(list(
 			"name" = initial(S.name) || "Unknown Spell",
 			"desc" = initial(S.desc) || "",
-			"cost" = cost,
-			"tier" = spell_tier,
+			"cost" = initial(S.cost),
+			"tier" = initial(S.spell_tier),
 			"path" = "[spell_path]",
 			"school" = initial(S.school) || "generic",
 			"range" = initial(S.range),
 			"charge_time" = initial(S.chargetime) / 10,
 			"cooldown" = initial(S.recharge_time) / 10,
 			"fatigue" = initial(S.releasedrain),
-			"img64" = img64,
-			"is_known" = is_known,
-			"can_afford" = can_afford,
-			"tier_locked" = tier_locked,
-			"evil_locked" = evil_locked
+			"img64" = img64
 		))
 
-	data["spells"] = spells_data
-	return data
+	return list("spell_catalogue" = spell_catalogue)
 
 /obj/effect/proc_holder/spell/self/learnspell/ui_act(action, params)
 	. = ..()

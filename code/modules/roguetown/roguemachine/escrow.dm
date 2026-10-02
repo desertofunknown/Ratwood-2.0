@@ -44,9 +44,9 @@ GLOBAL_LIST_EMPTY(escrow_machines)
 		else if(istype(key, /datum/crafting_recipe))
 			var/datum/crafting_recipe/CR = key
 			if(islist(CR.result))
-				var/list/rl = CR.result
-				if(length(rl))
-					result_path = rl[1]
+				for(var/path in CR.result)
+					out[path] = (out[path] || 0) + want
+				continue
 			else
 				result_path = CR.result
 		if(!result_path)

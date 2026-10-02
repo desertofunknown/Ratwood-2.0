@@ -222,22 +222,26 @@
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
 	var/canread = user.can_read(src, TRUE)
-	var/contents
-
-	if(canread)
-		contents = "<center>THE PEDDLER, THIRD ITERATION<BR>"
-		if(locked)
-			contents += "<a href='?src=[REF(src)];change=1'>Stored Mammon:</a> [budget]<BR>"
-		else
-			contents += "<a href='?src=[REF(src)];withdrawgain=1'>Stored Profits:</a> [wgain]<BR>"
-	else
-		contents = "<center>[stars("THE PEDDLER, THIRD ITERATION")]<BR>"
-		if(locked)
-			contents += "<a href='?src=[REF(src)];change=1'>[stars("Stored Mammon:")]</a> [budget]<BR>"
-		else
-			contents += "<a href='?src=[REF(src)];withdrawgain=1'>[stars("Stored Profits:")]</a> [wgain]<BR>"
-
-	contents += "</center>"
+	var/list/labels = list(
+		"title" = "The Peddler",
+		"edition" = "Third iteration",
+		"mode" = locked ? "Customer" : "Operator / Unlocked",
+		"help" = locked ? "Insert coins into the machine, then choose your wares." : "Insert wares to stock the shelves. Select a name or price to edit it.",
+		"item" = "Wares",
+		"quantity" = "Stock",
+		"price" = "Mammon",
+		"action" = "Action",
+		"buy" = "Buy",
+		"take" = "Take",
+		"free" = "Free",
+		"empty" = "The shelves are empty.",
+		"balance" = locked ? "Stored Mammon" : "Stored Profits",
+		"withdraw" = locked ? "Return change" : "Withdraw profits"
+	)
+	if(!canread)
+		for(var/label in labels)
+			labels[label] = stars(labels[label])
+	var/list/contents = list("<div class='merchant-folio'><div class='merchant-heading'><div class='merchant-edition'>[labels["edition"]]</div><h1>[labels["title"]]</h1><div class='merchant-mode'>[labels["mode"]]</div><p>[labels["help"]]</p></div><div class='merchant-stock'>")
 
 	var/list/groups = list()
 	for(var/obj/item/I in held_items)
@@ -247,28 +251,29 @@
 			groups[key] = list("REP" = I, "COUNT" = 0, "PRICE" = held_items[I]["PRICE"])
 		groups[key]["COUNT"] += 1
 
-	// render groups
+	contents += "<table class='merchant-table'><thead><tr><th scope='col'>[labels["item"]]</th><th scope='col' class='merchant-quantity'>[labels["quantity"]]</th><th scope='col' class='merchant-price'>[labels["price"]]</th><th scope='col' class='merchant-action'>[labels["action"]]</th></tr></thead><tbody>"
 	for(var/key in groups)
 		var/obj/item/rep = groups[key]["REP"]
 		var/namer = held_items[rep]["NAME"]
 		var/price = groups[key]["PRICE"]
 		var/count = groups[key]["COUNT"]
-
+		var/display_name = html_encode(canread ? namer : stars(namer))
+		var/display_price = price ? "[price]" : labels["free"]
+		contents += "<tr><td class='merchant-product'><span class='merchant-icon'>[icon2html(rep, user)]</span><div class='merchant-name'>"
 		if(locked)
-			if(canread)
-				contents += "[icon2html(rep, user)] [namer] x[count] - [price] <a href='?src=[REF(src)];buy=[REF(rep)]'>BUY</a>"
-			else
-				contents += "[icon2html(rep, user)] [stars(namer)] x[count] - [price] <a href='?src=[REF(src)];buy=[REF(rep)]'>[stars("BUY")]</a>"
+			contents += "[display_name]</div></td><td class='merchant-quantity'>[count]</td><td class='merchant-price'>[display_price]</td><td class='merchant-action'><a href='?src=[REF(src)];buy=[REF(rep)]'>[price ? labels["buy"] : labels["take"]]</a></td></tr>"
 		else
-			if(canread)
-				contents += "[icon2html(rep, user)] <a href='?src=[REF(src)];setname=[REF(rep)]'>[namer]</a> x[count] - <a href='?src=[REF(src)];setprice=[REF(rep)]'>[price]</a> <a href='?src=[REF(src)];retrieve=[REF(rep)]'>TAKE</a>"
-			else
-				contents += "[icon2html(rep, user)] <a href='?src=[REF(src)];setname=[REF(rep)]'>[stars(namer)]</a> x[count] - <a href='?src=[REF(src)];setprice=[REF(rep)]'>[price]</a> <a href='?src=[REF(src)];retrieve=[REF(rep)]'>[stars("TAKE")]</a>"
+			contents += "<a class='merchant-edit' href='?src=[REF(src)];setname=[REF(rep)]'>[display_name]</a></div></td><td class='merchant-quantity'>[count]</td><td class='merchant-price'><a class='merchant-edit' href='?src=[REF(src)];setprice=[REF(rep)]'>[display_price]</a></td><td class='merchant-action'><a href='?src=[REF(src)];retrieve=[REF(rep)]'>[labels["take"]]</a></td></tr>"
+	if(!length(groups))
+		contents += "<tr><td colspan='4' class='merchant-empty'>[labels["empty"]]</td></tr>"
+	contents += "</tbody></table></div><div class='merchant-footer'><div class='merchant-balance'><span>[labels["balance"]]</span><strong>[locked ? (budget ? budget : 0) : wgain]</strong></div><a href='?src=[REF(src)];[locked ? "change" : "withdrawgain"]=1'>[labels["withdraw"]]</a></div></div>"
 
-		contents += "<BR>"
-
-	var/datum/browser/popup = new(user, "VENDORTHING", "", 450, 350)
-	popup.set_content(contents)
+	var/datum/browser/popup = new(user, "VENDORTHING", "", 640, 600)
+	popup.add_stylesheet("merchant", 'html/browser/merchant.css')
+	var/datum/asset/simple/roguefonts/merchant_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = merchant_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Merchant Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Merchant Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Merchant Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+	popup.set_content(contents.Join())
 	popup.open()
 
 /obj/structure/roguemachine/vendor/obj_break(damage_flag)

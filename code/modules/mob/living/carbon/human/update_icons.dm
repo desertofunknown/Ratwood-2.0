@@ -1612,14 +1612,14 @@ There are several things that need to be remembered:
 		apply_overlay(LEGCUFF_LAYER)
 
 /proc/wear_female_version(t_color, icon, layer, type)
-	var/index = t_color
+	var/index = "[icon]|[t_color]|[type]"
 	var/icon/female_clothing_icon = GLOB.female_clothing_icons[index]
 	if(!female_clothing_icon) 	//Create standing/laying icons if they don't exist
 		generate_female_clothing(index,t_color,icon,type)
-	return mutable_appearance(GLOB.female_clothing_icons[t_color], layer = -layer)
+	return mutable_appearance(GLOB.female_clothing_icons[index], layer = -layer)
 
 /proc/wear_dismembered_version(t_color, icon, layer, sleeveindex, type)
-	var/index = "[t_color][sleeveindex]"
+	var/index = "[icon]|[t_color]|[sleeveindex]|[type]"
 	var/icon/clothing_icon = GLOB.dismembered_clothing_icons[index]
 	if(!clothing_icon) 	//Create standing/laying icons if they don't exist
 		generate_dismembered_clothing(index,t_color,icon,sleeveindex, type)
@@ -1818,19 +1818,16 @@ generate/load female uniform sprites matching all previously decided variables
 
 
 	if(!isinhands && HAS_BLOOD_DNA(src))
-		var/index = "[t_state][sleeveindex]"
+		var/index = "[file2use]|[t_state]|[sleeveindex]|[sleevejazz]|[sleeved && !nodismemsleeves]|[boobed_overlay && boobed]|[bloody_icon]|[bloody_icon_state]"
 		var/static/list/bloody_onmob = list()
-		var/icon/clothing_icon = bloody_onmob["[index][(boobed_overlay) ? "_boob" : ""]"]
+		var/icon/clothing_icon = bloody_onmob[index]
 		if(!clothing_icon)
-			if(sleeved && sleeveindex < 4) //cut out sleeves from north/south sprites
-				clothing_icon = icon(GLOB.dismembered_clothing_icons[index])
-			else
-				clothing_icon = icon(file2use, t_state)
+			clothing_icon = icon(standing.icon, standing.icon_state)
 			if(boobed_overlay && boobed)
 				clothing_icon.Blend(icon(file2use, "[t_state]_boob"), ICON_OVERLAY)
 			clothing_icon.Blend("#fff", ICON_ADD) 			//fills the icon_state with white (except where it's transparent)
 			clothing_icon.Blend(icon(bloody_icon, bloody_icon_state), ICON_MULTIPLY) //adds blood and the remaining white areas become transparant
-			bloody_onmob["[index][(boobed_overlay) ? "_boob" : ""]"] = fcopy_rsc(clothing_icon)
+			bloody_onmob[index] = fcopy_rsc(clothing_icon)
 		var/mutable_appearance/pic = mutable_appearance(clothing_icon, -layer2use)
 		standing.overlays.Add(pic)
 
@@ -2034,7 +2031,26 @@ generate/load female uniform sprites matching all previously decided variables
 					observers = null
 					break
 
+/mob/living/carbon/human
+	var/tmp/bodypart_update_defer_count = 0
+	var/tmp/bodypart_update_pending = FALSE
+
+/mob/living/carbon/human/proc/defer_bodypart_updates()
+	bodypart_update_defer_count++
+
+/mob/living/carbon/human/proc/resume_bodypart_updates()
+	if(bodypart_update_defer_count)
+		bodypart_update_defer_count--
+	if(bodypart_update_defer_count || !bodypart_update_pending)
+		return
+	bodypart_update_pending = FALSE
+	update_body_parts(TRUE)
+
 /mob/living/carbon/human/update_body_parts(redraw = FALSE)
+	if(bodypart_update_defer_count)
+		bodypart_update_pending = TRUE
+		return
+
 	var/oldkey = icon_render_key
 	icon_render_key = generate_icon_render_key()
 	if(oldkey == icon_render_key && !redraw)

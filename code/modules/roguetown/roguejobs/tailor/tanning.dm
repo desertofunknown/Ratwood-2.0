@@ -4,6 +4,7 @@
 	icon = 'icons/roguetown/misc/structure.dmi'
 	icon_state = "dryrack"
 	var/obj/item/natural/hide/hide
+	var/mob/living/scraping_user
 	max_integrity = 200
 	density = TRUE
 	climbable = TRUE
@@ -39,16 +40,23 @@
 			return
 	if((user.used_intent.type == /datum/intent/dagger/cut || user.used_intent.type == /datum/intent/sword/cut || user.used_intent.type == /datum/intent/axe/cut) && hide)
 		if(anchored)
+			if(scraping_user)
+				to_chat(user, span_warning("Someone is already scraping this hide."))
+				return
+			var/obj/item/natural/hide/worked_hide = hide
+			scraping_user = user
 			var/skill_level = max(user.get_skill_level(/datum/skill/craft/tanning))
 			var/work_time = (120 - (skill_level * 15))
 			var/pieces_to_spawn = rand(1, min(skill_level + 1, 6)) //Random number from 1 to skill level
 			var/sound_played = FALSE
 			to_chat(user, span_warning("I begin scraping the hide's skin..."))
-			if(!do_after(user, work_time, target = user))
+			var/completed = do_after(user, work_time, target = src)
+			scraping_user = null
+			if(!completed || QDELETED(src) || QDELETED(worked_hide) || hide != worked_hide || worked_hide.loc != src || !anchored || QDELETED(I) || I.loc != user)
 				return
 			playsound(src,pick('sound/items/book_open.ogg','sound/items/book_page.ogg'), 100, FALSE)
 			QDEL_NULL(hide)
-			user.mind.add_sleep_experience(/datum/skill/craft/tanning, user.STAINT * 2) //these numbers may need some revision
+			user.mind?.add_sleep_experience(/datum/skill/craft/tanning, user.STAINT * 2) //these numbers may need some revision
 			update_icon()
 			var/essence_factor = 1 // Chance of getting an essence
 			// Not flat scaling, tilted toward the higher levels

@@ -19,6 +19,7 @@ export type RoyalSnapshot = {
   headeater_levy: number;
   import_tariff: number;
   export_duty: number;
+  recovered_spoils: number;
   other_fees: number;
 };
 

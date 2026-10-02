@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useBackend } from 'tgui/backend';
 import { Window } from 'tgui/layouts';
 import { Box, Section, Stack, TextArea } from 'tgui-core/components';
@@ -74,26 +74,35 @@ export const TextInputModal = (props) => {
 
   const visualMultiline = multiline || input.length >= 30;
   // Dynamically expands the window to accommodate longer prompt messages.
-  const dynamicHeight = message.length > 30 ? (message.length / 40) * 18 : 18;
+  const dynamicHeight = Math.min(
+    160,
+    Math.max(22, Math.ceil(message.length / 55) * 22),
+  );
 
   // Explicitly multiline inputs (flavor text, OOC notes, ERP prefs, etc.) get a large canvas
   // so they're comfortable to read and edit. visualMultiline (input overflow) gets a modest bump.
   // bigmodal hard-overrides both for the largest inputs.
   let windowHeight =
-    145 +
+    210 +
     dynamicHeight +
     (multiline ? 225 : visualMultiline ? 80 : 0) +
     (message.length && large_buttons ? 5 : 0);
   if (preview_leadin) windowHeight += 30;
-  if (bigmodal) windowHeight = 500;
-  const windowWidth = bigmodal ? 530 : multiline ? 425 : 325;
+  if (bigmodal) windowHeight = 560;
+  const windowWidth = bigmodal ? 620 : multiline ? 560 : 480;
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key === KEY.Enter && (!visualMultiline || !event.shiftKey)) {
-      act('submit', { entry: input });
-    }
     if (isEscape(event.key)) {
+      event.preventDefault();
       act('cancel');
+      return;
+    }
+    if ((event.target as HTMLElement).closest('.InputModal__footer')) {
+      return;
+    }
+    if (event.key === KEY.Enter && (!visualMultiline || !event.shiftKey)) {
+      event.preventDefault();
+      act('submit', { entry: input });
     }
   }
   // gate for chastity hardmode prayer to prevent cheaters from copy pasting
@@ -106,12 +115,12 @@ export const TextInputModal = (props) => {
 
   return (
     <Window title={title} width={windowWidth} height={windowHeight}>
-      {timeout && <Loader value={timeout} />}
-      <Window.Content onKeyDown={handleKeyDown}>
+      {!!timeout && <Loader value={timeout} />}
+      <Window.Content className="InputModal" onKeyDown={handleKeyDown}>
         <Section fill>
           <Stack fill vertical>
             <Stack.Item>
-              <Box color="label">{message}</Box>
+              <Box className="InputModal__prompt">{message}</Box>
             </Stack.Item>
             <Stack.Item grow>
               {/* height:100% propagates the Stack.Item's grown height down to the TextArea */}
@@ -125,9 +134,8 @@ export const TextInputModal = (props) => {
                   autoSelect
                   fluid
                   userMarkup={{ u: '_', i: '|', b: '+' }}
-                  height={multiline || input.length >= 30 ? '100%' : '1.8rem'}
+                  height={multiline || input.length >= 30 ? '100%' : '2.8rem'}
                   maxLength={max_length}
-                  onEscape={() => act('cancel')}
                   onChange={onType}
                   placeholder="Type something..."
                   value={input}
@@ -136,13 +144,18 @@ export const TextInputModal = (props) => {
             </Stack.Item>
             {!!preview_leadin && (
               <Stack.Item>
-                <Box color="label" italic>
+                <Box className="InputModal__hint" italic>
                   {preview_leadin} {input.trim() || '...'}
                 </Box>
               </Stack.Item>
             )}
-            <Stack.Item>
-              <InputButtons input={input} message={`${input.length}`} />
+            <Stack.Item className="InputModal__footer">
+              <InputButtons
+                input={input}
+                message={max_length > 0 && max_length <= 10000
+                  ? `${input.length} / ${max_length}`
+                  : `${input.length} characters`}
+              />
             </Stack.Item>
           </Stack>
         </Section>

@@ -65,10 +65,10 @@
 /datum/light_source/Destroy(force)
 	remove_lum()
 	if (source_atom)
-		LAZYREMOVE(source_atom.light_sources, src)
+		remove_from_light_sources(source_atom)
 
-	if (top_atom)
-		LAZYREMOVE(top_atom.light_sources, src)
+	if (top_atom && top_atom != source_atom)
+		remove_from_light_sources(top_atom)
 
 	if (needs_update)
 		SSlighting.sources_queue -= src
@@ -82,7 +82,7 @@
 
 	LAZYADD(new_atom_host.light_sources, src)
 	//yes, we register the signal to the top atom too, this is intentional and ensures contained lighting updates properly
-	if(ismovable(new_atom_host) && new_atom_host == source_atom)
+	if(ismovable(new_atom_host))
 		RegisterSignal(new_atom_host, COMSIG_MOVABLE_MOVED, PROC_REF(update_host_lights))
 	return TRUE
 
@@ -92,7 +92,7 @@
 		return FALSE
 
 	LAZYREMOVE(old_atom_host.light_sources, src)
-	if(ismovable(old_atom_host) && old_atom_host == source_atom)
+	if(ismovable(old_atom_host))
 		UnregisterSignal(old_atom_host, COMSIG_MOVABLE_MOVED)
 	return TRUE
 
@@ -114,13 +114,13 @@
 /datum/light_source/proc/update(atom/new_top_atom)
 	// This top atom is different.
 	if (new_top_atom && new_top_atom != top_atom)
-		if(top_atom != source_atom && top_atom.light_sources) // Remove ourselves from the light sources of that top atom.
-			LAZYREMOVE(top_atom.light_sources, src)
+		if(top_atom && top_atom != source_atom)
+			remove_from_light_sources(top_atom)
 
 		top_atom = new_top_atom
 
 		if (top_atom != source_atom)
-			LAZYADD(top_atom.light_sources, src) // Add ourselves to the light sources of our new top atom.
+			add_to_light_sources(top_atom)
 
 	EFFECT_UPDATE(LIGHTING_CHECK_UPDATE)
 

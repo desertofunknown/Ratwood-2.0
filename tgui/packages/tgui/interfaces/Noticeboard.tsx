@@ -2,19 +2,16 @@ import { useState } from 'react';
 
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
-import {
-  inkButtonStyle,
-  pageStyle,
-  rulerStyle,
-  subtitleStyle,
-  tabBarStyle,
-  tabStyle,
-  titleStyle,
-} from './common/parchment';
 import { AvisaTab } from './Noticeboard/AvisaTab';
 import { PostingsTab } from './Noticeboard/PostingsTab';
 import { RosterTab } from './Noticeboard/RosterTab';
 import { type NoticeboardData, type TabKey } from './Noticeboard/types';
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'postings', label: 'Postings' },
+  { key: 'avisa', label: 'The Avisa' },
+  { key: 'roster', label: 'Mercenary Roster' },
+];
 
 export const Noticeboard = () => {
   const { data, act } = useBackend<NoticeboardData>();
@@ -23,42 +20,35 @@ export const Noticeboard = () => {
   return (
     <Window title="Noticeboard" width={1000} height={760} theme="parchment">
       <Window.Content scrollable>
-        <div style={{ ...pageStyle, position: 'relative' }}>
-          <button
-            type="button"
-            title="Refresh market data (5s cooldown)"
-            style={{ ...inkButtonStyle({}), position: 'absolute', top: 8, right: 8 }}
-            onClick={() => act('refresh_market')}
-          >
-            ↻
-          </button>
-          <div style={titleStyle}>The Notice Board</div>
-          <div style={subtitleStyle}>
-            of {data.realm_name || 'the realm'} &middot; postings of the realm and her commons
-          </div>
-          <hr style={rulerStyle} />
-
-          <div style={tabBarStyle}>
-            <div
-              style={tabStyle(tab === 'postings')}
-              onClick={() => setTab('postings')}
-            >
-              Postings
+        <div className="RealmNoticeboard">
+          <header className="RealmNoticeboard__heading">
+            <div>
+              <h1>The Notice Board</h1>
+              <p>
+                of {data.realm_name || 'the realm'} — postings of the realm and
+                her commons
+              </p>
             </div>
-            <div
-              style={tabStyle(tab === 'avisa')}
-              onClick={() => setTab('avisa')}
+            <button
+              type="button"
+              title="Refresh market data (5s cooldown)"
+              onClick={() => act('refresh_market')}
             >
-              The Avisa
-            </div>
-            <div
-              style={tabStyle(tab === 'roster')}
-              onClick={() => setTab('roster')}
-            >
-              Mercenary Roster
-            </div>
-          </div>
-
+              Refresh market
+            </button>
+          </header>
+          <nav className="RealmNoticeboard__tabs" aria-label="Noticeboard">
+            {TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={tab === key}
+                onClick={() => setTab(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
           {tab === 'postings' && <PostingsTab data={data} act={act} />}
           {tab === 'avisa' && <AvisaTab data={data} act={act} />}
           {tab === 'roster' && <RosterTab data={data} act={act} />}

@@ -406,31 +406,38 @@
 	name = "bag of three's away dice"
 	desc = "A bag used to play Three's Away. Activate in hand (Z) to start or join a game."
 	var/datum/threes_away_game/active_game
-	var/static/threes_away_rules_text = {"<div style='padding:8px;font-family:Verdana,sans-serif;'>
-	<h2 style='text-align:center;margin:0 0 6px 0;'>Three's Away</h2>
-<br>
-<b>Objective:</b> Achieve the lowest score.<br>
-<br>
-<b>Rules:</b><br>
-- One at a time, all players roll 5d6.<br>
-- After every roll, players choose one dice that must be set aside.<br>
-- Continue rolling remaining dice until all five are set aside.<br>
-- 3s are worth 0, 1s are valuable low dice.<br>
-- If you roll three 3s during your turn, your score is wiped to 0.<br>
-- If you roll four or more 3s on a roll, you bust and are disqualified.<br>
-<br>
-<b>Tie-breaking:</b><br>
-If round-end has a tie for lowest score, the tied players are told to roll once more.<br>
-Each tied player rolls a fresh set of 5d6.<br>
-The total of that set is summed.<br>
-Lowest total wins the tie-break.<br>
-If tie-break itself ties, it repeats automatically until one winner remains.<br>
+	var/static/threes_away_rules_text = {"<div class='keep-panel keep-prose' role='main' tabindex='0'>
+	<h1>Three's Away</h1>
+	<h2>Objective:</h2>
+	<p>Achieve the lowest score.</p>
+	<h2>Rules:</h2>
+	<ul>
+		<li>One at a time, all players roll 5d6.</li>
+		<li>After every roll, players choose one dice that must be set aside.</li>
+		<li>Continue rolling remaining dice until all five are set aside.</li>
+		<li>3s are worth 0, 1s are valuable low dice.</li>
+		<li>If you roll three 3s during your turn, your score is wiped to 0.</li>
+		<li>If you roll four or more 3s on a roll, you bust and are disqualified.</li>
+	</ul>
+	<h2>Tie-breaking:</h2>
+	<p>If round-end has a tie for lowest score, the tied players are told to roll once more. Each tied player rolls a fresh set of 5d6. The total of that set is summed. Lowest total wins the tie-break. If tie-break itself ties, it repeats automatically until one winner remains.</p>
 </div>"}
 
 /obj/item/storage/pill_bottle/dice/threes_away/proc/show_rules(mob/living/user)
 	if(!user)
 		return
-	user << browse(threes_away_rules_text, "window=threes_away_rules;size=700x450")
+	var/datum/browser/noclose/popup = new(user, "threes_away_rules", "", 700, 450)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content({"<style>
+		@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+		@font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+		@font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+		@font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+	</style>"})
+	popup.set_content(threes_away_rules_text)
+	popup.open(FALSE)
+	winset(user, "threes_away_rules.browser", "focus=true")
 
 /obj/item/storage/pill_bottle/dice/threes_away/PopulateContents()
 	for(var/i in 1 to 5)

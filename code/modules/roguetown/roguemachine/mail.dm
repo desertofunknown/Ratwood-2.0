@@ -32,13 +32,14 @@
 /obj/structure/roguemachine/mail/Initialize(mapload)
 	. = ..()
 	SSroguemachine.hermailers += src
-	ournum = SSroguemachine.hermailers.len
+	ournum = SSroguemachine.register_hermes_number(src)
 	name = "[name] #[ournum]"
 	update_icon()
 
 /obj/structure/roguemachine/mail/Destroy()
 	set_light(0)
 	SSroguemachine.hermailers -= src
+	SSroguemachine.unregister_hermes_number(src, ournum)
 	return ..()
 
 /obj/structure/roguemachine/mail/attack_hand(mob/user)
@@ -134,10 +135,13 @@
 	if(inqcoins)
 		to_chat(user, span_warning("The machine doesn't respond."))
 		return
-	var/send2place = sanitize(input(user, "Where to? (Person or #number)", "ROGUETOWN", null))
-	if(!send2place)
+	var/send2place = sanitize(tgui_input_text(user, "Enter the recipient's name or a Hermes #number.", "Address letter", max_length = MAX_MESSAGE_LEN, encode = FALSE))
+	if(!send2place || QDELETED(src) || QDELETED(user) || !Adjacent(user) || !coin_loaded || inqcoins)
 		return
-	var/sentfrom = sanitize(input(user, "Who is this letter from?", "ROGUETOWN", null))
+	var/sentfrom = tgui_input_text(user, "Who is this letter from? Leave blank to send anonymously.", "Sign letter", max_length = MAX_MESSAGE_LEN, encode = FALSE)
+	if(isnull(sentfrom) || QDELETED(src) || QDELETED(user) || !Adjacent(user) || !coin_loaded || inqcoins)
+		return
+	sentfrom = sanitize(sentfrom)
 	if(!sentfrom)
 		sentfrom = "Anonymous"
 	var/sender_ckey = user.ckey
@@ -147,14 +151,11 @@
 			if(H.real_name == send2place)
 				recipient_ckey = H.ckey
 				break
-	var/t = stripped_multiline_input("Write Your Letter", "ROGUETOWN", no_trim=TRUE)
-	if(t)
-		if(length(t) > 2000)
-			to_chat(user, span_warning("Too long. Try again."))
-			return
-	if(!coin_loaded)
+	var/t = stripped_multiline_input(user, "Write your letter to [send2place].", "Compose letter", no_trim = TRUE)
+	if(!t || QDELETED(src) || QDELETED(user) || !coin_loaded || inqcoins || !Adjacent(user))
 		return
-	if(!Adjacent(user))
+	if(length(t) > 2000)
+		to_chat(user, span_warning("Too long. Try again."))
 		return
 	var/obj/item/paper/P = new
 	P.info += t
@@ -163,25 +164,19 @@
 	P.update_icon()
 	if(findtext(send2place, "#"))
 		var/box2find = text2num(copytext(send2place, findtext(send2place, "#")+1))
-		var/found = FALSE
-		for(var/obj/structure/roguemachine/mail/X in SSroguemachine.hermailers)
-			if(X.ournum == box2find)
-				found = TRUE
-				P.mailer = sentfrom
-				P.mailedto = send2place
-				P.update_icon()
-				GLOB.fax_panel.register_player_letter(sentfrom, send2place, t)
-				P.forceMove(X.loc)
-				X.say("New mail!")
-				playsound(X, 'sound/misc/hiss.ogg', 100, FALSE, -1)
-				break
-		if(found)
+		var/obj/structure/roguemachine/mail/X = SSroguemachine.get_hermes_by_number(box2find)
+		if(X)
+			GLOB.fax_panel.register_player_letter(sentfrom, send2place, t)
+			P.forceMove(X.loc)
+			X.say("New mail!")
+			playsound(X, 'sound/misc/hiss.ogg', 100, FALSE, -1)
 			visible_message(span_warning("[user] sends something."))
 			playsound(loc, 'sound/misc/disposalflush.ogg', 100, FALSE, -1)
 			coin_loaded = FALSE
 			update_icon()
 			return
 		else
+			qdel(P)
 			to_chat(user, span_warning("Failed to send it. Bad number?"))
 	else
 		if(!send2place)
@@ -208,6 +203,7 @@
 					H.apply_status_effect(/datum/status_effect/ugotmail)
 					H.playsound_local(H, 'sound/misc/mail.ogg', 100, FALSE, -1)
 		else
+			qdel(P)
 			to_chat(user, span_warning("The master of mails has perished?"))
 			return
 		visible_message(span_warning("[user] sends something."))
@@ -545,9 +541,16 @@
 		if(inqcoins)
 			to_chat(user, span_warning("The machine doesn't respond."))
 			return
-		if(alert(user, "Send Mail?",,"YES","NO") == "YES")
-			var/send2place = sanitize(input(user, "Where to? (Person or #number)", "ROGUETOWN", null))
-			var/sentfrom = sanitize(input(user, "Who is this from? (Leave blank to send anonymously)", "ROGUETOWN", null))
+		if(tgui_alert(user, "Send this letter or parcel?", "Hermes", list("Send", "Cancel")) == "Send")
+			if(QDELETED(src) || QDELETED(user) || QDELETED(P) || !Adjacent(user) || !user.is_holding(P) || inqcoins)
+				return
+			var/send2place = sanitize(tgui_input_text(user, "Enter the recipient's name or a Hermes #number.", "Address mail", max_length = MAX_MESSAGE_LEN, encode = FALSE))
+			if(!send2place || QDELETED(src) || QDELETED(user) || QDELETED(P) || !Adjacent(user) || !user.is_holding(P) || inqcoins)
+				return
+			var/sentfrom = tgui_input_text(user, "Who is this from? Leave blank to send anonymously.", "Sign mail", max_length = MAX_MESSAGE_LEN, encode = FALSE)
+			if(isnull(sentfrom) || QDELETED(src) || QDELETED(user) || QDELETED(P) || !Adjacent(user) || !user.is_holding(P) || inqcoins)
+				return
+			sentfrom = sanitize(sentfrom)
 			if(!sentfrom)
 				sentfrom = "Anonymous"
 			var/sender_ckey = user.ckey
@@ -559,30 +562,25 @@
 						break
 			if(findtext(send2place, "#"))
 				var/box2find = text2num(copytext(send2place, findtext(send2place, "#")+1))
-				testing("box2find [box2find]")
-				var/found = FALSE
-				for(var/obj/structure/roguemachine/mail/X in SSroguemachine.hermailers)
-					if(X.ournum == box2find)
-						found = TRUE
-						P.mailer = sentfrom
-						P.mailedto = send2place
-						P.update_icon()
-						var/letter_text = ""
-						var/obj/item/paper/letter_paper = null
-						var/obj/item/smallDelivery/letter_package = null
-						if(istype(P, /obj/item/paper))
-							letter_paper = P
-							letter_text = letter_paper.info
-						else if(istype(P, /obj/item/smallDelivery))
-							letter_package = P
-							if(letter_package.note)
-								letter_text = letter_package.note.info
-						GLOB.fax_panel.register_player_letter(sentfrom, send2place, letter_text, sender_ckey, recipient_ckey)
-						P.forceMove(X.loc)
-						X.say("New mail!")
-						playsound(X, 'sound/misc/hiss.ogg', 100, FALSE, -1)
-						break
-				if(found)
+				var/obj/structure/roguemachine/mail/X = SSroguemachine.get_hermes_by_number(box2find)
+				if(X)
+					P.mailer = sentfrom
+					P.mailedto = send2place
+					P.update_icon()
+					var/letter_text = ""
+					var/obj/item/paper/letter_paper = null
+					var/obj/item/smallDelivery/letter_package = null
+					if(istype(P, /obj/item/paper))
+						letter_paper = P
+						letter_text = letter_paper.info
+					else if(istype(P, /obj/item/smallDelivery))
+						letter_package = P
+						if(letter_package.note)
+							letter_text = letter_package.note.info
+					GLOB.fax_panel.register_player_letter(sentfrom, send2place, letter_text, sender_ckey, recipient_ckey)
+					P.forceMove(X.loc)
+					X.say("New mail!")
+					playsound(X, 'sound/misc/hiss.ogg', 100, FALSE, -1)
 					visible_message(span_warning("[user] sends something."))
 					playsound(loc, 'sound/misc/disposalflush.ogg', 100, FALSE, -1)
 					return
@@ -597,7 +595,9 @@
 						mailrecipient = H
 						recipient_ckey = H.ckey
 						break
-				if(!mailrecipient && (alert("Could not find recipient [send2place]. Still send the letter?", "", "YES", "NO") == "NO")) // ask player if they still want to send a letter to a non-found character
+				if(!mailrecipient && tgui_alert(user, "Could not find recipient [send2place]. Send the mail anyway?", "Unknown recipient", list("Send", "Cancel")) != "Send")
+					return
+				if(QDELETED(src) || QDELETED(user) || QDELETED(P) || !Adjacent(user) || !user.is_holding(P) || inqcoins)
 					return
 				var/findmaster
 				if(SSroguemachine.hermailermaster)
@@ -695,17 +695,23 @@
 	. += "<a href='?src=[REF(src)];directory=1'>Directory:</a> [mailtag]"
 
 /obj/structure/roguemachine/mail/proc/view_directory(mob/user)
-	var/dat
+	var/list/contents = list("<div class='comms-folio'><div class='comms-heading'><div class='comms-eyebrow'>Postal directory</div><h1>Hermes register</h1><p>Find a destination for your correspondence.</p></div><div class='comms-search'><label for='directory-search'>Find a destination</label><input id='directory-search' type='text' placeholder='Search by number or place...' oninput='filterCommsDirectory(this.value)'></div><div class='comms-body' tabindex='0' role='region' aria-label='Mail destinations'><table class='comms-directory'><thead><tr><th scope='col' class='comms-number'>Number</th><th scope='col'>Destination</th></tr></thead><tbody id='directory-entries'>")
+	var/station_count = 0
 	for(var/obj/structure/roguemachine/mail/X in SSroguemachine.hermailers)
 		if(X.obfuscated)
 			continue
-		if(X.mailtag)
-			dat += "#[X.ournum] [X.mailtag]<br>"
-		else
-			dat += "#[X.ournum] [capitalize(get_area_name(X))]<br>"
+		station_count++
+		var/destination = X.mailtag ? X.mailtag : capitalize(get_area_name(X))
+		contents += "<tr><td class='comms-number'>#[X.ournum]</td><td>[html_encode(destination)]</td></tr>"
+	contents += "</tbody></table><div id='directory-no-matches' class='comms-empty'[station_count ? " style='display:none'" : ""]>[station_count ? "No destinations match your search." : "No destinations are registered."]</div></div><div class='comms-footer'>[station_count] listed destination[station_count == 1 ? "" : "s"].</div></div>"
 
-	var/datum/browser/popup = new(user, "hermes_directory", "<center>HERMES DIRECTORY</center>", 387, 420)
-	popup.set_content(dat)
+	var/datum/browser/popup = new(user, "hermes_directory", "", 560, 640)
+	popup.add_stylesheet("communications", 'html/browser/communications.css')
+	popup.add_script("communications_directory", 'html/browser/communications_directory.js')
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Comms Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Comms Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+	popup.set_content(contents.Join())
 	popup.open(FALSE)
 
 /obj/item/roguemachine/mastermail
@@ -791,6 +797,18 @@
 /obj/structure/roguemachine/mail/proc/inqlock()
 	inqonly = !inqonly
 
+/obj/structure/roguemachine/mail/proc/can_view_inq_pack(mob/user, datum/inqports/pack)
+	if(!pack || !(pack.category in category))
+		return FALSE
+	if(istype(pack, /datum/inqports/equipment/garrote) && !HAS_TRAIT(user, TRAIT_BLACKBAGGER))
+		return FALSE
+	return TRUE
+
+/obj/structure/roguemachine/mail/proc/can_purchase_inq_pack(mob/user, datum/inqports/pack)
+	if(!ishuman(user) || !can_view_inq_pack(user, pack) || (inqonly && !HAS_TRAIT(user, TRAIT_PURITAN)))
+		return FALSE
+	return pack.marquescost >= 0 && inqcoins >= pack.marquescost && (!pack.maximum || pack.remaining > 0)
+
 /obj/structure/roguemachine/mail/proc/decreaseremaining(datum/inqports/PA)
 	PA.remaining -= 1
 	PA.name = "[initial(PA.name)] ([PA.remaining]/[PA.maximum]) - ᛉ [PA.marquescost] ᛉ"
@@ -799,57 +817,70 @@
 	return
 
 /obj/structure/roguemachine/mail/proc/display_marquette(mob/user)
-	var/contents
-	contents = "<center>✤ ── L'INQUISITION MARQUETTE D'OTAVA ── ✤<BR>"
-	contents += "POUR L'ÉRADICATION DE L'HÉRÉSIE, TANT QUE PSYDON ENDURE.<BR>"
-	if(HAS_TRAIT(user, TRAIT_PURITAN))
-		contents += "✤ ── <a href='?src=[REF(src)];locktoggle=1]'> PURITAN'S LOCK: [inqonly ? "OUI":"NON"]</a> ── ✤<BR>"
-	else
-		contents += "✤ ── PURITAN'S LOCK: [inqonly ? "OUI":"NON"] ── ✤<BR>"
-	contents += "ᛉ <a href='?src=[REF(src)];eject=1'>MARQUES LOADED: [inqcoins]</a>ᛉ<BR>"
-
-	if(cat_current == "1")
-		contents += "<BR> <table style='width: 100%' line-height: 40px;'>"
-/*		if(HAS_TRAIT(user, TRAIT_PURITAN))
-			for(var/i = 1, i <= inq_category.len, i++)
-				contents += "<tr>"
-				contents += "<td style='width: 100%; text-align: center;'>\
-					<a href='?src=[REF(src)];changecat=[inq_category[i]]'>[inq_category[i]]</a>\
-					</td>"
-				contents += "</tr>"*/
-		for(var/i = 1, i <= category.len, i++)
-			contents += "<tr>"
-			contents += "<td style='width: 100%; text-align: center;'>\
-				<a href='?src=[REF(src)];changecat=[category[i]]'>[category[i]]</a>\
-				</td>"
-			contents += "</tr>"
-		contents += "</table>"
-	else
-		contents += "<center>[cat_current]<BR></center>"
-		contents += "<center><a href='?src=[REF(src)];changecat=1'>\[RETURN\]</a><BR><BR></center>"
-		contents += "<center>"
-		var/list/items = list()
-		for(var/pack in GLOB.inqsupplies)
-			var/datum/inqports/PA = pack
-			if(all_category[PA.category] == cat_current && PA.name)
-				items += GLOB.inqsupplies[pack]
-				if(PA.name == "Seizing Garrote" && !HAS_TRAIT(user, TRAIT_BLACKBAGGER))
-					items -= GLOB.inqsupplies[pack]
-		for(var/pack in sortNames(items, order=0))
-			var/datum/inqports/PA = pack
-			var/name = uppertext(PA.name)
-			if(inqonly && !HAS_TRAIT(user, TRAIT_PURITAN) || (PA.maximum && !PA.remaining) || inqcoins < PA.marquescost)
-				contents += "[name]<BR>"
-			else
-				contents += "<a href='?src=[REF(src)];buy=[PA.type]'>[name]</a><BR>"
-		contents += "</center>"
-	var/datum/browser/popup = new(user, "VENDORTHING", "", 500, 600)
-	popup.set_content(contents)
+	var/datum/browser/popup = new(user, "inquisition_marquette", "", 740, 720)
 	if(inqcoins == 0)
 		popup.close()
 		return
+	var/list/contents = list("<div class='merchant-folio marquette'><div class='merchant-heading'><div class='merchant-edition'>L'Inquisition d'Otava</div><h1>Marquette</h1><p>Pour l'éradication de l'hérésie, tant que Psydon endure.</p></div><div class='merchant-container'><div class='merchant-container-details'><strong>Puritan's lock: [inqonly ? "OUI" : "NON"]</strong><span>[inqonly ? "Purchases are restricted to the Puritan." : "Purchases are open to the Inquisition."]</span></div>")
+	if(HAS_TRAIT(user, TRAIT_PURITAN))
+		contents += "<a href='?src=[REF(src)];locktoggle=1'>[inqonly ? "Unlock purchases" : "Lock purchases"]</a>"
+	contents += "</div><div class='merchant-stock' tabindex='0' role='region' aria-label='Marquette catalogue'><div class='marquette-categories'>"
+	for(var/available_category in category)
+		contents += "<a href='?src=[REF(src)];changecat=[url_encode(available_category)]' class='[available_category == cat_current ? "marquette-selected" : ""]'[available_category == cat_current ? " aria-current='page'" : ""]>[html_encode(available_category)]</a>"
+	contents += "</div>"
+	if(cat_current == "1")
+		contents += "<div class='marquette-empty'>Choose a category to browse the Marquette.</div>"
 	else
-		popup.open()
+		contents += "<div class='marquette-catalogue-heading'><h2>[html_encode(cat_current)]</h2><a href='?src=[REF(src)];changecat=1'>All categories</a></div>"
+		var/list/items = list()
+		for(var/pack in GLOB.inqsupplies)
+			var/datum/inqports/PA = GLOB.inqsupplies[pack]
+			if(can_view_inq_pack(user, PA) && PA.category == cat_current && PA.name)
+				items += PA
+		if(length(items))
+			contents += "<div class='marquette-search'><label for='marquette-search'>Find goods</label><input id='marquette-search' type='text' placeholder='Search this category...' oninput='filterMarquetteGoods(this.value)'></div><table class='merchant-table marquette-goods'><thead><tr><th scope='col'>Goods</th><th scope='col' class='merchant-quantity'>Stock</th><th scope='col' class='merchant-price'>Marques</th><th scope='col' class='merchant-action'>Action</th></tr></thead><tbody id='marquette-goods'>"
+			for(var/pack in sortNames(items, order=0))
+				var/datum/inqports/PA = pack
+				contents += "<tr><td class='marquette-product'>[html_encode(initial(PA.name))]</td><td class='merchant-quantity'>[PA.maximum ? "[PA.remaining] / [PA.maximum]" : "&mdash;"]</td><td class='merchant-price'>[PA.marquescost]</td><td class='merchant-action'>"
+				if(can_purchase_inq_pack(user, PA))
+					contents += "<a href='?src=[REF(src)];buy=[url_encode("[PA.type]")]'>Buy</a>"
+				else
+					var/reason = "Unavailable"
+					if(inqonly && !HAS_TRAIT(user, TRAIT_PURITAN))
+						reason = "Puritan's lock"
+					else if(PA.maximum && PA.remaining <= 0)
+						reason = "Out of stock"
+					else if(inqcoins < PA.marquescost)
+						reason = "Need [PA.marquescost - inqcoins] more"
+					contents += "<span class='marquette-unavailable' aria-disabled='true'>[reason]</span>"
+				contents += "</td></tr>"
+			contents += "</tbody></table><div id='marquette-no-matches' class='marquette-empty' style='display:none'>No goods match your search.</div>"
+		else
+			contents += "<div class='marquette-empty'>No goods are available in this category.</div>"
+	contents += "</div><div class='merchant-footer'><div class='merchant-balance'><span>Marques loaded</span><strong>[inqcoins]</strong></div><a href='?src=[REF(src)];eject=1'>Return marques</a></div></div>"
+	popup.add_stylesheet("merchant", 'html/browser/merchant.css')
+	popup.add_stylesheet("marquette", 'html/browser/marquette.css')
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = fonts.get_url_mappings()
+	var/head = "<style>@font-face { font-family: 'Merchant Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Merchant Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Merchant Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>"
+	head += {"<script type='text/javascript'>
+function filterMarquetteGoods(value) {
+	var query = value.toLowerCase();
+	var rows = document.getElementById('marquette-goods').getElementsByTagName('tr');
+	var visible = 0;
+	for (var i = 0; i < rows.length; i++) {
+		var row = rows.item(i);
+		var name = row.getElementsByTagName('td').item(0);
+		var matches = (name.textContent || name.innerText || '').toLowerCase().indexOf(query) !== -1;
+		row.style.display = matches ? '' : 'none';
+		if (matches) visible++;
+	}
+	document.getElementById('marquette-no-matches').style.display = visible ? 'none' : 'block';
+}
+</script>"}
+	popup.add_head_content(head)
+	popup.set_content(contents.Join())
+	popup.open()
 
 /obj/structure/roguemachine/mail/Topic(href, href_list)
 	..()
@@ -867,16 +898,38 @@
 		inqcoins = 0
 
 	if(href_list["changecat"])
-		cat_current = href_list["changecat"]
+		var/requested_category = href_list["changecat"]
+		if(requested_category == "1" || requested_category in category)
+			cat_current = requested_category
 
 	if(href_list["locktoggle"])
+		if(!HAS_TRAIT(usr, TRAIT_PURITAN))
+			return
 		playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
+		var/new_lock = !inqonly
 		for(var/obj/structure/roguemachine/mail/everyhermes in SSroguemachine.hermailers)
-			everyhermes.inqlock()
+			everyhermes.inqonly = new_lock
 
 	if(href_list["buy"])
 		var/path = text2path(href_list["buy"])
 		var/datum/inqports/PA = GLOB.inqsupplies[path]
+		if(!can_purchase_inq_pack(usr, PA))
+			return
+		var/area/A = GLOB.areas_by_type[/area/rogue/indoors/inq/import]
+		if(!A)
+			to_chat(usr, span_warning("The delivery route is unavailable."))
+			return
+		var/list/turfs = list()
+		for(var/turf/destination in A)
+			if(!destination.density)
+				turfs += destination
+		if(!length(turfs))
+			to_chat(usr, span_warning("The delivery route is unavailable."))
+			return
+		var/turf/T = pick(turfs)
+		var/pathi = islist(PA.item_type) ? pick(PA.item_type) : PA.item_type
+		if(!ispath(pathi, /obj))
+			return
 
 		inqcoins -= PA.marquescost
 		if(PA.maximum)
@@ -886,14 +939,6 @@
 			coin_loaded = FALSE
 			update_icon()
 		playsound(loc, 'sound/misc/disposalflush.ogg', 100, FALSE, -1)
-		var/area/A = GLOB.areas_by_type[/area/rogue/indoors/inq/import]
-		if(!A)
-			return
-		var/list/turfs = list()
-		for(var/turf/T in A)
-			turfs += T
-		var/turf/T = pick(turfs)
-		var/pathi = pick(PA.item_type)
 		playsound(T, 'sound/misc/disposalflush.ogg', 100, FALSE, -1)
 		new pathi(get_turf(T))
 

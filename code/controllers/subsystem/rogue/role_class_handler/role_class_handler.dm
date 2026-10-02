@@ -116,7 +116,9 @@ SUBSYSTEM_DEF(role_class_handler)
 
 	XTRA_MEATY.register_id = register_id
 	if(!XTRA_MEATY.initial_setup())
-		return // There was just one advclass that got automatically selected
+		if(!QDELETED(XTRA_MEATY))
+			qdel(XTRA_MEATY)
+		return // No selection menu is needed, or no eligible classes were available.
 	class_select_handlers[client_ckey] = XTRA_MEATY
 
 /datum/controller/subsystem/role_class_handler/proc/cancel_class_handler(client_ckey)

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useBackend } from 'tgui/backend';
 import { Window } from 'tgui/layouts';
-import { Autofocus, Button, Divider, Input, Section, Stack } from 'tgui-core/components';
+import { Autofocus, Box, Button, Input, Section, Stack } from 'tgui-core/components';
 import { isAlphabetic, isNumeric, KEY } from 'tgui-core/keys';
 
 import { InputButtons } from './common/InputButtons';
@@ -24,180 +24,179 @@ export const ListInputModal = (props) => {
     items = [],
     message = '',
     init_value,
-    large_buttons,
     timeout,
     title,
     enable_preview,
     previewing,
   } = data;
-  const [selected, setSelected] = useState(items.indexOf(init_value));
-  const [searchBarVisible, setSearchBarVisible] = useState(items.length > 9);
+  const [selection, setSelection] = useState(init_value);
+  const [searchBarVisible, setSearchBarVisible] = useState(items.length > 8);
   const [searchQuery, setSearchQuery] = useState('');
-  // User presses up or down on keyboard
-  // Simulates clicking an item
-
-  const onArrowKey = (key: KEY) => {
-    const len = filteredItems.length - 1;
-    if (key === KEY.Down) {
-      if (selected === null || selected === len) {
-        setSelected(0);
-        document!.getElementById('0')?.scrollIntoView();
-      } else {
-        setSelected(selected + 1);
-        document!.getElementById((selected + 1).toString())?.scrollIntoView();
-      }
-    } else if (key === KEY.Up) {
-      if (selected === null || selected === 0) {
-        setSelected(len);
-        document!.getElementById(len.toString())?.scrollIntoView();
-      } else {
-        setSelected(selected - 1);
-        document!.getElementById((selected - 1).toString())?.scrollIntoView();
-      }
-    }
-  };
-  // User selects an item with mouse
-  const onClick = (index: number) => {
-    if (index === selected) {
-      return;
-    }
-    setSelected(index);
-  };
-  // User presses a letter key and searchbar is visible
-  const onFocusSearch = () => {
-    setSearchBarVisible(false);
-    setTimeout(() => {
-      setSearchBarVisible(true);
-    }, 1);
-  };
-  // User presses a letter key with no searchbar visible
-  const onLetterSearch = (key: string) => {
-    const foundItem = items.find((item) => {
-      return item?.toLowerCase().startsWith(key?.toLowerCase());
-    });
-    if (foundItem) {
-      const foundIndex = items.indexOf(foundItem);
-      setSelected(foundIndex);
-      document!.getElementById(foundIndex.toString())?.scrollIntoView();
-    }
-  };
-  // User types into search bar
-  const onSearch = (query: string) => {
-    if (query === searchQuery) {
-      return;
-    }
-    setSearchQuery(query);
-    setSelected(0);
-    document!.getElementById('0')?.scrollIntoView();
-  };
-  // User presses the search button
-  const onSearchBarToggle = () => {
-    setSearchBarVisible(!searchBarVisible);
-    setSearchQuery('');
-  };
+  const [searchFocus, setSearchFocus] = useState(0);
+  const searchRef = useRef<HTMLInputElement>(null);
   const filteredItems = items.filter((item) =>
-    item?.toLowerCase().includes(searchQuery.toLowerCase()),
+    item.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-  // Dynamically changes the window height based on the message.
-  const windowHeight =
-    325 + Math.ceil(message.length / 3) + (large_buttons ? 5 : 0);
-  // Grabs the cursor when no search bar is visible.
-  if (!searchBarVisible) {
-    setTimeout(() => document!.getElementById(selected.toString())?.focus(), 1);
-  }
+  const selected = Math.max(0, filteredItems.indexOf(selection));
+  const selectedItem = filteredItems[selected];
+  const windowHeight = Math.min(
+    640,
+    200 + (searchBarVisible ? 42 : 0) +
+      Math.min(8, Math.max(2, items.length)) * 44 +
+      Math.min(100, Math.ceil(message.length / 55) * 22),
+  );
 
-  function handleKeyDown<T>(event: React.KeyboardEvent<T>) {
+  useEffect(() => {
+    document.getElementById(`list-input-option-${selected}`)?.scrollIntoView({
+      block: 'nearest',
+    });
+  }, [selected, searchQuery]);
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     const key = event.key;
-    if (key === KEY.Down || key === KEY.Up) {
-      event.preventDefault();
-      onArrowKey(key);
-    }
-    if (key === KEY.Enter) {
-      event.preventDefault();
-      act('submit', { entry: filteredItems[selected] });
-    }
-    if (!searchBarVisible && (isAlphabetic(key) || isNumeric(key))) {
-      event.preventDefault();
-      onLetterSearch(key);
-    }
     if (key === KEY.Escape) {
       event.preventDefault();
       act('cancel');
+      return;
+    }
+    // Footer controls keep their own Enter and Space actions.
+    const target = event.target as HTMLElement;
+    if (
+      target.closest('.InputModal__footer') ||
+      (target.closest('.Button') && !target.closest('.ListInput__option'))
+    ) {
+      return;
+    }
+    if (key === KEY.Down || key === KEY.Up) {
+      event.preventDefault();
+      if (filteredItems.length) {
+        const direction = key === KEY.Down ? 1 : -1;
+        const index =
+          (selected + direction + filteredItems.length) % filteredItems.length;
+        setSelection(filteredItems[index]);
+      }
+    } else if (key === KEY.Enter) {
+      event.preventDefault();
+      if (selectedItem !== undefined) {
+        act('submit', { entry: selectedItem });
+      }
+    } else if (
+      !event.ctrlKey &&
+      !event.altKey &&
+      !event.metaKey &&
+      (isAlphabetic(key) || isNumeric(key)) &&
+      event.target !== searchRef.current
+    ) {
+      event.preventDefault();
+      if (searchBarVisible) {
+        setSearchQuery(key);
+        setSearchFocus((value) => value + 1);
+      } else {
+        const match = items.find((item) =>
+          item.toLowerCase().startsWith(key.toLowerCase()),
+        );
+        if (match !== undefined) {
+          setSelection(match);
+        }
+      }
     }
   }
 
   return (
-    <Window title={title} width={325} height={windowHeight}>
-      {timeout && <Loader value={timeout} />}
-      <Window.Content
-        onKeyDown={(event) => {
-          handleKeyDown(event);
-        }}
-      >
-        <Section
-          buttons={
-            <Button
-              compact
-              icon={searchBarVisible ? 'search' : 'font'}
-              selected
-              tooltip={
-                searchBarVisible
-                  ? 'Search Mode. Type to search or use arrow keys to select manually.'
-                  : 'Hotkey Mode. Type a letter to jump to the first match. Enter to select.'
-              }
-              tooltipPosition="left"
-              onClick={() => onSearchBarToggle()}
-            />
-          }
-          className="ListInput__Section"
-          fill
-          title={message}
-        >
+    <Window title={title} width={500} height={windowHeight}>
+      {!!timeout && <Loader value={timeout} />}
+      <Window.Content className="InputModal" onKeyDown={handleKeyDown}>
+        <Section className="ListInput__Section" fill>
           <Stack fill vertical>
-            <Stack.Item grow>
-              <ListDisplay
-                filteredItems={filteredItems}
-                onClick={onClick}
-                onFocusSearch={onFocusSearch}
-                searchBarVisible={searchBarVisible}
-                selected={selected}
-              />
-            </Stack.Item>
-            {searchBarVisible && (
-              <Input
-                autoFocus
-                autoSelect
-                fluid
-                expensive
-                onEnter={() => {
-                  act('submit', { entry: filteredItems[selected] });
-                }}
-                onChange={onSearch}
-                placeholder="Search..."
-                value={searchQuery}
-              />
-            )}
-            {!searchBarVisible && <Divider />}
             <Stack.Item>
-              <Stack align="center" fill justify="space-around">
+              <Stack align="baseline">
+                <Stack.Item grow>
+                  <Box className="InputModal__prompt">{message}</Box>
+                </Stack.Item>
+                <Stack.Item>
+                  <Button
+                    className="ListInput__searchToggle"
+                    icon="search"
+                    selected={searchBarVisible}
+                    tooltip={
+                      searchBarVisible ? 'Hide search; use letters to jump to choices' : 'Search choices'
+                    }
+                    onClick={() => {
+                      setSearchBarVisible(!searchBarVisible);
+                      setSearchQuery('');
+                    }}
+                  >Search</Button>
+                </Stack.Item>
+              </Stack>
+            </Stack.Item>
+            {searchBarVisible ? (
+              <Stack.Item>
+                <Input
+                  autoFocus
+                  fluid
+                  ref={searchRef}
+                  key={searchFocus}
+                  onChange={setSearchQuery}
+                  placeholder="Search choices..."
+                  value={searchQuery}
+                />
+              </Stack.Item>
+            ) : <Autofocus />}
+            <Stack.Item grow className="ListInput__choices">
+              <Section fill scrollable>
+                {filteredItems.length ? filteredItems.map((item, index) => (
+                  <div key={index} onFocusCapture={() => setSelection(item)}>
+                    <Button
+                      className="ListInput__option"
+                      color="transparent"
+                      captureKeys={false}
+                      fluid
+                      id={`list-input-option-${index}`}
+                      onClick={() => setSelection(item)}
+                      onDoubleClick={(event) => {
+                        event.preventDefault();
+                        act('submit', { entry: item });
+                      }}
+                      selected={index === selected}
+                    >
+                      <span className="ListInput__marker" aria-hidden="true">
+                        {index === selected ? '✓' : '◇'}
+                      </span>
+                      <span>{item.replace(/^\w/, (c) => c.toUpperCase())}</span>
+                    </Button>
+                  </div>
+                )) : (
+                  <Box className="ListInput__empty">No choices match your search.</Box>
+                )}
+              </Section>
+            </Stack.Item>
+            <Stack.Item>
+              <Box className="InputModal__hint">
+                {filteredItems.length} {filteredItems.length === 1 ? 'choice' : 'choices'}
+                {' · '}↑ ↓ to navigate · Enter to confirm
+              </Box>
+            </Stack.Item>
+            <Stack.Item className="InputModal__footer">
+              <Stack align="center">
                 {!!enable_preview && (
                   <Stack.Item>
                     <Button
-                      color="transparent"
-                      className={previewing ? 'input-button__cancel' : 'input-button__submit'}
-                      disabled={!filteredItems.length || selected === null || selected < 0}
-                      m={0.5}
-                      onClick={() =>
-                        act('preview_toggle', { entry: filteredItems[selected] })
-                      }
-                      textAlign="center"
+                      className="InputModal__preview"
+                      icon={previewing ? 'stop' : 'play'}
+                      disabled={!previewing && selectedItem === undefined}
+                      onClick={() => act('preview_toggle', {
+                        entry: selectedItem ?? items[0],
+                      })}
                     >
-                      {previewing ? 'STOP' : 'LISTEN'}
+                      {previewing ? 'Stop' : 'Listen'}
                     </Button>
                   </Stack.Item>
                 )}
-                <Stack.Item>
-                  <InputButtons input={filteredItems[selected]} />
+                <Stack.Item grow>
+                  <InputButtons
+                    input={selectedItem}
+                    disabled={selectedItem === undefined}
+                  />
                 </Stack.Item>
               </Stack>
             </Stack.Item>
@@ -208,52 +207,3 @@ export const ListInputModal = (props) => {
   );
 };
 
-/**
- * Displays the list of selectable items.
- * If a search query is provided, filters the items.
- */
-const ListDisplay = (props) => {
-  const { act } = useBackend<ListInputData>();
-  const { filteredItems, onClick, onFocusSearch, searchBarVisible, selected } =
-    props;
-
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    const key = event.key;
-    if (searchBarVisible && (isAlphabetic(key) || isNumeric(key))) {
-      event.preventDefault();
-      onFocusSearch();
-    }
-  }
-
-  return (
-    <Section fill scrollable>
-      <Autofocus />
-      {filteredItems.map((item, index) => {
-        return (
-          <Button
-            className="candystripe"
-            color="transparent"
-            fluid
-            id={index}
-            key={index}
-            onClick={() => onClick(index)}
-            onDoubleClick={(event) => {
-              event.preventDefault();
-              act('submit', { entry: filteredItems[selected] });
-            }}
-            onKeyDown={(event) => {
-              handleKeyDown(event);
-            }}
-            selected={index === selected}
-            style={{
-              animation: 'none',
-              transition: 'none',
-            }}
-          >
-            {item.replace(/^\w/, (c) => c.toUpperCase())}
-          </Button>
-        );
-      })}
-    </Section>
-  );
-};

@@ -18,6 +18,7 @@ export const GronnWrit = (props: {
   namePlural?: string | null;
   crimes: string[];
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -38,6 +39,7 @@ export const GronnWrit = (props: {
     namePlural,
     crimes,
     reward,
+    deposit,
     levyRate,
     levyExempt,
     guildCutRate,
@@ -98,6 +100,7 @@ export const GronnWrit = (props: {
         then to the Contract Ledger, that the bounty of{' '}
         <RewardClause
           reward={reward}
+          deposit={deposit}
           levyRate={levyRate}
           levyExempt={levyExempt}
           guildCutRate={guildCutRate}

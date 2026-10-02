@@ -110,7 +110,7 @@
 	SSmerchant_trade.bm_pool_consumed[category] = (SSmerchant_trade.bm_pool_consumed[category] || 0) + base_price
 	SSmerchant_trade.lifetime_bm_pool_credited[category] = (SSmerchant_trade.lifetime_bm_pool_credited[category] || 0) + base_price
 
-/obj/item/roguemachine/navigator/blackmarket/ui_static_data(mob/user)
+/obj/item/roguemachine/navigator/blackmarket/ui_data(mob/user)
 	var/list/data = ..()
 	data["is_smuggler"] = TRUE
 	data["duty_rate"] = 0
@@ -183,16 +183,6 @@
 /obj/item/roguemachine/navigator/ui_static_data(mob/user)
 	var/list/data = list()
 	data["motto"] = motto
-	data["handler_fee_percent"] = round(fixed_tax * 100)
-	data["duty_rate"] = SStreasury ? SStreasury.get_tax_rate(TAX_CATEGORY_EXPORT_DUTY) : 0
-	data["pay_taxes"] = pay_taxes
-	data["levy_rate"] = SSmerchant_trade ? SSmerchant_trade.merchant_levy_percent : 0
-	data["pay_merchant_share"] = pay_merchant_share
-	data["duty_collected_here"] = duty_collected_here
-	data["duty_evaded_here"] = duty_evaded_here
-	data["levy_collected_here"] = levy_collected_here
-	data["is_smuggler"] = FALSE
-	data["facilitator_present"] = FALSE
 	data["market_data"] = build_navigator_market_data()
 	return data
 
@@ -206,6 +196,16 @@
 		is_prop = (H.job in profit_id)
 	data["is_proprietor"] = is_prop
 	data["is_readable"] = user ? user.can_read(src, TRUE) : TRUE
+	data["handler_fee_percent"] = round(fixed_tax * 100)
+	data["duty_rate"] = SStreasury ? SStreasury.get_tax_rate(TAX_CATEGORY_EXPORT_DUTY) : 0
+	data["levy_rate"] = SSmerchant_trade ? SSmerchant_trade.merchant_levy_percent : 0
+	data["pay_taxes"] = is_prop ? pay_taxes : FALSE
+	data["pay_merchant_share"] = is_prop ? pay_merchant_share : FALSE
+	data["duty_collected_here"] = is_prop ? duty_collected_here : 0
+	data["duty_evaded_here"] = is_prop ? duty_evaded_here : 0
+	data["levy_collected_here"] = is_prop ? levy_collected_here : 0
+	data["is_smuggler"] = FALSE
+	data["facilitator_present"] = FALSE
 	return data
 
 /obj/item/roguemachine/navigator/proc/build_navigator_market_data()
@@ -267,13 +267,11 @@
 			pay_taxes = !pay_taxes
 			to_chat(H, span_notice("The Navigator's toll clasp clicks. Crown duty: <b>[pay_taxes ? "PAYING" : "DODGING"]</b>."))
 			playsound(loc, 'sound/misc/gold_misc.ogg', 80, FALSE, -1)
-			update_static_data_for_all_viewers()
 			return TRUE
 		if("toggle_levy")
 			pay_merchant_share = !pay_merchant_share
 			to_chat(H, span_notice("The Navigator's toll clasp clicks. Merchant's levy: <b>[pay_merchant_share ? "COLLECTING" : "WAIVED"]</b>."))
 			playsound(loc, 'sound/misc/gold_misc.ogg', 80, FALSE, -1)
-			update_static_data_for_all_viewers()
 			return TRUE
 
 /obj/item/roguemachine/navigator/update_icon()

@@ -1,0 +1,122 @@
+// Service desks share the Nervelock's dark palette; documents keep their paper.
+:root .KeepService {
+  --p-title: #e5d7c8;
+  --p-bg: #100d0e;
+  --p-bg-deep: #1b1114;
+  --p-bg-shadow: #594046;
+  --p-ink: #ded1c2;
+  --p-ink-soft: #b9a6a0;
+  --p-ink-faint: #af9d97;
+  --p-seal-red: #df9c89;
+  --p-seal-green: #b6c59a;
+  --p-seal-blue: #a6bdcf;
+  --p-seal-amber: #d8c198;
+  --p-button-bg: #281b1f;
+  --p-tab-active-bg: #42222a;
+  color: var(--p-ink);
+  background: var(--p-bg);
+  font:
+    13px/1.45 'Lora',
+    Georgia,
+    serif;
+  scrollbar-color: #594046 #100d0e;
+
+  .Window__contentPadding {
+    margin: 0;
+    height: 100%;
+  }
+
+  .MarketRegister {
+    --market-warm: #d7b077;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    padding: 0;
+  }
+  h1 {
+    color: var(--p-title);
+    font:
+      22px/1.2 'Nervelock Rocker',
+      'Pterra',
+      Georgia,
+      serif;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    border-radius: 0;
+  }
+  button {
+    min-height: 28px;
+    padding: 3px 7px;
+    border: 1px solid #594046;
+    background: var(--p-button-bg);
+    line-height: 1.3;
+  }
+  button:not(:disabled),
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) {
+    background: #3c2026;
+    border-color: #ae8189;
+  }
+  button[aria-pressed='true'],
+  button[aria-selected='true'] {
+    background: var(--p-tab-active-bg);
+    border-color: #ae8189;
+  }
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    min-height: 28px;
+    padding: 3px 6px;
+    color: #e7dac2;
+    background: var(--p-bg);
+    border: 1px solid #594046;
+    font-variant-numeric: tabular-nums;
+  }
+  option {
+    color: var(--p-ink);
+    background: var(--p-bg);
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: #ae8189;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #af9d97;
+    opacity: 1;
+  }
+  button:disabled,
+  input:not([type='checkbox']):not([type='radio']):disabled,
+  select:disabled,
+  textarea:disabled {
+    opacity: 1;
+    color: #a99b98;
+    background: transparent;
+    border-color: #382b2f;
+    cursor: default;
+  }
+  input:not([type='checkbox']):not([type='radio'])[aria-invalid='true'],
+  textarea[aria-invalid='true'] {
+    border-color: var(--p-seal-red);
+  }
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible,
+  a:focus-visible {
+    outline: 2px solid #d4bb8f;
+    outline-offset: 2px;
+  }
+}

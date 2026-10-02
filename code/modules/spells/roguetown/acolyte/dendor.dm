@@ -936,8 +936,7 @@
 	desc = "Command your lesser dryad. Cast and click yourself to follow, a tile to guard there, or an enemy to attack."
 	faction_ordering = FALSE
 
-/obj/effect/proc_holder/spell/invoked/minion_order/lesser_dryad/process_minions(order_type, turf/target_location, mob/living/target, faction_tag)
-	var/mob/living/carbon/human/caster = usr
+/obj/effect/proc_holder/spell/invoked/minion_order/lesser_dryad/process_minions(mob/caster, order_type, turf/target_location, mob/living/target, faction_tag)
 	if(!caster?.mind)
 		return
 	var/mob/living/simple_animal/hostile/retaliate/rogue/fae/dryad/lesser/D = null

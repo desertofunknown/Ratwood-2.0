@@ -1,10 +1,3 @@
-import {
-  fieldRowStyle,
-  fieldValueStyle,
-  inkButtonStyle,
-  SEAL_AMBER,
-  SERIF,
-} from '../common/parchment';
 import type { ActFn } from './types';
 import { starsIfIlliterate } from './util';
 
@@ -19,33 +12,15 @@ type Props = {
 export const MammonRow = (props: Props) => {
   const { budget, canRead, isProprietor, isPublic, act } = props;
   return (
-    <div style={fieldRowStyle}>
-      <div
-        style={{
-          flex: '0 0 auto',
-          fontFamily: SERIF,
-          color: SEAL_AMBER,
-          marginRight: '12px',
-        }}
-      >
-        Mammon Loaded
+    <div className="Goldface__balance">
+      <div>
+        <span>{starsIfIlliterate('Mammon loaded', canRead)}</span>
+        <strong>{budget}<small>m</small></strong>
       </div>
-      <div style={{ ...fieldValueStyle, fontWeight: 'bold' }}>{budget}m</div>
-      <div style={{ display: 'flex', gap: '6px' }}>
-        <button
-          type="button"
-          style={inkButtonStyle({ disabled: budget <= 0 })}
-          disabled={budget <= 0}
-          onClick={() => act('change')}
-        >
-          Withdraw as Coin
-        </button>
+      <div className="Goldface__accountActions">
+        <button type="button" disabled={budget <= 0} onClick={() => act('change')}>Return coins</button>
         {isProprietor && !isPublic && (
-          <button
-            type="button"
-            style={inkButtonStyle()}
-            onClick={() => act('secrets')}
-          >
+          <button type="button" onClick={() => act('secrets')}>
             {starsIfIlliterate('Secrets', canRead)}
           </button>
         )}

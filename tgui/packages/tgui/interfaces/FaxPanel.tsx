@@ -279,11 +279,9 @@ export const FaxPanel = (props) => {
                               >
                                 From: {entry.sender || 'Anonymous'}
                               </Box>
-                              <Box
-                                dangerouslySetInnerHTML={{
-                                  __html: (entry.body || '(empty letter)').replace(/\r?\n/g, '<br>'),
-                                }}
-                              />
+                              <Box style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                                {entry.body || '(empty letter)'}
+                              </Box>
                             </Box>
                           </Box>
                         )}

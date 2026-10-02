@@ -1,24 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useBackend } from '../../backend';
 import { groupByCategory } from './helpers';
-import {
-  badgeStyle,
-  BUTTON_BG,
-  cardStyle,
-  FONT_BODY,
-  INK,
-  INK_FAINT,
-  INK_SOFT,
-  inkButtonStyle,
-  SEAL_AMBER,
-  SEAL_BLUE,
-  SEAL_GREEN,
-  SEAL_RED,
-  sectionHeaderStyle,
-  subTabBarStyle,
-  subTabStyle,
-} from '../common/parchment';
 import type { AutoImportRow, Data } from './types';
 
 export const AutoImportView = (props: { data: Data }) => {
@@ -37,107 +20,49 @@ export const AutoImportView = (props: { data: Data }) => {
   const aldermanActing = !!props.data.is_alderman_acting;
   const aldermanBlockTitle =
     "Reserved to the Steward's office - the Alderman has no say in the Crown's stockpile.";
-
   const [floorDraft, setFloorDraft] = useState<string>(String(purse_floor));
-
+  const previousFloor = useRef(purse_floor);
+  useEffect(() => {
+    const previous = previousFloor.current;
+    previousFloor.current = purse_floor;
+    setFloorDraft((value) =>
+      value.trim() !== '' && Number(value) === previous
+        ? String(purse_floor)
+        : value,
+    );
+  }, [purse_floor]);
+  const floorAmount = Number(floorDraft);
+  const validFloor =
+    floorDraft.trim() !== '' &&
+    Number.isInteger(floorAmount) &&
+    floorAmount >= 0 &&
+    floorAmount <= 99999;
+  const canSetFloor =
+    !aldermanActing && validFloor && floorAmount !== purse_floor;
   const activeCount =
-    essentials.filter((r) => r.active).length +
-    others.filter((r) => r.active).length;
-
+    essentials.filter((row) => row.active).length +
+    others.filter((row) => row.active).length;
   const groupedOthers = groupByCategory(others, good_catalog);
-  const [activeCategory, setActiveCategory] = useState<string>(
+  const [activeCategory, setActiveCategory] = useState(
     groupedOthers[0]?.category ?? '',
   );
   const activeGroup =
-    groupedOthers.find((g) => g.category === activeCategory) ?? groupedOthers[0];
+    groupedOthers.find((group) => group.category === activeCategory) ??
+    groupedOthers[0];
 
-  return (
-    <div>
-      <div style={sectionHeaderStyle}>Standing Imports</div>
-
-      <div style={cardStyle}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '8px',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: FONT_BODY, color: INK_SOFT }}>
-              Today&apos;s spend:{' '}
-              <span style={{ color: SEAL_AMBER, fontWeight: 'bold' }}>
-                {today_spent}m
-              </span>{' '}
-              &middot; Goods on standing import:{' '}
-              <span style={{ fontWeight: 'bold' }}>{activeCount}</span>
-            </div>
-            <div style={{ fontSize: FONT_BODY, color: INK_SOFT }}>
-              Tops up each good by {batch_size} units every 6 minutes when stock is
-              below {floor_target}, skipping when a unit would cost more than{' '}
-              {max_price_mult}x its base price.
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ color: INK_FAINT, fontSize: FONT_BODY }}>Purse floor:</span>
-            <input
-              type="number"
-              value={floorDraft}
-              min={0}
-              max={99999}
-              disabled={aldermanActing}
-              style={{
-                width: '80px',
-                fontFamily: 'inherit',
-                fontSize: FONT_BODY,
-                padding: '2px 4px',
-                border: `1px solid ${INK_FAINT}`,
-                background: BUTTON_BG,
-                color: INK,
-                opacity: aldermanActing ? 0.55 : 1,
-              }}
-              title={aldermanActing ? aldermanBlockTitle : undefined}
-              onChange={(e) => setFloorDraft(e.target.value)}
-            />
-            <button
-              type="button"
-              style={inkButtonStyle({ color: SEAL_BLUE, disabled: aldermanActing })}
-              disabled={aldermanActing}
-              onClick={() => {
-                const amount = Number(floorDraft);
-                if (!Number.isFinite(amount)) return;
-                act('set_auto_import_purse_floor', { amount });
-              }}
-              title={aldermanActing ? aldermanBlockTitle : undefined}
-            >
-              Set
-            </button>
-            <button
-              type="button"
-              style={inkButtonStyle({ color: SEAL_RED, disabled: aldermanActing })}
-              disabled={aldermanActing}
-              onClick={() => act('kill_switch_auto_import')}
-              title={
-                aldermanActing
-                  ? aldermanBlockTitle
-                  : 'Strike every standing import from the ledger at once.'
-              }
-            >
-              Strike All
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div style={sectionHeaderStyle}>Essentials (on by default)</div>
-      {essentials.length === 0 ? (
-        <div style={{ textAlign: 'center', fontStyle: 'italic', color: INK_SOFT }}>
-          No essentials configured.
-        </div>
-      ) : (
-        essentials.map((row) => (
+  const importTable = (rows: AutoImportRow[], label: string) => (
+    <table className="StewardRoutes__imports" aria-label={label}>
+      <thead>
+        <tr>
+          <th scope="col">Standing import</th>
+          <th scope="col" className="StewardRoutes__number">
+            Stock / target
+          </th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
           <ToggleRow
             key={row.good_id}
             row={row}
@@ -145,88 +70,155 @@ export const AutoImportView = (props: { data: Data }) => {
             floorTarget={floor_target}
             disabled={aldermanActing}
             disabledTitle={aldermanBlockTitle}
-            onToggle={() =>
-              act('toggle_auto_import', { good_id: row.good_id })
-            }
+            onToggle={() => {
+              if (!aldermanActing)
+                act('toggle_auto_import', { good_id: row.good_id });
+            }}
           />
-        ))
-      )}
+        ))}
+      </tbody>
+    </table>
+  );
 
-      <div style={sectionHeaderStyle}>Other Goods</div>
-      {groupedOthers.length === 0 ? (
-        <div style={{ textAlign: 'center', fontStyle: 'italic', color: INK_SOFT }}>
+  return (
+    <section className="StewardRoutes" aria-label="Standing Imports">
+      <div className="StewardRoutes__heading">
+        <h2>Standing Imports</h2>
+        <span>
+          Today&apos;s spend: <strong>{today_spent}m</strong> · Goods on
+          standing import: <strong>{activeCount}</strong>
+        </span>
+      </div>
+      <p>
+        Tops up each good by {batch_size} units every 6 minutes when stock is
+        below {floor_target}, skipping when a unit would cost more than{' '}
+        {max_price_mult}x its base price.
+      </p>
+      <div className="StewardRoutes__floor">
+        <label>
+          Purse floor:
+          <input
+            type="number"
+            value={floorDraft}
+            min={0}
+            max={99999}
+            step={1}
+            aria-label="Standing import purse floor"
+            aria-invalid={!validFloor}
+            disabled={aldermanActing}
+            title={aldermanActing ? aldermanBlockTitle : undefined}
+            onChange={(event) => setFloorDraft(event.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          disabled={!canSetFloor}
+          title={aldermanActing ? aldermanBlockTitle : undefined}
+          onClick={() => {
+            if (canSetFloor)
+              act('set_auto_import_purse_floor', { amount: floorAmount });
+          }}
+        >
+          Set
+        </button>
+        <button
+          type="button"
+          className="StewardRoutes__danger"
+          disabled={aldermanActing}
+          title={
+            aldermanActing
+              ? aldermanBlockTitle
+              : 'Strike every standing import from the ledger at once.'
+          }
+          onClick={() => {
+            if (!aldermanActing) act('kill_switch_auto_import');
+          }}
+        >
+          Strike All
+        </button>
+      </div>
+      {aldermanActing && (
+        <p className="StewardRoutes__muted">{aldermanBlockTitle}</p>
+      )}
+      <h3>Essentials (on by default)</h3>
+      {essentials.length ? (
+        importTable(essentials, 'Essential standing imports')
+      ) : (
+        <p className="StewardRoutes__muted">No essentials configured.</p>
+      )}
+      <h3>Other Goods</h3>
+      {!groupedOthers.length ? (
+        <p className="StewardRoutes__muted">
           No other goods may be placed on standing import at present.
-        </div>
+        </p>
       ) : (
         <>
-          <div style={subTabBarStyle}>
-            {groupedOthers.map((g) => (
-              <div
-                key={g.category}
-                style={subTabStyle(g.category === activeGroup?.category)}
-                onClick={() => setActiveCategory(g.category)}
+          <nav
+            className="StewardRoutes__categories"
+            aria-label="Standing import categories"
+          >
+            {groupedOthers.map((group) => (
+              <button
+                key={group.category}
+                type="button"
+                aria-pressed={group.category === activeGroup?.category}
+                onClick={() => setActiveCategory(group.category)}
               >
-                {g.label} ({g.rows.filter((r) => r.active).length}/{g.rows.length})
-              </div>
+                {group.label} ({group.rows.filter((row) => row.active).length}/
+                {group.rows.length})
+              </button>
             ))}
-          </div>
-          {activeGroup && (
-            <div>
-              {activeGroup.rows.map((row) => (
-                <ToggleRow
-                  key={row.good_id}
-                  row={row}
-                  name={good_catalog[row.good_id]?.name ?? row.good_id}
-                  floorTarget={floor_target}
-                  disabled={aldermanActing}
-                  disabledTitle={aldermanBlockTitle}
-                  onToggle={() =>
-                    act('toggle_auto_import', { good_id: row.good_id })
-                  }
-                />
-              ))}
-            </div>
-          )}
+          </nav>
+          {activeGroup &&
+            importTable(
+              activeGroup.rows,
+              `${activeGroup.label} standing imports`,
+            )}
         </>
       )}
-
-      <div style={sectionHeaderStyle}>
-        Tally (last {history.length || 0} day{history.length === 1 ? '' : 's'})
-      </div>
-      {history.length === 0 ? (
-        <div style={{ textAlign: 'center', fontStyle: 'italic', color: INK_SOFT }}>
+      <h3>
+        Tally (last {history.length} day{history.length === 1 ? '' : 's'})
+      </h3>
+      {!history.length ? (
+        <p className="StewardRoutes__muted">
           No auto-import history yet. First tick will record here.
-        </div>
+        </p>
       ) : (
-        [...history].reverse().map((entry, idx) => (
-          <div key={`${entry.day}-${idx}`} style={cardStyle}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '4px',
-              }}
-            >
-              <span style={{ fontWeight: 'bold' }}>Day {entry.day}</span>
-              <span style={{ color: SEAL_AMBER, fontWeight: 'bold' }}>
-                {entry.spent}m
-              </span>
-            </div>
-            {entry.lines.length === 0 ? (
-              <div style={{ color: INK_FAINT, fontSize: FONT_BODY, fontStyle: 'italic' }}>
-                No auto-import activity.
-              </div>
-            ) : (
-              <div style={{ fontSize: FONT_BODY, color: INK_SOFT }}>
-                {entry.lines.map((line, i) => (
-                  <div key={i}>{line}</div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))
+        <table
+          className="StewardRoutes__history"
+          aria-label="Standing import history"
+        >
+          <thead>
+            <tr>
+              <th scope="col">Day</th>
+              <th scope="col" className="StewardRoutes__number">
+                Spent
+              </th>
+              <th scope="col">Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...history].reverse().map((entry, index) => (
+              <tr key={`${entry.day}-${index}`}>
+                <th scope="row">Day {entry.day}</th>
+                <td className="StewardRoutes__number">{entry.spent}m</td>
+                <td>
+                  {entry.lines.length ? (
+                    entry.lines.map((line, lineIndex) => (
+                      <div key={lineIndex}>{line}</div>
+                    ))
+                  ) : (
+                    <span className="StewardRoutes__muted">
+                      No auto-import activity.
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
-    </div>
+    </section>
   );
 };
 
@@ -234,47 +226,34 @@ const ToggleRow = (props: {
   row: AutoImportRow;
   name: string;
   floorTarget: number;
-  disabled?: boolean;
-  disabledTitle?: string;
+  disabled: boolean;
+  disabledTitle: string;
   onToggle: () => void;
 }) => {
   const { row, name, floorTarget, disabled, disabledTitle, onToggle } = props;
   const low = row.stock < floorTarget;
   return (
-    <div
-      style={{
-        ...cardStyle,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '6px 12px',
-        opacity: disabled ? 0.55 : 1,
-      }}
-      title={disabled ? disabledTitle : undefined}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <input
-          type="checkbox"
-          checked={!!row.active}
-          disabled={disabled}
-          onChange={onToggle}
-          style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
-        />
-        <span style={{ fontWeight: 'bold' }}>{name}</span>
-        {row.active && low && (
-          <span style={badgeStyle(SEAL_BLUE)}>will top up</span>
-        )}
-        {!row.active && (
-          <span style={badgeStyle(INK_FAINT)}>off</span>
-        )}
-      </div>
-      <div style={{ fontSize: FONT_BODY, color: INK_FAINT }}>
-        Stock:{' '}
-        <span style={{ color: low ? SEAL_RED : SEAL_GREEN, fontWeight: 'bold' }}>
-          {row.stock}
-        </span>{' '}
-        / target {floorTarget}
-      </div>
-    </div>
+    <tr title={disabled ? disabledTitle : undefined}>
+      <th scope="row">
+        <label>
+          <input
+            type="checkbox"
+            aria-label={`Standing import: ${name}`}
+            checked={!!row.active}
+            disabled={disabled}
+            onChange={onToggle}
+          />
+          <span>{name}</span>
+        </label>
+      </th>
+      <td
+        className={`StewardRoutes__number${low ? ' StewardRoutes__danger' : ''}`}
+      >
+        {row.stock} / {floorTarget}
+      </td>
+      <td className="StewardRoutes__status">
+        {!row.active ? 'Off' : low ? 'Will top up' : 'Stocked'}
+      </td>
+    </tr>
   );
 };

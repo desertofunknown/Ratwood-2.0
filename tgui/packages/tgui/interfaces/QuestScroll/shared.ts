@@ -31,6 +31,7 @@ export type QuestScrollData = {
   fetch_count?: number;
   recovery_shipment?: string | null;
   reward?: number;
+  deposit?: number;
   levy_rate?: number;
   guild_cut_rate?: number;
   progress_required?: number;

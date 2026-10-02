@@ -290,26 +290,38 @@
 	name = "bag of war dice"
 	desc = "A bag used to play Dice War. Activate in hand (Z) to start or join a game."
 	var/datum/dice_war_game/active_game
-	var/static/dice_war_rules_text = {"<div style='padding:8px;font-family:Verdana,sans-serif;'>
-	<h2 style='text-align:center;margin:0 0 6px 0;'>Dice War</h2>
-<br>
-<b>Objective:</b> Reduce your opponent to 0 HP.<br>
-<br>
-<b>Rules:</b><br>
-- Both players start with 50 HP.<br>
-- Both players roll 1d20, taking turns.<br>
-- Base Damage = difference between the high and low roll. Example: if Player 1 rolls 15 and Player 2 rolls 10, the base damage is 5.<br>
-- Even/Even or Odd/Odd: full damage to lower roll. Example: if a player rolls 12 and the opponent rolls 8, the full damage of 4 is dealt.<br>
-- High Odd vs Low Even: damage is halved. Example: if a player rolls 15 (odd) and the opponent rolls 8 (even), the damage is halved to 3 rounding down.<br>
-- High Even vs Low Odd: Power Stroke, full damage. Example: if a player rolls 16 (even) and the opponent rolls 7 (odd), the full damage of 9 is dealt.<br>
-- Natural 1: heal 10 HP.<br>
-- Natural 20: roll another d20 for direct damage (ignores halving rules).
+	var/static/dice_war_rules_text = {"<div class='keep-panel keep-prose' role='main' tabindex='0'>
+	<h1>Dice War</h1>
+	<h2>Objective:</h2>
+	<p>Reduce your opponent to 0 HP.</p>
+	<h2>Rules:</h2>
+	<ul>
+		<li>Both players start with 50 HP.</li>
+		<li>Both players roll 1d20, taking turns.</li>
+		<li>Base Damage = difference between the high and low roll. Example: if Player 1 rolls 15 and Player 2 rolls 10, the base damage is 5.</li>
+		<li>Even/Even or Odd/Odd: full damage to lower roll. Example: if a player rolls 12 and the opponent rolls 8, the full damage of 4 is dealt.</li>
+		<li>High Odd vs Low Even: damage is halved. Example: if a player rolls 15 (odd) and the opponent rolls 8 (even), the damage is halved to 3 rounding down.</li>
+		<li>High Even vs Low Odd: Power Stroke, full damage. Example: if a player rolls 16 (even) and the opponent rolls 7 (odd), the full damage of 9 is dealt.</li>
+		<li>Natural 1: heal 10 HP.</li>
+		<li>Natural 20: roll another d20 for direct damage (ignores halving rules).</li>
+	</ul>
 </div>"}
 
 /obj/item/storage/pill_bottle/dice/dice_war/proc/show_rules(mob/living/user)
 	if(!user)
 		return
-	user << browse(dice_war_rules_text, "window=dice_war_rules;size=700x450")
+	var/datum/browser/noclose/popup = new(user, "dice_war_rules", "", 700, 450)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content({"<style>
+		@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+		@font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+		@font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+		@font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+	</style>"})
+	popup.set_content(dice_war_rules_text)
+	popup.open(FALSE)
+	winset(user, "dice_war_rules.browser", "focus=true")
 
 /obj/item/storage/pill_bottle/dice/dice_war/PopulateContents()
 	new /obj/item/dice/d20(src)

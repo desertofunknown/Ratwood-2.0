@@ -170,6 +170,7 @@ export const CorruptionOfBloodClause = () => (
 
 export const LicenceToSlay = (props: {
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -180,6 +181,7 @@ export const LicenceToSlay = (props: {
     the Contract Ledger, that the bounty of{' '}
     <RewardClause
       reward={props.reward}
+      deposit={props.deposit}
       levyRate={props.levyRate}
       levyExempt={props.levyExempt}
       guildCutRate={props.guildCutRate}
@@ -243,6 +245,7 @@ export const HumanoidWrit = (props: {
   oathBreach: boolean;
   condemnation?: string;
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -274,6 +277,7 @@ export const HumanoidWrit = (props: {
     />
     <LicenceToSlay
       reward={props.reward}
+      deposit={props.deposit}
       levyRate={props.levyRate}
       levyExempt={props.levyExempt}
       guildCutRate={props.guildCutRate}

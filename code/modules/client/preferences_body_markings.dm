@@ -111,17 +111,8 @@
 
 /datum/preferences/proc/print_body_markings_page()
 	var/list/dat = list()
-	dat += "Use a <b>markings preset</b>: <a href='?_src_=prefs;preference=use_preset;task=change_marking'>Choose</a>  | <a href='?_src_=prefs;preference=reset_all_colors;task=change_marking'>Reset marking colors</a>"
-	/*
-	dat += "<table width='100%' align='center'>"
-	dat += " Mutant color #1:<span style='border: 1px solid #161616; background-color: #[features["mcolor"]];'>&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color;task=input'>Change</a>"
-	dat += " Mutant color #2:<span style='border: 1px solid #161616; background-color: #[features["mcolor2"]];'>&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color2;task=input'>Change</a>"
-	dat += " Mutant color #3:<span style='border: 1px solid #161616; background-color: #[features["mcolor3"]];'>&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color3;task=input'>Change</a>"
-	dat += "</table>"
-	*/
-	dat += "<table width='100%'>"
-	dat += "<td valign='top' width='50%'>"
-	var/iterated_markings = 0
+	dat += "<div class='appearance-toolbar'><span class='appearance-label'>Markings preset</span> <a href='?_src_=prefs;preference=use_preset;task=change_marking'>Choose</a> <a href='?_src_=prefs;preference=reset_all_colors;task=change_marking'>Reset marking colors</a></div>"
+	dat += "<div class='appearance-markings'>"
 	for(var/zone in GLOB.marking_zones)
 		var/named_zone = " "
 		switch(zone)
@@ -141,61 +132,45 @@
 				named_zone = "Right Hand"
 			if(BODY_ZONE_PRECISE_L_HAND)
 				named_zone = "Left Hand"
-		dat += "<center><h3>[named_zone]</h3></center>"
-		dat += "<table align='center'; width='100%'; height='100px'; style='background-color:#1c1313'>"
-		dat += "<tr style='vertical-align:top'>"
-		dat += "<td width=10%><font size=2> </font></td>"
-		dat += "<td width=10%><font size=2> </font></td>"
-		dat += "<td width=40%><font size=2> </font></td>"
-		dat += "<td width=25%><font size=2> </font></td>"
-		dat += "<td width=15%><font size=2> </font></td>"
-		dat += "</tr>"
+		dat += "<div class='appearance-card'><h2>[named_zone] <span class='appearance-count'>[length(body_markings[zone])] / [MAXIMUM_MARKINGS_PER_LIMB]</span></h2>"
 
-		if(body_markings[zone])
+		if(length(body_markings[zone]))
 			for(var/key in body_markings[zone])
 				var/can_move_up = " "
 				var/can_move_down = " "
 				var/color_line = " "
 				var/current_index = LAZYFIND(body_markings[zone], key)
 				var/color = body_markings[zone][key]
-				color_line = "<a href='?_src_=prefs;name=[key];key=[zone];preference=reset_color;task=change_marking'>R</a>"
-				color_line += "<a href='?_src_=prefs;name=[key];key=[zone];preference=change_color;task=change_marking'><span class='color_holder_box' style='background-color:["#[color]"]'></span></a>"
+				color_line = "<a title='Reset this marking color' href='?_src_=prefs;name=[key];key=[zone];preference=reset_color;task=change_marking'>Reset</a>"
+				color_line += "<a title='Change this marking color' href='?_src_=prefs;name=[key];key=[zone];preference=change_color;task=change_marking'><span class='color_holder_box' style='background-color:["#[color]"]'></span></a>"
 				if(current_index < length(body_markings[zone]))
 					can_move_down = "<a href='?_src_=prefs;name=[key];key=[zone];preference=marking_move_down;task=change_marking'>Down</a>"
 				if(current_index > 1)
 					can_move_up = "<a href='?_src_=prefs;name=[key];key=[zone];preference=marking_move_up;task=change_marking'>Up</a>"
-				dat += "<tr style='vertical-align:top;'>"
-				dat += "<td>[can_move_up]</td>"
-				dat += "<td>[can_move_down]</td>"
-				dat += "<td><a href='?_src_=prefs;name=[key];key=[zone];preference=change_marking;task=change_marking'>[key]</a></td>"
-				dat += "<td>[color_line]</td>"
-				dat += "<td><a href='?_src_=prefs;name=[key];key=[zone];preference=remove_marking;task=change_marking'>Remove</a></td>"
-				dat += "</tr>"
+				dat += "<div class='appearance-marking'><div class='appearance-marking-order'>[can_move_up][can_move_down]</div>"
+				dat += "<div class='appearance-marking-name'><a href='?_src_=prefs;name=[key];key=[zone];preference=change_marking;task=change_marking'>[key]</a></div>"
+				dat += "<div class='appearance-marking-color'>[color_line]</div>"
+				dat += "<div class='appearance-marking-remove'><a href='?_src_=prefs;name=[key];key=[zone];preference=remove_marking;task=change_marking'>Remove</a></div></div>"
+		else
+			dat += "<p class='appearance-empty'>No markings selected.</p>"
 
 		if(!(body_markings[zone]) || body_markings[zone].len < MAXIMUM_MARKINGS_PER_LIMB)
-			dat += "<tr style='vertical-align:top;'>"
-			dat += "<td> </td>"
-			dat += "<td> </td>"
-			dat += "<td> </td>"
-			dat += "<td> </td>"
-			dat += "<td><a href='?_src_=prefs;key=[zone];preference=add_marking;task=change_marking'>Add</a></td>"
-			dat += "</tr>"
+			dat += "<div class='appearance-card-actions'><a href='?_src_=prefs;key=[zone];preference=add_marking;task=change_marking'>Add marking</a></div>"
 
-		dat += "</table>"
+		dat += "</div>"
 
-		iterated_markings += 1
-		if(iterated_markings >= 4)
-			dat += "</td><td valign='top' width='50%'>"
-			iterated_markings = 0
-
-	dat += "</td></tr></table>"
+	dat += "</div>"
 	return dat
 
 /datum/preferences/proc/ShowMarkings(mob/user)
 	var/list/dat = list()
-	dat += "<style>span.color_holder_box{display: inline-block; width: 20px; height: 8px; border:1px solid #000; padding: 0px;}</style>"
+	dat += "<p class='appearance-intro'>Choose markings for each area. Use Up and Down to change their order.</p>"
 	dat += print_body_markings_page()
-	var/datum/browser/popup = new(user, "markings_cusotmization", "<div align='center'>Markings customization</div>", 650, 710)
+	var/datum/browser/popup = new(user, "markings_cusotmization", "Markings customization", 650, 710)
+	popup.add_stylesheet("appearance_editor", 'html/browser/appearance_editor.css')
+	var/datum/asset/simple/roguefonts/appearance_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = appearance_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
 

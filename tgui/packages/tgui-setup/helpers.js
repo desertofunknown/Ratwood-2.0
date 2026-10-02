@@ -57,7 +57,8 @@
   Byond.strictMode = Boolean(Number(parseMetaTag('tgui:strictMode')));
 
   // Callbacks for asynchronous calls
-  Byond.__callbacks__ = [];
+  Byond.__callbacks__ = {};
+  var nextCallbackId = 0;
 
   // Reviver for BYOND JSON
   var byondJsonReviver = function (key, value) {
@@ -114,9 +115,12 @@
     if (!window.Promise) {
       throw new Error('Async calls require API level of ES2015 or later.');
     }
-    var index = Byond.__callbacks__.length;
+    var index = nextCallbackId++;
     var promise = new window.Promise(function (resolve) {
-      Byond.__callbacks__.push(resolve);
+      Byond.__callbacks__[index] = function (value) {
+        delete Byond.__callbacks__[index];
+        resolve(value);
+      };
     });
     Byond.call(
       path,
@@ -262,7 +266,7 @@
           "' after several attempts.";
         if (type === 'css') {
           errorMessage +=
-            +'\nStylesheet was either not found, ' +
+            '\nStylesheet was either not found, ' +
             "or you're trying to load an empty stylesheet " +
             'that has no CSS rules in it.';
         }
@@ -271,7 +275,7 @@
       setTimeout(
         function () {
           loadedAssetByUrl[url] = null;
-          options.attempt += 1;
+          options.attempt = attempt + 1;
           loadAsset(options);
         },
         RETRY_WAIT_INITIAL + attempt * RETRY_WAIT_INCREMENT
@@ -417,7 +421,12 @@ window.onerror = function (msg, url, line, col, error) {
       });
     };
     setFatalErrorGeometry();
-    setInterval(setFatalErrorGeometry, 1000);
+    if (!window.onerror.__geometryInterval__) {
+      window.onerror.__geometryInterval__ = setInterval(
+        setFatalErrorGeometry,
+        1000
+      );
+    }
   }
   // Send logs to the game server
   if (Byond.strictMode) {

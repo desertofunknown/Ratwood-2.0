@@ -27,23 +27,8 @@
 		return
 	to_chat(user, span_warning("I start to collect [src]..."))
 	if(move_after(user, bundling_time, target = src))
-		var/stackcount = 0
-		for(var/obj/item/natural/brick/F in get_turf(src))
-			stackcount++
-		while(stackcount > 0)
-			if(stackcount == 1)
-				var/obj/item/natural/brick/S = new(get_turf(user))
-				user.put_in_hands(S)
-				stackcount--
-			else if(stackcount >= 2)
-				var/obj/item/natural/bundle/brick/B = new(get_turf(user))
-				B.amount = clamp(stackcount, 2, 4)
-				B.update_bundle()
-				stackcount -= clamp(stackcount, 2, 4)
-				user.put_in_hands(B)
-		for(var/obj/item/natural/brick/F in get_turf(src))
-			playsound(get_turf(user.loc), 'sound/foley/brickdrop.ogg', 100)
-			qdel(F)
+		if(collect_material_bundles(user, /obj/item/natural/brick, /obj/item/natural/bundle/brick, TRUE, TRUE))
+			playsound(get_turf(user), 'sound/foley/brickdrop.ogg', 100)
 
 /obj/item/natural/bundle/brick
 	name = "stack of bricks"

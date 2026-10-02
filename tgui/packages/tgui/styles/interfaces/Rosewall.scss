@@ -1,0 +1,126 @@
+.Rosewall {
+  min-width: 0;
+  padding: 8px 12px 12px;
+  color: var(--p-ink);
+  font:
+    13px/1.4 'Lora',
+    Georgia,
+    serif;
+
+  h1 {
+    margin: 0;
+    font:
+      22px/1.25 'Pterra',
+      Georgia,
+      serif;
+  }
+  h2 {
+    margin: 0;
+    font:
+      17px/1.4 'Pterra',
+      Georgia,
+      serif;
+  }
+  h3 {
+    margin: 0;
+    font:
+      bold 14px/1.4 'Lora',
+      Georgia,
+      serif;
+  }
+  p {
+    margin: 5px 0;
+    overflow-wrap: anywhere;
+  }
+  header {
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  header p,
+  &__message,
+  &__empty {
+    color: var(--p-ink-soft);
+  }
+  &__registry {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  &__controls,
+  &__actions,
+  &__identity {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 5px 8px;
+  }
+  &__controls {
+    margin-top: 5px;
+  }
+  &__controls label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 5px 8px;
+  }
+  &__count {
+    padding: 8px 0 4px;
+  }
+  &__count span {
+    color: var(--p-ink-soft);
+    font:
+      13px 'Lora',
+      Georgia,
+      serif;
+  }
+  &__adverts {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  &__adverts li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  &__identity {
+    overflow-wrap: anywhere;
+  }
+  &__identity span {
+    color: var(--p-ink-soft);
+  }
+  &__actions {
+    margin-top: 5px;
+  }
+  &__status {
+    margin-right: auto;
+  }
+  &__available {
+    color: var(--p-seal-green);
+  }
+  &__hired {
+    color: var(--p-seal-amber);
+  }
+  &__unavailable {
+    color: var(--p-seal-red);
+  }
+  button,
+  select {
+    max-width: 100%;
+    padding: 3px 6px;
+    border: 1px solid var(--p-bg-shadow);
+    border-radius: 0;
+    background: var(--p-button-bg);
+    color: inherit;
+    font: inherit;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:hover {
+    background: var(--p-tab-active-bg);
+  }
+  button:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--p-seal-amber);
+    outline-offset: 2px;
+  }
+}

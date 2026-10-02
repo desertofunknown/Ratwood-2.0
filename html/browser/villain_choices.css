@@ -1,0 +1,51 @@
+html, body, .uiWrapper, .uiWrapper .uiContent {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	background: #100d0e;
+	color: #ded1c2;
+	font: 13px/1.45 'Keep Lora', Georgia, serif;
+	overflow: hidden;
+	scrollbar-color: #594046 #100d0e;
+}
+
+.uiWrapper .uiContent { font: inherit; }
+.villain-choices { height: 100%; overflow-y: auto; box-sizing: border-box; padding: 0 12px 12px; }
+.villain-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.villain-choices h1 { margin: 10px 0 8px; padding: 0; color: #ded1c2; font: normal 22px/1.2 'Keep Rocker', Georgia, serif !important; }
+.villain-choices h2 { margin: 12px 0 4px; padding: 0 0 5px; border-bottom: 1px solid #594046; color: #ded1c2; font: normal 17px/1.2 'Keep Rocker', Georgia, serif !important; }
+.villain-choices table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.villain-choices th, .villain-choices td { padding: 4px 0; border-bottom: 1px solid #382b2f; text-align: left; overflow-wrap: anywhere; font-weight: normal; }
+.villain-choices tbody th { padding-right: 10px; }
+.villain-choices thead th { color: #b9a6a0; font-size: 12px; }
+.villain-choices .villain-state { width: 110px; text-align: right; }
+.villain-choices .villain-slots { width: 60px; text-align: right; }
+.villain-note, .villain-empty { color: #b9a6a0; }
+p.villain-note { margin: 5px 0 8px; font-size: 12px; }
+.villain-slot-note { display: block; font-size: 11px; margin-top: 2px; }
+.villain-choices th .villain-slot-note { display: inline; margin-left: 8px; }
+.villain-choices a, .villain-choices a:link, .villain-choices a:visited {
+	display: inline-block;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 3px 8px;
+	border: 1px solid #594046;
+	background: #281b1f;
+	color: #ded1c2;
+	font: inherit !important;
+	line-height: 1.3;
+	text-decoration: none;
+	scroll-margin: 5px 0;
+}
+.villain-state a { min-width: 84px; text-align: center; }
+.villain-choices a.villain-name { padding: 1px 0; background: transparent; border-color: transparent; text-decoration: underline; }
+.villain-choices a.villain-details { font-size: 11px !important; padding: 1px 4px; }
+.villain-choices a:hover { background: #42222a; border-color: #ae8189; }
+.villain-choices a:focus { outline: 2px solid #ae8189; outline-offset: 1px; }
+.villain-choices .villain-state a.villain-high { background: #42222a; border-color: #ae8189; }
+.villain-choices .villain-state a.villain-medium { border-color: #ae8189; }
+.villain-choices .villain-state a.villain-never { color: #b9a6a0; }

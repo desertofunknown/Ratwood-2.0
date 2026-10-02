@@ -1294,6 +1294,7 @@
 		dat += "<center><a href='?src=[REF(src)];task=stop'>Stop</a></center>"
 	else
 		dat += "<br>"
+	dat += "<center><a href='?src=[REF(src)];task=disable_erp'>Disable ERP participation</a></center>"
 	dat += "<center><a href='?src=[REF(src)];task=category_misc'>[action_category == SEX_CATEGORY_MISC ? "<font color='#eac8de'>OTHER</font>" : "OTHER"]</a> | "
 	dat += "<a href='?src=[REF(src)];task=category_hands'>[action_category == SEX_CATEGORY_HANDS ? "<font color='#eac8de'>HANDS</font>" : "HANDS"]</a> | "
 	dat += "<a href='?src=[REF(src)];task=category_penetrate'>[action_category == SEX_CATEGORY_PENETRATE ? "<font color='#eac8de'>PENETRATE</font>" : "PENETRATE"]</a></center>"
@@ -1334,6 +1335,10 @@
 	if(usr != user)
 		return
 	switch(href_list["task"])
+		if("disable_erp")
+			user.client?.set_erp_participation(FALSE)
+			user << browse(null, "window=sexcon")
+			return
 		if("action")
 			var/action_path = text2path(href_list["action_type"])
 			var/datum/sex_action/action = SEX_ACTION(action_path)
@@ -1447,6 +1452,9 @@
 	INVOKE_ASYNC(src, PROC_REF(sex_action_loop))
 
 /datum/sex_controller/proc/sex_action_loop()
+	if(QDELETED(user) || !can_perform_action(current_action, user.incapacitated()))
+		stop_current_action()
+		return
 	// Do action loop
 	var/performed_action_type = current_action
 	var/datum/sex_action/action = SEX_ACTION(current_action)
@@ -1461,7 +1469,7 @@
 	find_occupying_furniture()
 	find_occupying_grass()
 	while(TRUE)
-		if(!target?.client?.prefs?.sexable) // no prefs/sexability means we should safely stop the loop
+		if(!participants_opted_in())
 			break
 		if(!user.stamina_add(action.stamina_cost * get_stamina_cost_multiplier()))
 			break
@@ -1510,7 +1518,7 @@
 	stop_current_action()
 
 /datum/sex_controller/proc/can_perform_action(action_type, incapacitated)
-	if(!action_type)
+	if(!action_type || !participants_opted_in())
 		return FALSE
 	var/datum/sex_action/action = SEX_ACTION(action_type)
 	if(istype(action, /datum/sex_action/chastityplay) && !chastity_content_enabled_for_pair())
@@ -1520,6 +1528,9 @@
 	if(!action.can_perform(user, target))
 		return FALSE
 	return TRUE
+
+/datum/sex_controller/proc/participants_opted_in()
+	return user?.client?.prefs?.sexable && target?.client?.prefs?.sexable
 
 /datum/sex_controller/proc/chastity_content_enabled_for(mob/living/carbon/human/H)
 	if(!H)

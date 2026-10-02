@@ -3,4 +3,7 @@
 		"padlock.png" = 'html/padlock.png',
 		"flowers.png" = 'html/flowers.png',
 		)
-	parents = list("common.css" = 'html/browser/common.css')
+	parents = list(
+		"common.css" = 'html/browser/common.css',
+		"keyboard.js" = 'html/browser/keyboard.js',
+	)

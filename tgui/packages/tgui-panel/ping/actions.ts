@@ -6,6 +6,11 @@
 
 import { createAction } from 'common/redux';
 
+export type PendingPing = {
+  index: number;
+  sentAt: number;
+};
+
 export const pingReply = createAction('ping/reply');
 
 /**
@@ -15,9 +20,9 @@ export const pingReply = createAction('ping/reply');
  */
 export const pingSoft = createAction('ping/soft');
 
-export const pingSuccess = createAction('ping/success', (ping) => ({
+export const pingSuccess = createAction('ping/success', (ping: PendingPing) => ({
   payload: {
-    lastId: ping.id,
+    lastId: ping.index,
     roundtrip: (Date.now() - ping.sentAt) * 0.5,
   },
 }));

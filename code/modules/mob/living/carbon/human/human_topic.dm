@@ -104,8 +104,12 @@ GLOBAL_VAR_INIT(year_integer, text2num(year)) // = 2013???
 	if(href_list["species_lore"])
 		if(!dna?.species?.desc)
 			return
-		var/datum/browser/popup = new(usr, "species_info", "<center>Lore</center>", 460, 550)
-		popup.set_content(dna.species.desc)
+		var/datum/browser/popup = new(usr, "species_info", "", 620, 680)
+		popup.add_stylesheet("character_reports", 'html/browser/character_reports.css')
+		var/datum/asset/simple/roguefonts/report_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+		var/list/font_urls = report_fonts.get_url_mappings()
+		popup.add_head_content("<style>@font-face { font-family: 'Report Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Report Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Report Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+		popup.set_content("<div class='character-report report-lore'><div class='report-masthead'><div class='report-eyebrow'>Peoples of the realm</div><h1>Lore</h1></div><div class='report-reading'>[dna.species.desc]</div></div>")
 		popup.open()
 		return
 
@@ -281,34 +285,30 @@ GLOBAL_VAR_INIT(year_integer, text2num(year)) // = 2013???
 			if(!is_smart && !is_stupid && ((user.STAINT - 10) + (user.STAPER - 10) + user?.get_skill_level(/datum/skill/misc/reading)) >= 5)
 				is_normal = TRUE
 			var/list/dat = list()
-			// Top-level table
-			dat += "<table style='width: 100%; line-height: 20px;'>"
-			// NEXT ROW
-			dat += "<tr>"
-			dat += "<td style='width:16%;text-align:left;vertical-align: text-top'>"
+			dat += "<div class='character-report'><div class='report-masthead'><div class='report-eyebrow'>Field observations</div><h1>[html_encode("[src]")]</h1><p>Assessment</p></div><div class='report-columns'><div class='report-section report-stats'><h2>Attributes</h2>"
 			if(intellectual && (!obscured_name || H.client?.prefs.masked_examine))
-				dat += "<b>STATS:</b><br><br>"
+				dat += "<table class='report-attributes'>"
 				if(!is_guarded)
-					dat +=("STR: \Roman [H.STASTR]<br>")
-					dat +=("PER: \Roman [H.STAPER]<br>")
-					dat +=("INT: \Roman [H.STAINT]<br>")
-					dat +=("CON: \Roman [H.STACON]<br>")
-					dat +=("END: \Roman [H.STAWIL]<br>")
-					dat +=("SPD: \Roman [H.STASPD]<br>")
+					dat += "<tr><th scope='row'>Strength</th><td>\Roman [H.STASTR]</td></tr>"
+					dat += "<tr><th scope='row'>Perception</th><td>\Roman [H.STAPER]</td></tr>"
+					dat += "<tr><th scope='row'>Intelligence</th><td>\Roman [H.STAINT]</td></tr>"
+					dat += "<tr><th scope='row'>Constitution</th><td>\Roman [H.STACON]</td></tr>"
+					dat += "<tr><th scope='row'>Endurance</th><td>\Roman [H.STAWIL]</td></tr>"
+					dat += "<tr><th scope='row'>Speed</th><td>\Roman [H.STASPD]</td></tr>"
 				else
-					dat +=("STR: \Roman [rand(1,20)]<br>")
-					dat +=("PER: \Roman [rand(1,20)]<br>")
-					dat +=("INT: \Roman [rand(1,20)]<br>")
-					dat +=("CON: \Roman [rand(1,20)]<br>")
-					dat +=("END: \Roman [rand(1,20)]<br>")
-					dat +=("SPD: \Roman [rand(1,20)]<br>")
+					dat += "<tr><th scope='row'>Strength</th><td>\Roman [rand(1,20)]</td></tr>"
+					dat += "<tr><th scope='row'>Perception</th><td>\Roman [rand(1,20)]</td></tr>"
+					dat += "<tr><th scope='row'>Intelligence</th><td>\Roman [rand(1,20)]</td></tr>"
+					dat += "<tr><th scope='row'>Constitution</th><td>\Roman [rand(1,20)]</td></tr>"
+					dat += "<tr><th scope='row'>Endurance</th><td>\Roman [rand(1,20)]</td></tr>"
+					dat += "<tr><th scope='row'>Speed</th><td>\Roman [rand(1,20)]</td></tr>"
+				dat += "</table>"
 				if(is_guarded || job == "Jester")
-					dat += "Something feels off..."
-				dat += "</td>"
+					dat += "<p class='report-note'>Something feels off...</p>"
 			else
-				dat += "</td>"
+				dat += "<p class='report-note'>I cannot discern their attributes.</p>"
+			dat += "</div><div class='report-section report-protection'>"
 
-			dat += "<td style='width:33%;text-align:left;vertical-align: text-top'>"
 			var/list/damtypes = list("blunt","slash","stab","piercing")
 			var/list/body_parts = list(skin_armor, head, wear_mask, wear_wrists, gloves, wear_neck, cloak, wear_armor, wear_shirt, shoes, wear_pants, backr, backl, belt, s_store, glasses, ears, wear_ring)
 			var/list/coverage_exposed = list(READABLE_ZONE_HEAD, READABLE_ZONE_CHEST, READABLE_ZONE_ARMS, READABLE_ZONE_L_ARM, READABLE_ZONE_R_ARM, READABLE_ZONE_LEGS, READABLE_ZONE_L_LEG, READABLE_ZONE_R_LEG, READABLE_ZONE_NOSE, READABLE_ZONE_MOUTH, READABLE_ZONE_EYES, READABLE_ZONE_NECK, READABLE_ZONE_VITALS, READABLE_ZONE_GROIN, READABLE_ZONE_HANDS, READABLE_ZONE_L_HAND, READABLE_ZONE_R_HAND, READABLE_ZONE_FEET, READABLE_ZONE_L_FOOT, READABLE_ZONE_R_FOOT)
@@ -432,7 +432,7 @@ GLOBAL_VAR_INIT(year_integer, text2num(year)) // = 2013???
 						coverage_exposed.Remove(READABLE_ZONE_MOUTH, READABLE_ZONE_EYES, READABLE_ZONE_NOSE)
 
 			if(!is_stupid)
-				dat += "<b><center>BODY:</center></b><br>"
+				dat += "<h2>Protection</h2>"
 			if(length(coverage))
 				var/str
 				if(!is_smart && !is_normal)	//We get a significantly simplified printout if we don't have the stats / trait
@@ -443,19 +443,20 @@ GLOBAL_VAR_INIT(year_integer, text2num(year)) // = 2013???
 					if(is_normal || is_smart)
 						if(length(coverage_exposed))
 							for(var/exposed in coverage_exposed)
-								str += "<b>[exposed]</b>: <font color = '#770404'><b>EXPOSED!</B></font><br>"
+								str += "<div class='report-exposed'><strong>[exposed]</strong><span>Exposed</span></div>"
 					for(var/thing in coverage)
-						str += "<b>[thing]</b> LAYERS: <b>[coverage[thing]]</b> | [colorgrade_rating("", blunt_max[thing], TRUE)] | [colorgrade_rating("", slash_max[thing], TRUE)] | [colorgrade_rating("", stab_max[thing], TRUE)] | [colorgrade_rating("", piercing_max[thing], TRUE)] <br><font color = '#a35252'>[crit_weakness[thing]]</font><br>"
+						str += "<div class='report-armor'><div class='report-armor-title'><h3>[thing]</h3><span>Layers: [coverage[thing]]</span></div><table class='report-armor-grades'><thead><tr><th scope='col'>Blunt</th><th scope='col'>Slash</th><th scope='col'>Stab</th><th scope='col'>Piercing</th></tr></thead><tbody><tr><td>[colorgrade_rating("", blunt_max[thing], TRUE)]</td><td>[colorgrade_rating("", slash_max[thing], TRUE)]</td><td>[colorgrade_rating("", stab_max[thing], TRUE)]</td><td>[colorgrade_rating("", piercing_max[thing], TRUE)]</td></tr></tbody></table>"
+						if(crit_weakness[thing])
+							str += "<div class='report-weakness'><strong>Critical weaknesses</strong>[crit_weakness[thing]]</div>"
+						str += "</div>"
 					dat += str
 				else
-					dat += "<b><center>I don't know! Just hit them!</center></b>"
+					dat += "<p class='report-note'>I don't know! Just hit them!</p>"
 			else
-				dat += "<b><center>They're wearing nothing.</center></b>"
-			dat += "</td>"
-
-			dat += "<td style='width:40%;text-align:center;vertical-align: text-top'>"
+				dat += "<p class='report-note'>They're wearing nothing.</p>"
+			dat += "</div><div class='report-section report-skills'><h2>Skills</h2>"
+			var/visible_skills = 0
 			if(!is_guarded && !is_stupid && (!obscured_name || H.client?.prefs.masked_examine))	//We don't see Guarded people's skills at all.
-				dat += "<b>SKILLS:</b><br><br>"
 				var/list/wornstuff = list(H.backr, H.backl, H.beltl, H.beltr)
 				if(!is_normal && !is_smart)	//At minimum we get to see the skills of the weapons the person is holding, if we have them.
 					for(var/stuff in wornstuff)
@@ -464,43 +465,52 @@ GLOBAL_VAR_INIT(year_integer, text2num(year)) // = 2013???
 								var/obj/item/wornthing = stuff
 								if(wornthing.associated_skill)
 									var/datum/skill/SK = wornthing.associated_skill
-									if(user.get_skill_level(SK) > 0)
-										dat += "<font size = 4; font color = '#dddada'><b>[SK.name]</b><br></font>"
-										var/skilldiff = user.get_skill_level(SK) - H.get_skill_level(SK)
-										dat += "[skilldiff_report(skilldiff)] <br>"
-										dat += "-----------------------<br>"
+									var/user_skill_level = user.get_skill_level(SK)
+									if(user_skill_level > 0)
+										dat += "<div class='report-skill'><h3>[SK.name]</h3>"
+										var/skilldiff = user_skill_level - H.get_skill_level(SK)
+										dat += "<p>[skilldiff_report(skilldiff)]</p></div>"
+										visible_skills++
 					for(var/obj/item/I in held_items)	//Also what's in their hands!
 						if(!(I.item_flags & ABSTRACT))
 							if(I.associated_skill)
 								var/datum/skill/SK = I.associated_skill
-								if(user.get_skill_level(SK) > 0)
-									dat += "<font size = 4; font color = '#dddada'><b>[SK.name]</b><br></font>"
-									var/skilldiff = user.get_skill_level(SK) - H.get_skill_level(SK)
-									dat += "[skilldiff_report(skilldiff)] <br>"
-									dat += "-----------------------<br>"
+								var/user_skill_level = user.get_skill_level(SK)
+								if(user_skill_level > 0)
+									dat += "<div class='report-skill'><h3>[SK.name]</h3>"
+									var/skilldiff = user_skill_level - H.get_skill_level(SK)
+									dat += "<p>[skilldiff_report(skilldiff)]</p></div>"
+									visible_skills++
 				else	//Otherwise, we get to see all of their combat skills
 					for(var/S in subtypesof(/datum/skill/combat))
 						var/datum/skill/combat/SK = S
-						if(user.get_skill_level(S) > 0)
-							dat += "<font size = 4; font color = '#dddada'><b>[SK.name]</b><br></font>"
-							var/skilldiff = user.get_skill_level(S) - H.get_skill_level(S)
-							dat += "[skilldiff_report(skilldiff)] <br>"
-							dat += "-----------------------<br>"
+						var/user_skill_level = user.get_skill_level(S)
+						if(user_skill_level > 0)
+							dat += "<div class='report-skill'><h3>[SK.name]</h3>"
+							var/skilldiff = user_skill_level - H.get_skill_level(S)
+							dat += "<p>[skilldiff_report(skilldiff)]</p></div>"
+							visible_skills++
 					if(is_smart)	//And if we're smart enough, /all/ skills.
 						for(var/S in subtypesof(/datum/skill))
-							if(user.get_skill_level(S) > 0)
+							var/user_skill_level = user.get_skill_level(S)
+							if(user_skill_level > 0)
 								if(!ispath(S, /datum/skill/combat))	//We already did these.
 									var/datum/skill/SL = S
-									dat += "<font size = 4; font color = '#dddada'><b>[SL.name]</b><br></font>"
-									var/skilldiff = user.get_skill_level(S) - H.get_skill_level(S)
-									dat += "[skilldiff_report(skilldiff)] <br>"
-									dat += "-----------------------<br>"
+									dat += "<div class='report-skill'><h3>[SL.name]</h3>"
+									var/skilldiff = user_skill_level - H.get_skill_level(S)
+									dat += "<p>[skilldiff_report(skilldiff)]</p></div>"
+									visible_skills++
 								else
 									continue
 
-			dat += "</td>"
-			dat += "</tr>"
-			var/datum/browser/popup = new(user, "assess", ntitle = "[src] Assesment", nwidth = 1000, nheight = 600)
+			if(!visible_skills)
+				dat += "<p class='report-note'>I cannot discern their skills.</p>"
+			dat += "</div></div></div>"
+			var/datum/browser/popup = new(user, "assess", "", 900, 700)
+			popup.add_stylesheet("character_reports", 'html/browser/character_reports.css')
+			var/datum/asset/simple/roguefonts/report_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+			var/list/font_urls = report_fonts.get_url_mappings()
+			popup.add_head_content("<style>@font-face { font-family: 'Report Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Report Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Report Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
 			popup.set_content(dat.Join())
 			popup.open(FALSE)
 		else

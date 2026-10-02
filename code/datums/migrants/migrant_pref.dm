@@ -17,6 +17,8 @@
 	// Hidden waves are only queueable while an admin has them forced and forming.
 	if(wave.hidden && !SSmigrants.is_forced_forming(wave_type))
 		return
+	if(role_type && !(role_type in wave.required_roles) && !(role_type in wave.optional_roles))
+		return
 	if(role_type && !SSmigrants.can_be_role(prefs.parent, role_type))
 		to_chat(prefs.parent, span_warning("You can't be this role. (Wrong species, gender, or age.)"))
 		return
@@ -185,6 +187,8 @@
 	var/max_contribute = min(current_triumph, 25)
 	var/amount = tgui_input_number(client, "Contribute triumph to '[wave.name]'?\n\nYour triumph: [current_triumph]\nYour contribution: [player_contribution]\nWave total: [wave.triumph_total]/[wave.triumph_threshold]", "Triumph Contribution", max_value = max_contribute, min_value = 1)
 	if(!amount || amount <= 0 || amount > max_contribute)
+		return
+	if(!prefs || prefs.parent != client)
 		return
 	SSmigrants.contribute_triumph_to_wave(client, wave_type, amount)
 

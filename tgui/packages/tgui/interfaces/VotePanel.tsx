@@ -1,14 +1,10 @@
 import {
-  BlockQuote,
   Box,
   Button,
-  Dimmer,
+  Collapsible,
   Icon,
-  LabeledList,
-  NoticeBox,
   Section,
   Stack,
-  Tooltip,
 } from 'tgui-core/components';
 import type { BooleanLike } from 'tgui-core/react';
 
@@ -33,13 +29,18 @@ type Option = {
   votes: number;
 };
 
+enum VoteSystem {
+  VOTE_SINGLE = 1,
+  VOTE_MULTI = 2,
+}
+
 type ActiveVote = {
   vote: Vote;
   question: string | null;
   timeRemaining: number;
-  displayStatistics: boolean;
+  displayStatistics: BooleanLike;
   choices: Option[];
-  countMethod: number;
+  countMethod: VoteSystem;
 };
 
 type UserData = {
@@ -48,81 +49,83 @@ type UserData = {
   isLowerAdmin: BooleanLike;
   isUpperAdmin: BooleanLike;
   singleSelection: string | null;
-  multiSelection: string[] | null;
-  countMethod: VoteSystem;
+  multiSelection: Record<string, number> | null;
 };
 
-enum VoteSystem {
-  VOTE_SINGLE = 1,
-  VOTE_MULTI = 2,
-}
-
 type Data = {
-  currentVote: ActiveVote;
+  currentVote: ActiveVote | null;
   possibleVotes: Vote[];
   user: UserData;
   LastVoteTime: number;
   VoteCD: number;
-  deadVoteEnabled: BooleanLike;
 };
 
 export const VotePanel = (props) => {
   const { act, data } = useBackend<Data>();
   const { currentVote, user, LastVoteTime, VoteCD } = data;
-
-  let windowTitle = 'Vote';
-  if (currentVote) {
-    windowTitle +=
-      ': ' +
-      (currentVote.question || currentVote.vote.name).replace(/^\w/, (c) =>
-        c.toUpperCase(),
-      );
-  }
+  const cooldown = Math.max(0, Math.ceil((LastVoteTime + VoteCD) / 10));
 
   return (
-    <Window title={windowTitle} width={400} height={500}>
-      <Window.Content>
+    <Window title="The ballot" width={560} height={620}>
+      <Window.Content className="VotePanel">
         <Stack vertical fill>
-          <Stack.Item>
-            <Section
-              title="New Vote"
-              buttons={
-                !!user.isLowerAdmin && (
-                  <Stack>
-                    <Stack.Item>
-                      <Button
-                        icon="refresh"
-                        disabled={LastVoteTime + VoteCD <= 0}
-                        onClick={() => act('resetCooldown')}
-                      >
-                        Reset cooldown
-                      </Button>
-                    </Stack.Item>
-                    <Stack.Item>
-                      <Button.Checkbox
-                        disabled={!user.isUpperAdmin}
-                        onClick={() => act('toggleDeadVote')}
-                        checked={!data.deadVoteEnabled}
-                        color="primary"
-                      >
-                        Dead votes
-                      </Button.Checkbox>
-                    </Stack.Item>
-                  </Stack>
-                )
-              }
-            >
-              <VoteOptions />
-            </Section>
-          </Stack.Item>
           <Stack.Item grow>
-            <Section fill scrollable title="Active Vote">
-              <ChoicesPanel />
+            <Section fill scrollable title={currentVote ? 'Active ballot' : 'Call a vote'}>
+              {currentVote ? (
+                <ChoicesPanel />
+              ) : (
+                <>
+                  <Box className="VotePanel__instruction">No vote is currently open.</Box>
+                  <VoteOptions />
+                </>
+              )}
             </Section>
           </Stack.Item>
+          {!!currentVote && (
+            <Stack.Item>
+              <Section>
+                <TimePanel />
+              </Section>
+            </Stack.Item>
+          )}
           <Stack.Item>
-            <Section>
-              <TimePanel />
+            <Section className="VotePanel__administration">
+              {cooldown > 0 && (
+                <Box className="VotePanel__cooldown">
+                  <Icon name="hourglass-half" /> Next vote available in {cooldown}s
+                </Box>
+              )}
+              {!!currentVote && (
+                <Collapsible title="Start another vote" key={currentVote.vote.name}>
+                  <div className="VotePanel__newVotes"><VoteOptions /></div>
+                </Collapsible>
+              )}
+              {!!user.isLowerAdmin && (
+                <Stack wrap>
+                  <Stack.Item>
+                    <Button
+                      icon="refresh"
+                      disabled={cooldown <= 0}
+                      onClick={() => act('resetCooldown')}
+                    >
+                      Reset cooldown
+                    </Button>
+                  </Stack.Item>
+                  <Stack.Item>
+                    <Button
+                      icon="ghost"
+                      disabled={!user.isUpperAdmin}
+                      onClick={() => act('toggleDeadVote')}
+                      tooltip="Enable or disable voting by dead players."
+                    >
+                      Toggle ghost voting
+                    </Button>
+                  </Stack.Item>
+                </Stack>
+              )}
+              {!currentVote && cooldown === 0 && !user.isLowerAdmin && (
+                <Box className="VotePanel__muted">Choose an available vote to begin.</Box>
+              )}
             </Section>
           </Stack.Item>
         </Stack>
@@ -131,209 +134,101 @@ export const VotePanel = (props) => {
   );
 };
 
-const VoteOptionDimmer = (props) => {
-  const { data } = useBackend<Data>();
-  const { LastVoteTime, VoteCD } = data;
-
-  return (
-    <Dimmer>
-      <Box textAlign="center">
-        <Box fontSize={2} bold>
-          Vote Cooldown
-        </Box>
-        <Box fontSize={1.5}>{Math.floor((VoteCD + LastVoteTime) / 10)}s</Box>
-      </Box>
-    </Dimmer>
-  );
-};
-
-const VoteOptions = (props) => {
+const VoteOptions = () => {
   const { act, data } = useBackend<Data>();
   const { possibleVotes, user, LastVoteTime, VoteCD } = data;
+  const coolingDown = LastVoteTime + VoteCD > 0;
 
   return (
-    <Stack.Item>
-      {LastVoteTime + VoteCD > 0 && <VoteOptionDimmer />}
-      <Stack vertical justify="space-between">
-        {possibleVotes.map((option) => (
-          <Stack.Item key={option.name}>
-            <Stack>
-              {!!user.isLowerAdmin && (
-                <Stack.Item>
-                  <Button.Checkbox
-                    color="primary"
-                    checked={
-                      option.config === VoteConfig.Enabled ||
-                      option.config === VoteConfig.None
-                    }
-                    disabled={
-                      !user.isUpperAdmin || option.config === VoteConfig.None
-                    }
-                    tooltip={
-                      option.config === VoteConfig.None
-                        ? 'This vote cannot be disabled.'
-                        : null
-                    }
-                    onClick={() =>
-                      act('toggleVote', {
-                        voteName: option.name,
-                      })
-                    }
-                  >
-                    Active
-                  </Button.Checkbox>
-                </Stack.Item>
-              )}
-              <Stack.Item>
-                <Button
-                  disabled={!option.canBeInitiated}
-                  onClick={() =>
-                    act('callVote', {
-                      voteName: option.name,
-                    })
-                  }
-                  icon="play"
-                />
-              </Stack.Item>
-              <Stack.Item>
-                <Tooltip content={option.message}>
-                  <BlockQuote style={{ lineHeight: '1.7em' }}>
-                    {option.name} Vote
-                  </BlockQuote>
-                </Tooltip>
-              </Stack.Item>
-            </Stack>
-          </Stack.Item>
-        ))}
-      </Stack>
-    </Stack.Item>
+    <Stack vertical>
+      {possibleVotes.map((option) => (
+        <Stack.Item key={option.name}>
+          <div className="VotePanel__proposal">
+            <Button
+              fluid
+              disabled={!option.canBeInitiated || coolingDown}
+              onClick={() => act('callVote', { voteName: option.name })}
+              icon="play"
+            >
+              {option.name.replace(/^\w/, (c) => c.toUpperCase())} vote
+            </Button>
+            <Box className="VotePanel__muted">{option.message}</Box>
+            {!!user.isLowerAdmin && (
+              <Button.Checkbox
+                checked={option.config !== VoteConfig.Disabled}
+                disabled={!user.isUpperAdmin || option.config === VoteConfig.None}
+                tooltip={option.config === VoteConfig.None ? 'This vote cannot be disabled.' : undefined}
+                onClick={() => act('toggleVote', { voteName: option.name })}
+              >
+                Enabled
+              </Button.Checkbox>
+            )}
+          </div>
+        </Stack.Item>
+      ))}
+    </Stack>
   );
 };
 
-const ChoicesPanel = (props) => {
+const ChoicesPanel = () => {
   const { act, data } = useBackend<Data>();
   const { currentVote, user } = data;
+  if (!currentVote) return null;
+  const single = currentVote.countMethod === VoteSystem.VOTE_SINGLE;
+  const multiple = currentVote.countMethod === VoteSystem.VOTE_MULTI;
 
   return (
     <>
-      {currentVote && currentVote.countMethod === VoteSystem.VOTE_SINGLE ? (
-        <NoticeBox success>Select one option</NoticeBox>
-      ) : null}
-      {currentVote &&
-      currentVote.choices.length !== 0 &&
-      currentVote.countMethod === VoteSystem.VOTE_SINGLE ? (
-        <LabeledList>
-          {currentVote.choices.map((choice) => (
-            <Box key={choice.name}>
-              <LabeledList.Item
-                label={choice.name.replace(/^\w/, (c) => c.toUpperCase())}
-                textAlign="right"
-                buttons={
-                  <Button
-                    tooltip={
-                      user.isGhost && 'Ghost voting was disabled by an admin.'
-                    }
-                    disabled={
-                      user.singleSelection === choice.name || user.isGhost
-                    }
-                    onClick={() => {
-                      act('voteSingle', { voteOption: choice.name });
-                    }}
-                  >
-                    Vote
-                  </Button>
-                }
-              >
-                {user.singleSelection &&
-                  choice.name === user.singleSelection && (
-                    <Icon align="right" mr={2} color="green" name="vote-yea" />
-                  )}
-                {currentVote.displayStatistics ? `${choice.votes} Votes` : null}
-              </LabeledList.Item>
-              <LabeledList.Divider />
-            </Box>
-          ))}
-        </LabeledList>
-      ) : null}
-      {currentVote && currentVote.countMethod === VoteSystem.VOTE_MULTI ? (
-        <NoticeBox success>Select any number of options</NoticeBox>
-      ) : null}
-      {currentVote &&
-      currentVote.choices.length !== 0 &&
-      currentVote.countMethod === VoteSystem.VOTE_MULTI ? (
-        <LabeledList>
-          {currentVote.choices.map((choice) => (
-            <Box key={choice.name}>
-              <LabeledList.Item
-                label={choice.name.replace(/^\w/, (c) => c.toUpperCase())}
-                textAlign="right"
-                buttons={
-                  <Button
-                    tooltip={
-                      user.isGhost && 'Ghost voting was disabled by an admin.'
-                    }
-                    disabled={user.isGhost}
-                    onClick={() => {
-                      act('voteMulti', { voteOption: choice.name });
-                    }}
-                  >
-                    Vote
-                  </Button>
-                }
-              >
-                {user.multiSelection &&
-                user.multiSelection[user.ckey.concat(choice.name)] === 1 ? (
-                  <Icon align="right" mr={2} color="blue" name="vote-yea" />
-                ) : null}
-                {choice.votes} Votes
-              </LabeledList.Item>
-              <LabeledList.Divider />
-            </Box>
-          ))}
-        </LabeledList>
-      ) : null}
-      {currentVote ? null : <NoticeBox>No vote active!</NoticeBox>}
+      <h2 className="VotePanel__question">{currentVote.question || currentVote.vote.name}</h2>
+      <Box className="VotePanel__instruction">
+        {single ? 'Choose one option.' : multiple ? 'Choose any number of options. Select again to remove a choice.' : 'Voting is unavailable.'}
+      </Box>
+      {!!user.isGhost && (
+        <Box className="VotePanel__cooldown">Ghost voting is disabled for this ballot.</Box>
+      )}
+      {currentVote.choices.map((choice) => {
+        const selected = single
+          ? user.singleSelection === choice.name
+          : user.multiSelection?.[user.ckey + choice.name] === 1;
+        return (
+          <Button
+            key={choice.name}
+            className="VotePanel__choice"
+            color="transparent"
+            fluid
+            selected={selected}
+            disabled={!!user.isGhost || (!single && !multiple) || (single && selected)}
+            onClick={() => act(single ? 'voteSingle' : 'voteMulti', { voteOption: choice.name })}
+          >
+            <span className="VotePanel__selection"><Icon name={selected ? 'check-square' : 'square'} /></span>
+            <span className="VotePanel__choiceName">{choice.name.replace(/^\w/, (c) => c.toUpperCase())}</span>
+            {!!currentVote.displayStatistics && (
+              <span className="VotePanel__count">{choice.votes} {choice.votes === 1 ? 'vote' : 'votes'}</span>
+            )}
+          </Button>
+        );
+      })}
+      {!currentVote.choices.length && <Box className="VotePanel__muted">No choices are available.</Box>}
     </>
   );
 };
 
-const TimePanel = (props) => {
+const TimePanel = () => {
   const { act, data } = useBackend<Data>();
   const { currentVote, user } = data;
+  if (!currentVote) return null;
 
   return (
-    <Stack.Item>
-      <Stack justify="space-between">
-        <Box fontSize={1.5}>
-          {currentVote
-            ? `Time remaining: ${currentVote.timeRemaining}s`
-            : 'No current vote'}
-        </Box>
-        {!!user.isLowerAdmin && (
-          <Stack>
-            <Stack.Item>
-              <Button
-                color="green"
-                disabled={!user.isLowerAdmin || !currentVote}
-                onClick={() => act('endNow')}
-                style={{ lineHeight: '1.8em' }}
-              >
-                End Now
-              </Button>
-            </Stack.Item>
-            <Stack.Item>
-              <Button
-                color="red"
-                disabled={!user.isLowerAdmin || !currentVote}
-                onClick={() => act('cancel')}
-                style={{ lineHeight: '1.8em' }}
-              >
-                Cancel
-              </Button>
-            </Stack.Item>
-          </Stack>
-        )}
-      </Stack>
-    </Stack.Item>
+    <Stack align="center" justify="space-between" wrap>
+      <Stack.Item>
+        <Box className="VotePanel__time"><Icon name="hourglass-half" /> {currentVote.timeRemaining}s remaining</Box>
+      </Stack.Item>
+      {!!user.isLowerAdmin && (
+        <Stack.Item>
+          <Button onClick={() => act('endNow')}>End now</Button>
+          <Button onClick={() => act('cancel')}>Cancel vote</Button>
+        </Stack.Item>
+      )}
+    </Stack>
   );
 };

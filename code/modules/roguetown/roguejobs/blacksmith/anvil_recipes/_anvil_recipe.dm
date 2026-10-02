@@ -48,6 +48,9 @@
 	if(!istype(client))
 		client = user.client
 	user << browse_rsc('html/book.png')
+	// Coverage and armor are initialized fields; own one preview until rendering ends.
+	var/obj/item/book_preview = new created_item
+	var/result_icon = icon2html(book_preview, user)
 	var/html = {"
 		<!DOCTYPE html>
 		<html lang="en">
@@ -56,15 +59,15 @@
 		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>
 		<body>
 		  <div>
-		    <h1>[icon2html(new created_item, user)][name]</h1>
+		    <h1>[result_icon][name]</h1>
 			<h4>DESCRIPTION: [initial(created_item.desc)]</h4>
 			<div>
 		"}
-	var/obj/item/clothing/suit/roguetown/armor/bookarmor = initial(new created_item)
+	var/obj/item/clothing/suit/roguetown/armor/bookarmor = book_preview
 	var/obj/item/rogueweapon/bookweapon = initial(created_item)
 
 	if(!(bookarmor.armor == "")&&!isnull(bookarmor.armor) )
-		var/obj/item/clothing/C = initial(new created_item)
+		var/obj/item/clothing/C = book_preview
 		if(C.body_parts_covered)
 			html += "\n<b>COVERAGE: </b>"
 			html += " | "
@@ -168,10 +171,10 @@
 		      <strong>Requirements</strong>
 			  <br>"}
 
-	html += "[icon2html(new req_bar, user)] Start with [initial(req_bar.name)] on an anvil.<br>"
+	html += "[icon2html(image(initial(req_bar.icon), icon_state = initial(req_bar.icon_state)), user)] Start with [initial(req_bar.name)] on an anvil.<br>"
 	html += "Hammer the material.<br>"
 	for(var/atom/path as anything in additional_items)
-		html += "[icon2html(new path, user)] then add [initial(path.name)]<br>"
+		html += "[icon2html(image(initial(path.icon), icon_state = initial(path.icon_state)), user)] then add [initial(path.name)]<br>"
 		html += "Hammer the material.<br>"
 
 	html += {"
@@ -180,9 +183,9 @@
 		"}
 
 	if(createditem_num > 1)
-		html += "<strong class=class='scroll'>and then you get</strong> <br> [createditem_num] [icon2html(new created_item, user)]  [initial(created_item.name)]<br>"
+		html += "<strong class=class='scroll'>and then you get</strong> <br> [createditem_num] [result_icon] [initial(created_item.name)]<br>"
 	else
-		html += "<strong class=class='scroll'>and then you get</strong> <br> [icon2html(new created_item, user)]   [initial(created_item.name)]<br>"
+		html += "<strong class=class='scroll'>and then you get</strong> <br> [result_icon] [initial(created_item.name)]<br>"
 
 	if(created_item.sellprice)
 		html += "<strong class=class='scroll'>You can sell this for [created_item.sellprice] mammons at a normal quality</strong> <br>"
@@ -195,4 +198,5 @@
 	</body>
 	</html>
 	"}
+	qdel(book_preview)
 	return html

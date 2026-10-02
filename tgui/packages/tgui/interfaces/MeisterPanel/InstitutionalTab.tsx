@@ -1,11 +1,5 @@
 import { useState } from 'react';
 
-import {
-  cardStyle,
-  INK_SOFT,
-  tabBarStyle,
-  tabStyle,
-} from '../common/parchment';
 import { FundView } from './Institutional/FundView';
 import { type TabProps } from './types';
 
@@ -16,35 +10,27 @@ export const InstitutionalTab = ({ data, act }: TabProps) => {
   const [selectedFundId, setSelectedFundId] = useState<string>(
     accessibleFunds[0]?.id ?? '',
   );
+  const selectedFund = accessibleFunds.find((f) => f.id === selectedFundId) ?? accessibleFunds[0];
 
-  if (!accessibleFunds.length) {
-    return (
-      <div style={cardStyle}>
-        <div style={{ color: INK_SOFT }}>
-          You hold no institutional authority.
-        </div>
-      </div>
-    );
+  if (!selectedFund) {
+    return <p className="MeisterPanel__empty">You hold no institutional authority.</p>;
   }
 
-  const selectedFund = accessibleFunds.find((f) => f.id === selectedFundId);
-
   return (
-    <div style={cardStyle}>
-      <div style={tabBarStyle}>
+    <>
+      <nav className="MeisterPanel__funds" aria-label="Institutional funds">
         {accessibleFunds.map((f) => (
-          <div
+          <button
+            type="button"
             key={f.id}
-            style={tabStyle(selectedFundId === f.id)}
+            aria-pressed={selectedFund.id === f.id}
             onClick={() => setSelectedFundId(f.id)}
           >
             {f.label}
-          </div>
+          </button>
         ))}
-      </div>
-      {!!selectedFund && (
-        <FundView fund={selectedFund} data={data} act={act} />
-      )}
-    </div>
+      </nav>
+      <FundView key={selectedFund.id} fund={selectedFund} data={data} act={act} />
+    </>
   );
 };

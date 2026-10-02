@@ -1,0 +1,41 @@
+.KeyboardDropdown > .Dropdown__control,
+.KeyboardDropdown > .Dropdown__button,
+.KeyboardDropdown__menu--wrapper button.Dropdown__menu--entry {
+  appearance: none;
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  font-family: inherit;
+  text-align: left;
+}
+
+.KeyboardDropdown > .Dropdown__control {
+  padding: 0;
+}
+
+.KeyboardDropdown__menu--wrapper button.Dropdown__menu--entry {
+  display: block;
+  width: 100%;
+  background: transparent;
+  color: inherit;
+}
+
+.Button:focus-visible,
+.Tab:focus-visible,
+.Dropdown__control:focus-visible,
+.NumberInput:focus-visible,
+.ImageButton__container:focus-visible,
+.TitleBar__close:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid currentColor !important;
+  outline-offset: -2px !important;
+}
+
+.Tabs [role='tab'][aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.5;
+}

@@ -137,11 +137,7 @@
 		if(target.mob_biotypes & MOB_UNDEAD)
 			if(ishuman(target)) //BLEED AND PAIN
 				var/mob/living/carbon/human/human_target = target
-				var/datum/physiology/phy = human_target.physiology
-				phy.bleed_mod *= 1.5
-				phy.pain_mod *= 1.5
-				addtimer(VARSET_CALLBACK(phy, bleed_mod, phy.bleed_mod /= 1.5), 19 SECONDS)
-				addtimer(VARSET_CALLBACK(phy, pain_mod, phy.pain_mod /= 1.5), 19 SECONDS)
+				human_target.apply_status_effect(/datum/status_effect/persistence)
 				human_target.visible_message(span_danger("[target]'s wounds become inflammed as their vitality is sapped away!"), span_userdanger("Ravox inflammes my wounds and weakens my body!"))
 				return ..()
 			return FALSE
@@ -170,6 +166,33 @@
 					bleeder.set_bleed_rate(max(bleeder.clotting_threshold, bleeder.bleed_rate - difference * situational_bonus))
 		return TRUE
 	return FALSE
+
+/datum/status_effect/persistence
+	id = "persistence"
+	duration = 19 SECONDS
+	tick_interval = -1
+	status_type = STATUS_EFFECT_MULTIPLE
+	alert_type = null
+	on_remove_on_mob_delete = TRUE
+	var/datum/physiology/affected_physiology
+
+/datum/status_effect/persistence/on_apply()
+	if(!ishuman(owner))
+		return FALSE
+	var/mob/living/carbon/human/target = owner
+	if(QDELETED(target.physiology))
+		return FALSE
+	affected_physiology = target.physiology
+	affected_physiology.bleed_mod *= 1.5
+	affected_physiology.pain_mod *= 1.5
+	return TRUE
+
+/datum/status_effect/persistence/on_remove()
+	if(!QDELETED(affected_physiology))
+		affected_physiology.bleed_mod /= 1.5
+		affected_physiology.pain_mod /= 1.5
+	affected_physiology = null
+	return ..()
 
 /atom/movable/screen/alert/status_effect/buff/divine_strike
 	name = "Divine Strike"

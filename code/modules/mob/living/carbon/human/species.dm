@@ -386,6 +386,20 @@ GLOBAL_LIST_EMPTY(roundstart_races)
 
 //Will regenerate missing organs
 /datum/species/proc/regenerate_organs(mob/living/carbon/C, datum/species/old_species, replace_current=TRUE, list/excluded_zones, datum/preferences/pref_load)
+	var/mob/living/carbon/human/H
+	if(ishuman(C))
+		H = C
+		H.defer_bodypart_updates()
+	// Organ hooks still run in order; rebuild the body once its organs are complete.
+	try
+		. = regenerate_organs_internal(C, old_species, replace_current, excluded_zones, pref_load)
+	catch(var/exception/error)
+		H?.resume_bodypart_updates()
+		throw error
+	H?.resume_bodypart_updates()
+
+/datum/species/proc/regenerate_organs_internal(mob/living/carbon/C, datum/species/old_species, replace_current, list/excluded_zones, datum/preferences/pref_load)
+	PRIVATE_PROC(TRUE)
 	/// Add DNA and create organs from prefs
 	if(pref_load)
 		/// Clear the dna
@@ -2639,8 +2653,12 @@ GLOBAL_VAR_INIT(cold_breath_overlay, mutable_appearance(
 		Paralyze(15)
 
 /client/proc/view_species_info(species_info)
-	var/datum/browser/popup = new(src.mob, "species_info", "<center>BESTIARY</center>", 460, 550)
-	popup.set_content(species_info)
+	var/datum/browser/popup = new(src.mob, "species_info", "", 620, 680)
+	popup.add_stylesheet("character_reports", 'html/browser/character_reports.css')
+	var/datum/asset/simple/roguefonts/report_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = report_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Report Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Report Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Report Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+	popup.set_content("<div class='character-report report-lore'><div class='report-masthead'><div class='report-eyebrow'>Peoples of the realm</div><h1>Bestiary</h1></div><div class='report-reading'>[species_info]</div></div>")
 	popup.open()
 
 /datum/species/dump_harddel_info()

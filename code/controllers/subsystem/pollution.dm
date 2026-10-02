@@ -34,8 +34,9 @@ SUBSYSTEM_DEF(pollution)
 /datum/controller/subsystem/pollution/fire(resumed = FALSE)
 	var/list/current_run_cache = current_run
 	if(pollution_task == POLLUTION_TASK_PROCESS)
-		if(!current_run_cache.len)
-			current_run_cache = active_pollution.Copy()
+		if(!resumed)
+			current_run = active_pollution.Copy()
+			current_run_cache = current_run
 			processed_this_run.Cut()
 		while(current_run_cache.len)
 			var/datum/pollution/pollution = current_run_cache[current_run_cache.len]
@@ -48,7 +49,8 @@ SUBSYSTEM_DEF(pollution)
 		if(dissapation_ticker >= TICKS_TO_DISSIPATE * 4)
 			pollution_task = POLLUTION_TASK_DISSIPATE
 			dissapation_ticker = 0
-			current_run_cache = all_polution.Copy()
+			current_run = all_polution.Copy()
+			current_run_cache = current_run
 	if(pollution_task == POLLUTION_TASK_DISSIPATE)
 		while(current_run_cache.len)
 			var/datum/pollution/pollution = current_run_cache[current_run_cache.len]

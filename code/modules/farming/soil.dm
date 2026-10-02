@@ -798,6 +798,7 @@ GLOBAL_LIST_EMPTY(soil_list)
 		nutrition = 100
 	tilled_time = max(tilled_time - dt, 0)
 	blessed_time = max(blessed_time - dt, 0)
+	fertilized_time = max(fertilized_time - dt, 0)
 	pollination_time = max(pollination_time - dt, 0)
 
 /obj/structure/soil/proc/decay_soil()

@@ -102,7 +102,15 @@
 	H.adjust_blindness(-3)
 	if(H.mind)
 		var/weapons = list("Sword and Shield","Cudgel and Shield","Spear")
-		var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+		var/weapon_choice
+		if(H.client?.prefs.tgui_pref)
+			weapon_choice = tgui_input_list(H, "Choose your weapon.", "Take up arms", weapons, weapons[1])
+		if(QDELETED(H) || !H.client)
+			return
+		if(isnull(weapon_choice))
+			weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+		if(QDELETED(H) || !H.client)
+			return
 		H.set_blindness(0)
 		switch(weapon_choice)
 			if("Sword and Shield")
@@ -174,9 +182,25 @@
 	H.adjust_blindness(-3)
 	if(H.mind)
 		var/weapons = list("Crossbow","Bow","Sling")
-		var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+		var/weapon_choice
+		if(H.client?.prefs.tgui_pref)
+			weapon_choice = tgui_input_list(H, "Choose your weapon.", "Take up arms", weapons, weapons[1])
+		if(QDELETED(H) || !H.client)
+			return
+		if(isnull(weapon_choice))
+			weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+		if(QDELETED(H) || !H.client)
+			return
 		var/armor_options = list("Light Armor", "Medium Armor")
-		var/armor_choice = input(H, "Choose your armor.", "TAKE UP ARMS") as anything in armor_options
+		var/armor_choice
+		if(H.client?.prefs.tgui_pref)
+			armor_choice = tgui_input_list(H, "Choose your armor.", "Take up arms", armor_options, armor_options[1])
+		if(QDELETED(H) || !H.client)
+			return
+		if(isnull(armor_choice))
+			armor_choice = input(H, "Choose your armor.", "TAKE UP ARMS") as anything in armor_options
+		if(QDELETED(H) || !H.client)
+			return
 		H.set_blindness(0)
 		switch(weapon_choice)
 			if("Crossbow")

@@ -10,6 +10,10 @@
 		"lib": ["DOM", "DOM.Iterable", "ESNext", "ScriptHost"],
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
+		"paths": {
+			"tgui-core/components": ["./packages/tgui/components/keyboard/index.ts"],
+			"tgui-core/base-components": ["./node_modules/tgui-core/dist/components/index.d.ts"]
+		},
 		"noEmit": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,

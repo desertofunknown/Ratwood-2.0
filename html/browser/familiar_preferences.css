@@ -1,0 +1,140 @@
+body {
+	margin: 0;
+	padding: 0;
+	background: #181413;
+	color: #e7dac2;
+	font: 14px/1.55 'Keep Lora', Georgia, serif;
+	scrollbar-face-color: #65503c;
+	scrollbar-track-color: #181413;
+	scrollbar-arrow-color: #d7bb87;
+}
+
+.uiWrapper .uiTitle {
+	padding: 14px 18px;
+	border-top: 3px solid #a68a59;
+	border-bottom: 1px solid #65503c;
+	background: #241c19;
+	color: #e7dac2;
+	font-family: 'Keep Pterra', Georgia, serif !important;
+	font-size: 26px;
+	line-height: 1.2;
+}
+
+.uiWrapper .uiContent {
+	padding: 14px;
+	font-family: 'Keep Lora', Georgia, serif;
+}
+
+.uiContent a,
+.uiContent a:link,
+.uiContent a:visited,
+.uiContent a:active {
+	display: inline-block;
+	box-sizing: border-box;
+	max-width: 100%;
+	margin: 2px 3px 2px 0;
+	padding: 5px 10px;
+	border: 1px solid #65503c;
+	background: #342720;
+	color: #e7dac2;
+	font: 14px/1.4 'Keep Lora', Georgia, serif !important;
+	text-decoration: none;
+	word-wrap: break-word;
+}
+
+.uiContent a:hover,
+.uiContent a:focus {
+	background: #592c28;
+	border-color: #a68a59;
+	color: #fff2d9;
+	outline: 1px solid #a68a59;
+}
+
+.familiar-intro,
+.familiar-hint {
+	margin: 0 0 10px;
+	color: #b9a88e;
+}
+
+.familiar-card {
+	margin: 0 0 12px;
+	padding: 12px;
+	border: 1px solid #65503c;
+	background: #241c19;
+	word-wrap: break-word;
+}
+
+.familiar-card h2 {
+	margin: 0 0 8px;
+	padding: 0 0 8px;
+	border-bottom: 1px solid #65503c;
+	color: #e7dac2;
+	font: normal 20px/1.3 'Keep Pterra', Georgia, serif !important;
+}
+
+.familiar-card small {
+	color: #b9a88e;
+	font: normal 12px/1.4 'Keep Lora', Georgia, serif;
+}
+
+.familiar-card h2 small {
+	margin-left: 8px;
+}
+
+.familiar-field {
+	display: table;
+	table-layout: fixed;
+	width: 100%;
+	padding: 6px 0;
+}
+
+.familiar-label,
+.familiar-value {
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.familiar-label {
+	width: 34%;
+	padding-right: 10px;
+	color: #b9a88e;
+}
+
+.familiar-label small {
+	display: block;
+}
+
+.familiar-lore,
+.familiar-preview {
+	margin: 8px 0;
+	padding: 10px;
+	border-left: 2px solid #a68a59;
+	background: #181413;
+}
+
+.familiar-preview {
+	white-space: pre-wrap;
+}
+
+.familiar-headshot {
+	margin: 6px 0;
+	text-align: center;
+}
+
+.familiar-headshot img {
+	border: 1px solid #65503c;
+}
+
+.familiar-queue {
+	border-color: #a68a59;
+}
+
+.familiar-status {
+	margin: 0 0 8px;
+	color: #f1dfb1;
+}
+
+.familiar-missing {
+	margin: 8px 0 0;
+	color: #e3b99c;
+}

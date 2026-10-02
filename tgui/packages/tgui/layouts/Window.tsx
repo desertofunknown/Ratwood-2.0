@@ -10,6 +10,7 @@ import {
   type ReactNode,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
 } from 'react';
 import type { Box } from 'tgui-core/components';
@@ -17,9 +18,15 @@ import { UI_DISABLED, UI_INTERACTIVE } from 'tgui-core/constants';
 import { type BooleanLike, classes } from 'tgui-core/react';
 import { decodeHtmlEntities } from 'tgui-core/string';
 
-import { backendSuspendStart, globalStore, useBackend } from '../backend';
+import {
+  backendSuspendStart,
+  globalStore,
+  selectBackend,
+  useBackend,
+} from '../backend';
 import { useDebug } from '../debug';
 import {
+  cancelWindowInteraction,
   dragStartHandler,
   recallWindowGeometry,
   resizeStartHandler,
@@ -53,9 +60,10 @@ export const Window = (props: Props) => {
     height,
   } = props;
 
-  const { config, suspended } = useBackend();
+  const { config, suspended, suspending } = useBackend();
   const { debugLayout = false } = useDebug();
   const [isReadyToRender, setIsReadyToRender] = useState(false);
+  const visible = useRef(false);
 
   // We need to set the window to be invisible before we can set its geometry
   // Otherwise, we get a flicker effect when the window is first rendered
@@ -66,43 +74,70 @@ export const Window = (props: Props) => {
     setIsReadyToRender(true);
   }, []);
 
-  const { scale } = config.window;
+  const { scale, fancy, locked, key } = config.window || {};
+
+  useEffect(() => {
+    if (suspended) {
+      visible.current = false;
+    }
+    if (suspended || suspending || !isReadyToRender) {
+      return;
+    }
+    let cancelled = false;
+    const isCancelled = () => {
+      const state = selectBackend(globalStore.getState());
+      return Boolean(cancelled || state.suspended || state.suspending);
+    };
+    setWindowKey(key || Byond.windowId);
+    const updateGeometry = async () => {
+      const applied = await recallWindowGeometry(
+        {
+          fancy,
+          locked,
+          scale,
+          size: width && height ? [width, height] : DEFAULT_SIZE,
+        },
+        isCancelled,
+      );
+      if (!applied || isCancelled()) {
+        return;
+      }
+      // Let the native resize settle before exposing the browser surface.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      if (isCancelled()) {
+        return;
+      }
+      Byond.winset(Byond.windowId, { 'is-visible': true });
+      if (!visible.current) {
+        visible.current = true;
+        Byond.sendMessage('visible');
+      }
+      logger.log('set to visible');
+    };
+    updateGeometry();
+    return () => {
+      cancelled = true;
+      cancelWindowInteraction();
+    };
+  }, [
+    isReadyToRender,
+    suspended,
+    suspending,
+    width,
+    height,
+    scale,
+    fancy,
+    locked,
+    key,
+  ]);
 
   useEffect(() => {
     if (!suspended && isReadyToRender) {
-      const updateGeometry = () => {
-        const options = {
-          ...config.window,
-          size: DEFAULT_SIZE,
-        };
-
-        if (width && height) {
-          options.size = [width, height];
-        }
-        if (config.window?.key) {
-          setWindowKey(config.window.key);
-        }
-        recallWindowGeometry(options);
-        Byond.winset(Byond.windowId, {
-          'is-visible': true,
-        });
-        logger.log('set to visible');
-      };
-
-      Byond.winset(Byond.windowId, {
-        'can-close': Boolean(canClose),
-      });
-      logger.log('mounting');
-      updateGeometry();
-
-      return () => {
-        logger.log('unmounting');
-      };
+      Byond.winset(Byond.windowId, { 'can-close': Boolean(canClose) });
     }
-  }, [isReadyToRender, width, height, scale]);
+  }, [canClose, suspended, isReadyToRender]);
 
   const dispatch = globalStore.dispatch;
-  const fancy = config.window?.fancy;
 
   // Determine when to show dimmer
   const showDimmer =
@@ -133,15 +168,15 @@ export const Window = (props: Props) => {
         <>
           <div
             className="Window__resizeHandle__e"
-            onMouseDown={resizeStartHandler(1, 0) as any}
+            onMouseDown={resizeStartHandler(1, 0)}
           />
           <div
             className="Window__resizeHandle__s"
-            onMouseDown={resizeStartHandler(0, 1) as any}
+            onMouseDown={resizeStartHandler(0, 1)}
           />
           <div
             className="Window__resizeHandle__se"
-            onMouseDown={resizeStartHandler(1, 1) as any}
+            onMouseDown={resizeStartHandler(1, 1)}
           />
         </>
       )}

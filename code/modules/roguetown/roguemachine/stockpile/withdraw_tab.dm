@@ -42,6 +42,59 @@
 	var/list/quote = get_direct_import_quote(D)
 	return quote ? quote["price"] : 0
 
+/// Both stock interfaces share live rows; event metadata is indexed once per refresh.
+/datum/withdraw_tab/proc/get_stock_rows(include_export_prices = FALSE)
+	var/list/event_labels = list()
+	var/list/shortages = list()
+	for(var/datum/economic_event/event as anything in GLOB.active_economic_events)
+		var/label
+		switch(event.event_type)
+			if(ECON_EVENT_SHORTAGE)
+				label = "SHORTAGE"
+			if(ECON_EVENT_OVERSUPPLY)
+				label = "GLUT"
+			else
+				continue
+		var/list/shortage
+		if(event.event_type == ECON_EVENT_SHORTAGE)
+			var/list/good_names = list()
+			for(var/good_id in event.affected_goods)
+				var/datum/trade_good/good = GLOB.trade_goods[good_id]
+				good_names += (good && good.name) ? good.name : good_id
+			shortage = list("progress" = event.saturation_progress, "target" = event.saturation_target, "affected" = good_names.Join(", "))
+		for(var/good_id in event.affected_goods)
+			if(!event_labels[good_id])
+				event_labels[good_id] = label
+			// A preceding glut sets the label, but does not hide a later shortage's progress.
+			if(shortage && !shortages[good_id])
+				shortages[good_id] = shortage
+	var/list/rows = list()
+	for(var/datum/roguestock/stockpile/stock in SStreasury.stockpile_datums)
+		stock.refresh_auto_price()
+		var/list/shortage = stock.trade_good_id ? shortages[stock.trade_good_id] : null
+		var/export_unit_price = 0
+		if(include_export_prices && stock.importexport_amt > 0)
+			export_unit_price = round(stock.get_export_price() / stock.importexport_amt)
+		rows += list(list(
+			"ref" = REF(stock),
+			"name" = stock.name,
+			"desc" = stock.desc,
+			"category" = stock.category,
+			"amount" = stock.stockpile_amount,
+			"limit" = stock.stockpile_limit,
+			"withdraw_price" = stock.withdraw_price,
+			"deposit_price" = stock.payout_price,
+			"export_price" = export_unit_price,
+			"import_price" = direct_import_price(stock),
+			"withdraw_disabled" = stock.withdraw_disabled ? TRUE : FALSE,
+			"accept_enabled" = stock.accept_toggle_enabled ? TRUE : FALSE,
+			"event_tag" = stock.trade_good_id ? (event_labels[stock.trade_good_id] || "") : "",
+			"shortage_progress" = shortage ? shortage["progress"] : 0,
+			"shortage_target" = shortage ? shortage["target"] : 0,
+			"shortage_affected" = shortage ? shortage["affected"] : "",
+		))
+	return rows
+
 /datum/withdraw_tab/proc/do_withdraw(datum/roguestock/D, mob/user)
 	if(!D || !parent_structure)
 		return FALSE

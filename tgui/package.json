@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "tgui:analyze": "rspack --analyze",
-    "tgui:build": "rspack build",
+    "tgui:build": "bun run --cwd packages/tgui-setup build:helpers && rspack build",
     "tgui:dev": "bun --smol packages/tgui-dev-server/index.ts",
     "tgui:lint": "eslint packages --ext .js,.cjs,.ts,.tsx",
     "tgui:prettier": "prettier --check .",
@@ -40,5 +40,8 @@
     "@types/react-dom": "^19.1.5",
     "@types/webpack-env": "^1.18.8",
     "@types/wicg-file-system-access": "^2023.10.6"
+  },
+  "patchedDependencies": {
+    "tgui-core@4.3.3": "patches/tgui-core@4.3.3.patch"
   }
 }

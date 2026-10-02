@@ -33,7 +33,7 @@ export const Panel = (props) => {
         <Stack.Item fontSize={1.2}>
           <Section fitted>
             <Stack mr={1} align="center">
-              <Stack.Item grow overflowX="auto">
+              <Stack.Item grow minWidth={0}>
                 <ChatTabs />
               </Stack.Item>
               <Stack.Item>
@@ -51,7 +51,7 @@ export const Panel = (props) => {
               </Stack.Item>
               <Stack.Item>
                 <Button
-                  icon={settings.visible ? 'times' : 'cog'}
+                  icon="cog"
                   selected={settings.visible}
                   tooltip={
                     settings.visible ? 'Close settings' : 'Open settings'
@@ -81,14 +81,14 @@ export const Panel = (props) => {
               <ChatPanel lineHeight={settings.lineHeight} />
             </Pane.Content>
             <Notifications>
-              {game.connectionLostAt && (
+              {game.connectionLostAt && !game.roundRestartedAt && (
                 <Notifications.Item rightSlot={<ReconnectButton />}>
                   You are either AFK, experiencing lag or the connection has
                   closed.
                 </Notifications.Item>
               )}
               {game.roundRestartedAt && (
-                <Notifications.Item>
+                <Notifications.Item rightSlot={<ReconnectButton />}>
                   The connection has been closed because the server is
                   restarting. Please wait while you automatically reconnect.
                 </Notifications.Item>

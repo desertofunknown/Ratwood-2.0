@@ -21,7 +21,9 @@ SUBSYSTEM_DEF(chat)
 
 /datum/controller/subsystem/chat/proc/generate_payload(client/target, message_data)
 	var/sequence = client_to_sequence_number[target.ckey]
-	client_to_sequence_number[target.ckey] += 1
+	if(isnull(sequence))
+		sequence = 0
+	client_to_sequence_number[target.ckey] = sequence + 1
 
 	var/datum/chat_payload/payload = new
 	payload.sequence = sequence
@@ -76,13 +78,15 @@ SUBSYSTEM_DEF(chat)
 		send_payload_to_client(client, generate_payload(client, message_data))
 
 /datum/controller/subsystem/chat/proc/handle_resend(client/client, sequence)
+	if(!isnum(sequence) || sequence < 0 || sequence != round(sequence))
+		return
 	var/list/client_history = client_to_reliability_history[client.ckey]
 	sequence = "[sequence]"
 	if(isnull(client_history) || !(sequence in client_history))
 		return
 
 	var/datum/chat_payload/payload = client_history[sequence]
-	if(payload.resends > CHAT_RELIABILITY_MAX_RESENDS)
+	if(payload.resends >= CHAT_RELIABILITY_MAX_RESENDS)
 		return // we tried but byond said no
 
 	payload.resends += 1

@@ -436,3 +436,24 @@ ul.sparse {
 	display: inline-block;
 	vertical-align: middle;
 }
+
+/* Keep a visible focus ring in the embedded browser as well as modern clients. */
+a[href]:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+[tabindex]:focus {
+	outline: 2px solid currentColor !important;
+	outline-offset: 2px !important;
+}
+
+a[href]:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+	outline: 3px solid currentColor !important;
+	outline-offset: 2px !important;
+}

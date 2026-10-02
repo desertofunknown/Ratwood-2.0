@@ -17,9 +17,20 @@ SUBSYSTEM_DEF(map_procgen)
 	to_chat_immediate(GLOB.admins, type = MESSAGE_TYPE_DEBUG, html = span_admin("PROCGEN: Running [count] queued generators."))
 	log_world("Running [count] queued generators.")
 
+	var/generator_index = 0
 	for(var/datum/mapGenerator/map_gen as anything in generators_to_run)
+		generator_index++
+		var/start_time = REALTIMEOFDAY
+		var/start_message = "Running generator [generator_index]/[count]: [map_gen.type] ([length(map_gen.map)] turfs)."
+		to_chat_immediate(GLOB.admins, type = MESSAGE_TYPE_DEBUG, html = span_admin(start_message))
+		log_world(start_message)
+		log_game(start_message)
 		map_gen.generate()
 		CHECK_TICK
-		to_chat_immediate(GLOB.admins, type = MESSAGE_TYPE_DEBUG, html = span_admin("Finished generator [map_gen.type]"))
-		log_world("Finished generator [map_gen.type]")
+		var/finish_message = "Finished generator [generator_index]/[count]: [map_gen.type] in [(REALTIMEOFDAY - start_time) / 10] seconds."
+		to_chat_immediate(GLOB.admins, type = MESSAGE_TYPE_DEBUG, html = span_admin(finish_message))
+		log_world(finish_message)
+		log_game(finish_message)
+		map_gen.undefineRegion()
+	generators_to_run.Cut()
 	. = ..()

@@ -12,35 +12,47 @@ SUBSYSTEM_DEF(pathfinder)
 
 /datum/flowcache
 	var/lcount
-	var/run
-	var/free
-	var/list/flow
+	var/list/requests = list()
 
 /datum/flowcache/New(n)
 	. = ..()
 	lcount = n
-	run = 0
-	free = 1
-	flow = new/list(lcount)
 
 /datum/flowcache/proc/getfree(atom/M)
-	if(run < lcount)
-		run += 1
-		while(flow[free])
-			CHECK_TICK
-			free = (free % lcount) + 1
-		var/t = addtimer(CALLBACK(src, TYPE_PROC_REF(/datum/flowcache, toolong), free), 150, TIMER_STOPPABLE)
-		flow[free] = t
-		flow[t] = M
-		return free
-	else
-		return 0
+	if(length(requests) >= lcount)
+		return null
+	var/datum/pathfinding_request/request = new
+	request.requester = M
+	requests[request] = TRUE
+	request.timer_id = addtimer(CALLBACK(src, PROC_REF(toolong), request), 150, TIMER_STOPPABLE)
+	return request
 
-/datum/flowcache/proc/toolong(l)
-	log_game("Pathfinder route took longer than 150 ticks, src bot [flow[flow[l]]]")
-	found(l)
+/datum/flowcache/proc/toolong(datum/pathfinding_request/request)
+	if(!requests[request])
+		return
+	log_game("Pathfinder route took longer than 150 ticks, src bot [request.requester]")
+	found(request)
 
-/datum/flowcache/proc/found(l)
-	deltimer(flow[l])
-	flow[l] = null
-	run -= 1
+/datum/flowcache/proc/found(datum/pathfinding_request/request)
+	// A timed-out path may finish after a new request has claimed its capacity.
+	if(!requests[request])
+		return
+	requests -= request
+	qdel(request)
+
+/datum/flowcache/Destroy()
+	for(var/datum/pathfinding_request/request as anything in requests)
+		qdel(request)
+	requests.Cut()
+	return ..()
+
+/datum/pathfinding_request
+	var/atom/requester
+	var/timer_id
+
+/datum/pathfinding_request/Destroy()
+	if(timer_id)
+		deltimer(timer_id)
+		timer_id = null
+	requester = null
+	return ..()

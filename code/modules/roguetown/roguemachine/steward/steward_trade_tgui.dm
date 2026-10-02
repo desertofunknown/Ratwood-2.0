@@ -633,7 +633,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 			SStgui.update_uis(src)
 			return TRUE
 		if("trade_quote")
-			last_trade_quote[usr.ckey] = quote_trade(usr, params["side"], params["region_id"], params["good_id"], params["quantity"])
+			var/list/quote = quote_trade(usr, params["side"], params["region_id"], params["good_id"], params["quantity"])
+			quote["request_id"] = params["request_id"]
+			last_trade_quote[usr.ckey] = quote
 			SStgui.update_uis(src)
 			return TRUE
 		if("trade_quote_close")

@@ -18,6 +18,8 @@
 	hub = "Exadv1.spacestation13"
 	name = "RATWOOD KEEP"
 	fps = 20
+	// Dynamic resources are rebuilt each session; compiled resources are unaffected.
+	cache_lifespan = 0
 #ifdef FIND_REF_NO_CHECK_TICK
 	loop_checks = FALSE
 #endif

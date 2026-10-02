@@ -46,12 +46,14 @@
 		var/offset_x = 8 - (AT.x - x) - (p.client.pixel_x / world.icon_size)
 		var/offset_y = 8 - (AT.y - y) - (p.client.pixel_y / world.icon_size)
 		var/list/PM = list("screen-loc" = "[offset_x]:0,[offset_y]:0")
+		p.client.mouseovertext.maptext_width = 96
+		p.client.mouseovertext.maptext_height = 32
+		p.client.mouseovertext.maptext = {"<span style='font-size:8pt;font-family:"Pterra";color:#ddd7df;text-shadow:0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
 		if(!isturf(loc))
 			PM = params2list(params)
 			p.client.mouseovertext.movethis(PM, TRUE)
 		else
 			p.client.mouseovertext.movethis(PM)
-		p.client.mouseovertext.maptext = {"<span style='font-size:8pt;font-family:"Pterra";color:#ddd7df;text-shadow:0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
 		p.client.screen |= p.client.mouseovertext
 	return TRUE
 
@@ -70,21 +72,20 @@
 		var/offset_x = 8 - (AT.x - x) - (p.client.pixel_x / world.icon_size)
 		var/offset_y = 8 - (AT.y - y) - (p.client.pixel_y / world.icon_size)
 		var/list/PM = list("screen-loc" = "[offset_x]:0,[offset_y]:0")
+		p.client.mouseovertext.maptext_width = 96
+		p.client.mouseovertext.maptext_height = 32
+		//if((((rotation_structure && rotation_network) || istype(src, /obj/structure/water_pipe)) || accepts_water_input) && HAS_TRAIT(p, TRAIT_ENGINEERING_GOGGLES))	
+		if(((rotation_structure && rotation_network)) && (HAS_TRAIT(p, TRAIT_ENGINEERING_GOGGLES))) //changing this to just look at rotations and removing the trait, users just need over 3 engineering.
+			var/rotation_chat = return_rotation_chat(p.client.mouseovertext)
+			p.client.mouseovertext.maptext = {"[rotation_chat]
+			<span style='font-size:8pt;font-family:"Pterra";color:#ddd7df;text-shadow:0 0 1px #fff, 0 0 2px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
+		else
+			p.client.mouseovertext.maptext = {"<span style='font-size:8pt;font-family:"Pterra";color:#ddd7df;text-shadow:0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
 		if(!isturf(loc))
 			PM = params2list(params)
 			p.client.mouseovertext.movethis(PM, TRUE)
 		else
 			p.client.mouseovertext.movethis(PM)
-		//if((((rotation_structure && rotation_network) || istype(src, /obj/structure/water_pipe)) || accepts_water_input) && HAS_TRAIT(p, TRAIT_ENGINEERING_GOGGLES))	
-		if(((rotation_structure && rotation_network)) && (HAS_TRAIT(p, TRAIT_ENGINEERING_GOGGLES))) //changing this to just look at rotations and removing the trait, users just need over 3 engineering.
-			var/rotation_chat = return_rotation_chat(p.client.mouseovertext)
-			p.client.mouseovertext.maptext_width = 96
-			p.client.mouseovertext.maptext = {"[rotation_chat]
-			<span style='font-size:8pt;font-family:"Pterra";color:#ddd7df;text-shadow:0 0 1px #fff, 0 0 2px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
-		else
-			p.client.mouseovertext.maptext_height = 32
-			p.client.mouseovertext.maptext_width = 96
-			p.client.mouseovertext.maptext = {"<span style='font-size:8pt;font-family:"Pterra";color:#ddd7df;text-shadow:0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
 
 /atom/proc/return_rotation_chat(atom/movable/screen/movable/mouseover/mouseover)
 	return
@@ -95,6 +96,7 @@
 		if(!p.client.mouseovertext)
 			p.client.genmouseobj()
 			return FALSE
+		p.client.mouseovertext.placement_generation++
 		p.client.mouseovertext.screen_loc = null
 	return TRUE
 
@@ -135,6 +137,8 @@
 		if(offset_x < 1 || offset_x > 15 || offset_y < 1 || offset_x > 15)
 			return FALSE
 		var/list/PM = list("screen-loc" = "[offset_x]:0,[offset_y]:0")
+		p.client.mouseovertext.maptext_width = 96
+		p.client.mouseovertext.maptext_height = 32
 		p.client.mouseovertext.maptext = {"<span style='font-size:8pt;font-family:"Pterra";color:#607d65;text-shadow:0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
 		p.client.mouseovertext.movethis(PM)
 		p.client.screen |= p.client.mouseovertext
@@ -157,6 +161,8 @@
 		var/offset_x = 8 - (AT.x - x) - (p.client.pixel_x / world.icon_size)
 		var/offset_y = 8 - (AT.y - y) - (p.client.pixel_y / world.icon_size)
 		var/list/PM = list("screen-loc" = "[offset_x]:0,[offset_y]:0")
+		p.client.mouseovertext.maptext_width = 96
+		p.client.mouseovertext.maptext_height = 32
 		p.client.mouseovertext.maptext = {"<span style='font-size:8pt;font-family:"Pterra";color:#6b3f3f;text-shadow:0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
 		p.client.mouseovertext.movethis(PM)
 		p.client.screen |= p.client.mouseovertext
@@ -185,11 +191,10 @@
 		var/list/mouseover_data = get_mouseover_data(p)
 		if(!mouseover_data)
 			return FALSE
+		p.client.mouseovertext.maptext_width = 96
 		p.client.mouseovertext.maptext_height = mouseover_data["height"]
 		p.client.mouseovertext.maptext = mouseover_data["text"]
-		p.client.mouseovertext.movethis(PM)
-		if(mouseover_data["y_shift"])
-			p.client.mouseovertext.maptext_y += mouseover_data["y_shift"]
+		p.client.mouseovertext.movethis(PM, y_shift = mouseover_data["y_shift"])
 		p.client.screen |= p.client.mouseovertext
 	return TRUE
 
@@ -240,6 +245,7 @@
 	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	layer = ABOVE_HUD_LAYER+3
 	plane = HUD_PLANE + 1
+	var/placement_generation = 0
 
 /atom/movable/screen/movable/mouseover/maptext
 	name = ""
@@ -247,45 +253,101 @@
 	icon_state = null
 	maptext = "MOUSEOVER"
 	maptext_width = 96
+	maptext_height = 32
+	appearance_flags = APPEARANCE_UI | TILE_BOUND
 	alpha = 150
 
-/atom/movable/screen/movable/mouseover/proc/movethis(list/PM, hudobj = FALSE)
-	if(locked) //no! I am locked! begone!
+/atom/movable/screen/movable/mouseover/proc/movethis(list/PM, hudobj = FALSE, y_shift = 0)
+	set waitfor = FALSE
+	if(locked)
 		return
 
-	//No screen-loc information? abort.
-	if(!PM || !PM["screen-loc"])
-//		testing("Can't find parameters for that mouseover.")
+	var/generation = ++placement_generation
+	screen_loc = null
+	var/client/viewer = usr?.client
+	if(!viewer || !PM?["screen-loc"])
 		return
 
-	//Split screen-loc up into X+Pixel_X and Y+Pixel_Y
-	var/list/screen_loc_params = splittext(PM["screen-loc"], ",")
+	// Mouse event coordinates are numeric, including the negative HUD columns.
+	var/list/coordinates = splittext(PM["screen-loc"], ",")
+	if(length(coordinates) != 2)
+		return
+	var/list/horizontal = splittext(coordinates[1], ":")
+	var/list/vertical = splittext(coordinates[2], ":")
+	var/tile_x = text2num(horizontal[1])
+	var/tile_y = text2num(vertical[1])
+	if(isnull(tile_x) || isnull(tile_y))
+		return
+	var/pixel_offset_x = length(horizontal) > 1 ? text2num(horizontal[2]) : 0
+	var/pixel_offset_y = !hudobj && length(vertical) > 1 ? text2num(vertical[2]) : 0
+	var/anchor_x = (tile_x - 1) * world.icon_size + pixel_offset_x
+	var/anchor_y = (tile_y - 1) * world.icon_size + pixel_offset_y
+	var/text_width = maptext_width
+	var/text_height = maptext_height
 
-	//Split X+Pixel_X up into list(X, Pixel_X)
-	var/list/screen_loc_X = splittext(screen_loc_params[1],":")
+	var/mob/viewing_mob = viewer.mob
+	var/viewing_hud_version = viewing_mob?.hud_used?.hud_version
+	var/view_size = viewer.view
+	var/list/view_tiles = getviewsize(view_size)
+	var/left = 0
+	var/bottom = 0
+	var/right = view_tiles[1] * world.icon_size
+	var/top = view_tiles[2] * world.icon_size
+	var/list/hud_screen = viewer.screen
+	// Normal and ghost HUDs share the five-column left border. Reduced HUDs
+	// retain only their hands and status indicators; no HUD has no such border.
+	for(var/atom/movable/screen/hud_element in hud_screen)
+		switch(hud_element.screen_loc)
+			if(ui_backhudl)
+				left = min(left, -5 * world.icon_size)
+				var/list/background_size = get_icon_dimensions(hud_element.icon)
+				right = max(right, -5 * world.icon_size + background_size["width"])
+				top = max(top, background_size["height"])
+			if(rogueui_lefthand, rogueui_targetdoll)
+				left = min(left, -3 * world.icon_size)
+			if(rogueui_righthand)
+				left = min(left, -2 * world.icon_size)
+			if(rogueui_fat, rogueui_temperature)
+				left = min(left, -world.icon_size)
+			else
+				if(hud_element.screen_loc == ui_hand_position(1))
+					left = min(left, -3 * world.icon_size)
+				else if(hud_element.screen_loc == ui_hand_position(2))
+					left = min(left, -2 * world.icon_size)
 
-	//Split Y+Pixel_Y up into list(Y, Pixel_Y)
-	var/list/screen_loc_Y = splittext(screen_loc_params[2],":")
-
-	//Normalise Pixel Values (So the object drops at the center of the mouse, not 16 pixels off)
-	var/pix_X = text2num(screen_loc_X[2])
-	var/pix_Y = text2num(screen_loc_Y[2])
-
-	if(hudobj)
-		maptext_y = 28
-		maptext_x = -48
-		pix_Y = 0
-	else
-		maptext_y = 28
-		maptext_x = -32
-
-	if(text2num(screen_loc_X[1]) <= -3)
-		screen_loc_X[1] = -3
-	if(text2num(screen_loc_Y[1]) <= 0)
-		screen_loc_Y[1] = 1
-
-	screen_loc = "[screen_loc_X[1]]:[pix_X],[screen_loc_Y[1]]:[pix_Y]"
-
+	// view-size includes the HUD border and zoom. Letterboxing is not usable
+	// space; an oversized zoom crops the native view equally on either side.
+	var/list/map_sizes = params2list(winget(viewer, "mapwindow.map", "size;view-size"))
+	if(QDELETED(src) || !viewer || viewer.mouseovertext != src || generation != placement_generation || viewer.mob != viewing_mob || viewer.view != view_size || viewing_mob?.hud_used?.hud_version != viewing_hud_version)
+		return
+	var/list/control_size = splittext(map_sizes["size"] || "", "x")
+	var/list/scaled_size = splittext(map_sizes["view-size"] || "", "x")
+	if(length(control_size) != 2 || length(scaled_size) != 2)
+		return
+	var/control_width = text2num(control_size[1])
+	var/control_height = text2num(control_size[2])
+	var/scaled_width = text2num(scaled_size[1])
+	var/scaled_height = text2num(scaled_size[2])
+	if(control_width <= 0 || control_height <= 0 || scaled_width <= 0 || scaled_height <= 0)
+		return
+	var/crop_x = (right - left) * max(0, 1 - control_width / scaled_width) / 2
+	var/crop_y = (top - bottom) * max(0, 1 - control_height / scaled_height) / 2
+	left += crop_x
+	right -= crop_x
+	bottom += crop_y
+	top -= crop_y
+	left = CEILING(left, 1)
+	right = FLOOR(right, 1)
+	bottom = CEILING(bottom, 1)
+	top = FLOOR(top, 1)
+	if(right <= left || top <= bottom)
+		return
+	maptext_width = min(text_width, right - left)
+	maptext_height = min(text_height, top - bottom)
+	maptext_x = round(clamp(anchor_x + (hudobj ? -48 : -32), left, right - maptext_width))
+	maptext_y = round(clamp(anchor_y + 28 + y_shift, bottom, top - maptext_height))
+	// Keep the anchor inside the map so the tooltip cannot create its own HUD border.
+	screen_loc = "1,1"
 	moved = screen_loc
 
 /client/proc/genmouseobj()

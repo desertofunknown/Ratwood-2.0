@@ -5,8 +5,14 @@ PROCESSING_SUBSYSTEM_DEF(roguemachine)
 	flags = SS_NO_INIT
 	priority = 1
 	var/list/hermailers = list()
+	/// Mailbox numbers are never reused during a round.
+	var/list/hermes_by_number = list()
+	var/next_hermes_number = 0
 	var/list/cameras = list()
 	var/list/scomm_machines = list()
+	/// Dialling numbers stay stable when the broadcast list changes.
+	var/list/scom_by_number = list()
+	var/next_scom_number = 0
 	var/list/broadcaster_machines = list()
 	var/list/stock_machines = list()
 	var/list/noticeboards = list()
@@ -24,6 +30,32 @@ PROCESSING_SUBSYSTEM_DEF(roguemachine)
 	var/obj/item/clothing/head/roguetown/crown/serpcrown/crown
 	var/obj/item/rogueweapon/sword/long/martyr/martyrweapon
 	var/obj/item/key
+
+/datum/controller/subsystem/processing/roguemachine/proc/register_hermes_number(obj/structure/roguemachine/mail/machine)
+	next_hermes_number++
+	hermes_by_number["[next_hermes_number]"] = machine
+	return next_hermes_number
+
+/datum/controller/subsystem/processing/roguemachine/proc/unregister_hermes_number(obj/structure/roguemachine/mail/machine, number)
+	if(hermes_by_number["[number]"] == machine)
+		hermes_by_number -= "[number]"
+
+/datum/controller/subsystem/processing/roguemachine/proc/get_hermes_by_number(number)
+	if(!isnum(number) || number < 1 || number != round(number))
+		return null
+	var/obj/structure/roguemachine/mail/machine = hermes_by_number["[number]"]
+	if(QDELETED(machine))
+		return null
+	return machine
+
+/datum/controller/subsystem/processing/roguemachine/proc/register_scom_number(atom/machine)
+	next_scom_number++
+	scom_by_number["[next_scom_number]"] = machine
+	return next_scom_number
+
+/datum/controller/subsystem/processing/roguemachine/proc/unregister_scom_number(atom/machine, number)
+	if(scom_by_number["[number]"] == machine)
+		scom_by_number -= "[number]"
 
 /datum/controller/subsystem/processing/roguemachine/fire(resumed = 0)
 	. = ..()

@@ -203,6 +203,7 @@ GLOBAL_LIST_INIT(towner_posting_descriptors, list(
 	var/cost = GLOB.towner_posting_tier_costs[tier] * (crown_funded ? TOWNER_POSTING_CROWN_COST_MULT : 1)
 	if(!cost)
 		return
+	var/datum/fund/poster_account = SStreasury.get_account(poster)
 
 	if(crown_funded)
 		if(!SStreasury.discretionary_fund)
@@ -211,30 +212,19 @@ GLOBAL_LIST_INIT(towner_posting_descriptors, list(
 		if(SStreasury.discretionary_fund.balance < cost)
 			to_chat(poster, span_warning("Insufficient Crown's Purse. Need [cost]m, have [SStreasury.discretionary_fund.balance]m."))
 			return
-		if(!SStreasury.burn(SStreasury.discretionary_fund, cost, "crown towner commission ([chosen_type])"))
-			to_chat(poster, span_warning("The Crown's Purse refused the draft."))
-			return
 	else
-		if(!SStreasury.has_account(poster))
+		if(!poster_account)
 			to_chat(poster, span_warning("You have no account on record."))
 			return
-		if(SStreasury.get_balance(poster) < cost)
+		if(poster_account.balance < cost)
 			to_chat(poster, span_warning("Insufficient balance. This posting requires [cost] mammon."))
 			return
-		// Ratwood deviation: integer player ledger, not AP's fund accounts. Debit the poster
-		// and mint the fee into the Crown's Purse; the refund below mirrors this.
-		SStreasury.bank_accounts[poster] -= cost
-		SStreasury.mint(SStreasury.discretionary_fund, cost, "towner contract posting ([chosen_type])")
 
 	var/to_hand = (params["delivery"] == "hand")
-	var/datum/quest/dispatched = SSquestpool.issue_towner_quest(chosen_type, poster, tier, to_hand, variety)
+	var/datum/fund/source_fund = crown_funded ? SStreasury.discretionary_fund : poster_account
+	var/datum/quest/dispatched = SSquestpool.issue_towner_quest(chosen_type, poster, tier, to_hand, variety, source_fund, cost)
 	if(!dispatched)
-		if(crown_funded)
-			SStreasury.mint(SStreasury.discretionary_fund, cost, "crown towner commission refund (issue failure)")
-		else
-			SStreasury.bank_accounts[poster] += cost
-			SStreasury.burn(SStreasury.discretionary_fund, cost, "towner contract posting refund (issue failure)")
-		to_chat(poster, span_warning("No landmark could bear that contract. Funds refunded."))
+		to_chat(poster, span_warning("No contract could be issued. No funds were taken."))
 		return
 
 	playsound(src, 'sound/misc/coindispense.ogg', 60, FALSE, -1)

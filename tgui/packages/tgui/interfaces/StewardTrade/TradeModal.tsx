@@ -1,23 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useBackend } from '../../backend';
-import {
-  badgeStyle,
-  FONT_BODY,
-  FONT_TITLE,
-  INK,
-  INK_FAINT,
-  INK_SOFT,
-  inkButtonStyle,
-  PARCHMENT,
-  PARCHMENT_DEEP,
-  PARCHMENT_SHADOW,
-  SEAL_AMBER,
-  SEAL_BLUE,
-  SEAL_GREEN,
-  SEAL_RED,
-  SERIF,
-} from '../common/parchment';
 import type { Data, TradeQuote } from './types';
 
 export type TradeModalRequest = {
@@ -31,127 +14,22 @@ type TradeModalProps = {
   onClose: () => void;
 };
 
-const overlayStyle: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(28, 18, 8, 0.55)',
-  zIndex: 1000,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-};
-
-const modalStyle: React.CSSProperties = {
-  width: '460px',
-  maxWidth: '90vw',
-  background: PARCHMENT,
-  border: `3px double ${SEAL_AMBER}`,
-  outline: `1px solid ${PARCHMENT_SHADOW}`,
-  outlineOffset: '-6px',
-  boxShadow: '0 8px 24px rgba(28, 18, 8, 0.55)',
-  fontFamily: SERIF,
-  color: INK,
-  padding: '20px 24px',
-};
-
-const headerStyle: React.CSSProperties = {
-  textAlign: 'center',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  color: INK,
-  borderBottom: `1px solid ${INK_FAINT}`,
-  paddingBottom: '4px',
-  marginBottom: '12px',
-};
-
-const stepperRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '8px',
-  margin: '12px 0',
-};
-
-const stepperButtonStyle = (disabled: boolean): React.CSSProperties => ({
-  fontFamily: SERIF,
-  fontSize: '20px',
-  fontWeight: 'bold',
-  width: '32px',
-  height: '32px',
-  border: `1px solid ${INK_SOFT}`,
-  background: disabled ? 'transparent' : PARCHMENT_DEEP,
-  color: disabled ? INK_FAINT : INK,
-  borderRadius: '2px',
-  cursor: disabled ? 'default' : 'pointer',
-  opacity: disabled ? 0.5 : 1,
-});
-
-const quantityInputStyle: React.CSSProperties = {
-  fontFamily: SERIF,
-  fontSize: '20px',
-  fontWeight: 'bold',
-  textAlign: 'center',
-  width: '64px',
-  height: '32px',
-  padding: 0,
-  border: `1px solid ${INK_SOFT}`,
-  background: PARCHMENT_DEEP,
-  color: INK,
-  borderRadius: '2px',
-  MozAppearance: 'textfield',
-  WebkitAppearance: 'none',
-  appearance: 'textfield',
-};
-
-const lineStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'baseline',
-  padding: '3px 0',
-  fontSize: FONT_BODY,
-};
-
-const lineLabelStyle: React.CSSProperties = {
-  color: INK_SOFT,
-};
-
-const lineValueStyle: React.CSSProperties = {
-  color: INK,
-  fontWeight: 'bold',
-};
-
-const totalLineStyle: React.CSSProperties = {
-  ...lineStyle,
-  borderTop: `1px solid ${INK_FAINT}`,
-  marginTop: '4px',
-  paddingTop: '6px',
-  fontSize: FONT_TITLE,
-};
-
-const warningStyle: React.CSSProperties = {
-  fontSize: FONT_BODY,
-  textAlign: 'center',
-  marginTop: '8px',
-};
-
-const footerStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'flex-end',
-  gap: '8px',
-  marginTop: '16px',
-};
-
 const QUOTE_DEBOUNCE_MS = 120;
+let quoteSequence = 0;
+const nextQuoteId = () => `${Date.now()}-${++quoteSequence}`;
 
 const computeFillTarget = (quote: TradeQuote | null): number => {
-  if (!quote || !quote.ok) return 0;
+  if (!quote?.ok) return 0;
   const isImport = quote.side === 'import';
   const bulkCap = isImport
     ? quote.max_units
     : Math.min(quote.max_units, quote.stockpile_amount);
   let target = Math.min(quote.batch_capacity, bulkCap);
   if (isImport && quote.base_unit_price > 0) {
-    target = Math.min(target, Math.floor(quote.balance / quote.base_unit_price));
+    target = Math.min(
+      target,
+      Math.floor(quote.balance / quote.base_unit_price),
+    );
     if (quote.is_alderman_acting && quote.warrant_remaining >= 0) {
       target = Math.min(
         target,
@@ -159,421 +37,425 @@ const computeFillTarget = (quote: TradeQuote | null): number => {
       );
     }
   }
-  return Math.max(0, target);
+  return Math.max(0, Math.floor(target));
 };
 
-export const TradeModal = (props: TradeModalProps) => {
-  const { request, onClose } = props;
+export const TradeModal = ({ request, onClose }: TradeModalProps) =>
+  request ? (
+    <TradeDialog
+      key={`${request.side}:${request.regionId}:${request.goodId}`}
+      request={request}
+      onClose={onClose}
+    />
+  ) : null;
+
+const TradeDialog = ({
+  request,
+  onClose,
+}: {
+  request: TradeModalRequest;
+  onClose: () => void;
+}) => {
   const { act, data } = useBackend<Data>();
-  const [quantity, setQuantity] = useState(1);
-  const debounceRef = useRef<number | null>(null);
-  const lastQuoteRef = useRef<TradeQuote | null>(null);
+  const [draft, setDraft] = useState(() => ({ text: '1', id: nextQuoteId() }));
+  const [lastResponse, setLastResponse] = useState<TradeQuote | null>(null);
   const autoFilledRef = useRef(false);
+  const closedRef = useRef(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isImport = request.side === 'import';
+  const sideLabel = isImport ? 'Import' : 'Export';
+  const quantity = Number(draft.text);
+  const wholeQuantity =
+    draft.text.trim() !== '' && Number.isSafeInteger(quantity);
+  const matches = (candidate: TradeQuote | null | undefined) =>
+    candidate?.request_id === draft.id &&
+    candidate.side === request.side &&
+    candidate.region_id === request.regionId &&
+    candidate.good_id === request.goodId &&
+    (!candidate.ok || candidate.quantity === quantity);
+  // A late response cannot replace an accepted quote for the current draft.
+  const response = matches(data.trade_quote)
+    ? data.trade_quote
+    : matches(lastResponse)
+      ? lastResponse
+      : null;
+  const quote = response?.ok ? response : null;
+  const details = quote ?? (lastResponse?.ok ? lastResponse : null);
+  const bulkMax = details?.max_units ?? 50;
+  const stockpile = details?.stockpile_amount ?? 0;
+  const maxUnits =
+    isImport || !details ? bulkMax : Math.min(bulkMax, stockpile);
+  const validQuantity = wholeQuantity && quantity >= 1 && quantity <= maxUnits;
+  const sequestered = !!data.sequestration?.active;
+  const fillTarget = computeFillTarget(details);
+  const canFill = fillTarget >= 1 && !sequestered;
+  const atFill = quantity === fillTarget;
+  const batchCapacity = details?.batch_capacity ?? 0;
+  const escalation = quote?.escalation_subtotal ?? 0;
+  const blockaded = !!details?.is_blockaded;
 
-  useEffect(() => {
-    autoFilledRef.current = false;
-    if (!request) {
-      lastQuoteRef.current = null;
-      return;
-    }
-    setQuantity(1);
-    lastQuoteRef.current = null;
-  }, [request]);
-
-  useEffect(() => {
-    if (!request || request.side !== 'export' || autoFilledRef.current) return;
-    const fresh = data.trade_quote;
-    if (
-      !fresh ||
-      fresh.side !== 'export' ||
-      fresh.region_id !== request.regionId ||
-      fresh.good_id !== request.goodId
-    ) {
-      return;
-    }
-    const target = computeFillTarget(fresh);
+  const updateQuantity = (text: string) => {
     autoFilledRef.current = true;
-    if (target >= 1) {
-      setQuantity(target);
-    }
-  }, [request, data.trade_quote]);
+    setDraft({ text, id: nextQuoteId() });
+  };
 
   useEffect(() => {
-    if (!request) return;
-    if (debounceRef.current !== null) {
-      window.clearTimeout(debounceRef.current);
+    if (sequestered) {
+      setDraft((current) => ({ text: current.text, id: nextQuoteId() }));
     }
-    debounceRef.current = window.setTimeout(() => {
+  }, [sequestered]);
+
+  useEffect(() => {
+    if (response && response !== lastResponse) setLastResponse(response);
+    if (!isImport && quote && !autoFilledRef.current) {
+      autoFilledRef.current = true;
+      const target = computeFillTarget(quote);
+      if (target >= 1 && target !== quantity) {
+        setDraft({ text: String(target), id: nextQuoteId() });
+      }
+    }
+  }, [response, lastResponse, quote, isImport, quantity]);
+
+  useEffect(() => {
+    if (!validQuantity || sequestered) return;
+    const timer = window.setTimeout(() => {
+      if (closedRef.current) return;
       act('trade_quote', {
         side: request.side,
         region_id: request.regionId,
         good_id: request.goodId,
         quantity,
+        request_id: draft.id,
       });
     }, QUOTE_DEBOUNCE_MS);
-    return () => {
-      if (debounceRef.current !== null) {
-        window.clearTimeout(debounceRef.current);
-      }
-    };
-  }, [request, quantity, act]);
-
-  if (!request) return null;
-
-  const incoming: TradeQuote | null =
-    data.trade_quote &&
-    data.trade_quote.region_id === request.regionId &&
-    data.trade_quote.good_id === request.goodId &&
-    data.trade_quote.side === request.side
-      ? data.trade_quote
-      : null;
-  if (incoming) {
-    lastQuoteRef.current = incoming;
-  }
-  const quote = lastQuoteRef.current;
+    return () => window.clearTimeout(timer);
+  }, [
+    request.side,
+    request.regionId,
+    request.goodId,
+    draft.id,
+    quantity,
+    validQuantity,
+    sequestered,
+    act,
+  ]);
 
   const close = () => {
+    if (closedRef.current) return;
+    closedRef.current = true;
     act('trade_quote_close');
     onClose();
   };
+  const closeRef = useRef(close);
+  closeRef.current = close;
 
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const dialog = dialogRef.current!;
+    const focusable = () =>
+      Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), [tabindex="0"]',
+        ),
+      );
+    if (inputRef.current && !inputRef.current.disabled) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    } else {
+      (focusable()[0] ?? dialog).focus();
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closeRef.current();
+      } else if (event.key === 'Tab') {
+        const elements = focusable();
+        const first = elements[0];
+        const last = elements[elements.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    const onFocus = (event: FocusEvent) => {
+      if (!dialog.contains(event.target as Node)) {
+        (focusable()[0] ?? dialog).focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    document.addEventListener('focusin', onFocus);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.removeEventListener('focusin', onFocus);
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+        previousFocus.focus();
+      }
+    };
+  }, []);
+
+  const issue = sequestered
+    ? 'Commerce is in sequestration. This trade cannot be placed.'
+    : !validQuantity
+      ? maxUnits < 1
+        ? 'Nothing in the stockpile to sell.'
+        : `Enter a whole quantity from 1 to ${maxUnits}.`
+      : !response
+        ? 'Calculating current quote…'
+        : !response.ok
+          ? response.reason || 'This trade is unavailable.'
+          : isImport && !response.can_afford
+            ? 'Treasury cannot cover this trade.'
+            : !response.warrant_ok
+              ? 'Warrant cannot cover this trade.'
+              : '';
+  const submitDisabled = !!issue;
   const confirm = () => {
-    act(request.side === 'import' ? 'trade_import' : 'trade_export', {
+    if (submitDisabled || closedRef.current) return;
+    closedRef.current = true;
+    act(isImport ? 'trade_import' : 'trade_export', {
       region_id: request.regionId,
       good_id: request.goodId,
       quantity,
     });
     onClose();
   };
-
-  const isImport = request.side === 'import';
-  const sideLabel = isImport ? 'Import' : 'Export';
-  const blockaded = !!quote?.is_blockaded;
-  const escalation = quote?.escalation_subtotal ?? 0;
-  const hasEscalation = escalation > 0;
-  const escalationColor = SEAL_RED;
-
-  const bulkMax = quote?.max_units ?? 50;
-  const stockpile = quote?.stockpile_amount ?? 0;
-  const batchCapacity = quote?.batch_capacity ?? 0;
-  const maxUnits = isImport
-    ? bulkMax
-    : Math.max(1, Math.min(bulkMax, stockpile));
-  const fillTarget = computeFillTarget(quote);
-  const canFill = fillTarget >= 1;
-  const atFill = canFill && quantity === fillTarget;
-  const fillTooltip = !quote
-    ? 'Calculating...'
+  const change = (delta: number) => {
+    const current = wholeQuantity ? quantity : 1;
+    let next = current + delta;
+    if (
+      canFill &&
+      ((delta > 0 && current < fillTarget && next > fillTarget) ||
+        (delta < 0 && current > fillTarget && next < fillTarget))
+    ) {
+      next = fillTarget;
+    }
+    updateQuantity(String(Math.max(1, Math.min(maxUnits, next))));
+  };
+  const fillTooltip = !details
+    ? 'Waiting for the current quote.'
     : batchCapacity < 1
       ? 'No capacity left today.'
       : !canFill
-        ? isImport
-          ? 'The purse cannot cover a single unit.'
-          : 'Nothing in the stockpile to sell.'
-        : atFill
-          ? `Already set to ${fillTarget} - the last unit before saturation.`
-          : `Set quantity to ${fillTarget} - the most you can ${isImport ? 'buy' : 'sell'} before saturation.`;
-
-  const shortStock = !isImport && !!quote && quantity > stockpile;
-  const submitDisabled =
-    !quote?.ok ||
-    (isImport && !quote.can_afford) ||
-    !quote.warrant_ok ||
-    shortStock;
-  const submitTooltip = !quote
-    ? 'Calculating...'
-    : !quote.ok
-      ? quote.reason
-      : shortStock
-        ? `Stockpile holds only ${stockpile} unit${stockpile === 1 ? '' : 's'}.`
-        : isImport && !quote.can_afford
-          ? 'Treasury cannot cover this trade.'
-          : !quote.warrant_ok
-            ? 'Warrant cannot cover this trade.'
-            : '';
-
-  const change = (delta: number) => {
-    setQuantity((q) => {
-      let next = q + delta;
-      if (canFill) {
-        if (delta > 0 && q < fillTarget && next > fillTarget) {
-          next = fillTarget;
-        } else if (delta < 0 && q > fillTarget && next < fillTarget) {
-          next = fillTarget;
-        }
-      }
-      return Math.max(1, Math.min(maxUnits, next));
-    });
-  };
+        ? sequestered
+          ? 'Commerce is in sequestration.'
+          : isImport
+            ? 'The purse or warrant cannot cover a single unit.'
+            : 'Nothing in the stockpile to sell.'
+        : `Set quantity to ${fillTarget}, the most you can ${isImport ? 'buy' : 'sell'} before saturation.`;
 
   return (
-    <div style={overlayStyle} onClick={close}>
-      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-        <div style={headerStyle}>
-          {sideLabel} {quote?.good_name ?? '...'}
-        </div>
-        <div style={{ ...lineStyle, justifyContent: 'center', fontSize: FONT_BODY, color: INK_SOFT, marginBottom: '4px' }}>
-          {isImport ? 'from' : 'to'} {quote?.region_name ?? request.regionId}
-          {blockaded && <span style={badgeStyle(SEAL_RED)}>BLOCKADED</span>}
-        </div>
-        <div style={{ ...lineStyle, justifyContent: 'center', fontSize: FONT_BODY, color: INK_SOFT, marginBottom: '4px' }}>
-          Stockpile: <span style={{ color: INK, fontWeight: 'bold', marginLeft: '4px' }}>
-            {quote ? `${quote.stockpile_amount}` : '...'}
-          </span>
-          <span style={{ color: INK_FAINT, marginLeft: '4px' }}>units on hand</span>
-        </div>
-
-        <div style={stepperRowStyle}>
-          <button
-            type="button"
-            style={stepperButtonStyle(quantity <= 1)}
-            disabled={quantity <= 1}
-            onClick={() => change(-10)}
-            title="-10"
-          >
-            «
-          </button>
-          <button
-            type="button"
-            style={stepperButtonStyle(quantity <= 1)}
-            disabled={quantity <= 1}
-            onClick={() => change(-1)}
-          >
-            -
-          </button>
-          <input
-            type="number"
-            style={quantityInputStyle}
-            value={quantity}
-            min={1}
-            max={maxUnits}
-            onChange={(e) => {
-              const n = parseInt(e.target.value, 10);
-              if (!isNaN(n)) {
-                setQuantity(Math.max(1, Math.min(maxUnits, n)));
-              }
-            }}
-          />
-          <button
-            type="button"
-            style={stepperButtonStyle(quantity >= maxUnits)}
-            disabled={quantity >= maxUnits}
-            onClick={() => change(1)}
-          >
-            +
-          </button>
-          <button
-            type="button"
-            style={stepperButtonStyle(quantity >= maxUnits)}
-            disabled={quantity >= maxUnits}
-            onClick={() => change(10)}
-            title="+10"
-          >
-            »
-          </button>
-          <button
-            type="button"
-            style={{
-              ...stepperButtonStyle(!canFill || atFill),
-              width: 'auto',
-              padding: '0 8px',
-              fontSize: '13px',
-              marginLeft: '4px',
-            }}
-            disabled={!canFill || atFill}
-            title={fillTooltip}
-            onClick={() => setQuantity(fillTarget)}
-          >
-            Fill {canFill ? fillTarget : '-'}
-          </button>
-        </div>
-
+    <div className="StewardTradeModal__overlay" onClick={close}>
+      <div
+        className="StewardTradeModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="steward-trade-title"
+        aria-describedby="steward-trade-route"
+        ref={dialogRef}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="StewardTradeModal__header">
+          <h2 id="steward-trade-title">
+            {sideLabel}{' '}
+            {details?.good_name ??
+              data.good_catalog?.[request.goodId]?.name ??
+              request.goodId}
+          </h2>
+          <p id="steward-trade-route">
+            {isImport ? 'from' : 'to'}{' '}
+            {details?.region_name ??
+              data.region_catalog?.[request.regionId]?.name ??
+              request.regionId}
+            {blockaded && (
+              <strong className="StewardTradeModal__warning">
+                {' '}
+                · Blockaded
+              </strong>
+            )}
+          </p>
+        </header>
         <div
-          style={{
-            ...lineStyle,
-            fontSize: FONT_BODY,
-            color: INK_FAINT,
-            justifyContent: 'center',
-          }}
+          className="StewardTradeModal__body"
+          role="region"
+          aria-label="Shipment quantity and account"
+          tabIndex={0}
         >
-          (max {maxUnits} units per trade
-          {!isImport && stockpile < bulkMax ? ' - limited by stockpile' : ''})
-        </div>
-
-        <div
-          style={{
-            fontSize: FONT_BODY,
-            color: INK_SOFT,
-            textAlign: 'center',
-            margin: '6px 0 4px',
-            minHeight: '30px',
-            lineHeight: '1.35',
-          }}
-        >
-          {quote ? (
-            isImport ? (
-              <>
-                {batchCapacity} unit{batchCapacity === 1 ? '' : 's'} available
-                at base price in one shipment.
-                <br />
-                Buying past that drives the price up the more you take.
-              </>
-            ) : (
-              <>
-                {batchCapacity} unit{batchCapacity === 1 ? '' : 's'} of demand
-                left in one shipment.
-                <br />
-                Selling past that floods the market and the price drops.
-              </>
-            )
-          ) : (
-            '...'
-          )}
-        </div>
-
-        <div style={{ marginTop: '6px' }}>
-          <div style={lineStyle}>
-            <span style={lineLabelStyle}>
-              {isImport ? 'Region output today' : 'Region appetite today'}
-            </span>
-            <span style={lineValueStyle}>
-              {quote
-                ? `${quote.capacity_today} / ${quote.capacity_total} units`
-                : '...'}
-            </span>
-          </div>
-          <div style={lineStyle}>
-            <span style={lineLabelStyle}>Units at base price</span>
-            <span style={lineValueStyle}>
-              {quote
-                ? `${Math.min(quote.quantity, batchCapacity)} / ${quote.quantity}`
-                : '...'}
-            </span>
-          </div>
-          <div style={lineStyle}>
-            <span style={lineLabelStyle}>Units past saturation</span>
-            <span
-              style={{
-                ...lineValueStyle,
-                color: hasEscalation ? escalationColor : INK,
-              }}
-            >
-              {quote ? `${Math.max(0, quote.quantity - batchCapacity)}` : '...'}
-            </span>
-          </div>
-          <div style={lineStyle}>
-            <span style={lineLabelStyle}>Base unit price</span>
-            <span style={lineValueStyle}>
-              {quote ? `${quote.base_unit_price}m / unit` : '...'}
-            </span>
-          </div>
-          <div style={lineStyle}>
-            <span style={lineLabelStyle}>Base subtotal</span>
-            <span style={lineValueStyle}>
-              {quote ? `${quote.base_subtotal}m` : '...'}
-            </span>
-          </div>
-          <div
-            style={{
-              ...lineStyle,
-              visibility: hasEscalation ? 'visible' : 'hidden',
-            }}
-          >
-            <span style={{ ...lineLabelStyle, color: escalationColor, fontWeight: 'bold' }}>
-              {isImport ? 'Escalation surcharge' : 'Revenue lost to oversupply'}
-            </span>
-            <span style={{ ...lineValueStyle, color: escalationColor }}>
-              {isImport ? '+' : '-'}{escalation}m
-            </span>
-          </div>
-          <div style={totalLineStyle}>
-            <span style={{ ...lineLabelStyle, color: INK, fontStyle: 'normal', fontWeight: 'bold' }}>
-              {isImport ? 'Total cost' : 'Total revenue'}
-            </span>
-            <span style={{ ...lineValueStyle, color: SEAL_AMBER, fontSize: '17px' }}>
-              {quote ? `${quote.total}m` : '...'}
-            </span>
-          </div>
-          <div style={lineStyle}>
-            <span style={lineLabelStyle}>Crown's Purse after</span>
-            <span
-              style={{
-                ...lineValueStyle,
-                color: !quote
-                  ? INK
-                  : isImport
-                    ? quote.can_afford
-                      ? INK
-                      : SEAL_RED
-                    : SEAL_GREEN,
-              }}
-            >
-              {quote ? `${quote.balance_after}m` : '...'}
-            </span>
-          </div>
-          <div style={lineStyle}>
-            <span style={lineLabelStyle}>Stockpile after</span>
-            <span
-              style={{
-                ...lineValueStyle,
-                color: isImport ? SEAL_GREEN : INK,
-              }}
-            >
-              {quote ? `${quote.stockpile_after} units` : '...'}
-            </span>
-          </div>
-          <div
-            style={{
-              ...lineStyle,
-              visibility:
-                quote && quote.is_alderman_acting && quote.warrant_remaining >= 0
-                  ? 'visible'
-                  : 'hidden',
-            }}
-          >
-            <span style={lineLabelStyle}>Warrant remaining</span>
-            <span
-              style={{
-                ...lineValueStyle,
-                color: quote?.warrant_ok ? SEAL_AMBER : SEAL_RED,
-              }}
-            >
-              {quote && quote.warrant_remaining >= 0
-                ? `${quote.warrant_remaining}m`
-                : '0m'}
-            </span>
-          </div>
-        </div>
-
-        <div style={{ minHeight: '34px', marginTop: '6px' }}>
-          {blockaded && (
-            <div style={{ ...warningStyle, color: SEAL_RED }}>
-              This route is blockaded. {isImport ? 'Cost is doubled.' : 'Revenue is halved.'}
+          <div className="StewardTradeModal__quantity">
+            <label htmlFor="steward-trade-quantity">Quantity</label>
+            <div className="StewardTradeModal__stepper">
+              <button
+                type="button"
+                aria-label="Decrease quantity by ten"
+                disabled={sequestered || maxUnits < 1 || quantity <= 1}
+                onClick={() => change(-10)}
+              >
+                −10
+              </button>
+              <button
+                type="button"
+                aria-label="Decrease quantity by one"
+                disabled={sequestered || maxUnits < 1 || quantity <= 1}
+                onClick={() => change(-1)}
+              >
+                −
+              </button>
+              <input
+                ref={inputRef}
+                id="steward-trade-quantity"
+                type="number"
+                min={1}
+                max={maxUnits}
+                step={1}
+                value={draft.text}
+                disabled={sequestered}
+                aria-invalid={!validQuantity}
+                aria-describedby="steward-trade-limits steward-trade-status"
+                onChange={(event) => updateQuantity(event.target.value)}
+              />
+              <button
+                type="button"
+                aria-label="Increase quantity by one"
+                disabled={sequestered || maxUnits < 1 || quantity >= maxUnits}
+                onClick={() => change(1)}
+              >
+                +
+              </button>
+              <button
+                type="button"
+                aria-label="Increase quantity by ten"
+                disabled={sequestered || maxUnits < 1 || quantity >= maxUnits}
+                onClick={() => change(10)}
+              >
+                +10
+              </button>
+              <button
+                type="button"
+                disabled={!canFill || atFill}
+                title={fillTooltip}
+                aria-label={
+                  canFill
+                    ? `Fill to ${fillTarget} units before saturation`
+                    : 'Fill before saturation'
+                }
+                onClick={() => updateQuantity(String(fillTarget))}
+              >
+                Fill {canFill ? fillTarget : '—'}
+              </button>
             </div>
+          </div>
+          <p className="StewardTradeModal__note" id="steward-trade-limits">
+            Stockpile: {details ? `${stockpile} units` : '…'} · Max {maxUnits}{' '}
+            per trade
+            {!isImport && details && stockpile < bulkMax
+              ? ' (limited by stockpile)'
+              : ''}
+          </p>
+          <p className="StewardTradeModal__capacity">
+            {details
+              ? isImport
+                ? `${batchCapacity} units at base price in one shipment. Buying past that drives the price up the more you take.`
+                : `${batchCapacity} units of demand left in one shipment. Selling past that floods the market and the price drops.`
+              : 'Waiting for regional prices and shipment capacity.'}
+          </p>
+          <dl
+            className="StewardTradeModal__account"
+            aria-busy={!response && validQuantity && !sequestered}
+          >
+            <div>
+              <dt>
+                {isImport ? 'Region output today' : 'Region appetite today'}
+              </dt>
+              <dd>
+                {details
+                  ? `${details.capacity_today} / ${details.capacity_total} units`
+                  : '…'}
+              </dd>
+            </div>
+            <div>
+              <dt>Units at base price</dt>
+              <dd>
+                {quote
+                  ? `${Math.min(quantity, batchCapacity)} / ${quantity}`
+                  : '…'}
+              </dd>
+            </div>
+            <div>
+              <dt>Units past saturation</dt>
+              <dd>{quote ? Math.max(0, quantity - batchCapacity) : '…'}</dd>
+            </div>
+            <div>
+              <dt>Base unit price</dt>
+              <dd>{quote ? `${quote.base_unit_price}m / unit` : '…'}</dd>
+            </div>
+            <div>
+              <dt>Base subtotal</dt>
+              <dd>{quote ? `${quote.base_subtotal}m` : '…'}</dd>
+            </div>
+            {escalation > 0 && (
+              <div className="StewardTradeModal__warning">
+                <dt>
+                  {isImport
+                    ? 'Escalation surcharge'
+                    : 'Revenue lost to oversupply'}
+                </dt>
+                <dd>
+                  {isImport ? '+' : '−'}
+                  {escalation}m
+                </dd>
+              </div>
+            )}
+            <div className="StewardTradeModal__total">
+              <dt>{isImport ? 'Total cost' : 'Total revenue'}</dt>
+              <dd>{quote ? `${quote.total}m` : '…'}</dd>
+            </div>
+            <div>
+              <dt>Crown&apos;s Purse after</dt>
+              <dd>{quote ? `${quote.balance_after}m` : '…'}</dd>
+            </div>
+            <div>
+              <dt>Stockpile after</dt>
+              <dd>{quote ? `${quote.stockpile_after} units` : '…'}</dd>
+            </div>
+            {details?.is_alderman_acting && details.warrant_remaining >= 0 ? (
+              <div>
+                <dt>Warrant remaining</dt>
+                <dd>{quote ? `${quote.warrant_remaining}m` : '…'}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {blockaded && (
+            <p className="StewardTradeModal__warning">
+              This route is blockaded.{' '}
+              {isImport ? 'Cost is doubled.' : 'Revenue is halved.'}
+            </p>
           )}
         </div>
-
-        <div style={footerStyle}>
-          <button
-            type="button"
-            style={inkButtonStyle({ color: INK_SOFT })}
-            onClick={close}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            style={inkButtonStyle({
-              color: isImport ? SEAL_BLUE : SEAL_GREEN,
-              disabled: submitDisabled,
-            })}
-            disabled={submitDisabled}
-            title={submitTooltip}
-            onClick={confirm}
-          >
-            Confirm {sideLabel}
-          </button>
-        </div>
+        <footer className="StewardTradeModal__footer">
+          <p id="steward-trade-status" role="status">
+            {issue || 'Quote ready.'}
+          </p>
+          <div>
+            <button type="button" onClick={close}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="StewardTradeModal__confirm"
+              disabled={submitDisabled}
+              title={issue}
+              onClick={confirm}
+            >
+              Confirm {sideLabel}
+            </button>
+          </div>
+        </footer>
       </div>
     </div>
   );

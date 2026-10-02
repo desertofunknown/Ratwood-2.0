@@ -1,119 +1,82 @@
-@font-face {
-  font-family: 'Pterra';
-  src: url('~roguefont/pterra.ttf');
-}
+@use 'azure_base';
 
+// The default windows share the Nervelock's bone and burgundy palette.
 .theme-azure_default:root {
-  --color-base: #000000;
-  --color-base-start: #000000;
-  --color-base-end: #000000;
+  --color-base: #100d0e;
+  --color-base-start: #100d0e;
+  --color-base-end: #100d0e;
+  --font-size: 13px;
+  --font-family: 'Lora', Georgia, serif;
+  --line-height: 145%;
+  --color-text: #ded1c2;
+  --color-label: #b9a6a0;
+  --color-border: #594046;
+  --color-scrollbar-thumb: #594046;
+  --section-background: transparent;
+  --section-title-color: #e5d7c8;
+  --section-separator-color: #594046;
+  --button-background-default: #281b1f;
+  --button-background-selected: #42222a;
+  --button-color-transparent: #ded1c2;
+  --button-border-radius: 0;
+  --button-transition: 100ms;
+  --input-background: #100d0e;
+  --input-color: #ded1c2;
+  --input-color-placeholder: #af9d97;
+  --input-border-color: #594046;
+  --input-border-color-focus: #ae8189;
+  --input-font-family: 'Lora', Georgia, serif;
+  --input-border-radius: 0;
+  scrollbar-color: #594046 #100d0e;
 
-  --font-size: 14px;
-  --font-family: 'Pterra';
-  --color-text: #897472;
-  --line-height: 170%;
-  --color-scrollbar-thumb: #7b5353;
-
-
-  /* Semantic colors */ 
-  --color-label: #897472;
-
-  // Scrollbar
-  scrollbar-color: #511111 #000000;
-
-  // Basics
   .Layout__content {
     background-image: none;
-
   }
 
   .TitleBar {
-    background-image: url('../assets/azure_default/topbar_red.svg');
-    background-repeat: repeat-x;
-    background-size: 64px;
-    background-color: #000000;
+    background: #281b1f;
+    border-bottom: 1px solid #594046;
     box-shadow: none;
-
-    &__title {
-      font-size: 1.6rem;
-    }
   }
-
   .TitleBar__title {
-    padding-left: 12px;
-    font-size: 15px;
-    color: #FFFFFF;
-    font-weight: bolder;
+    padding-left: 14px;
+    color: #e5d7c8;
+    font: normal 18px/1.2 'Pterra', Georgia, serif;
+  }
+  .TitleBar__close { color: #b9a6a0; opacity: 1; }
+
+  .Section__titleText { font-family: 'Lora', Georgia, serif; }
+  .Divider { border-color: #594046; }
+  .Button { text-shadow: none; }
+  .Button--color--default,
+  .Button--selected {
+    --button-color: #ded1c2;
+    border: 1px solid #594046;
+    box-shadow: none;
+  }
+  .Button--color--transparent.Button--selected {
+    color: #ded1c2;
+    background: #42222a;
+    box-shadow: inset 3px 0 #ae8189;
+  }
+  .Button--color--transparent.Button--disabled {
+    color: #af9d97 !important;
+    --button-background-disabled: transparent;
+  }
+  .Button:focus-visible { outline: 2px solid #ae8189; outline-offset: 2px; }
+  .Input { box-shadow: none; }
+  .Window__contentPadding { margin-left: 1rem; margin-right: 1rem; }
+  .InputModal > .Window__contentPadding {
+    border: 0;
+    background: none;
+  }
+  .InputButtons .input-button__submit {
+    background: #42222a;
+    border-color: #ae8189;
+    color: #ded1c2;
+    &:hover { background: #54303a; }
   }
 
-  // Component overrides
-
-  --section-separator-color: #7b5353;
-
-  // Button
-  --button-background: #511111 ;
-  --button-background-default: #511111;
-  --button-background-selected: #511111;
-  .Button {
-    transition: all 0.5s;
-    --color-text: #897472;
-  }
-  .Button--color--transparent {
-    --button-background-hover: #7b5353;
-    --button-background-active: #7b5353;
-  }
-
-  .input-button {
-    &__submit, &__cancel {
-      color: #ae3636;
-      font-weight: 600;
-    }
-    &__submit:hover {
-      background: rgba(74, 140, 74, 0.3);
-      transition: all 0.5s;
-    }
-    &__cancel:hover {
-      background: rgba(140, 74, 74, 0.3);
-      transition: all 0.5s;
-    }
-  }
-
-  // Input
-  --input-border-color: #7b5353;
-  --input-border-color-focus: #7b5353;
-
-  .Window__contentPadding {
-    margin-left: 1rem;
-    margin-right: 1rem;
-  }
-
-  .Divider {
-    border-color: #7b5353;
-  }
-  
-  a:link {
-    color: #892a2b;
-    background-color: transparent;
-    text-decoration: underline;
-  }
-  
-  a:visited {
-    color: #e19d9e;
-    background-color: transparent;
-    text-decoration: underline;
-  }
-  
-  a:hover {
-    color: #c94f51;
-    background-color: transparent;
-    text-decoration: underline;
-  }
-  
-  a:active {
-    color: #c94f51;
-    background-color: transparent;
-    text-decoration: underline;
-  }
-
+  a:link, a:visited { color: #ded1c2; }
+  a:hover, a:active { color: #eee3d7; }
 }
-

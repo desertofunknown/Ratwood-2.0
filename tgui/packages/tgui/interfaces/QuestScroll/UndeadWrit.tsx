@@ -9,6 +9,7 @@ export const UndeadWrit = (props: {
   groupWord?: string | null;
   namePlural?: string | null;
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -26,6 +27,7 @@ export const UndeadWrit = (props: {
     groupWord,
     namePlural,
     reward,
+    deposit,
     levyRate,
     levyExempt,
     guildCutRate,
@@ -64,6 +66,7 @@ export const UndeadWrit = (props: {
         the writ to the Contract Ledger, that the bounty of{' '}
         <RewardClause
           reward={reward}
+          deposit={deposit}
           levyRate={levyRate}
           levyExempt={levyExempt}
           guildCutRate={guildCutRate}

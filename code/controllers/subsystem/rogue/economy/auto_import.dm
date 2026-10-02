@@ -93,40 +93,50 @@
 		today_lines += "[tg.name]: stockpile [stockpile_entry.stockpile_amount] >= floor [AUTO_IMPORT_FLOOR], no import needed."
 		return
 
-	// exclude_blockaded = TRUE: the price cap implicitly skips blockaded producers (2x import
-	// cost typically breaches AUTO_IMPORT_MAX_UNIT_PRICE), but excluding them up front avoids
-	// spurious "skipped (price)" lines for goods that only have blockaded producers today.
-	var/list/best = SSeconomy.get_best_import_region(good_id, exclude_blockaded = TRUE)
-	if(!best || !best["region_id"])
-		today_lines += "[tg.name]: no producing region available."
-		return
-	var/region_id = best["region_id"]
-	var/datum/economic_region/region = GLOB.economic_regions[region_id]
-	if(!region)
-		return
-
-	var/daily_pace = region.produces[good_id] || 0
-	var/produces_today = region.produces_today[good_id] || 0
-	var/starting_index = max(0, daily_pace - produces_today)
-
-	var/total_cost = 0
-	var/max_unit_price = 0
-	for(var/i in 1 to AUTO_IMPORT_BATCH)
-		var/unit_price = SSeconomy.compute_import_unit_price(good_id, region, starting_index + i)
-		total_cost += unit_price
-		if(unit_price > max_unit_price)
-			max_unit_price = unit_price
-
 	var/price_cap = tg.base_price * AUTO_IMPORT_MAX_PRICE_MULT
-	if(max_unit_price > price_cap)
-		today_lines += "[tg.name]: skipped (unit price [max_unit_price]m > [AUTO_IMPORT_MAX_PRICE_MULT]x base price [tg.base_price]m)."
+	var/available = discretionary_fund.balance - auto_import_purse_floor
+	var/datum/economic_region/region
+	var/total_cost = INFINITY
+	var/has_producer = FALSE
+	var/has_price_eligible = FALSE
+	for(var/region_id in GLOB.economic_regions)
+		var/datum/economic_region/candidate = GLOB.economic_regions[region_id]
+		var/daily_pace = candidate.produces[good_id] || 0
+		if(daily_pace <= 0)
+			continue
+		has_producer = TRUE
+		var/produces_today = candidate.produces_today[good_id] || 0
+		var/starting_index = max(0, daily_pace - produces_today)
+		var/batch_cost = 0
+		var/max_unit_price = 0
+		for(var/i in 1 to AUTO_IMPORT_BATCH)
+			var/unit_price = SSeconomy.compute_import_unit_price(good_id, candidate, starting_index + i)
+			batch_cost += unit_price
+			max_unit_price = max(max_unit_price, unit_price)
+		if(max_unit_price > price_cap)
+			continue
+		has_price_eligible = TRUE
+		if(batch_cost > available)
+			continue
+		// Prefer open trade routes, retaining the existing blockaded fallback.
+		if(region)
+			if(!region.is_region_blockaded && candidate.is_region_blockaded)
+				continue
+			if(region.is_region_blockaded == candidate.is_region_blockaded && batch_cost >= total_cost)
+				continue
+		region = candidate
+		total_cost = batch_cost
+
+	if(!region)
+		if(!has_producer)
+			today_lines += "[tg.name]: no producing region available."
+		else if(!has_price_eligible)
+			today_lines += "[tg.name]: skipped (every batch exceeds [AUTO_IMPORT_MAX_PRICE_MULT]x base price [tg.base_price]m per unit)."
+		else
+			today_lines += "[tg.name]: skipped (purse floor [auto_import_purse_floor]m would be breached)."
 		return
 
-	if(discretionary_fund.balance - total_cost < auto_import_purse_floor)
-		today_lines += "[tg.name]: skipped (purse floor [auto_import_purse_floor]m would be breached)."
-		return
-
-	var/spent = SSeconomy.manual_import(null, region_id, good_id, AUTO_IMPORT_BATCH)
+	var/spent = SSeconomy.manual_import(null, region.region_id, good_id, AUTO_IMPORT_BATCH)
 	if(!spent)
 		today_lines += "[tg.name]: import failed (treasury or region state changed mid-tick)."
 		return

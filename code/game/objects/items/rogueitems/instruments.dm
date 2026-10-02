@@ -317,6 +317,48 @@ GLOBAL_LIST_EMPTY(instrument_band_lobbies)
 			. += span_notice("If you try to play with combat mode active, you'll automatically play your last song.")
 
 
+/obj/item/rogue/instrument/proc/can_upload_song(mob/living/user)
+	if(QDELETED(src) || QDELETED(user) || !user.client || !user.mind || playing || groupplaying || user.get_skill_level(/datum/skill/misc/music) < 4)
+		return FALSE
+	if(lastfilechange && world.time < lastfilechange + 3 MINUTES)
+		return FALSE
+	if(not_held)
+		var/obj/item/organ/vocal_cords/harpy/voice = loc
+		if(!istype(voice) || voice.owner != user || voice.vocals != src)
+			return FALSE
+	else if(!(src in user.held_items))
+		return FALSE
+	if(user.get_inactive_held_item())
+		var/mob/living/carbon/human/bard = user
+		if(!istype(bard) || bard.inspiration?.level < BARD_T2)
+			return FALSE
+	return TRUE
+
+/obj/item/rogue/instrument/proc/upload_song(mob/living/user)
+	if(!can_upload_song(user))
+		to_chat(user, span_warning("You cannot upload a song to this instrument right now."))
+		return
+	var/datum/audio_upload_request/request = GLOB.audio_uploads.begin(user)
+	if(!request)
+		return
+	var/songname = input(user, "Name your song:", "Song Name") as text|null
+	songname = trim(strip_html(songname, MAX_NAME_LEN))
+	if(!songname || songname == "Upload New Song" || songname == "upload" || !request.is_current(user) || !can_upload_song(user))
+		GLOB.audio_uploads.finish(request)
+		return
+	playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
+	var/infile = input(user, "CHOOSE A NEW SONG (OGG, 6 MB OR LESS)", src) as null|file
+	var/cached_song
+	if(infile && request.is_current(user) && can_upload_song(user))
+		cached_song = GLOB.audio_uploads.cache_song(request, infile)
+	GLOB.audio_uploads.finish(request)
+	if(!cached_song)
+		return
+	curfile = cached_song
+	song_list[songname] = cached_song
+	lastfilechange = world.time
+	to_chat(user, span_notice("Your song is ready to play."))
+
 /obj/item/rogue/instrument/attack_self(mob/living/user)
 	var/stressevent = /datum/stressevent/music
 	var/can_play_with_occupied_offhand = FALSE
@@ -412,33 +454,7 @@ GLOBAL_LIST_EMPTY(instrument_band_lobbies)
 				return
 				
 			if(choice == "Upload New Song" || choice == "upload")
-				if(lastfilechange && world.time < lastfilechange + 3 MINUTES)
-					say("NOT YET!")
-					return
-				playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
-				var/infile = input(user, "CHOOSE A NEW SONG", src) as null|file
-
-				if(!infile)
-					return
-				if(playing || !(src in user.held_items) && !(not_held) || user.get_inactive_held_item() && !can_play_with_occupied_offhand)
-					return
-
-				var/filename = "[infile]"
-				var/file_ext = LOWER_TEXT(copytext(filename, -4))
-				var/file_size = length(infile)
-				message_admins("[ADMIN_LOOKUPFLW(user)] uploaded a song [filename] of size [file_size / 1000000] (~MB).")
-				if(file_ext != ".ogg")
-					to_chat(user, span_warning("SONG MUST BE AN OGG."))
-					return
-				if(file_size > 6485760)
-					to_chat(user, span_warning("TOO BIG. 6 MEGS OR LESS."))
-					return
-				lastfilechange = world.time
-				fcopy(infile,"data/jukeboxuploads/[user.ckey]/[filename]")
-				curfile = file("data/jukeboxuploads/[user.ckey]/[filename]")
-				var/songname = input(user, "Name your song:", "Song Name") as text|null
-				if(songname)
-					song_list[songname] = curfile
+				upload_song(user)
 				return
 			curfile = song_list[choice]
 			last_played = choice

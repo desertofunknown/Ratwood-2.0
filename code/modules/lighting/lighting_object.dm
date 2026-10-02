@@ -107,8 +107,9 @@ GLOBAL_DATUM_INIT(lighting_underlay_transparent, /mutable_appearance, create_lig
 	if(affected_turf.outdoor_effect?.sunlight_overlay?.luminosity)
 		set_luminosity = max(set_luminosity, affected_turf.outdoor_effect.sunlight_overlay.luminosity)
 
-	// remove the currently applied underlay before any mutation so removal matches by value
-	affected_turf.underlays -= current_underlay
+	// Remove the old snapshot before mutating a reused appearance, then apply once.
+	var/list/next_underlays = affected_turf.underlays.Copy()
+	next_underlays -= current_underlay?.appearance
 
 	var/mutable_appearance/new_underlay
 	if((rr & gr & br & ar) && (rg + gg + bg + ag + rb + gb + bb + ab == 8))
@@ -129,6 +130,7 @@ GLOBAL_DATUM_INIT(lighting_underlay_transparent, /mutable_appearance, create_lig
 		)
 		new_underlay = private_underlay
 
-	affected_turf.underlays += new_underlay
+	next_underlays += new_underlay
+	affected_turf.underlays = next_underlays
 	current_underlay = new_underlay
 	affected_turf.luminosity = set_luminosity

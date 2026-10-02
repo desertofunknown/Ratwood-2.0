@@ -134,11 +134,12 @@ SUBSYSTEM_DEF(migrants)
 
 	var/greet_text = pick_greet_text(wave, assignments.len)
 
-	for(var/client/client as anything in picked_migrants)
-		client.prefs.migrant.post_spawn()
-
+	var/spawned_count = 0
 	for(var/datum/migrant_assignment/assignment as anything in assignments)
-		spawn_migrant(wave, assignment, wave.spawn_on_location, greet_text)
+		if(spawn_migrant(wave, assignment, wave.spawn_on_location, greet_text))
+			spawned_count++
+	if(!spawned_count)
+		return FALSE
 
 	var/used_wave_type = wave.type
 	if(wave.shared_wave_type)
@@ -148,7 +149,7 @@ SUBSYSTEM_DEF(migrants)
 	spawned_waves[used_wave_type] += 1
 
 	reset_wave_contributions(wave)
-	message_admins("MIGRANTS: Spawned wave: [wave.name] (players: [assignments.len]) at [ADMIN_VERBOSEJMP(spawn_location)]")
+	message_admins("MIGRANTS: Spawned wave: [wave.name] (players: [spawned_count]) at [ADMIN_VERBOSEJMP(spawn_location)]")
 
 	return TRUE
 
@@ -263,12 +264,31 @@ SUBSYSTEM_DEF(migrants)
 
 /datum/controller/subsystem/migrants/proc/spawn_migrant(datum/migrant_wave/wave, datum/migrant_assignment/assignment, spawn_on_location, greet_text)
 	var/rank = "Migrant"
-	var/mob/dead/new_player/newplayer = assignment.client.mob
-
-	SSjob.AssignRole(newplayer, rank, TRUE)
-
+	var/client/player = assignment.client
+	var/mob/dead/new_player/newplayer = player?.mob
+	if(!istype(newplayer) || newplayer.spawning || player.prefs?.migrant?.queued_wave != wave.type)
+		return FALSE
+	if(!can_be_role(player, assignment.role_type) || (spawn_on_location && !assignment.spawn_location))
+		return FALSE
+	if(!SSjob.AssignRole(newplayer, rank, TRUE))
+		return FALSE
 	var/mob/living/character = newplayer.create_character(TRUE)	//creates the human and transfers vars and mind
+	if(!character)
+		var/datum/job/job = SSjob.GetJob(rank)
+		job.current_positions = max(0, job.current_positions - 1)
+		if(!QDELETED(newplayer))
+			newplayer.spawning = FALSE
+			newplayer.mind.assigned_role = null
+		return FALSE
+	player?.prefs?.migrant?.post_spawn()
+	// Commit each body before starting equipment that can wait for player input.
+	INVOKE_ASYNC(src, PROC_REF(finish_migrant_spawn), character, wave, assignment, spawn_on_location, greet_text)
+	return TRUE
 
+/datum/controller/subsystem/migrants/proc/finish_migrant_spawn(mob/living/character, datum/migrant_wave/wave, datum/migrant_assignment/assignment, spawn_on_location, greet_text)
+	if(QDELETED(character))
+		return
+	var/rank = "Migrant"
 	character.islatejoin = TRUE
 	SSjob.EquipRank(character, rank, TRUE)
 
@@ -371,7 +391,7 @@ SUBSYSTEM_DEF(migrants)
 
 /datum/controller/subsystem/migrants/proc/can_be_role(client/player, role_type)
 	var/datum/migrant_role/role = MIGRANT_ROLE(role_type)
-	if(!player)
+	if(!player || !role)
 		return FALSE
 	if(!player.prefs)
 		return FALSE
@@ -448,10 +468,17 @@ SUBSYSTEM_DEF(migrants)
 /datum/controller/subsystem/migrants/proc/contribute_triumph_to_wave(client/player, wave_type, amount)
 	if(!player || !player.ckey)
 		return FALSE
+	if(!isnum(amount) || amount <= 0 || amount > 25 || amount != round(amount))
+		return FALSE
 
 	var/datum/migrant_wave/wave = MIGRANT_WAVE(wave_type)
-	if(!wave)
+	if(!wave || wave.hidden || !wave.can_roll || wave.is_raid)
 		return FALSE
+	if(!isnull(wave.max_spawns))
+		var/used_wave_type = wave.shared_wave_type ? wave.shared_wave_type : wave.type
+		if(spawned_waves[used_wave_type] && spawned_waves[used_wave_type] >= wave.max_spawns)
+			to_chat(player, span_warning("This wave has already reached its arrival limit."))
+			return FALSE
 
 	var/current_triumph = SStriumphs.get_triumphs(player.ckey)
 	if(current_triumph < amount)

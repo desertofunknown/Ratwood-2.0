@@ -268,6 +268,8 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 	if(gambling_active)
 		return
 	switch(href_list["task"])
+		if("refresh")
+			return attack_hand(usr)
 		if("roll")
 			var/current_balance = get_salt_balance(usr)
 			if(current_balance <= 0)
@@ -306,16 +308,31 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	playsound(loc, 'sound/misc/keyboard_enter.ogg', 100, FALSE, -1)
 
-	var/contents = "<center>FEED THE MACHINE - WIN YOUR <font color='#ab8000'>FREEDOM</font><BR>"
-	contents += "----------<BR>"
-	contents += "DEPOSIT SALT TO INCREASE LUCK<BR>"
-	contents += "CURRENT INTEREST RATE: [get_interest_string(user)]<BR>"
-	contents += "CURRENT ODDS: [get_odds_of_winning_string(user)]<BR>"
-	contents += "----------<BR>"
-	contents += "<a href='?src=[REF(src)];task=roll'>(ROLL FOR FREEDOM)</a><BR>"
-	contents += "</center>"
+	var/balance = get_salt_balance(user)
+	var/deposited_salt = salt_accounts[user.real_name] || 0
+	var/max_salt = get_salt_max(user)
+	var/odds = get_odds_of_winning(user)
+	var/contents = "<div class='service-ledger'><div class='service-header'><h1>[html_encode(name)]</h1><a href='?src=[REF(src)];task=refresh'>Refresh</a></div>"
+	contents += "<div class='service-summary'>FEED THE MACHINE - WIN YOUR FREEDOM<br>DEPOSIT SALT TO INCREASE LUCK</div>"
+	contents += "<div class='service-section'><table class='service-table'><tbody>"
+	contents += "<tr><th scope='row'>Salt deposited</th><td class='service-number'>[deposited_salt]</td></tr>"
+	contents += "<tr><th scope='row'>Current interest</th><td class='service-number'>[get_interest_string(user)]</td></tr>"
+	contents += "<tr><th scope='row'>Salt with interest</th><td class='service-number'>[round(balance, 0.1)] / [max_salt]</td></tr>"
+	contents += "<tr><th scope='row'>Current odds</th><td class='service-number'>[round(odds, 0.5)]%</td></tr></tbody></table>"
+	if(odds <= 0 || odds >= 100)
+		contents += "<p>[get_odds_of_winning_string(user)]</p>"
+	contents += "</div><div class='service-actions'>"
+	if(balance > 0)
+		contents += "<a href='?src=[REF(src)];task=roll'>Roll for freedom</a>"
+	else
+		contents += "<span class='service-disabled'>Roll for freedom</span>"
+	contents += "<p class='service-warning'>A roll spends your entire salt balance, whether you win or lose.</p><p class='service-muted'>Right click the machine to deposit all salt in front of it.</p></div></div>"
 
 	var/datum/browser/popup = new(user, "saltcamp", "", 500, 500)
+	popup.add_stylesheet("service_ledger", 'html/browser/service_ledger.css')
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Service Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Service Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Service Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Service Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(contents)
 	popup.open()
 
@@ -364,11 +381,16 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 	var/datum/weakref/stockpile_ref = null
 
 /obj/structure/roguemachine/ticket_manager/proc/does_name_exist(obj/structure/roguemachine/stockpile_saltcamp/stockpile, name_to_check)
-	var/total_accounts = length(stockpile.salt_accounts)
-	for(var/i = 1; i <= total_accounts; i++)
-		if(stockpile.salt_accounts[i] == name_to_check)
-			return TRUE
-	return FALSE
+	return name_to_check in stockpile.salt_accounts
+
+/obj/structure/roguemachine/ticket_manager/proc/can_finish_edit(mob/user, obj/structure/roguemachine/stockpile_saltcamp/stockpile, account_name)
+	if(QDELETED(src) || QDELETED(user) || QDELETED(stockpile) || out_of_service)
+		return FALSE
+	if(!user.canUseTopic(src, BE_CLOSE) || stockpile_ref?.resolve() != stockpile)
+		return FALSE
+	if(!isnull(account_name) && !does_name_exist(stockpile, account_name))
+		return FALSE
+	return TRUE
 
 /obj/structure/roguemachine/ticket_manager/Topic(href, href_list)
 	if(!usr.canUseTopic(src, BE_CLOSE))
@@ -398,8 +420,8 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 			var/name = href_list["name"]
 			if(!does_name_exist(stockpile, name)) // sanity check name argument
 				return
-			var/new_max = input(usr, "Set the maximum salt needed to assure a 100% win", src, stockpile.salt_accounts_max[name]) as null
-			if(!isnum(new_max))
+			var/new_max = tgui_input_number(usr, "Set the maximum salt needed to assure a 100% win", name, stockpile.salt_accounts_max[name], SALT_CHANCE_MAX, 10, round_value = FALSE)
+			if(!isnum(new_max) || !can_finish_edit(usr, stockpile, name))
 				return
 			new_max = round(new_max, 1)
 			if(new_max < 10)
@@ -410,8 +432,8 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 				return
 			stockpile.salt_accounts_max[name] = new_max
 		if("set_salt_default")
-			var/new_max = input(usr, "Set the maximum salt needed to assure a 100% win", src, stockpile.salt_chance_default) as null
-			if(!isnum(new_max))
+			var/new_max = tgui_input_number(usr, "Set the default maximum salt needed to assure a 100% win", name, stockpile.salt_chance_default, SALT_CHANCE_MAX, 10, round_value = FALSE)
+			if(!isnum(new_max) || !can_finish_edit(usr, stockpile))
 				return
 			new_max = round(new_max, 1)
 			if(new_max < 10)
@@ -425,8 +447,8 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 			var/name = href_list["name"]
 			if(!does_name_exist(stockpile, name)) // sanity check name argument
 				return
-			var/new_max = input(usr, "Set the maximum interest rate percentage (1 hour for max interest)", src, stockpile.salt_accounts_interest_max[name] * 100) as null
-			if(!isnum(new_max))
+			var/new_max = tgui_input_number(usr, "Set the maximum interest rate percentage (1 hour for max interest)", name, stockpile.salt_accounts_interest_max[name] * 100, SALT_CHANCE_INTEREST_MAX * 100, 0, round_value = FALSE)
+			if(!isnum(new_max) || !can_finish_edit(usr, stockpile, name))
 				return
 			new_max = round(new_max, 1)
 			if(new_max < 0)
@@ -437,8 +459,8 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 				return
 			stockpile.salt_accounts_interest_max[name] = new_max / 100
 		if("set_interest_default")
-			var/new_max = input(usr, "Set the maximum interest rate percentage (1 hour for max interest)", src, stockpile.interest_rate_default * 100) as null
-			if(!isnum(new_max))
+			var/new_max = tgui_input_number(usr, "Set the default maximum interest rate percentage (1 hour for max interest)", name, stockpile.interest_rate_default * 100, SALT_CHANCE_INTEREST_MAX * 100, 0, round_value = FALSE)
+			if(!isnum(new_max) || !can_finish_edit(usr, stockpile))
 				return
 			new_max = round(new_max, 1)
 			if(new_max < 0)
@@ -453,7 +475,7 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 			if(!does_name_exist(stockpile, name)) // sanity check name argument
 				return
 			var/answer = tgui_alert(usr, "Reset [name]'s interest progression to 0%?", "Please answer in [DisplayTimeText(100)]", list("Yes", "Cancel"), 100)
-			if(!answer || answer != "Yes")
+			if(answer != "Yes" || !can_finish_edit(usr, stockpile, name))
 				return
 			stockpile.salt_accounts_timestamp[name] = world.time
 	return attack_hand(usr)
@@ -474,7 +496,7 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 				stockpile_ref = WEAKREF(stockpile)
 			else
 				out_of_service = TRUE
-	if(out_of_service) // aka there isn't any other machine in this world
+	if(out_of_service || !stockpile) // aka there isn't any other machine in this world
 		say("Sorry, machine out of service!")
 		return
 	user.changeNext_move(CLICK_CD_INTENTCAP)
@@ -482,17 +504,18 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 
 	var/gambled_salt = round(stockpile.salt_spent_on_gambling, 1)
 	var/total_accounts = length(stockpile.salt_accounts)
-	var/contents = "<center>SALT MANAGER DELUXE<BR>"
-	contents += "Where tears become fears<BR>"
-	contents += "----------<BR>"
-	contents += "SALT GAMBLED AWAY: [gambled_salt]<BR>"
+	var/contents = "<div class='service-ledger'><div class='service-header'><h1>SALT MANAGER DELUXE</h1><a href='?src=[REF(src)];task=refresh'>Refresh</a></div>"
+	contents += "<p class='service-muted'>Where tears become fears</p><div class='service-summary'>Salt gambled away: <b>[gambled_salt]</b> "
 	if(gambled_salt > 0)
-		contents += "<a href='?src=[REF(src)];task=withdraw'>(WITHDRAW GAMBLED SALT AS COINS)</a><BR>"
-	contents += "Salt Mined Max Default: <a href='?src=[REF(src)];task=set_salt_default;'>[stockpile.salt_chance_default]</a> | Interest Rate Default: <a href='?src=[REF(src)];task=set_interest_default;'>[stockpile.interest_rate_default * 100]%</a><BR>"
-	contents += "</center>"
+		contents += "<a href='?src=[REF(src)];task=withdraw'>Withdraw as coins</a>"
+	contents += "</div><div class='service-section'><h2>New prisoner defaults</h2><table class='service-table'><tbody>"
+	contents += "<tr><th scope='row'>Salt for a certain win</th><td class='service-number'><a href='?src=[REF(src)];task=set_salt_default'>[stockpile.salt_chance_default]</a></td></tr>"
+	contents += "<tr><th scope='row'>Maximum interest</th><td class='service-number'><a href='?src=[REF(src)];task=set_interest_default'>[stockpile.interest_rate_default * 100]%</a></td></tr></tbody></table>"
+	contents += "<p class='service-muted'>Interest reaches its maximum after one hour. These defaults apply to new accounts.</p></div>"
+	contents += "<div class='service-section'><h2>Prisoner accounts</h2>"
+	var/visible_accounts = 0
 	if(total_accounts > 0)
-		contents += "<hr><BR>"
-		contents += "<table><tr><th>Prisoner Name</th><th>Salt Mined</th><th>Interest Rate</th></tr>"
+		contents += "<table class='service-table'><thead><tr><th scope='col'>Prisoner</th><th scope='col'>Salt mined / required</th><th scope='col'>Maximum interest</th></tr></thead><tbody>"
 		for(var/i = 1; i <= total_accounts; i++)
 			var/name = stockpile.salt_accounts[i]
 			var/salt = stockpile.salt_accounts[name]
@@ -500,13 +523,23 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 			var/interest = stockpile.salt_accounts_interest_max[name] * 100
 			if(salt == 0 && stockpile.salt_ticket_win[name] > 0) // don't show ticket winners who have left the mines
 				continue
-			contents += "<tr><td>[name]</td>"
-			contents += "<td>[salt] salt / <a href='?src=[REF(src)];task=set_salt;name=[name]'>[salt_max] max</a></td>"
-			contents += "<td><a href='?src=[REF(src)];task=set_interest;name=[name]'>[interest]%</a> "
-			contents += "(<a href='?src=[REF(src)];task=reset_interest;name=[name]'>reset progress</a>)</td></tr>"
-		contents += "</table>"
+			visible_accounts++
+			var/account_url = url_encode(name)
+			var/account_label = replacetext(html_encode(name), "'", "&#39;")
+			contents += "<tr><td>[account_label]</td>"
+			contents += "<td>[salt] / <a aria-label='Set salt required for [account_label]' href='?src=[REF(src)];task=set_salt;name=[account_url]'>[salt_max]</a></td>"
+			contents += "<td><a aria-label='Set maximum interest for [account_label]' href='?src=[REF(src)];task=set_interest;name=[account_url]'>[interest]%</a> "
+			contents += "<a aria-label='Reset interest progress for [account_label]' href='?src=[REF(src)];task=reset_interest;name=[account_url]'>Reset progress</a></td></tr>"
+		contents += "</tbody></table>"
+	if(!visible_accounts)
+		contents += "<p class='service-empty'>No current prisoner accounts.</p>"
+	contents += "</div></div>"
 
 	var/datum/browser/popup = new(user, "saltmanager", "", 800, 500)
+	popup.add_stylesheet("service_ledger", 'html/browser/service_ledger.css')
+	var/datum/asset/simple/roguefonts/fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Service Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Service Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Service Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Service Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(contents)
 	popup.open()
 

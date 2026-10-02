@@ -159,6 +159,7 @@ export type AutoImportData = {
 };
 
 export type TradeQuote = {
+  request_id: string;
   ok: BooleanLike;
   reason: string;
   side: 'import' | 'export';

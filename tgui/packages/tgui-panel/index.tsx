@@ -64,8 +64,7 @@ function setupApp() {
   setupPanelFocusHacks();
   captureExternalLinks();
 
-  // Re-render UI on store updates
-  store.subscribe(() => render(<Panel />));
+  render(Panel, store);
 
   // Dispatch incoming messages as store actions
   Byond.subscribe((type, payload) => store.dispatch({ type, payload }));
@@ -98,7 +97,7 @@ function setupApp() {
         './telemetry',
       ],
       () => {
-        render(<Panel />);
+        render(Panel, store);
       },
     );
   }

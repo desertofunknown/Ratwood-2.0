@@ -1,0 +1,217 @@
+:root .StewardMarket {
+  min-width: 0;
+  color: var(--p-ink);
+  font:
+    13px/1.4 'Lora',
+    Georgia,
+    serif;
+
+  &__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+    padding-bottom: 4px;
+
+    h2 {
+      margin: 0;
+      font:
+        19px/1.25 'Pterra',
+        Georgia,
+        serif;
+    }
+    > span {
+      color: var(--p-ink-soft);
+    }
+  }
+  &__summary {
+    padding: 5px 0;
+  }
+  &__controls,
+  &__categories,
+  &__values,
+  &__permissions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 5px;
+  }
+  &__controls {
+    padding: 3px 0;
+  }
+  &__categories {
+    border-top: 1px solid var(--p-bg-shadow);
+    border-bottom: 1px solid var(--p-bg-shadow);
+    padding: 5px 0;
+    margin-bottom: 4px;
+  }
+  button {
+    min-height: 24px;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 2px 6px;
+    border: 1px solid var(--p-bg-shadow);
+    border-radius: 0;
+    background: var(--p-button-bg);
+    color: inherit;
+    font: inherit;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) {
+    background: var(--p-tab-active-bg);
+  }
+  button:focus-visible {
+    outline: 2px solid var(--p-seal-amber);
+    outline-offset: 2px;
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  button[aria-pressed='true'] {
+    border-color: var(--p-seal-green);
+    color: var(--p-seal-green);
+  }
+  &__categories button[aria-pressed='true'] {
+    color: var(--p-ink);
+    border-color: var(--p-ink);
+    font-weight: bold;
+    background: var(--p-tab-active-bg);
+  }
+  &__register {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-top: 5px;
+    th,
+    td {
+      padding: 5px 6px 2px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    thead {
+      color: var(--p-ink-soft);
+      border-top: 1px solid var(--p-bg-shadow);
+      border-bottom: 1px solid var(--p-bg-shadow);
+      th {
+        padding: 4px 6px;
+      }
+    }
+    tbody {
+      border-bottom: 1px solid var(--p-bg-shadow);
+    }
+    tbody:nth-of-type(even) {
+      background: rgba(255, 246, 215, 0.1);
+    }
+    .StewardMarket__routesCell {
+      padding: 2px 6px 6px;
+    }
+  }
+  &__goodColumn {
+    width: 23%;
+  }
+  &__stockColumn {
+    width: 12%;
+  }
+  &__priceColumn {
+    width: 13%;
+  }
+  &__capColumn {
+    width: 14%;
+  }
+  &__permissionsColumn {
+    width: 25%;
+  }
+  &__goodName {
+    font-weight: bold;
+  }
+  &__stock {
+    font-variant-numeric: tabular-nums;
+  }
+  &__margin {
+    display: block;
+    color: var(--p-seal-amber);
+    font-size: inherit;
+  }
+  &__routes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4px 14px;
+  }
+  &__side {
+    min-width: 0;
+  }
+  &__routeHeading,
+  &__route {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 5px;
+    min-width: 0;
+  }
+  &__route {
+    flex: 1 1 auto;
+  }
+  &__regionName {
+    overflow-wrap: anywhere;
+  }
+  &__capacity {
+    color: var(--p-ink-soft);
+  }
+  &__otherRoutes {
+    margin-top: 3px;
+    padding-left: 8px;
+    border-left: 1px solid var(--p-bg-shadow);
+    > div + div {
+      margin-top: 3px;
+    }
+  }
+  button.StewardMarket__disclosure {
+    min-height: 22px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--p-ink-soft);
+    text-decoration: underline;
+  }
+  &__muted {
+    color: var(--p-ink-soft);
+  }
+  &__accent {
+    color: var(--p-seal-amber);
+  }
+  &__bad {
+    color: var(--p-seal-red);
+  }
+  &__good {
+    color: var(--p-seal-green);
+  }
+  &__empty {
+    padding: 8px 0;
+    color: var(--p-ink-soft);
+  }
+  &__srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  @media (max-width: 700px) {
+    &__routes {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    &__register th,
+    &__register td {
+      padding-left: 3px;
+      padding-right: 3px;
+    }
+  }
+}

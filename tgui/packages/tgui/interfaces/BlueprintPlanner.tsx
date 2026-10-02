@@ -68,6 +68,11 @@ const NEXT_DIR: Record<number, number> = {
   8: 1,
 };
 
+const GRID_KEYS = new Set([
+  'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+  'Home', 'End', 'Enter', ' ', 'r', 'R',
+]);
+
 const exportBlueprintToString = (data: { max_floors: number; grid: GridCell[] }): string => {
   const json = JSON.stringify(data);
   const utf8Bytes = encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, (_, p1) =>
@@ -235,6 +240,36 @@ export const BlueprintPlanner = () => {
 
   const [grid, setGrid] = useState<GridCell[]>([]);
   const [hoveredCell, setHoveredCell] = useState<{ x: number; y: number } | null>(null);
+  const [keyboardCell, setKeyboardCell] = useState({ x: 0, y: 0 });
+  const [isGridFocused, setIsGridFocused] = useState(false);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const focusedCellRef = useRef<HTMLDivElement | null>(null);
+  const focusedCell = {
+    x: Math.max(-gridRadius, Math.min(gridRadius, keyboardCell.x)),
+    y: Math.max(-gridRadius, Math.min(gridRadius, keyboardCell.y)),
+  };
+  const previewCell = isGridFocused ? focusedCell : hoveredCell;
+
+  useEffect(() => {
+    setKeyboardCell((cell) => ({
+      x: Math.max(-gridRadius, Math.min(gridRadius, cell.x)),
+      y: Math.max(-gridRadius, Math.min(gridRadius, cell.y)),
+    }));
+    setHoveredCell(null);
+  }, [gridRadius]);
+
+  useEffect(() => {
+    if (activeView !== 'editor') {
+      setIsGridFocused(false);
+      setHoveredCell(null);
+    }
+  }, [activeView]);
+
+  useEffect(() => {
+    if (isGridFocused) {
+      focusedCellRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [isGridFocused, focusedCell.x, focusedCell.y, activeZ]);
 
   const [confirmClear, setConfirmClear] = useState<boolean>(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState<boolean>(false);
@@ -299,8 +334,7 @@ export const BlueprintPlanner = () => {
     });
   };
 
-  const handleCellContextMenu = (e: React.MouseEvent, x: number, y: number) => {
-    e.preventDefault();
+  const rotateCell = (x: number, y: number) => {
     setGrid((prev) => {
       return prev.map((c) => {
         if (c.x === x && c.y === y && c.z === activeZ && buildableTypes[c.type]?.layer_type === 'obj') {
@@ -310,6 +344,48 @@ export const BlueprintPlanner = () => {
         return c;
       });
     });
+  };
+
+  const handleCellContextMenu = (e: React.MouseEvent, x: number, y: number) => {
+    e.preventDefault();
+    setKeyboardCell({ x, y });
+    gridRef.current?.focus({ preventScroll: true });
+    rotateCell(x, y);
+  };
+
+  const handleGridKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (
+      event.target !== event.currentTarget || event.defaultPrevented ||
+      event.altKey || event.ctrlKey || event.metaKey || !GRID_KEYS.has(event.key)
+    ) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setHoveredCell(null);
+    if (event.key === 'Enter' || event.key === ' ') {
+      if (!event.repeat) handleCellClick(focusedCell.x, focusedCell.y);
+      return;
+    }
+    if (event.key === 'r' || event.key === 'R') {
+      if (!event.repeat) rotateCell(focusedCell.x, focusedCell.y);
+      return;
+    }
+    const x = event.key === 'Home' ? -gridRadius
+      : event.key === 'End' ? gridRadius
+        : focusedCell.x + (event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0);
+    const y = focusedCell.y + (event.key === 'ArrowUp' ? 1 : event.key === 'ArrowDown' ? -1 : 0);
+    setKeyboardCell({
+      x: Math.max(-gridRadius, Math.min(gridRadius, x)),
+      y: Math.max(-gridRadius, Math.min(gridRadius, y)),
+    });
+  };
+
+  const handleGridKeyUp = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (
+      event.target !== event.currentTarget ||
+      event.altKey || event.ctrlKey || event.metaKey || !GRID_KEYS.has(event.key)
+    ) return;
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   const changeFloorCount = (delta: number) => {
@@ -869,7 +945,7 @@ export const BlueprintPlanner = () => {
 
                 <Stack.Item grow>
                   <Section
-                    title="Workspace (RMB to rotate furniture)"
+                    title="Workspace"
                     fill
                     buttons={
                       <Stack align="center">
@@ -964,6 +1040,16 @@ export const BlueprintPlanner = () => {
                         </Stack>
                       </Stack.Item>
 
+                      <Stack.Item mb={1}>
+                        <div id="blueprint-grid-position" role="status" style={{ color: '#d4b37e' }}>
+                          Cell ({previewCell?.x ?? focusedCell.x}, {previewCell?.y ?? focusedCell.y}) · {floorNames[activeZ]}
+                        </div>
+                        <div id="blueprint-grid-controls" style={{ fontSize: '0.85em', color: '#b9a88e' }}>
+                          Focus grid: arrows move, Home/End reach row edges, Enter/Space use brush,
+                          R rotates furniture, Tab leaves. Right-click also rotates furniture.
+                        </div>
+                      </Stack.Item>
+
                       <Stack.Item
                         grow
                         style={{
@@ -973,7 +1059,18 @@ export const BlueprintPlanner = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <Box
+                        <div
+                          ref={gridRef}
+                          tabIndex={0}
+                          role="group"
+                          aria-label="Blueprint grid"
+                          aria-describedby="blueprint-grid-position blueprint-grid-controls"
+                          onFocus={(event) => {
+                            if (event.target === event.currentTarget) setIsGridFocused(true);
+                          }}
+                          onBlur={() => setIsGridFocused(false)}
+                          onKeyDown={handleGridKeyDown}
+                          onKeyUp={handleGridKeyUp}
                           onMouseLeave={() => setHoveredCell(null)}
                           style={{
                             display: 'grid',
@@ -1019,7 +1116,8 @@ export const BlueprintPlanner = () => {
 
                             const isCenter = cell.x === 0 && cell.y === 0;
 
-                            const isHovered = hoveredCell?.x === cell.x && hoveredCell?.y === cell.y;
+                            const isFocusedCell = isGridFocused && focusedCell.x === cell.x && focusedCell.y === cell.y;
+                            const isHovered = previewCell?.x === cell.x && previewCell?.y === cell.y;
                             const ghostInfo = isHovered && selectedBrush ? buildableTypes[selectedBrush] : null;
 
                             const floorInfo = floorTile ? buildableTypes[floorTile.type] : undefined;
@@ -1032,14 +1130,28 @@ export const BlueprintPlanner = () => {
                             return (
                               <div
                                 key={`${cell.x}_${cell.y}_${activeZ}`}
-                                onClick={() => handleCellClick(cell.x, cell.y)}
+                                ref={isFocusedCell ? focusedCellRef : undefined}
+                                onMouseDown={() => setKeyboardCell({ x: cell.x, y: cell.y })}
+                                onClick={() => {
+                                  setKeyboardCell({ x: cell.x, y: cell.y });
+                                  gridRef.current?.focus({ preventScroll: true });
+                                  handleCellClick(cell.x, cell.y);
+                                }}
                                 onContextMenu={(e) => handleCellContextMenu(e, cell.x, cell.y)}
                                 onMouseEnter={() => setHoveredCell({ x: cell.x, y: cell.y })}
+                                onMouseMove={() => {
+                                  if (isGridFocused && (focusedCell.x !== cell.x || focusedCell.y !== cell.y)) {
+                                    setKeyboardCell({ x: cell.x, y: cell.y });
+                                  }
+                                }}
                                 style={{
                                   width: '36px',
                                   height: '36px',
                                   backgroundColor: '#151515',
                                   border: isCenter ? '2px solid #e74c3c' : '1px solid #2a2a2a',
+                                  outline: isFocusedCell ? '2px solid #e9c477' : undefined,
+                                  outlineOffset: '1px',
+                                  zIndex: isFocusedCell ? 11 : undefined,
                                   cursor: 'pointer',
                                   display: 'flex',
                                   alignItems: 'center',
@@ -1248,7 +1360,7 @@ export const BlueprintPlanner = () => {
                               </div>
                             );
                           })}
-                        </Box>
+                        </div>
                       </Stack.Item>
                     </Stack>
                   </Section>

@@ -58,11 +58,17 @@
 /client/proc/full_macro_assert(datum/preferences/prefs_override = prefs)
 	INVOKE_ASYNC(src, PROC_REF(set_macros), prefs_override)
 
-/client/proc/set_macros(datum/preferences/prefs_override = prefs)
+/client/proc/set_macros(datum/preferences/prefs_override = prefs, preserve_focus = FALSE)
 	set waitfor = FALSE
 
 	// First, wipe
+	release_keybindings()
 	keys_held.Cut()
+	movement_blocked = FALSE
+	movement_locked = FALSE
+	next_move_dir_add = NONE
+	next_move_dir_sub = NONE
+	calculate_move_dir()
 
 	erase_all_macros()
 	update_movement_keys()
@@ -130,7 +136,7 @@
 	apply_macro_set(SKIN_MACROSET_CLASSIC_HOTKEYS, SSinput.macroset_classic_hotkey)
 	apply_macro_set(SKIN_MACROSET_CLASSIC_INPUT, SSinput.macroset_classic_input)
 
-	set_hotkeys_preference()
+	set_hotkeys_preference(preserve_focus = preserve_focus)
 	set_hotkeys_button(prefs_override.hotkeys)
 
 /proc/keybind_modifier_permutation(key, alt = FALSE, ctrl = FALSE, shift = FALSE, self = TRUE)
@@ -154,11 +160,12 @@
 		. += "[mod]+[key]"
 		do_keybind_modifier_permutations("[mod]+[key]", permutations.Copy(), .)
 
-/client/proc/set_hotkeys_preference(datum/preferences/prefs_override = prefs)
+/client/proc/set_hotkeys_preference(datum/preferences/prefs_override = prefs, preserve_focus = FALSE)
+	var/focus_setting = preserve_focus ? "" : (prefs_override.hotkeys ? "map.focus=true " : "input.focus=true ")
 	if(prefs_override.hotkeys)
-		winset(src, null, "map.focus=true input.background-color=[COLOR_INPUT_DISABLED] mainwindow.macro=[SKIN_MACROSET_HOTKEYS]")
+		winset(src, null, "[focus_setting]input.background-color=[COLOR_INPUT_DISABLED] mainwindow.macro=[SKIN_MACROSET_HOTKEYS]")
 	else
-		winset(src, null, "input.focus=true input.background-color=[COLOR_INPUT_ENABLED] mainwindow.macro=[SKIN_MACROSET_CLASSIC_INPUT]")
+		winset(src, null, "[focus_setting]input.background-color=[COLOR_INPUT_ENABLED] mainwindow.macro=[SKIN_MACROSET_CLASSIC_INPUT]")
 
 /client/proc/set_hotkeys_button(toggled)
 	winset(src, "hotkey_toggle", "is-checked=[toggled? "true" : "false"]")

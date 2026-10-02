@@ -269,6 +269,7 @@
 					return
 				if(newtax < 1)
 					return
+				newtax = min(newtax, 10000)
 				SStreasury.give_money_account(newtax, A, "NERVE MASTER")
 				break
 	if(href_list["fineaccount"])
@@ -334,6 +335,7 @@
 			return
 		if(findtext(num2text(amount_to_pay), "."))
 			return
+		amount_to_pay = min(amount_to_pay, 10000)
 		for(var/mob/living/carbon/human/H in GLOB.human_list)
 			if(H.job == job_to_pay)
 				if(SStreasury.give_money_account(amount_to_pay, H, "NERVE MASTER"))
@@ -397,7 +399,11 @@
 					playsound(src, 'sound/misc/machineno.ogg', 100, FALSE, -1)
 					return
 
-				if(HAS_TRAIT(A, TRAIT_WAGES_SUSPENDED))
+				var/datum/fund/account = SStreasury.get_account(A)
+				if(!account)
+					return
+				account.wages_suspended = !account.wages_suspended
+				if(!account.wages_suspended)
 					REMOVE_TRAIT(A, TRAIT_WAGES_SUSPENDED, TRAIT_GENERIC)
 					say("[A.real_name]'s wages have been reinstated.")
 					to_chat(A, span_notice("My wages have been reinstated by the Stewardry."))
@@ -672,171 +678,135 @@
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	playsound(loc, 'sound/misc/keyboard_enter.ogg', 100, FALSE, -1)
 	var/canread = user.can_read(src, TRUE)
-	var/contents
+	var/contents = "<div class='service-ledger'><div class='service-header'><h1>Nerve Master</h1><span>Treasury: [SStreasury.discretionary_fund.balance]m</span></div>"
+	var/list/tabs = list("Main" = TAB_MAIN, "Bank" = TAB_BANK, "Imports" = TAB_IMPORT, "Daily Payments" = TAB_PAYDAY, "Fiscal Ledger" = TAB_FISCAL, "Debts & Arrears" = TAB_DEBT, "Salt Mine Report" = TAB_SALTMINE)
+	contents += "<nav class='service-nav' aria-label='Nerve Master sections'>"
+	for(var/tab_name in tabs)
+		var/tab_id = tabs[tab_name]
+		contents += "<a href='?src=\ref[src];switchtab=[tab_id]'[current_tab == tab_id ? " aria-current='page'" : ""]>[html_encode(tab_name)]</a>"
+	contents += "</nav><div class='service-section'>"
 	switch(current_tab)
 		if(TAB_MAIN)
-			contents += "<center>NERVE MASTER<BR>"
-			contents += "--------------<BR>"
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_BANK]'>\[Bank\]</a><BR>"
-			contents += "<a href='?src=\ref[src];trade_tgui=1'>\[Trade & Stockpile\]</a><BR>"
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_IMPORT]'>\[Import\]</a><BR>"
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_PAYDAY]'>\[Daily Payments\]</a><BR>"
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_FISCAL]'>\[Fiscal Ledger\]</a><BR>"
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_DEBT]'>\[Debts &amp; Arrears\]</a><BR>"
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_SALTMINE]'>\[Salt Mine Report\]</a><BR>"
-			contents += "<a href='?src=\ref[src];printresidency=1'>\[Print Letter of Citizenry\]</a><BR>"
-			contents += "<a href='?src=\ref[src];setpurchasefloor=1'>\[Purchase Floor: [SStreasury.stockpile_purchase_floor]m\]</a><BR>"
-			contents += "</center>"
+			contents += "<h2>Stewardry</h2><div class='service-actions'><a href='?src=\ref[src];trade_tgui=1'>Trade &amp; Stockpile</a>"
+			contents += "<a href='?src=\ref[src];printresidency=1'>Print Letter of Citizenry</a>"
+			contents += "<a href='?src=\ref[src];setpurchasefloor=1'>Purchase Floor: [SStreasury.stockpile_purchase_floor]m</a></div>"
 		if(TAB_BANK)
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_MAIN]'>\[Return\]</a>"
-			contents += " <a href='?src=\ref[src];compact=1'>\[Compact: [compact? "ENABLED" : "DISABLED"]\]</a><BR>"
-			contents += "<center>Bank<BR>"
-			contents += "--------------<BR>"
-			contents += "Treasury: [SStreasury.discretionary_fund.balance]m</center><BR>"
-			contents += "<a href='?src=\ref[src];payroll=1'>\[Pay by Class\]</a><BR><BR>"
-			// Collect all accounts, sort debtors/arrears first, then rest.
-			var/list/priority_accounts = list() // debtors or in arrears
+			contents += "<h2>Bank</h2><div class='service-actions'><a href='?src=\ref[src];compact=1' aria-pressed='[compact ? "true" : "false"]'>Compact: [compact ? "Enabled" : "Disabled"]</a><a href='?src=\ref[src];payroll=1'>Pay by Class</a></div>"
+			// Keep debtors and accounts in arrears ahead of the remaining accounts.
+			var/list/priority_accounts = list()
 			var/list/normal_accounts = list()
 			for(var/mob/living/carbon/human/A in SStreasury.bank_accounts)
 				var/owed = SStreasury.poll_tax_owed[A] || 0
-				var/is_debtor = HAS_TRAIT(A, TRAIT_DEBTOR)
-				if(is_debtor || owed > 0)
+				if(HAS_TRAIT(A, TRAIT_DEBTOR) || owed > 0)
 					priority_accounts += A
 				else
 					normal_accounts += A
 			var/show_fiscal_actions = has_fiscal_authority(user)
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Account</th><th scope='col' class='service-number'>Balance</th><th scope='col'>Actions</th></tr></thead><tbody>"
 			for(var/mob/living/carbon/human/A in priority_accounts + normal_accounts)
 				var/balance = SStreasury.get_balance(A)
 				var/max_fine = SStreasury.get_max_fine_for(A)
 				var/datum/fund/A_account = SStreasury.bank_accounts[A]
 				var/A_suspended = A_account?.wages_suspended ? TRUE : FALSE
-				var/wage_status_short = A_suspended ? "UNSUSPEND" : "SUSPEND"
-				var/wage_status_long = A_suspended ? "Unsuspend Wages" : "Suspend Wages"
-				var/fine_label = max_fine > 0 ? "FINE (Max [max_fine]m)" : "FINE (exempt)"
-				var/fine_long_label = max_fine > 0 ? "Fine Account (Max [max_fine]m)" : "Fine Account (exempt)"
+				var/wage_label = A_suspended ? (compact ? "Unsuspend" : "Unsuspend Wages") : (compact ? "Suspend" : "Suspend Wages")
+				var/fine_label = compact ? "Fine" : "Fine Account"
+				fine_label += max_fine > 0 ? " (Max [max_fine]m)" : " (exempt)"
 				var/poll_owed = SStreasury.poll_tax_owed[A] || 0
 				var/overdue_days = SStreasury.poll_tax_debt_days[A] || 0
-				var/a_is_debtor = HAS_TRAIT(A, TRAIT_DEBTOR)
-				var/debt_tag = ""
-				if(a_is_debtor)
-					var/owed_str = poll_owed > 0 ? ", owes [poll_owed]m" : ""
-					debt_tag = " <font color='#d9534f'>\[DEBTOR[owed_str]\]</font>"
+				contents += "<tr><td>[html_encode(A.real_name)]<div class='service-muted'>[html_encode(job_filter(A.advjob, A.job, compact))]</div>"
+				if(HAS_TRAIT(A, TRAIT_DEBTOR))
+					contents += "<div class='service-warning'>Debtor[poll_owed > 0 ? ", owes [poll_owed]m" : ""]</div>"
 				else if(poll_owed > 0)
-					debt_tag = " <font color='#e07b39'>\[ARREARS: [poll_owed]m, [overdue_days] day[overdue_days == 1 ? "" : "s"]\]</font>"
-				if(compact)
-					if(ishuman(A))
-						var/mob/living/carbon/human/tmp = A
-						contents += "[tmp.real_name] ([job_filter(tmp.advjob, tmp.job, compact)]) - [balance]m[debt_tag]"
-					else
-						contents += "[A.real_name] - [balance]m[debt_tag]"
-					contents += " / <a href='?src=\ref[src];givemoney=\ref[A]'>\[PAY\]</a>"
-					if(show_fiscal_actions)
-						contents += " <a href='?src=\ref[src];fineaccount=\ref[A]'>\[[fine_label]\]</a> <a href='?src=\ref[src];togglewages=\ref[A]'>\[[wage_status_short]\]</a>"
-					contents += "<BR><BR>"
-				else
-					if(ishuman(A))
-						var/mob/living/carbon/human/tmp = A
-						contents += "[tmp.real_name] ([job_filter(tmp.advjob, tmp.job, compact)]) - [balance]m[debt_tag]<BR>"
-					else
-						contents += "[A.real_name] - [balance]m[debt_tag]<BR>"
-					contents += "<a href='?src=\ref[src];givemoney=\ref[A]'>\[Give Money\]</a>"
-					if(show_fiscal_actions)
-						contents += " <a href='?src=\ref[src];fineaccount=\ref[A]'>\[[fine_long_label]\]</a> <a href='?src=\ref[src];togglewages=\ref[A]'>\[[wage_status_long]\]</a>"
-					contents += "<BR><BR>"
+					contents += "<div class='service-warning'>Arrears: [poll_owed]m, [overdue_days] day[overdue_days == 1 ? "" : "s"]</div>"
+				contents += "</td><td class='service-number'>[balance]m</td><td class='service-actions'><a href='?src=\ref[src];givemoney=\ref[A]'>[compact ? "Pay" : "Give Money"]</a>"
+				if(show_fiscal_actions)
+					contents += "<a href='?src=\ref[src];fineaccount=\ref[A]'>[html_encode(fine_label)]</a><a href='?src=\ref[src];togglewages=\ref[A]'>[html_encode(wage_label)]</a>"
+				contents += "</td></tr>"
+			if(!length(priority_accounts) && !length(normal_accounts))
+				contents += "<tr><td colspan='3' class='service-empty'>No bank accounts.</td></tr>"
+			contents += "</tbody></table></div>"
 		if(TAB_IMPORT)
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_MAIN]'>\[Return\]</a>"
-			contents += " <a href='?src=\ref[src];compact=1'>\[Compact: [compact? "ENABLED" : "DISABLED"]\]</a><BR>"
-			contents += "<center>Imports<BR>"
-			contents += "--------------<BR>"
-			if(compact)
-				contents += "Treasury: [SStreasury.discretionary_fund.balance]m</center><BR>"
-				for(var/datum/crown_import/A in GLOB.crown_imports)
-					var/blockade_tag = A.is_blockaded() ? " <font color='#c44'>(BLOCKADED)</font>" : ""
-					contents += "<b>[A.name][blockade_tag]:</b>"
-					contents += " <a href='?src=\ref[src];import=\ref[A]'>\[Import [A.import_amt] ([A.get_import_price()])\]</a><BR>"
-			else
-				contents += "Treasury: [SStreasury.discretionary_fund.balance]m</center><BR>"
-				for(var/datum/crown_import/A in GLOB.crown_imports)
-					var/blockade_tag_full = A.is_blockaded() ? " <font color='#c44'>(BLOCKADED - 2x COST)</font>" : ""
-					contents += "<b>[A.name][blockade_tag_full]</b> - <i>[A.desc]</i> "
-					contents += "<a href='?src=\ref[src];import=\ref[A]'>\[Import [A.import_amt] ([A.get_import_price()])\]</a><BR>"
+			contents += "<h2>Imports</h2><div class='service-actions'><a href='?src=\ref[src];compact=1' aria-pressed='[compact ? "true" : "false"]'>Compact: [compact ? "Enabled" : "Disabled"]</a></div>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Goods</th><th scope='col' class='service-number'>Cost</th><th scope='col'>Order</th></tr></thead><tbody>"
+			for(var/datum/crown_import/A in GLOB.crown_imports)
+				contents += "<tr><td>[html_encode(A.name)]"
+				if(!compact)
+					contents += "<div class='service-muted'>[html_encode(A.desc)]</div>"
+				if(A.is_blockaded())
+					contents += "<div class='service-warning'>[compact ? "Blockaded" : "Blockaded - 2x cost"]</div>"
+				contents += "</td><td class='service-number'>[A.get_import_price()]m</td><td class='service-actions'><a href='?src=\ref[src];import=\ref[A]'>Import [A.import_amt]</a></td></tr>"
+			if(!length(GLOB.crown_imports))
+				contents += "<tr><td colspan='3' class='service-empty'>No imports available.</td></tr>"
+			contents += "</tbody></table></div>"
 		if(TAB_DEBT)
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_MAIN]'>\[Return\]</a><BR>"
-			contents += "<center>Debts &amp; Arrears<BR>"
-			contents += "--------------<BR>"
-			contents += "Treasury: [SStreasury.discretionary_fund.balance]m</center><BR>"
+			contents += "<h2>Debts &amp; Arrears</h2>"
 			var/crown_loans = 0
 			var/crown_loan_content = ""
 			for(var/datum/loan/L in SStreasury.loans)
 				if(L.source_fund != SStreasury.discretionary_fund)
 					continue
 				crown_loans++
-				var/loan_color = L.defaulted ? "#d9534f" : "#e07b39"
-				crown_loan_content += "<font color='[loan_color]'>[L.format()]</font><BR>"
+				crown_loan_content += "<tr><td[L.defaulted ? " class='service-warning'" : ""]>[html_encode(L.format())]</td></tr>"
+			contents += "<h3>Active Crown Loans ([crown_loans])</h3>"
 			if(crown_loans)
-				contents += "<b>Active Crown Loans ([crown_loans]):</b><BR>"
-				contents += crown_loan_content
-				contents += "<BR>"
+				contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Loan</th></tr></thead><tbody>[crown_loan_content]</tbody></table></div>"
 			else
-				contents += "<i>No active loans.</i><BR><BR>"
+				contents += "<p class='service-empty'>No active loans.</p>"
 			var/list/debt_rows = list()
 			for(var/mob/living/carbon/human/A in SStreasury.bank_accounts)
 				var/poll_owed = SStreasury.poll_tax_owed[A] || 0
 				if(poll_owed > 0 || HAS_TRAIT(A, TRAIT_DEBTOR))
 					debt_rows += A
+			contents += "<h3>Poll Tax Debtors / Arrears ([length(debt_rows)])</h3>"
 			if(length(debt_rows))
-				contents += "<b>Poll Tax Debtors / Arrears ([length(debt_rows)]):</b><BR>"
+				contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Account</th><th scope='col'>Obligation</th><th scope='col' class='service-number'>Balance</th></tr></thead><tbody>"
 				for(var/mob/living/carbon/human/A in debt_rows)
 					var/poll_owed = SStreasury.poll_tax_owed[A] || 0
 					var/overdue_days = SStreasury.poll_tax_debt_days[A] || 0
 					var/balance = SStreasury.get_balance(A)
+					contents += "<tr><td>[html_encode(A.real_name)]</td><td class='service-warning'>"
 					if(HAS_TRAIT(A, TRAIT_DEBTOR_CROWN))
-						var/owed_str = poll_owed > 0 ? ", owes [poll_owed]m" : ""
-						contents += "<font color='#d9534f'><b>[A.real_name]</b> \[DEBTOR[owed_str]\]</font> - balance: [balance]m"
+						contents += "Debtor[poll_owed > 0 ? ", owes [poll_owed]m" : ""]"
 					else
-						contents += "<font color='#e07b39'><b>[A.real_name]</b> \[ARREARS: [poll_owed]m, [overdue_days] day[overdue_days == 1 ? "" : "s"]\]</font> - balance: [balance]m"
-					contents += "<BR>"
-				contents += "<BR>"
+						contents += "Arrears: [poll_owed]m, [overdue_days] day[overdue_days == 1 ? "" : "s"]"
+					contents += "</td><td class='service-number'>[balance]m</td></tr>"
+				contents += "</tbody></table></div>"
 			else
-				contents += "<i>No poll tax arrears.</i><BR><BR>"
-			contents += "<a href='?src=\ref[src];clearloandebtor=1'>\[Clear Defaulter Mark\]</a><BR>"
-			contents += "<font color='gray'><i>(Forgives outstanding loans entirely and lifts the defaulter mark.)</i></font><BR>"
-			contents += "<a href='?src=\ref[src];clearpolltax=1'>\[Clear Poll Tax Obligation\]</a><BR>"
-			contents += "<font color='gray'><i>(Wipes a subject's poll tax arrears.)</i></font><BR>"
+				contents += "<p class='service-empty'>No poll tax arrears.</p>"
+			contents += "<div class='service-actions'><a href='?src=\ref[src];clearloandebtor=1'>Clear Defaulter Mark</a></div><p class='service-muted'>Forgives outstanding loans entirely and lifts the defaulter mark.</p>"
+			contents += "<div class='service-actions'><a href='?src=\ref[src];clearpolltax=1'>Clear Poll Tax Obligation</a></div><p class='service-muted'>Wipes a subject's poll tax arrears.</p>"
 		if(TAB_FISCAL)
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_MAIN]'>\[Return\]</a><BR>"
 			var/list/snap = SStreasury.compute_fiscal_snapshot()
 			var/list/charters = SStreasury.compute_charter_states()
-			contents += "<center><b>Fiscal Ledger &mdash; Day [GLOB.dayspassed]</b></center>"
-			contents += "<hr>"
+			contents += "<h2>Fiscal Ledger</h2><p class='service-summary'>Day [GLOB.dayspassed]</p>"
 
 			// Balances (two-column)
-			contents += "<b><font color='#e6b327'>BALANCES</font></b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
-			contents += "<tr><td>Crown's Purse</td><td align='right'><font color='#e6b327'>[snap["discretionary"]]m</font></td>"
-			contents += "<td>Burgher Pledge</td><td align='right'><font color='#e6b327'>[snap["burgher_pledge"]]m</font></td></tr>"
-			contents += "<tr><td>Total Bank Coin</td><td align='right'>[snap["total_bank"]]m</td>"
-			contents += "<td>Held Accounts</td><td align='right'>[snap["held_accounts"]]</td></tr>"
-			contents += "<tr><td>Average Balance</td><td align='right'>[snap["avg_balance"]]m</td>"
-			contents += "<td>Under 50m</td><td align='right'><font color='#e07b39'>[snap["under_50m"]]</font></td></tr>"
-			contents += "</table><br>"
+			contents += "<h3>Balances</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
+			contents += "<tr><td>Crown's Purse</td><td class='service-number'>[snap["discretionary"]]m</td>"
+			contents += "<td>Burgher Pledge</td><td class='service-number'>[snap["burgher_pledge"]]m</td></tr>"
+			contents += "<tr><td>Total Bank Coin</td><td class='service-number'>[snap["total_bank"]]m</td>"
+			contents += "<td>Held Accounts</td><td class='service-number'>[snap["held_accounts"]]</td></tr>"
+			contents += "<tr><td>Average Balance</td><td class='service-number'>[snap["avg_balance"]]m</td>"
+			contents += "<td>Under 50m</td><td class='service-number'>[snap["under_50m"]]</td></tr>"
+			contents += "</tbody></table></div>"
 
-			// Revenue (two-column, green) - only mammon that lands in Crown's Purse
-			contents += "<b><font color='#5cb85c'>CROWN REVENUE THIS WEEK</font></b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
-			contents += "<tr><td>Rural Tax</td><td align='right'><font color='#5cb85c'>[SStreasury.total_rural_tax]m</font></td>"
-			contents += "<td>Fines</td><td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_FINES_INCOME]]m</font></td></tr>"
-			contents += "<tr><td>Poll Tax</td><td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_POLL_TAX_COLLECTED]]m</font></td>"
-			contents += "<td>Deposit Tax</td><td align='right'><font color='#5cb85c'>[SStreasury.total_deposit_tax]m</font></td></tr>"
-			contents += "<tr><td>Contract Levy</td><td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_REVENUE_CONTRACT_LEVY]]m</font></td>"
-			contents += "<td>Headeater Levy</td><td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_REVENUE_HEADEATER_LEVY]]m</font></td></tr>"
-			contents += "<tr><td>Import Tariff</td><td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_REVENUE_IMPORT_TARIFF]]m</font></td>"
-			contents += "<td>Export Duty</td><td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_REVENUE_EXPORT_DUTY]]m</font></td></tr>"
-			contents += "<tr><td>Recovered Spoils</td><td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_REVENUE_RECOVERED_SPOILS] || 0]m</font></td>"
+			// Revenue (two-column) - only mammon that lands in Crown's Purse
+			contents += "<h3>Crown Revenue This Week</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
+			contents += "<tr><td>Rural Tax</td><td class='service-number'>[SStreasury.total_rural_tax]m</td>"
+			contents += "<td>Fines</td><td class='service-number'>[GLOB.azure_round_stats[STATS_FINES_INCOME]]m</td></tr>"
+			contents += "<tr><td>Poll Tax</td><td class='service-number'>[GLOB.azure_round_stats[STATS_POLL_TAX_COLLECTED]]m</td>"
+			contents += "<td>Deposit Tax</td><td class='service-number'>[SStreasury.total_deposit_tax]m</td></tr>"
+			contents += "<tr><td>Contract Levy</td><td class='service-number'>[GLOB.azure_round_stats[STATS_REVENUE_CONTRACT_LEVY]]m</td>"
+			contents += "<td>Headeater Levy</td><td class='service-number'>[GLOB.azure_round_stats[STATS_REVENUE_HEADEATER_LEVY]]m</td></tr>"
+			contents += "<tr><td>Import Tariff</td><td class='service-number'>[GLOB.azure_round_stats[STATS_REVENUE_IMPORT_TARIFF]]m</td>"
+			contents += "<td>Export Duty</td><td class='service-number'>[GLOB.azure_round_stats[STATS_REVENUE_EXPORT_DUTY]]m</td></tr>"
+			contents += "<tr><td>Recovered Spoils</td><td class='service-number'>[GLOB.azure_round_stats[STATS_REVENUE_RECOVERED_SPOILS] || 0]m</td>"
 			contents += "<td></td><td></td></tr>"
-			contents += "</table><br>"
+			contents += "</tbody></table></div>"
 
-			// Forgone Revenue (two-column, muted - what the Crown *could* have collected)
+			// Forgone revenue
 			var/exempt_contract = GLOB.azure_round_stats[STATS_EXEMPTED_CONTRACT_LEVY]
 			var/exempt_headeater = GLOB.azure_round_stats[STATS_EXEMPTED_HEADEATER_LEVY]
 			var/exempt_import = GLOB.azure_round_stats[STATS_EXEMPTED_IMPORT_TARIFF]
@@ -844,47 +814,46 @@
 			var/exempt_fine = GLOB.azure_round_stats[STATS_EXEMPTED_FINE]
 			var/exempt_poll = GLOB.azure_round_stats[STATS_EXEMPTED_POLL_TAX]
 			var/exempt_total = exempt_contract + exempt_headeater + exempt_import + exempt_export + exempt_fine + exempt_poll
-			contents += "<b><font color='#8f7a5a'>FORGONE REVENUE (tax exempted)</font></b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
-			contents += "<tr><td>Contract Levy</td><td align='right'><font color='#8f7a5a'>[exempt_contract]m</font></td>"
-			contents += "<td>Headeater Levy</td><td align='right'><font color='#8f7a5a'>[exempt_headeater]m</font></td></tr>"
-			contents += "<tr><td>Import Tariff</td><td align='right'><font color='#8f7a5a'>[exempt_import]m</font></td>"
-			contents += "<td>Export Duty</td><td align='right'><font color='#8f7a5a'>[exempt_export]m</font></td></tr>"
-			contents += "<tr><td>Fines Waived</td><td align='right'><font color='#8f7a5a'>[exempt_fine]m</font></td>"
-			contents += "<td>Poll Tax</td><td align='right'><font color='#8f7a5a'>[exempt_poll]m</font></td></tr>"
-			contents += "<tr><td><b>Total Forgone</b></td><td align='right'><b><font color='#8f7a5a'>[exempt_total]m</font></b></td>"
+			contents += "<h3>Forgone Revenue (tax exempted)</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
+			contents += "<tr><td>Contract Levy</td><td class='service-number'>[exempt_contract]m</td>"
+			contents += "<td>Headeater Levy</td><td class='service-number'>[exempt_headeater]m</td></tr>"
+			contents += "<tr><td>Import Tariff</td><td class='service-number'>[exempt_import]m</td>"
+			contents += "<td>Export Duty</td><td class='service-number'>[exempt_export]m</td></tr>"
+			contents += "<tr><td>Fines Waived</td><td class='service-number'>[exempt_fine]m</td>"
+			contents += "<td>Poll Tax</td><td class='service-number'>[exempt_poll]m</td></tr>"
+			contents += "<tr><td><b>Total Forgone</b></td><td class='service-number'><b>[exempt_total]m</b></td>"
 			contents += "<td></td><td></td></tr>"
-			contents += "</table>"
-			contents += "<font size='1'><i>Charter exemptions, levy-exempt stamps, and rate-cap gaps. Mammon the Crown would have collected had no exemption applied.</i></font><br><br>"
+			contents += "</tbody></table></div>"
+			contents += "<p class='service-muted'>Charter exemptions, levy-exempt stamps, and rate-cap gaps. Mammon the Crown would have collected had no exemption applied.</p>"
 
-			// Trade (two-column, mixed)
-			contents += "<b><font color='#c0b283'>TRADE</font></b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
-			contents += "<tr><td>Stockpile Exports</td><td align='right'><font color='#5cb85c'>[SStreasury.total_export]m</font></td>"
-			contents += "<td>Stockpile Imports</td><td align='right'><font color='#d9534f'>-[SStreasury.total_import]m</font></td></tr>"
+			// Trade
+			contents += "<h3>Trade</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
+			contents += "<tr><td>Stockpile Exports</td><td class='service-number'>[SStreasury.total_export]m</td>"
+			contents += "<td>Stockpile Imports</td><td class='service-number'>-[SStreasury.total_import]m</td></tr>"
 			var/trade_bal = SStreasury.total_export - SStreasury.total_import
-			var/trade_col = trade_bal >= 0 ? "#5cb85c" : "#d9534f"
-			contents += "<tr><td>Trade Balance</td><td align='right'><font color='[trade_col]'>[trade_bal]m</font></td>"
-			contents += "<td>Economic Output</td><td align='right'>[SStreasury.economic_output]m</td></tr>"
-			contents += "</table><br>"
+			contents += "<tr><td>Trade Balance</td><td class='service-number'>[trade_bal]m</td>"
+			contents += "<td>Economic Output</td><td class='service-number'>[SStreasury.economic_output]m</td></tr>"
+			contents += "</tbody></table></div>"
 
-			// Expenses (two-column, red)
-			contents += "<b><font color='#d9534f'>EXPENSES THIS WEEK</font></b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
-			contents += "<tr><td>Wages Paid</td><td align='right'><font color='#d9534f'>-[GLOB.azure_round_stats[STATS_WAGES_PAID]]m</font></td>"
-			contents += "<td>Treasury Transfers</td><td align='right'><font color='#d9534f'>-[GLOB.azure_round_stats[STATS_DIRECT_TREASURY_TRANSFERS]]m</font></td></tr>"
-			contents += "<tr><td>Stockpile Imports <font size='1'><i>(see Trade)</i></font></td><td align='right'><font color='#d9534f'>-[SStreasury.total_import]m</font></td>"
+			// Expenses
+			contents += "<h3>Expenses This Week</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
+			contents += "<tr><td>Wages Paid</td><td class='service-number'>-[GLOB.azure_round_stats[STATS_WAGES_PAID]]m</td>"
+			contents += "<td>Treasury Transfers</td><td class='service-number'>-[GLOB.azure_round_stats[STATS_DIRECT_TREASURY_TRANSFERS]]m</td></tr>"
+			contents += "<tr><td>Stockpile Imports <span class='service-muted'><i>(see Trade)</i></span></td><td class='service-number'>-[SStreasury.total_import]m</td>"
 			contents += "<td></td><td></td></tr>"
-			contents += "</table><br>"
+			contents += "</tbody></table></div>"
 
 			// Tax Rates (two columns: rate name | percentage)
-			contents += "<b>TAX RATES</b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
+			contents += "<h3>Tax Rates</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
 			var/list/rate_entries = list()
 			for(var/cat in SStreasury.tax_rates)
 				if(cat == TAX_CATEGORY_FINE)
 					continue
-				rate_entries += "<td>[SStreasury.get_tax_category_pretty_name(cat)]</td><td align='right'>[round(SStreasury.tax_rates[cat] * 100)]%</td>"
+				rate_entries += "<td>[html_encode(SStreasury.get_tax_category_pretty_name(cat))]</td><td class='service-number'>[round(SStreasury.tax_rates[cat] * 100)]%</td>"
 			for(var/i = 1, i <= length(rate_entries), i += 2)
 				contents += "<tr>"
 				contents += rate_entries[i]
@@ -893,11 +862,11 @@
 				else
 					contents += "<td></td><td></td>"
 				contents += "</tr>"
-			contents += "</table><br>"
+			contents += "</tbody></table></div>"
 
 			// Poll Tax Rates (two columns: category | m/day)
-			contents += "<b>POLL TAX RATES (daily)</b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
+			contents += "<h3>Poll Tax Rates (daily)</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
 			var/datum/decree/golden = SStreasury.get_decree(DECREE_GOLDEN_BULL)
 			var/golden_active = golden?.active
 			var/datum/decree/covenant = SStreasury.get_decree(DECREE_NOC_PESTRA_COVENANT)
@@ -910,10 +879,10 @@
 				var/pretty = SStreasury.get_poll_tax_category_pretty_name(pcat)
 				var/rate_display = "[rate]m"
 				if(pcat == POLL_TAX_CAT_BURGHER && golden_active && rate > GOLDEN_BULL_POLL_CAP)
-					rate_display = "<font color='#e07b39'>[GOLDEN_BULL_POLL_CAP]m</font> (raw [rate]m, capped)"
+					rate_display = "[GOLDEN_BULL_POLL_CAP]m (raw [rate]m, capped)"
 				else if(pcat == POLL_TAX_CAT_MERCENARY && merc_charter_active && rate > GUILD_CHARTER_OF_ARMS_POLL_CAP)
-					rate_display = "<font color='#e07b39'>[GUILD_CHARTER_OF_ARMS_POLL_CAP]m</font> (raw [rate]m, capped)"
-				poll_entries += "<td>[pretty]</td><td align='right'>[rate_display]</td>"
+					rate_display = "[GUILD_CHARTER_OF_ARMS_POLL_CAP]m (raw [rate]m, capped)"
+				poll_entries += "<td>[html_encode(pretty)]</td><td class='service-number'>[rate_display]</td>"
 			for(var/i = 1, i <= length(poll_entries), i += 2)
 				contents += "<tr>"
 				contents += poll_entries[i]
@@ -922,21 +891,19 @@
 				else
 					contents += "<td></td><td></td>"
 				contents += "</tr>"
-			contents += "</table>"
+			contents += "</tbody></table></div>"
 			if(covenant_active)
-				contents += "<i><font color='#e07b39'>Covenant of Noc & Pestra in force: University and Apothecary pay no more than [NOC_PESTRA_POLL_CAP]m/day regardless of category rate.</font></i><br>"
-			contents += "<br>"
+				contents += "<i class='service-warning'>Covenant of Noc &amp; Pestra in force: University and Apothecary pay no more than [NOC_PESTRA_POLL_CAP]m/day regardless of category rate.</i><br>"
 
 			// Charters (two-column)
-			contents += "<b>CHARTERS</b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
+			contents += "<h3>Charters</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
 			var/list/charter_rows = list()
 			for(var/entry in charters)
 				var/cooldown_left = entry["cooldown_remaining"]
 				var/cd_text = cooldown_left > 0 ? " <i>(cd: [round(cooldown_left / 600, 0.1)]m)</i>" : ""
-				var/status_color = entry["active"] ? "#5cb85c" : "#d9534f"
 				var/status_text = entry["active"] ? "ACTIVE" : "SUSPENDED"
-				charter_rows += "<td>[entry["name"]]</td><td align='right'><font color='[status_color]'>[status_text]</font>[cd_text]</td>"
+				charter_rows += "<td>[html_encode(entry["name"])]</td><td class='service-number'>[status_text][cd_text]</td>"
 			for(var/i = 1, i <= length(charter_rows), i += 2)
 				contents += "<tr>"
 				contents += charter_rows[i]
@@ -945,83 +912,88 @@
 				else
 					contents += "<td></td><td></td>"
 				contents += "</tr>"
-			contents += "</table><br>"
+			contents += "</tbody></table></div>"
 
-			// Debt & Loans (two-column, orange for warnings)
-			contents += "<b><font color='#e07b39'>DEBT &amp; LOANS</font></b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
-			contents += "<tr><td>Accounts in Arrears</td><td align='right'><font color='#e07b39'>[snap["in_arrears"]]</font></td>"
-			contents += "<td>Accounts in Advance</td><td align='right'>[snap["in_advance"]]</td></tr>"
-			contents += "<tr><td>Default Debtors</td><td align='right'><font color='#d9534f'>[snap["debtor_count"]]</font></td>"
-			contents += "<td>Loans Outstanding</td><td align='right'>[snap["loans_outstanding"]] ([snap["loan_exposure"]]m)</td></tr>"
-			contents += "</table><br>"
+			// Debt and loans
+			contents += "<h3>Debt &amp; Loans</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th><th scope='col'>Entry</th><th scope='col' class='service-number'>Value</th></tr></thead><tbody>"
+			contents += "<tr><td>Accounts in Arrears</td><td class='service-number'>[snap["in_arrears"]]</td>"
+			contents += "<td>Accounts in Advance</td><td class='service-number'>[snap["in_advance"]]</td></tr>"
+			contents += "<tr><td>Default Debtors</td><td class='service-number'>[snap["debtor_count"]]</td>"
+			contents += "<td>Loans Outstanding</td><td class='service-number'>[snap["loans_outstanding"]] ([snap["loan_exposure"]]m)</td></tr>"
+			contents += "</tbody></table></div>"
 
 			// Contracts (three-column: Issued / Taken / Completed, by issuing authority)
-			contents += "<b>CONTRACTS THIS WEEK</b>"
-			contents += "<table width='100%' cellspacing='0' cellpadding='2'>"
-			contents += "<tr><td></td><td align='right'><b>Issued</b></td><td align='right'><b>Taken</b></td><td align='right'><b>Completed</b></td></tr>"
+			contents += "<h3>Contracts This Week</h3>"
+			contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Authority</th><th scope='col' class='service-number'>Issued</th><th scope='col' class='service-number'>Taken</th><th scope='col' class='service-number'>Completed</th></tr></thead><tbody>"
 			contents += "<tr><td>Guild</td>"
-			contents += "<td align='right'>[GLOB.azure_round_stats[STATS_CONTRACTS_GENERATED_POOL]]</td>"
-			contents += "<td align='right'>[GLOB.azure_round_stats[STATS_CONTRACTS_TAKEN_POOL]]</td>"
-			contents += "<td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_CONTRACTS_COMPLETED_POOL]]</font></td></tr>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_GENERATED_POOL]]</td>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_TAKEN_POOL]]</td>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_COMPLETED_POOL]]</td></tr>"
 			contents += "<tr><td>Tavern</td>"
-			contents += "<td align='right'>[GLOB.azure_round_stats[STATS_CONTRACTS_GENERATED_RUMOR]]</td>"
-			contents += "<td align='right'>[GLOB.azure_round_stats[STATS_CONTRACTS_TAKEN_RUMOR]]</td>"
-			contents += "<td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_CONTRACTS_COMPLETED_RUMOR]]</font></td></tr>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_GENERATED_RUMOR]]</td>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_TAKEN_RUMOR]]</td>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_COMPLETED_RUMOR]]</td></tr>"
 			contents += "<tr><td>Crown</td>"
-			contents += "<td align='right'>[GLOB.azure_round_stats[STATS_CONTRACTS_GENERATED_DEFENSE]]</td>"
-			contents += "<td align='right'>[GLOB.azure_round_stats[STATS_CONTRACTS_TAKEN_DEFENSE]]</td>"
-			contents += "<td align='right'><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_CONTRACTS_COMPLETED_DEFENSE]]</font></td></tr>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_GENERATED_DEFENSE]]</td>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_TAKEN_DEFENSE]]</td>"
+			contents += "<td class='service-number'>[GLOB.azure_round_stats[STATS_CONTRACTS_COMPLETED_DEFENSE]]</td></tr>"
 			contents += "<tr><td><b>Total</b></td>"
-			contents += "<td align='right'><b>[GLOB.azure_round_stats[STATS_CONTRACTS_GENERATED]]</b></td>"
-			contents += "<td align='right'><b>[GLOB.azure_round_stats[STATS_CONTRACTS_TAKEN]]</b></td>"
-			contents += "<td align='right'><b><font color='#5cb85c'>[GLOB.azure_round_stats[STATS_CONTRACTS_COMPLETED]]</font></b></td></tr>"
-			contents += "</table>"
+			contents += "<td class='service-number'><b>[GLOB.azure_round_stats[STATS_CONTRACTS_GENERATED]]</b></td>"
+			contents += "<td class='service-number'><b>[GLOB.azure_round_stats[STATS_CONTRACTS_TAKEN]]</b></td>"
+			contents += "<td class='service-number'><b>[GLOB.azure_round_stats[STATS_CONTRACTS_COMPLETED]]</b></td></tr>"
+			contents += "</tbody></table></div>"
 		if(TAB_PAYDAY)
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_MAIN]'>\[Return\]</a><BR>"
-			contents += "<center>Daily Payments<BR>"
-			contents += "--------------<BR>"
-			contents += "Treasury: [SStreasury.discretionary_fund.balance]m</center><BR>"
-			contents += "<a href='?src=\ref[src];setdailypay=1'>\[Add/Modify Job Payment\]</a><BR><BR>"
+			contents += "<h2>Daily Payments</h2><div class='service-actions'><a href='?src=\ref[src];setdailypay=1'>Add/Modify Job Payment</a></div>"
 			if(daily_payments.len)
-				contents += "<center>Configured Payments:</center><BR>"
+				var/list/paid_counts = list()
+				for(var/mob/living/owner as anything in SStreasury.bank_accounts)
+					if(!owner || !daily_payments[owner.job])
+						continue
+					var/datum/fund/account = SStreasury.bank_accounts[owner]
+					if(!account || account.wages_suspended)
+						continue
+					paid_counts[owner.job] = (paid_counts[owner.job] || 0) + 1
+				contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Job</th><th scope='col' class='service-number'>Daily Pay</th><th scope='col' class='service-number'>Paid Accounts</th><th scope='col' class='service-number'>Daily Total</th><th scope='col'>Action</th></tr></thead><tbody>"
 				for(var/job_name in daily_payments)
 					var/amt = daily_payments[job_name]
-					var/count = 0
-					for(var/mob/living/carbon/human/H in GLOB.human_list)
-						if(H.job == job_name && !HAS_TRAIT(H, TRAIT_WAGES_SUSPENDED))
-							count++
-					contents += "<b>[job_name]:</b> [amt]m/day"
-					if(count > 0)
-						contents += " ([count] employed, [amt * count]m total/day)"
-					contents += " <a href='?src=\ref[src];removedailypay=[job_name]'>\[Remove\]</a><BR>"
+					var/count = paid_counts[job_name] || 0
+					contents += "<tr><td>[html_encode(job_name)]</td><td class='service-number'>[amt]m</td><td class='service-number'>[count]</td><td class='service-number'>[amt * count]m</td><td class='service-actions'><a href='?src=\ref[src];removedailypay=[url_encode(job_name)]'>Remove</a></td></tr>"
+				contents += "</tbody></table></div>"
 			else
-				contents += "<center>No daily payments configured.</center><BR>"
+				contents += "<p class='service-empty'>No daily payments configured.</p>"
 		if(TAB_SALTMINE)
 			var/obj/structure/roguemachine/stockpile_saltcamp/stockpile = null
-			stockpile = locate(/obj/structure/roguemachine/stockpile_saltcamp) in GLOB.saltminestockpilemachines // we're assuming there is only ever one of these machines in the world
-			contents += "<a href='?src=\ref[src];switchtab=[TAB_MAIN]'>\[Return\]</a><BR>"
+			stockpile = locate(/obj/structure/roguemachine/stockpile_saltcamp) in GLOB.saltminestockpilemachines // There is only one salt mine stockpile.
+			contents += "<h2>Die Troyt Salt Mine Report</h2>"
 			if(!isnull(stockpile))
 				var/gambled_salt = round(stockpile.salt_spent_on_gambling, 1)
 				var/total_accounts = length(stockpile.salt_accounts)
-				contents += "<center>Die Troyt Salt Mine Report:<BR>"
-				contents += "Total Salt Gambled: [gambled_salt] piles of salt</center><BR>"
-				if(total_accounts > 0)
-					contents += "--------------<BR>"
-					contents += "<table><tr><th>Prisoner Name</th><th>Salt Mined</th><th>Interest Rate</th></tr>"
-					for(var/i = 1; i <= total_accounts; i++)
-						var/name = stockpile.salt_accounts[i]
-						var/salt = stockpile.salt_accounts[name]
-						var/salt_max = stockpile.salt_accounts_max[name]
-						var/interest = stockpile.salt_accounts_interest_max[name] * 100
-						if(salt == 0 && stockpile.salt_ticket_win[name] > 0) // don't show ticket winners who have left the mines
-							continue
-						contents += "<tr><td>[name]</td><td>[salt] salt / [salt_max] max</td><td>[interest]%</td></tr>"
-					contents += "</table>"
-
+				contents += "<p class='service-summary'>Total Salt Gambled: [gambled_salt] piles of salt</p>"
+				contents += "<div class='service-scroll' tabindex='0' aria-label='Ledger entries'><table class='service-table'><thead><tr><th scope='col'>Prisoner Name</th><th scope='col' class='service-number'>Salt Mined</th><th scope='col' class='service-number'>Maximum Interest</th></tr></thead><tbody>"
+				var/visible_accounts = 0
+				for(var/i = 1; i <= total_accounts; i++)
+					var/name = stockpile.salt_accounts[i]
+					var/salt = stockpile.salt_accounts[name]
+					var/salt_max = stockpile.salt_accounts_max[name]
+					var/interest = stockpile.salt_accounts_interest_max[name] * 100
+					if(salt == 0 && stockpile.salt_ticket_win[name] > 0) // Hide ticket winners who have left the mines.
+						continue
+					visible_accounts++
+					contents += "<tr><td>[html_encode(name)]</td><td class='service-number'>[salt] salt / [salt_max] max</td><td class='service-number'>[interest]%</td></tr>"
+				if(!visible_accounts)
+					contents += "<tr><td colspan='3' class='service-empty'>No current prisoner accounts.</td></tr>"
+				contents += "</tbody></table></div>"
+			else
+				contents += "<p class='service-empty'>Salt mine report unavailable.</p>"
+	contents += "</div></div>"
 	if(!canread)
 		contents = stars(contents)
 	var/datum/browser/popup = new(user, "VENDORTHING", "", 700, 800)
+	popup.add_stylesheet("service_ledger", 'html/browser/service_ledger.css')
+	var/datum/asset/simple/roguefonts/service_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = service_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Service Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Service Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Service Lora'; font-style: italic; src: url('[font_urls["lora-italic.ttf"]]'); } @font-face { font-family: 'Service Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Service Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
 	popup.set_content(contents)
 	popup.open()
 

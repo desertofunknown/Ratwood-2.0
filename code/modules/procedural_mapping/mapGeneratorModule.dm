@@ -28,7 +28,9 @@
 	allowed_turfs = typecacheof(allowed_turfs)
 	allowed_areas = typecacheof(allowed_areas, only_root_path = !include_subtypes)
 	var/list/map = mother.map
-	for(var/turf/T in map)
+	// Placement can replace turfs, but does not change the region's list or order.
+	for(var/i in 1 to length(map))
+		var/turf/T = map[i]
 		place(T)
 		CHECK_TICK
 
@@ -39,6 +41,7 @@
 		return 0
 	var/clustering = 0
 	var/skipLoopIteration = FALSE
+	var/alist/atom_ranges
 
 	if(excluded_turfs[T.type])
 		return
@@ -85,7 +88,7 @@
 
 
 	//Atoms DO care whether atoms can be placed here
-	if(checkPlaceAtom(T))
+	if(length(spawnableAtoms) && checkPlaceAtom(T))
 
 		for(var/atomPath in spawnableAtoms)
 
@@ -95,7 +98,13 @@
 				//You're the same as me? I hate you I'm going home
 				if(clusterCheckFlags & CLUSTER_CHECK_SAME_ATOMS)
 					clustering = rand(clusterMin, clusterMax)
-					for(var/atom/movable/M in range(clustering,T))
+					var/list/nearby_atoms = atom_ranges?[clustering]
+					if(isnull(nearby_atoms))
+						nearby_atoms = range(clustering,T)
+						if(isnull(atom_ranges))
+							atom_ranges = alist()
+						atom_ranges[clustering] = nearby_atoms
+					for(var/atom/movable/M in nearby_atoms)
 						if(istype(M,atomPath))
 							skipLoopIteration = TRUE
 							break
@@ -106,7 +115,13 @@
 				//You're DIFFERENT from me? I hate you I'm going home
 				if(clusterCheckFlags & CLUSTER_CHECK_DIFFERENT_ATOMS)
 					clustering = rand(clusterMin, clusterMax)
-					for(var/atom/movable/M in range(clustering,T))
+					var/list/nearby_atoms = atom_ranges?[clustering]
+					if(isnull(nearby_atoms))
+						nearby_atoms = range(clustering,T)
+						if(isnull(atom_ranges))
+							atom_ranges = alist()
+						atom_ranges[clustering] = nearby_atoms
+					for(var/atom/movable/M in nearby_atoms)
 						if(!(istype(M,atomPath)))
 							skipLoopIteration = TRUE
 							break
@@ -117,6 +132,8 @@
 			//Success!
 			if(prob(spawnableAtoms[atomPath]))
 				new atomPath(T)
+				// Initializers may add or move other atoms as well as the spawned atom.
+				atom_ranges = null
 
 	. = 1
 
@@ -128,7 +145,7 @@
 		return 0
 	if(checkdensity)
 		if(T.density)
-			. = 0
+			return 0
 		for(var/atom/A in T)
 			if(A.density)
 				. = 0

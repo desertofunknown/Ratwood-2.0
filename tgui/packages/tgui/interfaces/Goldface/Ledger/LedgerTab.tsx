@@ -1,249 +1,114 @@
-import {
-  cardStyle,
-  FONT_BODY,
-  INK,
-  INK_FAINT,
-  INK_SOFT,
-  PARCHMENT_SHADOW,
-  pageStyle,
-  SEAL_AMBER,
-  SEAL_GREEN,
-  SEAL_RED,
-  SERIF,
-  sectionHeaderStyle,
-} from '../../common/parchment';
-import type { FundLogEntry, HarborData } from '../types';
+import type { HarborData } from '../types';
 
-const labelStyle = {
-  fontFamily: SERIF,
-  fontSize: FONT_BODY,
-  color: SEAL_AMBER,
-  letterSpacing: '0.04em',
-};
-
-const valueStyle = {
-  fontFamily: SERIF,
-  fontSize: FONT_BODY,
-  color: INK,
-};
-
-const noteStyle = {
-  fontFamily: SERIF,
-  fontSize: FONT_BODY,
-  fontStyle: 'italic' as const,
-  color: INK_SOFT,
-  lineHeight: 1.4,
-};
-
-const BalanceCard = (props: { balance: number }) => (
-  <div
-    style={{
-      ...cardStyle,
-      marginTop: '4px',
-      marginBottom: '6px',
-      padding: '4px 12px',
-      display: 'grid',
-      gridTemplateColumns: '1fr auto',
-      alignItems: 'baseline',
-      columnGap: '12px',
-    }}
-  >
-    <span style={labelStyle}>Merchant Fund balance</span>
-    <span
-      style={{
-        fontFamily: SERIF,
-        fontSize: '18px',
-        fontWeight: 'bold',
-        color: INK,
-      }}
-    >
-      {props.balance}m
-    </span>
-  </div>
-);
-
-const StatRow = (props: { label: string; value: string; tone?: string }) => (
-  <>
-    <span style={{ color: INK }}>{props.label}</span>
-    <span
-      style={{
-        ...valueStyle,
-        textAlign: 'right',
-        fontWeight: 'bold',
-        color: props.tone || INK,
-      }}
-    >
-      {props.value}
-    </span>
-  </>
-);
-
-const FundLogRow = (props: { entry: FundLogEntry }) => {
-  const { entry } = props;
-  const color = entry.amount >= 0 ? SEAL_GREEN : SEAL_RED;
-  const sign = entry.amount >= 0 ? '+' : '';
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr) 80px',
-        columnGap: '8px',
-        padding: '3px 4px',
-        borderBottom: `1px dashed ${PARCHMENT_SHADOW}`,
-        fontSize: FONT_BODY,
-        color: INK,
-      }}
-    >
-      <span
-        style={{
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {entry.source}
-      </span>
-      <span style={{ textAlign: 'right', color, fontWeight: 'bold' }}>
-        {sign}
-        {entry.amount}m
-      </span>
-    </div>
-  );
-};
-
-export const LedgerTab = (props: { harbor?: HarborData }) => {
-  const { harbor } = props;
-  if (!harbor) {
+export const LedgerTab = ({ harbor }: { harbor?: HarborData }) => {
+  if (!harbor)
     return (
-      <div style={pageStyle}>
-        <div style={{ ...cardStyle, textAlign: 'center', color: INK_SOFT }}>
-          The ledgers are not yet drawn up.
-        </div>
-      </div>
+      <p className="Goldface__notice">The ledgers are not yet drawn up.</p>
     );
-  }
   const ledger = harbor.ledger;
   return (
-    <div style={pageStyle}>
-      <BalanceCard balance={ledger.merchant_fund_balance} />
-
-      <div
-        style={{
-          ...cardStyle,
-          marginTop: '0',
-          marginBottom: '6px',
-          padding: '6px 12px',
-        }}
-      >
-        <div
-          style={{ ...sectionHeaderStyle, marginTop: 0, marginBottom: '4px' }}
-        >
-          Week Audit
-        </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr auto',
-            rowGap: '4px',
-            columnGap: '12px',
-            paddingTop: '4px',
-          }}
-        >
-          <StatRow
-            label="Merchant's levy collected"
-            value={`+${ledger.levy_collected}m`}
-            tone={SEAL_GREEN}
-          />
-          <StatRow
-            label="Crown duty paid on levy"
-            value={`-${ledger.levy_taxed}m`}
-            tone={SEAL_RED}
-          />
-          <StatRow
-            label="Company Gnomes margin"
-            value={`+${ledger.gnome_margin_collected}m`}
-            tone={SEAL_GREEN}
-          />
-        </div>
-        <div style={{ ...noteStyle, marginTop: '6px' }}>
+    <div className="GoldfaceOffice">
+      <section className="GoldfaceOffice__section">
+        <h2>
+          Merchant Fund{' '}
+          <span className="GoldfaceOffice__amount">
+            {ledger.merchant_fund_balance}m
+          </span>
+        </h2>
+        <h3>Week audit</h3>
+        <dl className="GoldfaceOffice__entries">
+          <div>
+            <dt>Merchant&apos;s levy collected</dt>
+            <dd className="GoldfaceOffice__good">+{ledger.levy_collected}m</dd>
+          </div>
+          <div>
+            <dt>Crown duty paid on levy</dt>
+            <dd className="GoldfaceOffice__bad">-{ledger.levy_taxed}m</dd>
+          </div>
+          <div>
+            <dt>Company Gnomes margin</dt>
+            <dd className="GoldfaceOffice__good">
+              +{ledger.gnome_margin_collected}m
+            </dd>
+          </div>
+        </dl>
+        <p className="GoldfaceOffice__muted">
           All credits deposit into the Merchant Fund at your Jawbank. The Crown
           taxes the levy at the prevailing export duty rate; the gnome margin is
           captured at the listed Silverface rate.
-        </div>
-      </div>
-
-      <div
-        style={{
-          ...cardStyle,
-          marginTop: '0',
-          marginBottom: '6px',
-          padding: '6px 12px',
-        }}
-      >
-        <div
-          style={{ ...sectionHeaderStyle, marginTop: 0, marginBottom: '4px' }}
-        >
-          Recent Fund Movements
-        </div>
-        {ledger.fund_log.length === 0 ? (
-          <div style={{ ...noteStyle, padding: '4px 0' }}>
+        </p>
+      </section>
+      <section className="GoldfaceOffice__section">
+        <h2>Recent fund movements</h2>
+        {!ledger.fund_log.length ? (
+          <p className="GoldfaceOffice__muted">
             No movements recorded yet this week.
-          </div>
+          </p>
         ) : (
-          ledger.fund_log.map((entry, idx) => (
-            <FundLogRow key={idx} entry={entry} />
-          ))
+          <>
+            <table className="GoldfaceOffice__table">
+              <thead>
+                <tr>
+                  <th>Source</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ledger.fund_log.map((entry, index) => (
+                  <tr key={index}>
+                    <td>{entry.source}</td>
+                    <td
+                      className={
+                        entry.amount >= 0
+                          ? 'GoldfaceOffice__good'
+                          : 'GoldfaceOffice__bad'
+                      }
+                    >
+                      {entry.amount >= 0 ? '+' : ''}
+                      {entry.amount}m
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="GoldfaceOffice__muted">
+              Most recent first. Older entries roll off after twelve.
+            </p>
+          </>
         )}
-        {ledger.fund_log.length > 0 && (
-          <div style={{ ...noteStyle, marginTop: '6px' }}>
-            Most recent first. Older entries roll off after twelve.
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          ...cardStyle,
-          marginTop: '0',
-          marginBottom: '6px',
-          padding: '6px 12px',
-        }}
-      >
-        <div
-          style={{ ...sectionHeaderStyle, marginTop: 0, marginBottom: '4px' }}
-        >
-          Silverface Margin
-        </div>
+      </section>
+      <details className="GoldfaceOffice__details">
+        <summary>
+          Silverface margin
+          {harbor.favor.gnome_unlocked
+            ? ` (+${ledger.silverface_margin_percent}%)`
+            : ''}
+        </summary>
         {harbor.favor.gnome_unlocked ? (
           <>
-            <div style={{ ...noteStyle, marginBottom: '4px' }}>
-              By writ of the Ferentian Guild of Gnomes Porters, the public stalls
-              now run under their hand. They take their cost in labour and remit
-              the margin of <b>+{ledger.silverface_margin_percent}%</b> on every
-              sale unto the Merchant Fund. Adjust the rate from the Management
-              tab as you see fit.
-            </div>
-            <div
-              style={{
-                color: INK_FAINT,
-                fontSize: FONT_BODY,
-                fontStyle: 'italic',
-              }}
-            >
+            <p>
+              By writ of the Ferentian Guild of Gnomes Porters, the public
+              stalls now run under their hand. They take their cost in labour
+              and remit the margin of{' '}
+              <b>+{ledger.silverface_margin_percent}%</b> on every sale unto the
+              Merchant Fund. Adjust the rate from the Management tab as you see
+              fit.
+            </p>
+            <p>
               A heavier margin fattens the Fund per sale; a lighter one draws
               more buyers to the stalls.
-            </div>
+            </p>
           </>
         ) : (
-          <div style={noteStyle}>
+          <p>
             By standing pact, the Ferentian Guild of Porters and Stevedores hold
             the margin upon a fixed measure of trade each week. Should you push
             enough goods through the Company&apos;s books, your standing shall
             earn the right to call in their Gnomes - who will take their wage in
             labour alone and remit the margin to your Fund.
-          </div>
+          </p>
         )}
-      </div>
+      </details>
     </div>
   );
 };

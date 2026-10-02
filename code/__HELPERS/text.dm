@@ -641,6 +641,14 @@ GLOBAL_LIST_INIT(binary, list("0","1"))
 	t = parsemarkdown_basic_step2(t, hyperlink)
 	return t
 
+/// Formatting shared by player-authored papers, manuscripts and archived books.
+/proc/sanitize_document_html(text)
+	if(!istext(text) || !length(text))
+		return ""
+	var/static/attributes = json_encode(list("class", "face", "color", "size", "align", "colspan", "rowspan"))
+	var/static/tags = json_encode(list("b", "strong", "i", "em", "u", "s", "del", "br", "p", "div", "span", "font", "center", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "blockquote", "pre", "code", "ul", "ol", "li", "table", "thead", "tbody", "tr", "td", "th"))
+	return rustg_sanitize_html(text, attributes, tags)
+
 /proc/parsemarkdown(t, mob/user=null, limited=FALSE)
 	if(length(t) <= 0)
 		return
@@ -651,7 +659,7 @@ GLOBAL_LIST_INIT(binary, list("0","1"))
 
 	t = parsemarkdown_basic_step1(t)
 
-	t = replacetext(t, regex("%s(?:ign)?(?=\\s|$)", "igm"), user ? "<font face=\"[SIGNFONT]\"><i>[user.real_name]</i></font>" : "<span class=\"paper_field\"></span>")
+	t = replacetext(t, regex("%s(?:ign)?(?=\\s|$)", "igm"), user ? "<font face=\"[SIGNFONT]\"><i>[html_encode(user.real_name)]</i></font>" : "<span class=\"paper_field\"></span>")
 	t = replacetext(t, regex("%f(?:ield)?(?=\\s|$)", "igm"), "<span class=\"paper_field\"></span>")
 
 	t = parsemarkdown_basic_step2(t)

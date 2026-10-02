@@ -452,44 +452,57 @@
 /obj/item/storage/pill_bottle/dice/farkle
 	desc = "Six dice for the game of Farkle. Activate in hand (Z) to start or join a game!"
 	var/datum/farkle_game/active_game
-	var/static/farkle_rules_text = {"<div style='padding:8px;font-family:Verdana,sans-serif;'>
-	<h2 style='text-align:center;margin:0 0 6px 0;'>Farkle</h2>
-<br>
-<b>Objective:</b> Be the player with the highest score over 10,000.<br>
-<br>
-- Single 1s and 5s are worth points.<br>
-- Other numbers count if you get three or more of the same number in a single roll.<br>
-- Other combinations of numbers are worth points if you get them in a single roll. Note: Dice from multiple rolls cannot be added together. For example, if you set aside one 5 (50 points) on your first roll and two 5s (100 points) on your second roll, you have 150 points. You cannot add them together to make three 5s (500 points).<br>
-- Some scoring dice must be removed after every roll.<br>
-- When it's your turn, place the six Dice in the Shaker Cup and roll 'em. Any Dice that roll off the playing area are rolled again.<br>
-- After each roll, set aside Dice that are worth points and roll the rest of them. You must remove at least one Die after each roll and keep a running total of your points for that turn.<br>
-- If you're lucky enough to set aside all six Dice, you can roll them all again to build your running total.<br>
-- If you cannot set aside any Dice after a roll, that's a Farkle. You lose your running total of points for that turn and play passes to the left. A Farkle could happen on your first roll or when you roll the remaining Dice.<br>
-<br>
-<b>Winning:</b> When a player's accumulated score is 10,000 or more, each of the other players has one last turn to beat that total. The player with the highest score wins.<br>
-<br>
-<b>Scoring:</b><br>
-Single 1 = 100<br>
-Single 5 = 50<br>
-Three 1s = 300<br>
-Three 2s = 200<br>
-Three 3s = 300<br>
-Three 4s = 400<br>
-Three 5s = 500<br>
-Three 6s = 600<br>
-Four of any number = 1,000<br>
-Five of any number = 2,000<br>
-Six of any number = 3,000<br>
-1-6 straight = 1,500<br>
-Three pairs = 1,500<br>
-Four of any number with a pair = 1,500<br>
-Two triplets = 2,500
+	var/static/farkle_rules_text = {"<div class='keep-panel keep-prose' role='main' tabindex='0'>
+	<h1>Farkle</h1>
+	<h2>Objective:</h2>
+	<p>Be the player with the highest score over 10,000.</p>
+	<ul>
+		<li>Single 1s and 5s are worth points.</li>
+		<li>Other numbers count if you get three or more of the same number in a single roll.</li>
+		<li>Other combinations of numbers are worth points if you get them in a single roll. Note: Dice from multiple rolls cannot be added together. For example, if you set aside one 5 (50 points) on your first roll and two 5s (100 points) on your second roll, you have 150 points. You cannot add them together to make three 5s (500 points).</li>
+		<li>Some scoring dice must be removed after every roll.</li>
+		<li>When it's your turn, place the six Dice in the Shaker Cup and roll 'em. Any Dice that roll off the playing area are rolled again.</li>
+		<li>After each roll, set aside Dice that are worth points and roll the rest of them. You must remove at least one Die after each roll and keep a running total of your points for that turn.</li>
+		<li>If you're lucky enough to set aside all six Dice, you can roll them all again to build your running total.</li>
+		<li>If you cannot set aside any Dice after a roll, that's a Farkle. You lose your running total of points for that turn and play passes to the left. A Farkle could happen on your first roll or when you roll the remaining Dice.</li>
+	</ul>
+	<h2>Winning:</h2>
+	<p>When a player's accumulated score is 10,000 or more, each of the other players has one last turn to beat that total. The player with the highest score wins.</p>
+	<h2>Scoring:</h2>
+	<ul>
+		<li>Single 1 = 100</li>
+		<li>Single 5 = 50</li>
+		<li>Three 1s = 300</li>
+		<li>Three 2s = 200</li>
+		<li>Three 3s = 300</li>
+		<li>Three 4s = 400</li>
+		<li>Three 5s = 500</li>
+		<li>Three 6s = 600</li>
+		<li>Four of any number = 1,000</li>
+		<li>Five of any number = 2,000</li>
+		<li>Six of any number = 3,000</li>
+		<li>1-6 straight = 1,500</li>
+		<li>Three pairs = 1,500</li>
+		<li>Four of any number with a pair = 1,500</li>
+		<li>Two triplets = 2,500</li>
+	</ul>
 </div>"}
 
 /obj/item/storage/pill_bottle/dice/farkle/proc/show_rules(mob/living/user)
 	if(!user)
 		return
-	user << browse(farkle_rules_text, "window=farkle_rules;size=700x700")
+	var/datum/browser/noclose/popup = new(user, "farkle_rules", "", 700, 700)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content({"<style>
+		@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+		@font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+		@font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+		@font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+	</style>"})
+	popup.set_content(farkle_rules_text)
+	popup.open(FALSE)
+	winset(user, "farkle_rules.browser", "focus=true")
 
 /obj/item/storage/pill_bottle/dice/farkle/attack_self(mob/living/user)
 	var/list/menu = list()

@@ -97,8 +97,15 @@
 	var/writer_draft = ""
 	/// Optional font override selected in the tgui writer panel.
 	var/writer_font = "default"
-	/// Latest accepted writer action sequence from tgui; older actions are ignored.
+
+/datum/tgui/paper_writer
 	var/writer_action_seq = 0
+
+/datum/tgui/paper_writer/get_payload(custom_data, with_data, with_static_data)
+	. = ..()
+	var/list/data = .["data"]
+	if(islist(data))
+		data["writer_sequence"] = writer_action_seq
 
 /obj/item/paper/proc/get_writer_action_seq(list/params)
 	var/seq = text2num("[params["seq"]]")
@@ -175,7 +182,7 @@
 	return TRUE
 
 /obj/item/paper/proc/build_writer_preview(mob/living/carbon/human/user)
-	var/preview = info || ""
+	var/preview = sanitize_document_html(info)
 	if(!length(writer_draft))
 		return preview
 
@@ -222,7 +229,7 @@
 /obj/item/paper/ui_interact(mob/user, datum/tgui/ui)
 	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, "PaperWriterPanel", "Letter Editor")
+		ui = new /datum/tgui/paper_writer(user, src, "PaperWriterPanel", "Letter Editor")
 		ui.set_autoupdate(FALSE)
 		ui.open()
 
@@ -246,29 +253,32 @@
 		return TRUE
 
 	var/mob/living/carbon/human/user = ui.user
-	if(!user)
+	if(action == "close")
+		ui.close()
 		return TRUE
+	if(!can_use_writer(user))
+		return TRUE
+	var/datum/tgui/paper_writer/writer_ui = ui
+	if(!istype(writer_ui))
+		return TRUE
+	if(action in list("update_draft", "sign", "clear"))
+		var/client_seq = get_writer_action_seq(params)
+		if(client_seq <= writer_ui.writer_action_seq)
+			return TRUE
+		writer_ui.writer_action_seq = client_seq
 
 	switch(action)
 		if("update_draft")
-			var/client_seq = get_writer_action_seq(params)
-			if(client_seq < writer_action_seq)
-				return TRUE
-			writer_action_seq = client_seq
-			var/new_draft = params["draft"] || ""
+			var/new_draft = istext(params["draft"]) ? params["draft"] : ""
 			writer_draft = copytext(new_draft, 1, maxlen + 1)
 			writer_font = sanitize_writer_font(params["font"])
 			return TRUE
 
 		if("sign")
-			var/client_seq = get_writer_action_seq(params)
-			if(client_seq < writer_action_seq)
-				return TRUE
-			writer_action_seq = client_seq
 			// Accept draft/font inline so the tgui client can send a single atomic
 			// action instead of a separate update_draft + sign (avoids the race under
 			// server time dilation where the debounce timer fires in between).
-			if(!isnull(params["draft"]))
+			if(istext(params["draft"]))
 				writer_draft = copytext(params["draft"], 1, maxlen + 1)
 			if(!isnull(params["font"]))
 				writer_font = sanitize_writer_font(params["font"])
@@ -276,19 +286,11 @@
 			return TRUE
 
 		if("clear")
-			var/client_seq = get_writer_action_seq(params)
-			if(client_seq < writer_action_seq)
-				return TRUE
-			writer_action_seq = client_seq
 			writer_draft = ""
 			return TRUE
 
 		if("help")
 			openhelp(user)
-			return TRUE
-
-		if("close")
-			ui.close()
 			return TRUE
 
 	return FALSE
@@ -431,11 +433,13 @@
 		to_chat(user, span_warning("The wax seal is still intact. I need to unseal it first."))
 		return
 	if(in_range(user, src) || isobserver(user))
+		var/datum/asset/simple/namespaced/common/common_asset = get_asset_datum(/datum/asset/simple/namespaced/common)
+		common_asset.send(user)
 		user << browse_rsc('html/book.png')
 		var/body_border_css = window_rim_style ? "box-sizing:border-box;[window_rim_style]" : ""
 		var/rendered_info = build_read_info(TRUE)
 		var/dat = {"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">
-			<html><head><meta charset=\"utf-8\"><style type=\"text/css\">
+			<html><head><meta charset=\"utf-8\"><script type='text/javascript' src='[common_asset.get_url_mappings()["keyboard.js"]]'></script><style type=\"text/css\">
 			html, body { height:100%; margin:0; padding:0; }
 			body { background-image:url('book.png');background-repeat: repeat;[body_border_css] }</style></head><body scroll=yes>"}
 		dat += rendered_info
@@ -446,17 +450,19 @@
 	else
 		return span_warning("I'm too far away to read it.") 
 
-/obj/item/paper/proc/format_browse(t, mob/user)
+/obj/item/paper/proc/format_browse(mob/user)
+	var/datum/asset/simple/namespaced/common/common_asset = get_asset_datum(/datum/asset/simple/namespaced/common)
+	common_asset.send(user)
 	user << browse_rsc('html/book.png')
 	var/dat = {"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">
-			<html><head><meta charset=\"utf-8\"><style type=\"text/css\">
+			<html><head><meta charset=\"utf-8\"><script type='text/javascript' src='[common_asset.get_url_mappings()["keyboard.js"]]'></script><style type=\"text/css\">
 			body { background-image:url('book.png');background-repeat: repeat; }</style></head><body scroll=yes>"}
-	dat += "[t]<br>"
+	dat += "[build_read_info(TRUE)]<br>"
 	dat += "</body></html>"
 	user << browse(dat, "window=reading;size=500x400;can_close=1;can_minimize=0;can_maximize=0;can_resize=1;titlebar=1;border=0")
 
 /obj/item/paper/proc/build_read_info(include_field_links = TRUE)
-	var/rendered = info || ""
+	var/rendered = sanitize_document_html(info)
 	var/laststart = 1
 	var/field_id = 0
 	while(field_id < 15)
@@ -615,7 +621,7 @@
 		return
 
 	// Writer panel no longer supports large (^text^) tokens.
-	t = replacetext(t, "^", "")
+	t = replacetext(html_encode(t), "^", "")
 
 	t = parsemarkdown(t, user, iscrayon)
 	var/pen_font = FOUNTAIN_PEN_FONT
@@ -651,23 +657,41 @@
 
 
 /obj/item/paper/proc/openhelp(mob/user)
-	user << browse({"<HTML><HEAD><TITLE>Paper Help</TITLE></HEAD>
-	<BODY>
-		You can use backslash (\\) to escape special characters.<br>
-		<br>
-		# text : Defines a header.<br>
-		|text| : Centers the text.<br>
-		**text** : Makes the text <b>bold</b>.<br>
-		*text* : Makes the text <i>italic</i>.<br>
-		%s : Inserts a signature of your name in a foolproof way.<br>
-		((text)) : Decreases the <font size = \"1\">size</font> of the text.<br>
-		%f or %field : Creates a blank write-in field in the final letter.<br>
-		* item : An unordered list item.<br>
-		&nbsp;&nbsp;* item: An unordered list child item.<br>
-		1. item : An ordered list item.<br>
-		--- : Adds a horizontal rule.<br>
-		-=862F20text=- : Adds a specific <font color = '#862F20'>colour</font> to text.
-	</BODY></HTML>"}, "window=paper_help")
+	var/html = {"
+		<div class='keep-panel paper-help' tabindex='0' aria-label='Paper writing guide'>
+			<h1>Writing guide</h1>
+			<p>Use these marks while writing to format your paper.</p>
+			<p>Place a backslash (<code>&#92;</code>) before a special character to write it literally.</p>
+			<table class='paper-help-table'>
+				<thead><tr><th scope='col'>Write this</th><th scope='col'>What it does</th></tr></thead>
+				<tbody>
+					<tr><td><code># text</code></td><td>Creates a heading.</td></tr>
+					<tr><td><code>|text|</code></td><td>Centers the text.</td></tr>
+					<tr><td><code>**text**</code></td><td>Makes the text <strong>bold</strong>.</td></tr>
+					<tr><td><code>*text*</code></td><td>Makes the text <em>italic</em>.</td></tr>
+					<tr><td><code>%s</code></td><td>Inserts your character's signature.</td></tr>
+					<tr><td><code>((text))</code></td><td>Makes the text smaller.</td></tr>
+					<tr><td><code>%f</code> or <code>%field</code></td><td>Creates a blank field that can be written in on the finished letter.</td></tr>
+					<tr><td><code>* item</code></td><td>Creates an unordered list item.</td></tr>
+					<tr><td><code>&nbsp;&nbsp;* item</code></td><td>Indents an unordered list item beneath its parent. Begin with two spaces.</td></tr>
+					<tr><td><code>1. item</code></td><td>Creates an ordered list item.</td></tr>
+					<tr><td><code>---</code></td><td>Draws a horizontal rule.</td></tr>
+					<tr><td><code>-=862F20text=-</code></td><td>Colors the text using the hexadecimal color <code>#862F20</code>.</td></tr>
+				</tbody>
+			</table>
+		</div>
+	"}
+	var/datum/browser/noclose/popup = new(user, "paper_help", "", 620, 650)
+	popup.add_stylesheet("keep_panel", 'html/browser/keep_panel.css')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content({"<style>
+		@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); }
+		@font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); }
+		@font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }
+		@font-face { font-family: 'Keep New Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }
+	</style>"})
+	popup.set_content(html)
+	popup.open(FALSE)
 
 
 /obj/item/paper/Topic(href, href_list)
@@ -713,7 +737,7 @@
 		if(!istype(i, /obj/item/natural/thorn) && !istype(i, /obj/item/natural/feather))
 			to_chat(usr, span_warning("I need a feather or thorn in hand to write."))
 			return
-		var/t =  stripped_multiline_input("Enter what you want to write:", "Write", no_trim=TRUE)
+		var/t =  stripped_multiline_input(usr, "Enter what you want to write:", "Write", no_trim=TRUE)
 		if(!t || !usr.canUseTopic(src, BE_CLOSE, literate))
 			return
 
@@ -721,7 +745,7 @@
 			return
 
 		log_paper("[key_name(usr)] writing to paper [t]")
-		t = parsepencode(t, i, usr, FALSE) // Encode everything from pencode to html
+		t = parsepencode(html_decode(t), i, usr, FALSE)
 
 		if(t != null)	//No input from the user means nothing needs to be added
 			if((length(info) + length(t)) > maxlen)
@@ -729,7 +753,7 @@
 				return
 			addtofield(field_num, t) // Field-only writing via read links.
 			playsound(src, 'sound/items/write.ogg', 100, FALSE)
-			format_browse(build_read_info(TRUE), usr)
+			format_browse(usr)
 			update_icon_state()
 
 /obj/item/paper/attackby(obj/item/P, mob/living/carbon/human/user, params)
@@ -755,7 +779,7 @@
 			return
 		if(user.can_read(src))
 			if(has_empty_fields())
-				format_browse(build_read_info(TRUE), user)
+				format_browse(user)
 			else
 				open_writer_panel(user, P)
 			return
@@ -813,19 +837,19 @@
 			return
 	
 	if(istype(P, /obj/item/paper))
+		if(P == src)
+			return TRUE
 		var/obj/item/paper/p = P
 		if(info && p.info)
 			var/obj/item/manuscript/M = new /obj/item/manuscript(get_turf(P.loc))
 			M.page_texts = list(src.info, p.info)
-			M.compiled_pages = "<p>[src.info]</p><p>[p.info]</p>"
+			M.number_of_pages = length(M.page_texts)
 			qdel(p)
+			qdel(src)
 			if(user.Adjacent(M))
 				M.add_fingerprint(user)
-				user.update_inv_hands()
-				user.put_in_active_hand(src)
-				user.put_in_inactive_hand(M)
-			. = ..()
-			return qdel(src)
+				user.put_in_hands(M)
+			return TRUE
 	if(!P.can_be_package_wrapped())
 		return ..()
 

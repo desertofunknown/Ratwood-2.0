@@ -79,9 +79,10 @@
 			opaque_atom_count++
 
 /turf/proc/change_area(area/old_area, area/new_area)
-	GLOB.SUNLIGHT_QUEUE_WORK += src
+	SSoutdoor_effects.clear_ceiling_cache()
+	SSoutdoor_effects.queue_turf(src)
 	if(outdoor_effect)
-		GLOB.SUNLIGHT_QUEUE_UPDATE += outdoor_effect
+		SSoutdoor_effects.queue_outdoor_effect(outdoor_effect)
 	if(SSlighting.initialized)
 		if (new_area.dynamic_lighting != old_area.dynamic_lighting)
 			if (new_area.dynamic_lighting)

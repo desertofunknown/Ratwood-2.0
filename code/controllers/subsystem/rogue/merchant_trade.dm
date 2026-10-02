@@ -167,11 +167,12 @@ SUBSYSTEM_DEF(merchant_trade)
 
 /datum/controller/subsystem/merchant_trade/proc/build_realm_demand_matrix()
 	var/list/out = list()
+	var/list/navigator_buckets = all_navigator_buckets()
 	for(var/realm_id in realms)
 		var/datum/foreign_realm/R = realms[realm_id]
 		var/list/buckets = list()
 		for(var/cat in R.demanded_categories)
-			var/bucket = (cat in all_navigator_buckets()) ? cat : get_navigator_bucket_for_category(cat)
+			var/bucket = (cat in navigator_buckets) ? cat : get_navigator_bucket_for_category(cat)
 			if(bucket && !(bucket in buckets))
 				buckets += bucket
 		out += list(list(

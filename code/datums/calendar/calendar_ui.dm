@@ -33,13 +33,7 @@
 /datum/calendar_ui/ui_state(mob/user)
 	return GLOB.always_state
 
-/datum/calendar_ui/ui_data(mob/user)
-	var/list/parts = resolve_ic_date_parts(GLOB.dayspassed)
-	var/today_day = parts[1]
-	var/today_month = parts[2]
-	var/today_year = parts[3]
-	var/today_week = CEILING(today_day / CALENDAR_DAYS_IN_WEEK, 1)
-
+/datum/calendar_ui/ui_static_data(mob/user)
 	var/list/months_meta = list()
 	for(var/i in 1 to CALENDAR_MONTHS_PER_YEAR)
 		months_meta += list(list(
@@ -48,6 +42,19 @@
 			"season" = get_season_from_month(i),
 			"phase" = get_season_phase(i),
 		))
+	return list(
+		"weekday_names" = list("Moon's", "Tiw's", "Wedding's", "Thule's", "Freyja's", "Saturn's", "Sun's"),
+		"days_in_month" = CALENDAR_DAYS_IN_MONTH,
+		"days_in_week" = CALENDAR_DAYS_IN_WEEK,
+		"months" = months_meta,
+	)
+
+/datum/calendar_ui/ui_data(mob/user)
+	var/list/parts = resolve_ic_date_parts(GLOB.dayspassed)
+	var/today_day = parts[1]
+	var/today_month = parts[2]
+	var/today_year = parts[3]
+	var/today_week = CEILING(today_day / CALENDAR_DAYS_IN_WEEK, 1)
 
 	var/list/events_in_view = list()
 	for(var/datum/calendar_event/event in get_calendar_events_for_month(view_month))
@@ -60,10 +67,6 @@
 		"today_week" = today_week,
 		"view_month" = view_month,
 		"view_year" = view_year,
-		"weekday_names" = list("Moon's", "Tiw's", "Wedding's", "Thule's", "Freyja's", "Saturn's", "Sun's"), // ES weekday set
-		"days_in_month" = CALENDAR_DAYS_IN_MONTH,
-		"days_in_week" = CALENDAR_DAYS_IN_WEEK,
-		"months" = months_meta,
 		"events" = events_in_view,
 		"wrap_count" = wrap_count,
 	)
@@ -89,7 +92,7 @@
 			return TRUE
 		if("jump_month")
 			var/target = text2num("[params["month"]]")
-			if(target >= 1 && target <= CALENDAR_MONTHS_PER_YEAR)
+			if(target >= 1 && target <= CALENDAR_MONTHS_PER_YEAR && target == round(target))
 				view_month = target
 				return TRUE
 		if("today")

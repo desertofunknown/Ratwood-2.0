@@ -485,49 +485,28 @@
 	var/player_book_icon
 	var/player_book_author_ckey
 	var/is_in_round_player_generated
-	var/list/book_icons = list(
-	"Sickly green with embossed bronze" = "book8",
-	"Red with embossed toper" = "book7",
-	"Purple with embossed obsidian" = "book6",
-	"Brown with embossed obsidian" = "book5",
-	"Yellow without embossed material" = "book4",
-	"Blue without embossed material" = "book3",
-	"Red without embossed material" = "book2",
-	"Black without embossed material" = "book",
-	"Green without embossed material" = "basic_book")
 	name = "unknown title"
 	desc = "Penned by an unknown author."
 	icon_state = "basic_book_0"
 	base_icon_state = "basic_book"
 	override_find_book = TRUE
 
-/obj/item/book/rogue/playerbook/Initialize(mapload, in_round_player_generated, mob/living/in_round_player_mob, text)
+/obj/item/book/rogue/playerbook/Initialize(mapload, list/book_details, text)
 	. = ..()
-	is_in_round_player_generated = in_round_player_generated
+	is_in_round_player_generated = !!book_details
 	if(is_in_round_player_generated)
 		player_book_text = text
-		INVOKE_ASYNC(src, PROC_REF(prompt_for_contents), in_round_player_mob)
+		player_book_title = book_details["title"]
+		player_book_author = book_details["author"]
+		player_book_icon = book_details["cover"]
+		player_book_author_ckey = book_details["author_ckey"]
+		name = player_book_title
+		desc = "By [player_book_author]"
+		icon_state = "[player_book_icon]_0"
+		base_icon_state = player_book_icon
+		pages = list("<h2>Title: [html_encode(player_book_title)]</h2><p>Author: [html_encode(player_book_author)]</p>[player_book_text]")
 	else
 		pick_random_book()
-
-//Just rewrite this entirely. STRIP_HTML_SIMPLE might be insufficient, but that's just the tip of the iceberg.area
-//This needs to check if an input is valid via reject_bad_text, and if not prompt the user again.
-/obj/item/book/rogue/playerbook/proc/prompt_for_contents(mob/living/in_round_player_mob)
-	while(!player_book_author_ckey) // doesn't have to be this, but better than defining a bool.
-		player_book_title = capitalize(STRIP_HTML_SIMPLE(input(in_round_player_mob, "What title do you want to give the book? (max 42 characters)", "Title", "Unknown"), MAX_NAME_LEN))
-		player_book_author = STRIP_HTML_SIMPLE(input(in_round_player_mob, "What do you want the author text to be? (max 42 characters)", "Author", ""), MAX_NAME_LEN)
-		player_book_icon = book_icons[input(in_round_player_mob, "Choose a book style", "Book Style") as anything in book_icons]
-		player_book_author_ckey = in_round_player_mob.ckey
-		//This gives the icon_state name, not the descriptive name, i. e. "book8", instead of "Sickly green with embossed Bronze"
-		if(alert("Confirm?:\nTitle: [player_book_title]\nAuthor: [player_book_author]\nBook Cover: [player_book_icon]", "", "Yes", "No") == "No")
-			player_book_author_ckey = null
-		message_admins("[player_book_author_ckey]([in_round_player_mob.real_name]) has generated the player book: [player_book_title]")
-
-	name = "[player_book_title]"
-	desc = "By [player_book_author]"
-	icon_state = "[player_book_icon]_0"
-	base_icon_state = "[player_book_icon]"
-	pages = list("<b3><h3>Title: [player_book_title]<br>Author: [player_book_author]</b><h3>[player_book_text]")
 
 /obj/item/book/rogue/playerbook/proc/pick_random_book()
 	var/list/player_book_titles = SSlibrarian.pull_player_book_titles()
@@ -543,7 +522,7 @@
 	desc = "By [player_book_author]"
 	icon_state = "[player_book_icon]_0"
 	base_icon_state = "[player_book_icon]"
-	pages = list("<b3><h3>Title: [player_book_title]<br>Author: [player_book_author]</b><h3>[player_book_text]")
+	pages = list("<h2>Title: [html_encode(player_book_title)]</h2><p>Author: [html_encode(player_book_author)]</p>[player_book_text]")
 
 
 /obj/item/manuscript
@@ -557,23 +536,72 @@
 	grid_height = 64
 	dropshrink = 0.8
 	var/number_of_pages = 2
-	var/compiled_pages = null
 	var/list/page_texts = list()
-	var/qdel_source = FALSE
+	var/static/list/book_icons = list(
+		"Sickly green with embossed bronze" = "book8",
+		"Red with embossed toper" = "book7",
+		"Purple with embossed obsidian" = "book6",
+		"Brown with embossed obsidian" = "book5",
+		"Yellow without embossed material" = "book4",
+		"Blue without embossed material" = "book3",
+		"Red without embossed material" = "book2",
+		"Black without embossed material" = "book",
+		"Green without embossed material" = "basic_book")
+
+/obj/item/manuscript/proc/prompt_book_details(mob/living/user)
+	var/book_title = "Unknown"
+	var/book_author = ""
+	var/cover_label = "Green without embossed material"
+	while(!QDELETED(src) && !QDELETED(user) && user.client)
+		var/title_input = tgui_input_text(user, "Give your book a title (up to 42 characters).", "Book title", book_title, max_length = MAX_NAME_LEN, encode = FALSE)
+		if(isnull(title_input) || QDELETED(src) || QDELETED(user) || !user.client)
+			return
+		book_title = capitalize(trim(STRIP_HTML_SIMPLE(title_input, PREVENT_CHARACTER_TRIM_LOSS(MAX_NAME_LEN))))
+		if(!length(book_title))
+			to_chat(user, span_notice("The book needs a title."))
+			continue
+		var/author_input = tgui_input_text(user, "What author should appear on the book? Leave blank for no author.", "Book author", book_author, max_length = MAX_NAME_LEN, encode = FALSE)
+		if(isnull(author_input) || QDELETED(src) || QDELETED(user) || !user.client)
+			return
+		book_author = trim(STRIP_HTML_SIMPLE(author_input, PREVENT_CHARACTER_TRIM_LOSS(MAX_NAME_LEN)))
+		cover_label = tgui_input_list(user, "Choose a cover for your book.", "Book cover", book_icons, cover_label)
+		if(!cover_label || QDELETED(src) || QDELETED(user) || !user.client || !book_icons[cover_label])
+			return
+		var/choice = tgui_alert(user, "Title: [book_title]\nAuthor: [length(book_author) ? book_author : "None"]\nCover: [cover_label]\n\nBinding uses the manuscript and one book crafting kit.", "Bind your book", list("Confirm", "Revise", "Cancel"))
+		if(QDELETED(src) || QDELETED(user) || !user.client)
+			return
+		if(choice == "Confirm")
+			return list("title" = book_title, "author" = book_author, "cover" = book_icons[cover_label], "author_ckey" = user.ckey)
+		if(choice != "Revise")
+			return
 
 /obj/item/manuscript/examine()
 	. = ..()
 	. += span_info("It has [number_of_pages] pages. Use paper to add more. Finish the book with a book crafting kit.")
 
 /obj/item/manuscript/attackby(obj/item/I, mob/living/user)
-	// why is a book crafting kit using the craft system, but crafting a book isn't? Well the crafting system for *some reason* is made in such a way as to make reworking it to allow you to put reqs vars in the crafted item near *impossible.*
 	if(istype(I, /obj/item/book_crafting_kit))
+		if(!user.is_holding(I) || !user.canUseTopic(src, BE_CLOSE, TRUE) || length(page_texts) < 2)
+			return
+		var/list/bound_pages = page_texts.Copy()
+		var/list/book_details = prompt_book_details(user)
+		if(!book_details || QDELETED(src) || QDELETED(I) || QDELETED(user) || !user.client)
+			return
+		if(!user.is_holding(I) || !user.canUseTopic(src, BE_CLOSE, TRUE))
+			return
+		if(!compare_list(bound_pages, page_texts))
+			to_chat(user, span_notice("The manuscript's pages changed while you were choosing. Start binding again to use the current pages."))
+			return
+		var/list/compiled_text = list()
+		for(var/page in bound_pages)
+			compiled_text += "<p>[page]</p>"
+		var/obj/item/book/rogue/playerbook/PB = new /obj/item/book/rogue/playerbook(get_turf(src), book_details, compiled_text.Join())
 		qdel(I)
-		var/obj/item/book/rogue/playerbook/PB = new /obj/item/book/rogue/playerbook(get_turf(loc), TRUE, user, compiled_pages)
-		if(user.Adjacent(PB))
-			PB.add_fingerprint(user)
-			user.put_in_hands(PB)
-		return qdel(src)
+		qdel(src)
+		PB.add_fingerprint(user)
+		user.put_in_hands(PB)
+		message_admins("[PB.player_book_author_ckey]([user.real_name]) has generated the player book: [PB.player_book_title]")
+		return TRUE
 
 	if(!istype(I, /obj/item/paper))
 		return
@@ -581,15 +609,14 @@
 	if(!(P.info))
 		to_chat(user, "the paper needs to contain text to be added to a manuscript!")
 		return
-	if(number_of_pages == 8)
+	if(length(page_texts) >= 8)
 		to_chat(user, "The manuscript pile cannot surpass 8 pages!")
 		return
 
-	++number_of_pages
+	page_texts += P.info
+	number_of_pages = length(page_texts)
 	name = "[number_of_pages] page manuscript"
 	desc = "A [number_of_pages] page written piece aspiring to one dae become a book."
-	page_texts += P.info
-	compiled_pages += "<p>[P.info]</p>"
 	qdel(P)
 
 	update_icon()
@@ -623,7 +650,6 @@
 	read(user)
 
 /obj/item/manuscript/proc/read(mob/user)
-	user << browse_rsc('html/book.png')
 	if(!user.client || !user.hud_used)
 		return
 	if(!user.hud_used.reads)
@@ -631,14 +657,18 @@
 	if(!user.can_read(src))
 		return
 	if(in_range(user, src) || isobserver(user))
-		var/dat = {"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">
-			<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><style type=\"text/css\">
-					body { background-image:url('book.png');background-repeat: repeat; }</style></head><body scroll=yes>"}
-		for(var/I in page_texts)
-			dat += "<p>[I]</p>"
-		dat += "<br>"
-		dat += "</body></html>"
-		user << browse(dat, "window=reading;size=1000x700;can_close=1;can_minimize=0;can_maximize=0;can_resize=0;titlebar=1")
+		var/list/content = list("<div class='book-reader'><div class='book-reader-heading'><div><div class='book-reader-eyebrow'>Work in progress</div><h1>[html_encode(name)]</h1></div><a class='book-reader-close' href='?src=[REF(src)];close=1'>Close</a></div><div class='book-reader-paper' tabindex='0' role='region' aria-label='Manuscript contents' style=\"background-image:url('book.png')\"><div class='book-reader-column'>")
+		for(var/page_number in 1 to length(page_texts))
+			content += "<section class='book-reader-sheet'><div class='book-reader-sheet-label'>Sheet [page_number] of [length(page_texts)]</div>[sanitize_document_html(page_texts[page_number])]</section>"
+		content += "</div></div><div class='book-reader-footer'>Tab to the page to scroll. Add written paper or use a book crafting kit to bind these sheets.</div></div>"
+		user << browse_rsc('html/book.png')
+		var/datum/browser/noclose/popup = new(user, "reading", null, 900, 700, src)
+		popup.set_window_options("can_close=1;can_minimize=0;can_maximize=0;can_resize=1;titlebar=1;border=0;")
+		popup.add_stylesheet("book_reader", 'html/browser/book_reader.css')
+		var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+		popup.add_head_content("<title>Manuscript</title><style>@font-face { font-family: 'Reader Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Reader Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Reader Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
+		popup.set_content(content.Join())
+		popup.open(FALSE)
 		onclose(user, "reading", src)
 	else
 		return span_warning("I'm too far away to read it.")
@@ -669,27 +699,27 @@
 /obj/item/manuscript/attack_hand(mob/user)
 	if(istype(user, /mob/living) && src.loc == user)
 		var/mob/living/L = user
+		var/last_page = length(page_texts)
+		if(last_page < 2)
+			return
 		var/obj/item/paper/P = new /obj/item/paper(get_turf(src.loc))
-		L.put_in_active_hand(P)
-		L.put_in_inactive_hand(src)
 		P.icon_state = "paperwrite"
-		P.info = page_texts[length(page_texts)]
-		page_texts -= page_texts[length(page_texts)]
-		--number_of_pages
+		P.info = page_texts[last_page]
+		page_texts.Cut(last_page, last_page + 1)
+		number_of_pages = length(page_texts)
 		if(number_of_pages == 1)
 			var/obj/item/paper/P_two = new /obj/item/paper(get_turf(src.loc))
 			P_two.icon_state = "paperwrite"
-			P_two.info = page_texts[length(page_texts)]
-			qdel_source = TRUE
-			. = ..()
-			src.loc = get_turf(src.loc)
-			L.put_in_hands(P_two)
+			P_two.info = page_texts[1]
 			qdel(src)
+			L.put_in_hands(P)
+			L.put_in_hands(P_two)
 			return
 		else
 			update_icon()
 			name = "[number_of_pages] page manuscript"
 			desc = "A [number_of_pages] page written piece aspiring to one dae become a book."
+			L.put_in_hands(P)
 			return
 
 	. = ..()

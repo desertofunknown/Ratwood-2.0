@@ -6,7 +6,11 @@
 	falloff = 0
 	persistent_loop = TRUE
 	var/stress2give = /datum/stressevent/music
-	channel = CHANNEL_JUKEBOX
+
+/datum/looping_sound/musloop/attach_loop_to_all_clients()
+	// Nearby listeners join through play() and the sound subsystem's range scan.
+	// Registering a silent track globally lets distant devices interfere with it.
+	return
 
 /datum/looping_sound/musloop/on_hear_sound(mob/M)
 	. = ..()
@@ -97,65 +101,98 @@
 	. = ..()
 	if(.)
 		return
-
 	user.changeNext_move(CLICK_CD_INTENTCAP)
+	if(interact(user))
+		winset(user, "musicbox[REF(src)].browser", "focus=true")
 
-	var/button_selection = input(user, "What button do I press?", "\The [src]") as null | anything in list("Stop/Start","Change Song","Change Volume")
-	if(!Adjacent(user))
+/obj/structure/roguemachine/musicbox/proc/get_song_catalogue()
+	return list("Otherworldly" = songlist_otherworldly, "Tavern" = songlist_generic, "Oldschool" = songlist_oldschool)
+
+/obj/structure/roguemachine/musicbox/interact(mob/user)
+	if(!isliving(user) || !user.client || !user.canUseTopic(src, BE_CLOSE, NO_DEXTERITY, NO_TK))
 		return
-	if(!button_selection)
-		to_chat(user, span_info("I change my mind..."))
+	user.set_machine(src)
+	var/list/catalogue = get_song_catalogue()
+	var/track_name = "No song selected"
+	for(var/category in catalogue)
+		var/list/songs = catalogue[category]
+		for(var/song_name in songs)
+			if(songs[song_name] == curfile)
+				track_name = song_name
+	var/list/contents = list("<main class='musicbox' data-device='[REF(src)]'><header><h1>[html_encode(capitalize(name))]</h1><span class='musicbox-status'>[playing ? "Playing" : "Stopped"]</span></header>")
+	contents += "<section class='musicbox-controls' aria-label='Playback'><div class='musicbox-track'>[html_encode(track_name)]</div><div class='musicbox-playback'><a id='music-playback' role='button' href='?src=[REF(src)];music_action=[playing ? "stop" : "play"]'>[playing ? "Stop" : "Play"]</a>"
+	contents += "<form action='?' method='get'><input type='hidden' name='src' value='[REF(src)]'><input type='hidden' name='music_action' value='volume'><label for='music-volume'>Volume</label> <input id='music-volume' name='volume' type='number' min='1' max='100' step='1' value='[curvol]'> <button id='music-set-volume' type='submit'>Set</button></form></div></section>"
+	contents += "<div class='musicbox-filter'><label for='music-search'>Find a song</label><input id='music-search' type='search' autocomplete='off' placeholder='Song or collection...'></div><div id='music-catalogue' class='musicbox-catalogue' tabindex='0' aria-label='Songs'>"
+	for(var/category_index in 1 to length(catalogue))
+		var/category = catalogue[category_index]
+		var/list/songs = catalogue[category]
+		contents += "<section class='musicbox-collection' data-collection='[html_encode(category)]'><h2>[html_encode(category)]</h2>"
+		for(var/song_index in 1 to length(songs))
+			var/song_name = songs[song_index]
+			var/selected = songs[song_name] == curfile
+			contents += "<a class='musicbox-song[selected ? " is-selected" : ""]' id='music-song-[category_index]-[song_index]' href='?src=[REF(src)];music_action=song;collection=[category_index];song=[song_index]'[selected ? " aria-current='true'" : ""]><span>[html_encode(song_name)]</span><small>[selected ? (playing ? "Playing" : "Selected") : "Play"]</small></a>"
+		contents += "</section>"
+	contents += "<p id='music-no-matches' hidden>No songs match this search.</p></div><footer><span>Select a song to play it.</span><a id='music-close' href='?src=[REF(src)];music_action=close'>Close</a></footer></main>"
+	var/datum/browser/popup = new(user, "musicbox[REF(src)]", "", 460, 540, src)
+	popup.add_stylesheet("musicbox", 'html/browser/musicbox.css')
+	popup.add_script("musicbox", 'html/browser/musicbox.js')
+	var/list/font_urls = get_asset_datum(/datum/asset/simple/roguefonts).get_url_mappings()
+	popup.add_head_content("<title>[html_encode(capitalize(name))]</title><style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); } @font-face { font-family: 'Keep Rocker'; src: url('[font_urls["newrocker.ttf"]]'); }</style>")
+	popup.set_content(contents.Join())
+	popup.open()
+	return TRUE
+
+/obj/structure/roguemachine/musicbox/Topic(href, list/href_list)
+	. = ..()
+	var/mob/user = usr
+	if(!user?.client)
 		return
-	user.visible_message(span_info("[user] presses a button on \the [src]."),span_info("I press a button on \the [src]."))
-	playsound(loc, pick('sound/misc/keyboard_select (1).ogg','sound/misc/keyboard_select (2).ogg','sound/misc/keyboard_select (3).ogg','sound/misc/keyboard_select (4).ogg'), 100, FALSE, -1)
-
-	if(button_selection=="Stop/Start")
-		toggle_music()
-
-	if(button_selection=="Change Song")
-		var/songlists_selection = input(user, "Which song list?", "\The [src]") as null | anything in list("OTHERWORLDLY", "GENERIC", "OLDSCHOOL")
-		playsound(loc, pick('sound/misc/keyboard_select (1).ogg','sound/misc/keyboard_select (2).ogg','sound/misc/keyboard_select (3).ogg','sound/misc/keyboard_select (4).ogg'), 100, FALSE, -1)
-		user.visible_message(span_info("[user] presses a button on \the [src]."),span_info("I press a button on \the [src]."))
-		var/chosen_songlists_selection = null
-		switch(songlists_selection)
-			if("OTHERWORLDLY")
-				chosen_songlists_selection = songlist_otherworldly
-			if("GENERIC")
-				chosen_songlists_selection = songlist_generic
-			if("OLDSCHOOL")
-				chosen_songlists_selection = songlist_oldschool
-		var/song_selection = input(user, "Which song do I play?", "\The [src]") as null | anything in chosen_songlists_selection
-		if(!Adjacent(user))
-			return
-		if(!song_selection)
-			to_chat(user, span_info("I change my mind..."))
-			return
-		playsound(loc, pick('sound/misc/keyboard_select (1).ogg','sound/misc/keyboard_select (2).ogg','sound/misc/keyboard_select (3).ogg','sound/misc/keyboard_select (4).ogg'), 100, FALSE, -1)
-		user.visible_message(span_info("[user] presses a button on \the [src]."),span_info("I press a button on \the [src]."))
-		curfile = chosen_songlists_selection[song_selection]
-		stop_playing()
-		start_playing()
-
-	if(button_selection=="Change Volume")
-		var/volume_selection = input(user, "How loud do you wish me to be?", "\The [src] (Volume Currently : [curvol]/[100])") as num|null
-		if(!Adjacent(user))
-			return
-		if(!volume_selection)
-			to_chat(user, span_info("I change my mind..."))
-			return
-		if(volume_selection == curvol)
-			to_chat(user, span_info("The dial is already set to that volume!"))
-			return
-		playsound(loc, pick('sound/misc/keyboard_select (1).ogg','sound/misc/keyboard_select (2).ogg','sound/misc/keyboard_select (3).ogg','sound/misc/keyboard_select (4).ogg'), 100, FALSE, -1)
-		user.visible_message(span_info("[user] presses a button on \the [src]."),span_info("I press a button on \the [src]."))
-		volume_selection = clamp(volume_selection, 1, 100)
-		if(curvol<volume_selection)
-			to_chat(user, span_info("I make \the [src] get louder."))
+	var/action = href_list["music_action"]
+	if(href_list["close"] || action == "close")
+		user << browse(null, "window=musicbox[REF(src)]")
+		if(user.machine == src)
+			user.unset_machine()
+		return
+	if(user.machine != src || !isliving(user) || !user.canUseTopic(src, BE_CLOSE, NO_DEXTERITY, NO_TK))
+		return
+	switch(action)
+		if("play")
+			if(playing || !curfile)
+				return
+			start_playing()
+		if("stop")
+			if(!playing)
+				return
+			stop_playing()
+		if("song")
+			var/list/catalogue = get_song_catalogue()
+			var/category_index = text2num(href_list["collection"])
+			if(!ISINTEGER(category_index) || category_index < 1 || category_index > length(catalogue))
+				return
+			var/list/songs = catalogue[catalogue[category_index]]
+			var/song_index = text2num(href_list["song"])
+			if(!ISINTEGER(song_index) || song_index < 1 || song_index > length(songs))
+				return
+			curfile = songs[songs[song_index]]
+			stop_playing()
+			start_playing()
+		if("volume")
+			var/new_volume = text2num(href_list["volume"])
+			if(!isnum(new_volume))
+				return
+			new_volume = clamp(round(new_volume), 1, 100)
+			if(new_volume == curvol)
+				return
+			curvol = new_volume
+			soundloop.volume = curvol
+			if(playing)
+				stop_playing()
+				start_playing()
 		else
-			to_chat(user, span_info("I make \the [src] get quieter."))
-		curvol = volume_selection
-		stop_playing()
-		start_playing()
+			return
+	user.visible_message(span_info("[user] presses a button on \the [src]."), span_info("I press a button on \the [src]."))
+	playsound(loc, pick('sound/misc/keyboard_select (1).ogg', 'sound/misc/keyboard_select (2).ogg', 'sound/misc/keyboard_select (3).ogg', 'sound/misc/keyboard_select (4).ogg'), 100, FALSE, -1)
+	updateDialog()
 
 /obj/structure/roguemachine/musicbox/tavern
 	init_curfile = list(

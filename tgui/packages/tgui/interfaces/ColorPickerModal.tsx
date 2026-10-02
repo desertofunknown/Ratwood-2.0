@@ -14,7 +14,7 @@ import {
   rgbaToHsva,
   validHex,
 } from 'common/colorpicker';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useBackend } from 'tgui/backend';
 import { Pointer } from 'tgui/components';
 import { type Interaction, Interactive } from 'tgui/components/Interactive';
@@ -113,7 +113,6 @@ export const ColorPickerModal: React.FC<ColorPickerModalProps> = () => {
       height={message ? 460 : 420}
       title={title}
       width={600}
-      theme="generic"
     >
       {!!timeout && <Loader value={timeout} />}
       <Window.Content>
@@ -161,6 +160,62 @@ interface ColorPresetsProps {
   onAllowEditing: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+const presetNavigationKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+
+const ColorPresetPalette = ({ rows, custom, selectedPreset, onSelect }: {
+  rows: string[][];
+  custom?: boolean;
+  selectedPreset?: number;
+  onSelect: (color: string, index: number) => void;
+}) => {
+  const [focus, setFocus] = useState({ row: 0, column: 0 });
+  const buttons = useRef<(HTMLButtonElement | null)[][]>([]);
+  return (
+    <div role="group" aria-label={`${custom ? 'Custom' : 'Built-in'} colors: arrow keys move, Enter or Space selects`}>
+      {rows.map((row, rowIndex) => (
+        <Stack key={rowIndex} justify="center" g={0}>
+          {row.map((entry, column) => (
+            <Box key={column} p="1px" backgroundColor="black">
+              <button
+                type="button"
+                className="ColorPickerModal__preset"
+                ref={(node) => { (buttons.current[rowIndex] ??= [])[column] = node; }}
+                tabIndex={focus.row === rowIndex && focus.column === column ? 0 : -1}
+                aria-label={`${custom ? `Custom color ${10 * rowIndex + column + 1}: ` : ''}#${entry}`}
+                aria-pressed={custom ? selectedPreset === 10 * rowIndex + column : undefined}
+                title={`#${entry}`}
+                style={{
+                  backgroundColor: `#${entry}`,
+                  borderColor: custom && selectedPreset === 10 * rowIndex + column ? '#FF0000' : '#AAAAAA',
+                }}
+                onFocus={() => setFocus({ row: rowIndex, column })}
+                onClick={() => onSelect(entry, 10 * rowIndex + column)}
+                onKeyDown={(event) => {
+                  if (event.altKey || event.ctrlKey || event.metaKey || !presetNavigationKeys.includes(event.key)) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const nextRow = Math.max(0, Math.min(rows.length - 1,
+                    rowIndex + (event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0)));
+                  const nextColumn = event.key === 'Home' ? 0 : event.key === 'End' ? rows[nextRow].length - 1
+                    : Math.max(0, Math.min(rows[nextRow].length - 1,
+                      column + (event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0)));
+                  buttons.current[nextRow]?.[nextColumn]?.focus();
+                }}
+                onKeyUp={(event) => {
+                  if (!event.altKey && !event.ctrlKey && !event.metaKey && presetNavigationKeys.includes(event.key)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }
+                }}
+              />
+            </Box>
+          ))}
+        </Stack>
+      ))}
+    </div>
+  );
+};
+
 const ColorPresets: React.FC<ColorPresetsProps> = React.memo(
   ({
     setColor,
@@ -174,67 +229,25 @@ const ColorPresets: React.FC<ColorPresetsProps> = React.memo(
     return (
       <>
         <Button
+          id="color-presets-back"
           onClick={() => setShowPresets(false)}
           position="absolute"
           right="4px"
           icon="arrow-left"
+          tooltip="Return to color controls"
         />
         <Stack justify="center" vertical g={0}>
           <Stack.Item>
-            {colorList.map((row, index) => (
-              <Stack.Item key={index} width="100%">
-                <Stack justify="center" g={0}>
-                  {row.map((entry) => (
-                    <Box key={entry} p="1px" backgroundColor="black">
-                      <Box
-                        p="1px"
-                        backgroundColor="#AAAAAA"
-                        onClick={() => {
-                          setColor(hexToHsva(entry));
-                          onSelectedPreset(undefined);
-                        }}
-                      >
-                        <Box
-                          backgroundColor={`#${entry}`}
-                          width="21px"
-                          height="14px"
-                        />
-                      </Box>
-                    </Box>
-                  ))}
-                </Stack>
-              </Stack.Item>
-            ))}
+            <ColorPresetPalette rows={colorList} onSelect={(entry) => {
+              setColor(hexToHsva(entry));
+              onSelectedPreset(undefined);
+            }} />
           </Stack.Item>
           <Stack.Item mt={0.5}>
-            {presetList.map((row, index) => (
-              <Stack.Item key={index} grow>
-                <Stack justify="center" g={0}>
-                  {row.map((entry, i) => (
-                    <Box key={i} p="1px" backgroundColor="black">
-                      <Box
-                        p="1px"
-                        backgroundColor={
-                          selectedPreset === 10 * index + i
-                            ? '#FF0000'
-                            : '#AAAAAA'
-                        }
-                        onClick={() => {
-                          setColor(hexToHsva(entry));
-                          onSelectedPreset(10 * index + i);
-                        }}
-                      >
-                        <Box
-                          backgroundColor={`#${entry}`}
-                          width="21px"
-                          height="14px"
-                        />
-                      </Box>
-                    </Box>
-                  ))}
-                </Stack>
-              </Stack.Item>
-            ))}
+            <ColorPresetPalette rows={presetList} custom selectedPreset={selectedPreset} onSelect={(entry, index) => {
+              setColor(hexToHsva(entry));
+              onSelectedPreset(index);
+            }} />
           </Stack.Item>
         </Stack>
         <Button
@@ -243,6 +256,7 @@ const ColorPresets: React.FC<ColorPresetsProps> = React.memo(
           right="4px"
           bottom="4px"
           icon="lock"
+          tooltip={allowEditing ? 'Lock custom colors' : 'Unlock custom colors for editing'}
           onClick={() => onAllowEditing(!allowEditing)}
         />
       </>
@@ -280,6 +294,12 @@ const ColorSelector: React.FC<ColorSelectorProps> = React.memo(
     );
 
     const [showPresets, setShowPresets] = useState<boolean>(false);
+    const previousShowPresets = useRef(showPresets);
+    useEffect(() => {
+      if (previousShowPresets.current === showPresets) return;
+      previousShowPresets.current = showPresets;
+      document.getElementById(showPresets ? 'color-presets-back' : 'color-presets-open')?.focus();
+    }, [showPresets]);
     const rgb = hsvaToRgba(color);
     const hexColor = hsvaToHex(color);
 
@@ -353,7 +373,9 @@ const ColorSelector: React.FC<ColorSelectorProps> = React.memo(
                   </Stack.Item>
                   <Stack.Item>
                     <Button
+                      id="color-presets-open"
                       icon="eye-dropper"
+                      tooltip="Choose a color preset"
                       onClick={() => setShowPresets(true)}
                     />
                   </Stack.Item>

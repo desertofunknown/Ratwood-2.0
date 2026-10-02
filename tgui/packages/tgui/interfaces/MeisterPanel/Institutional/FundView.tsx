@@ -1,10 +1,3 @@
-import {
-  fieldLabelStyle,
-  fieldRowStyle,
-  fieldValueStyle,
-  INK_FAINT,
-  SEAL_AMBER,
-} from '../../common/parchment';
 import { type FundEntry, type TabProps } from '../types';
 import { BathhouseFundSection } from './BathhouseFundSection';
 import { BathhouseOrdinanceSection } from './BathhouseOrdinanceSection';
@@ -12,57 +5,33 @@ import { FundActivity } from './FundActivity';
 import { IssueLoanSection } from './IssueLoanSection';
 import { WithdrawSection } from './WithdrawSection';
 
-export const FundView = ({
-  fund,
-  data,
-  act,
-}: TabProps & { fund: FundEntry }) => {
+export const FundView = ({ fund, data, act }: TabProps & { fund: FundEntry }) => {
   const balance = data.fund_balances[fund.id]?.balance ?? 0;
   const outstanding = data.fund_balances[fund.id]?.outstanding_principal ?? 0;
-
-  const view_only = !fund.can_withdraw && !fund.can_issue && fund.can_view;
-  const can_issue_loan = fund.can_issue && fund.supports_loans;
+  const viewOnly = !fund.can_withdraw && !fund.can_issue && fund.can_view;
+  const withdrawalLimit = fund.id === 'bathhouse' && !fund.can_issue
+    ? Math.min(balance, data.bathhouse_withdraw_remaining) : balance;
 
   return (
     <>
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>Coffers</div>
-        <div style={fieldValueStyle}>
-          <span style={{ color: SEAL_AMBER, fontWeight: 'bold' }}>
-            {balance}m
-          </span>
-          {outstanding > 0 && (
-            <span style={{ marginLeft: 8, color: INK_FAINT }}>
-              ({outstanding}m in loan circulation)
-            </span>
-          )}
-        </div>
-      </div>
-      <div style={fieldRowStyle}>
-        <div style={fieldLabelStyle}>Authority</div>
-        <div style={fieldValueStyle}>{fund.authority_label}</div>
-      </div>
-
-      {!!fund.can_withdraw && (
-        <WithdrawSection fund={fund} balance={balance} act={act} />
-      )}
-      {!!can_issue_loan && (
-        <IssueLoanSection fund={fund} data={data} act={act} />
-      )}
-      {/* Bathhouse employment: deposits for anyone who can see the fund, and the
-          Bathmaster's daily-limit setter. */}
+      <section className="MeisterPanel__section">
+        <div className="MeisterPanel__sectionTitle"><h2>{fund.label}</h2></div>
+        <dl className="MeisterPanel__entries">
+          <div><dt>Coffers</dt><dd>{balance}m</dd></div>
+          {outstanding > 0 && <div><dt>In loan circulation</dt><dd>{outstanding}m</dd></div>}
+          <div><dt>Authority</dt><dd>{fund.authority_label}</dd></div>
+        </dl>
+        {viewOnly && <p className="MeisterPanel__help">You may view these coffers, but not withdraw or issue loans.</p>}
+      </section>
+      {!!fund.can_withdraw && <WithdrawSection fund={fund} balance={withdrawalLimit} act={act} />}
+      {!!fund.can_issue && !!fund.supports_loans && <IssueLoanSection fund={fund} data={data} act={act} />}
       {fund.id === 'bathhouse' && !!fund.can_view && (
-        <BathhouseFundSection data={data} act={act} />
+        <BathhouseFundSection key={`employment:${data.is_bathmaster}`} data={data} act={act} />
       )}
-      {/* Gated on bathhouse_ordinance_available from atm_tgui.dm; the ordinance system is live. */}
       {!!data.bathhouse_ordinance_available &&
-        (fund.id === 'bathhouse' || fund.id === 'church') &&
-        !!fund.can_issue && <BathhouseOrdinanceSection data={data} act={act} />}
-      {!!view_only && (
-        <div style={{ color: INK_FAINT, marginTop: 8 }}>
-          {"You may view this institution's coffers, but not act upon them."}
-        </div>
-      )}
+        (fund.id === 'bathhouse' || fund.id === 'church') && !!fund.can_issue && (
+          <BathhouseOrdinanceSection key={`ordinance:${data.bathhouse_ordinance_active}`} data={data} act={act} />
+        )}
       <FundActivity fund={fund} data={data} />
     </>
   );

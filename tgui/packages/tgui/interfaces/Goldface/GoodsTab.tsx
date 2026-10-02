@@ -3,6 +3,8 @@
 // primitives AP's version would have used (TariffHeader, SearchBar, PacksGrid) - it covers exactly
 // what legacy goldface.dm's category-grid + pack-list Topic() flow did: pick a category (or search
 // across all of them) and buy.
+import { useState } from 'react';
+
 import {
   FONT_BODY,
   INK,
@@ -17,6 +19,11 @@ import type { ActFn, VendingData } from './types';
 
 export const GoodsTab = (props: { data: VendingData; act: ActFn }) => {
   const { data, act } = props;
+  const [searchReset, setSearchReset] = useState(0);
+  const selectCategory = (category: string) => {
+    setSearchReset((value) => value + 1);
+    act('changecat', { category });
+  };
   const inSearchMode = !!data.search_mode;
   const hasCategory = !!data.current_category;
 
@@ -33,7 +40,7 @@ export const GoodsTab = (props: { data: VendingData; act: ActFn }) => {
         publicMarginPct={data.public_margin_pct}
         publicMarginLabel={data.public_margin_label}
       />
-      <SearchBar serverSearch={data.search} act={act} />
+      <SearchBar serverSearch={data.search} searchRevision={data.search_revision} resetKey={searchReset} act={act} />
       {!inSearchMode && (
         <div
           style={{
@@ -48,7 +55,7 @@ export const GoodsTab = (props: { data: VendingData; act: ActFn }) => {
             <button
               type="button"
               style={inkButtonStyle()}
-              onClick={() => act('changecat', { category: '' })}
+              onClick={() => selectCategory('')}
             >
               ← All Categories
             </button>
@@ -58,7 +65,7 @@ export const GoodsTab = (props: { data: VendingData; act: ActFn }) => {
                 key={cat}
                 type="button"
                 style={inkButtonStyle()}
-                onClick={() => act('changecat', { category: cat })}
+                onClick={() => selectCategory(cat)}
               >
                 {cat}
               </button>

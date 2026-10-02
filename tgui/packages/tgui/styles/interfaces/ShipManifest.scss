@@ -1,0 +1,170 @@
+.ShipManifest {
+  min-width: 0;
+  padding: 8px 12px 12px;
+  color: var(--p-ink);
+  font:
+    13px/1.4 'Lora',
+    Georgia,
+    serif;
+
+  h1 {
+    margin: 0;
+    font:
+      22px/1.25 'Pterra',
+      Georgia,
+      serif;
+  }
+  p {
+    margin: 5px 0;
+    overflow-wrap: anywhere;
+  }
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  button {
+    padding: 3px 6px;
+    border: 1px solid var(--p-bg-shadow);
+    border-radius: 0;
+    color: inherit;
+    background: var(--p-button-bg);
+    font: inherit;
+    cursor: pointer;
+  }
+  summary {
+    padding: 5px 0;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+  }
+  button:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--p-seal-blue);
+    outline-offset: 2px;
+  }
+  &__muted,
+  &__realm,
+  &__annotation,
+  &__hint {
+    color: var(--p-ink-soft);
+  }
+  &__vessel {
+    margin-top: 12px;
+    border-top: 1px solid var(--p-bg-shadow);
+  }
+  &__vessel > summary {
+    border-bottom: 1px solid var(--p-bg-shadow);
+  }
+  &__shipName {
+    font-weight: bold;
+  }
+  &__realm,
+  &__vessel > summary > .ShipManifest__kin {
+    margin-left: 8px;
+  }
+  &__kin,
+  button.ShipManifest__paying {
+    color: var(--p-seal-green);
+  }
+  button.ShipManifest__dodging {
+    color: var(--p-seal-red);
+  }
+  &__table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font: inherit;
+    color: inherit;
+  }
+  &__table th[scope='rowgroup'] strong {
+    color: var(--p-seal-amber);
+  }
+  &__hint {
+    display: block;
+    margin-top: 2px;
+    font-weight: normal;
+    overflow-wrap: anywhere;
+  }
+  &__table th,
+  &__table td {
+    padding: 5px 6px;
+    border-bottom: 1px solid var(--p-bg-shadow);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+  &__table th:first-child {
+    width: 42%;
+    padding-left: 0;
+    text-align: left;
+  }
+  &__table th:not(:first-child),
+  &__table td {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  &__table th:last-child,
+  &__table td:last-child {
+    padding-right: 0;
+  }
+  &__table thead th {
+    color: var(--p-ink-soft);
+    font-weight: normal;
+  }
+  &__table th[scope='rowgroup'] {
+    width: auto;
+    padding: 8px 0 4px;
+    text-align: left;
+  }
+  &__annotation {
+    display: block;
+    margin-top: 2px;
+  }
+  &__fulfilled > th {
+    color: var(--p-ink-soft);
+    font-weight: normal;
+  }
+  &__empty {
+    padding: 10px 0;
+    color: var(--p-ink-soft);
+  }
+  &__underledger {
+    margin-top: 14px;
+    border-top: 1px solid var(--p-bg-shadow);
+  }
+  &__underledger > summary {
+    font-weight: bold;
+  }
+  &__duty {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px 12px;
+    margin: 4px 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .ShipManifest {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ShipManifest {
+    &__header {
+      align-items: flex-start;
+    }
+    &__table th,
+    &__table td {
+      padding-right: 4px;
+      padding-left: 4px;
+    }
+    &__table thead th:first-child {
+      width: 37%;
+    }
+  }
+}

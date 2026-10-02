@@ -210,132 +210,98 @@
 		return
 
 	var/list/dat = list()
-	dat += "<html><head><title>Gnoll Customization</title></head><body>"
-	dat += "<center><h2>Choose your form to spread terror in the name of the GORESTAR!!</h2></center><br>"
-
-	// Name section
-	dat += "<b>Current Name:</b> [gnoll_name] "
-	dat += "<a href='?_src_=gnoll_prefs;action=set_name'>Set Custom Name</a> | "
-	dat += "<a href='?_src_=gnoll_prefs;action=random_name'>Random Gnoll Name</a><br>"
-
-	// Pronouns section
+	dat += "<div class='gnoll-folio'><div class='gnoll-header'><div class='gnoll-eyebrow'>Character preferences</div><h1>Gnoll Customization</h1><p>Choose your form to spread terror in the name of the Gorestar.</p></div>"
+	dat += "<div class='gnoll-content' id='gnoll-content'><div class='gnoll-card'><h2>Identity</h2>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>Name</span><span class='gnoll-value'><strong>[html_encode(gnoll_name)]</strong><br><a href='?_src_=gnoll_prefs;action=set_name'>Set name</a><a href='?_src_=gnoll_prefs;action=random_name'>Random name</a></span></div>"
 	var/list/pronoun_options = get_pronoun_options()
 	var/pronoun_label = get_selected_label(pronoun_options, gnoll_pronouns) || "He/Him"
-	dat += "<b>Pronouns:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=choose_pronouns'>[pronoun_label]</a>"
-	dat += "<br>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>Pronouns</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=choose_pronouns'>[pronoun_label]</a></span></div>"
+	var/voice_color = sanitize_hexcolor(gnoll_voice_color)
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>Voice color</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=voice_color'><span class='gnoll-swatch' style='background: #[voice_color];'></span>#[voice_color]</a></span></div></div>"
 
-	dat += "<b>Voice Color:</b> <a href='?_src_=gnoll_prefs;action=voice_color'>Change</a><br>"
-
-	dat += "<b>Gnoll Statpack:</b> <a href='?_src_=gnoll_prefs;action=gnoll_statpack'>Change</a><br>"
-	dat += "<span style='color:#b2b2b2;'>" 
+	dat += "<div class='gnoll-card'><h2>Statpack</h2>"
+	dat += "<a href='?_src_=gnoll_prefs;action=gnoll_statpack'>[gnoll_statpack ? html_encode(gnoll_statpack.name) : "Choose statpack"]</a>"
 	if(gnoll_statpack)
 		var/stats_string = gnoll_statpack.generate_modifier_string()
 		if(stats_string)
-			dat += "<b>[gnoll_statpack.name]</b> <i>" + stats_string + "</i><br>"
-		else
-			dat += "<b>[gnoll_statpack.name]</b><br>"
-		dat += "[gnoll_statpack.desc]<br>"
-	else
-		dat += "None Selected<br>"
-	dat += "</span><br>"
+			dat += "<div class='gnoll-stats'>[stats_string]</div>"
+		dat += "<p class='gnoll-hint'>[gnoll_statpack.desc]</p>"
+	dat += "</div>"
 
-	// Pelt type section
+	dat += "<div class='gnoll-card'><h2>Appearance &amp; descriptors</h2>"
 	var/list/pelt_options = get_pelt_options()
 	var/pelt_label = get_selected_label(pelt_options, pelt_type) || "Firepelt"
-	dat += "<b>Pelt Pattern:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=choose_pelt'>[pelt_label]</a>"
-	dat += "<br>"
-
-	// Genitals section
-	dat += "<b>Genitals:</b><br>"
-	var/list/genital_options = list(
-		"Penis" = "penis",
-		"Vagina" = "vagina",
-		"Breasts" = "breasts"
-	)
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>Pelt pattern</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=choose_pelt'>[pelt_label]</a></span></div>"
+	var/list/descriptor_labels = list("height" = "Height", "body" = "Build", "fur" = "Coat", "voice" = "Voice", "muzzle" = "Muzzle shape", "expression" = "Expression")
+	var/list/descriptor_defaults = list("height" = "Moderate", "body" = "Muscular", "fur" = "Coarse", "voice" = "Growly", "muzzle" = "Long", "expression" = "Alert")
+	for(var/slot in descriptor_labels)
+		var/descriptor_label = get_selected_label(get_descriptor_options(slot), get_descriptor_value(slot)) || descriptor_defaults[slot]
+		dat += "<div class='gnoll-field'><span class='gnoll-label'>[descriptor_labels[slot]]</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=choose_descriptor;slot=[slot]'>[descriptor_label]</a></span></div>"
+	dat += "<h3>Anatomy</h3>"
+	var/list/genital_options = list("Penis" = "penis", "Vagina" = "vagina", "Breasts" = "breasts")
 	for(var/genital_label in genital_options)
 		var/genital_id = genital_options[genital_label]
 		var/status = genitals[genital_id] ? "Yes" : "No"
 		var/toggle_action = genitals[genital_id] ? "disable" : "enable"
-		dat += "&nbsp;&nbsp;[genital_label]: [status] "
-		dat += "<a href='?_src_=gnoll_prefs;action=toggle_genital;genital=[genital_id];toggle=[toggle_action]'>[toggle_action == "enable" ? "Enable" : "Disable"]</a><br>"
+		dat += "<div class='gnoll-field'><span class='gnoll-label'>[genital_label]</span><span class='gnoll-value'><a class='[genitals[genital_id] ? "gnoll-selected" : ""]' href='?_src_=gnoll_prefs;action=toggle_genital;genital=[genital_id];toggle=[toggle_action]' title='[toggle_action == "enable" ? "Enable" : "Disable"] [genital_label]'>[status]</a></span></div>"
+	dat += "</div>"
 
-	// Height section
-	var/list/height_options = get_descriptor_options("height")
-	var/height_label = get_selected_label(height_options, descriptor_height) || "Moderate"
-	dat += "<b>Height:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=choose_descriptor;slot=height'>[height_label]</a>"
-	dat += "<br>"
+	dat += "<div class='gnoll-card'><h2><button type='button' id='gnoll-profile-toggle' aria-expanded='true' aria-controls='gnoll-profile' onclick='toggleGnollSection(\"gnoll-profile\")'>Profile &amp; writing <span>Optional</span></button></h2><div id='gnoll-profile'>"
+	dat += "<p class='gnoll-hint'>Describe your gnoll and the stories others may hear. <a href='?_src_=gnoll_prefs;action=formathelp'>Formatting help</a></p>"
+	var/list/profile_fields = list("flavortext" = "Flavortext", "ooc_notes" = "OOC notes", "rumour" = "Rumours", "gossip" = "Noble gossip")
+	var/list/profile_values = list("flavortext" = flavortext, "ooc_notes" = ooc_notes, "rumour" = rumour, "gossip" = noble_gossip)
+	for(var/action in profile_fields)
+		dat += "<div class='gnoll-field'><span class='gnoll-label'>[profile_fields[action]]</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=[action]'>[profile_values[action] ? "Edit" : "Add"]</a><span class='gnoll-status'>[profile_values[action] ? "[length(profile_values[action])] characters" : "Not set"]</span></span></div>"
+	dat += "<a href='?_src_=gnoll_prefs;action=rumour_preview'>Preview rumours &amp; gossip</a></div></div>"
 
-	// Body section
-	var/list/body_options = get_descriptor_options("body")
-	var/body_label = get_selected_label(body_options, descriptor_body) || "Muscular"
-	dat += "<b>Build:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=choose_descriptor;slot=body'>[body_label]</a>"
-	dat += "<br>"
+	dat += "<div class='gnoll-card'><h2><button type='button' id='gnoll-media-toggle' aria-expanded='true' aria-controls='gnoll-media' onclick='toggleGnollSection(\"gnoll-media\")'>Portrait &amp; media <span>Optional</span></button></h2><div id='gnoll-media'>"
+	dat += "<p class='gnoll-hint'>Add a portrait, song, or images to your examine profile.</p>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>Headshot</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=headshot'>[headshot_link ? "Change portrait" : "Add portrait"]</a></span></div>"
+	if(headshot_link)
+		dat += "<div class='gnoll-headshot'><img src='[html_encode(headshot_link)]' width='100' height='100' alt='Gnoll headshot'></div>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>Song</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=ooc_extra'>[ooc_extra ? "Change URL" : "Add URL"]</a><a href='?_src_=gnoll_prefs;action=change_title'>Title: [song_title ? html_encode(song_title) : "Not set"]</a><a href='?_src_=gnoll_prefs;action=change_artist'>Artist: [song_artist ? html_encode(song_artist) : "Not set"]</a></span></div>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>Extra image / video / GIF</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=ooc_extra_img'>[ooc_extra_img_link ? "Change media" : "Add media"]</a></span></div>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>Image gallery</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=img_gallery'>Add image</a><a href='?_src_=gnoll_prefs;action=clear_gallery'>Clear gallery</a><span class='gnoll-status'>[length(img_gallery)] / 3 images</span></span></div></div></div>"
 
-	// Fur section
-	var/list/fur_options = get_descriptor_options("fur")
-	var/fur_label = get_selected_label(fur_options, descriptor_fur) || "Coarse"
-	dat += "<b>Coat:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=choose_descriptor;slot=fur'>[fur_label]</a>"
-	dat += "<br>"
+	dat += "<div class='gnoll-card'><h2><button type='button' id='gnoll-adult-toggle' aria-expanded='true' aria-controls='gnoll-adult' onclick='toggleGnollSection(\"gnoll-adult\")'>NSFW profile <span>Optional</span></button></h2><div id='gnoll-adult'>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>NSFW flavortext</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=nsfwflavortext'>[nsfwflavortext ? "Edit" : "Add"]</a><span class='gnoll-status'>[nsfwflavortext ? "[length(nsfwflavortext)] characters" : "Not set"]</span></span></div>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>ERP preferences</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=erpprefs'>[erpprefs ? "Edit" : "Add"]</a><span class='gnoll-status'>[erpprefs ? "[length(erpprefs)] characters" : "Not set"]</span></span></div>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>NSFW image / video / GIF</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=nsfw_ooc_extra_img'>[nsfw_ooc_extra_img_link ? "Change media" : "Add media"]</a></span></div>"
+	dat += "<div class='gnoll-field'><span class='gnoll-label'>NSFW gallery</span><span class='gnoll-value'><a href='?_src_=gnoll_prefs;action=nsfw_img_gallery'>Add image</a><a href='?_src_=gnoll_prefs;action=clear_nsfw_gallery'>Clear gallery</a><span class='gnoll-status'>[length(nsfw_img_gallery)] / 3 images</span></span></div></div></div></div>"
+	dat += "<div class='gnoll-footer'><a href='?_src_=gnoll_prefs;action=ooc_preview'>Preview Examine</a><a class='gnoll-close' href='?_src_=gnoll_prefs;action=close'>Close</a></div></div>"
+	dat += {"
+<script>
+function setGnollSection(id, open) {
+	document.getElementById(id).style.display = open ? 'block' : 'none';
+	document.getElementById(id + '-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function toggleGnollSection(id) {
+	var open = document.getElementById(id).style.display === 'none';
+	setGnollSection(id, open);
+	try { sessionStorage.setItem(id, open ? 'open' : 'closed'); } catch (error) {}
+}
+function restoreGnollSection(id) {
+	var open = false;
+	try { open = sessionStorage.getItem(id) === 'open'; } catch (error) {}
+	setGnollSection(id, open);
+}
+restoreGnollSection('gnoll-profile');
+restoreGnollSection('gnoll-media');
+restoreGnollSection('gnoll-adult');
+var gnollContent = document.getElementById('gnoll-content');
+try { gnollContent.scrollTop = Number(sessionStorage.getItem('gnoll-scroll')) || 0; } catch (error) {}
+gnollContent.onscroll = function () {
+	try { sessionStorage.setItem('gnoll-scroll', String(gnollContent.scrollTop)); } catch (error) {}
+};
+</script>
+"}
 
-	// Voice section
-	var/list/voice_options = get_descriptor_options("voice")
-	var/voice_label = get_selected_label(voice_options, descriptor_voice) || "Growly"
-	dat += "<b>Voice:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=choose_descriptor;slot=voice'>[voice_label]</a>"
-	dat += "<br>"
-
-	// Muzzle shape section
-	var/list/muzzle_options = get_descriptor_options("muzzle")
-	var/muzzle_label = get_selected_label(muzzle_options, descriptor_muzzle) || "Long"
-	dat += "<b>Muzzle Shape:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=choose_descriptor;slot=muzzle'>[muzzle_label]</a>"
-	dat += "<br>"
-
-	// Expression section
-	var/list/expression_options = get_descriptor_options("expression")
-	var/expression_label = get_selected_label(expression_options, descriptor_expression) || "Alert"
-	dat += "<b>Expression:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=choose_descriptor;slot=expression'>[expression_label]</a>"
-	dat += "<br>"
-
-	dat += "<h3>Gnoll Flavortext (Optional)</h3>"
-
-	dat += "<b>Headshot:</b> "
-	dat += "<a href='?_src_=gnoll_prefs;action=headshot'>Change</a>"
-	if(headshot_link != null)
-		dat += "<br><img src='[headshot_link]' width='100px' height='100px'>"
-
-	dat += "<br><b>Flavortext: </b><a href='?_src_=gnoll_prefs;action=formathelp'>(?)</a><a href='?_src_=gnoll_prefs;action=flavortext'>Change</a>"
-	dat += "<br><b>NSFW Flavortext: </b><a href='?_src_=gnoll_prefs;action=formathelp'>(?)</a><a href='?_src_=gnoll_prefs;action=nsfwflavortext'>Change</a>"
-	dat += "<br><b>OOC Notes: </b><a href='?_src_=gnoll_prefs;action=formathelp'>(?)</a><a href='?_src_=gnoll_prefs;action=ooc_notes'>Change</a>"
-
-	dat += "<br><b>Rumours & Noble Gossip:</b><a href='?_src_=gnoll_prefs;action=formathelp'>(?)</a><br><a href='?_src_=gnoll_prefs;action=rumour'>Set Rumours</a><a href='?_src_=gnoll_prefs;action=gossip'>Set Gossip</a><a href='?_src_=gnoll_prefs;action=rumour_preview'><i>Preview</i></a>"
-
-	dat += "<br><b>ERP Preferences:</b><a href='?_src_=gnoll_prefs;action=formathelp'>(?)</a><a href='?_src_=gnoll_prefs;action=erpprefs'>Change</a>"
-	dat += "<br><b>Song:</b> <a href='?_src_=gnoll_prefs;action=ooc_extra'>Change URL</a>"
-	dat += "<a href='?_src_=gnoll_prefs;action=change_title'>Change Title</a>"
-	dat += "<a href='?_src_=gnoll_prefs;action=change_artist'>Change Artist</a>"
-	dat += "<br><b>OOC Extra Image/Video/Gif (Flavor Text):</b> <a href='?_src_=gnoll_prefs;action=ooc_extra_img'>Change</a>"
-	if(ooc_extra_img_link != null)
-		dat += "<br><img src='[ooc_extra_img_link]' width='100px' height='100px'>"
-	dat += "<br><b>NSFW OOC Extra Image/Video/Gif (Flavor Text):</b> <a href='?_src_=gnoll_prefs;action=nsfw_ooc_extra_img'>Change</a>"
-	if(nsfw_ooc_extra_img_link != null)
-		dat += "<br><img src='[nsfw_ooc_extra_img_link]' width='100px' height='100px'>"
-	dat += "<br><B>Image Gallery:</b> <a href='?_src_=gnoll_prefs;action=img_gallery'>Add</a>"
-	dat+= "<a href='?_src_=gnoll_prefs;action=clear_gallery'>Clear Gallery</a>"
-	dat += "<br><B>Nsfw Image Gallery:</b> <a href='?_src_=gnoll_prefs;action=nsfw_img_gallery'>Add</a>"
-	dat+= "<a href='?_src_=gnoll_prefs;action=clear_nsfw_gallery'>Clear Nsfw Gallery</a>"
-	dat += "<br><a href='?_src_=gnoll_prefs;action=ooc_preview'><b>Preview Examine</b></a>"
-
-	dat += "<center><a href='?_src_=gnoll_prefs;action=close'>Close</a></center>"
-	dat += "</body></html>"
-
-	var/datum/browser/popup = new(user, "gnoll_prefs", "Gnoll Customization", 500, 600)
+	var/datum/browser/popup = new(user, "gnoll_prefs", null, 650, 740)
+	popup.set_window_options("can_close=1;can_resize=1;can_minimize=1;can_maximize=1;titlebar=1;")
+	popup.add_stylesheet("gnoll_preferences", 'html/browser/gnoll_preferences.css')
+	var/datum/asset/simple/roguefonts/gnoll_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = gnoll_fonts.get_url_mappings()
+	popup.add_head_content("<title>Gnoll Customization</title><style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
 	popup.set_content(dat.Join())
 	popup.open()
 
@@ -346,7 +312,7 @@
 	var/action = href_list["action"]
 	switch(action)
 		if("set_name")
-			var/new_name = input(user, "Enter a custom name for your gnoll:", "Gnoll Name", gnoll_name) as text|null
+			var/new_name = tgui_input_text(user, "Enter a custom name for your gnoll:", "Gnoll Name", gnoll_name, encode = FALSE)
 			if(new_name)
 				gnoll_name = sanitize_name(new_name)
 				ensure_gnoll_name()
@@ -359,7 +325,7 @@
 		if("choose_pronouns")
 			var/list/pronoun_options = get_pronoun_options()
 			var/current_pronoun = get_selected_label(pronoun_options, gnoll_pronouns)
-			var/selected_pronoun = input(user, "Choose pronouns", "Gnoll Customization", current_pronoun) as null|anything in pronoun_options
+			var/selected_pronoun = tgui_input_list(user, "Choose pronouns", "Gnoll Customization", pronoun_options, current_pronoun)
 			if(!selected_pronoun)
 				return
 			gnoll_pronouns = pronoun_options[selected_pronoun]
@@ -368,7 +334,7 @@
 		if("choose_pelt")
 			var/list/pelt_options = get_pelt_options()
 			var/current_pelt = get_selected_label(pelt_options, pelt_type)
-			var/selected_pelt = input(user, "Choose pelt pattern", "Gnoll Customization", current_pelt) as null|anything in pelt_options
+			var/selected_pelt = tgui_input_list(user, "Choose pelt pattern", "Gnoll Customization", pelt_options, current_pelt)
 			if(!selected_pelt)
 				return
 			pelt_type = pelt_options[selected_pelt]
@@ -380,7 +346,7 @@
 			if(!descriptor_options)
 				return
 			var/current_descriptor = get_selected_label(descriptor_options, get_descriptor_value(slot))
-			var/selected_descriptor = input(user, "Describe my [slot]", "Gnoll Customization", current_descriptor) as null|anything in descriptor_options
+			var/selected_descriptor = tgui_input_list(user, "Describe my [slot]", "Gnoll Customization", descriptor_options, current_descriptor)
 			if(!selected_descriptor)
 				return
 			if(set_descriptor_value(slot, descriptor_options[selected_descriptor]))
@@ -550,6 +516,7 @@
 			flavortext = new_flavortext
 			to_chat(user, "<span class='notice'>Successfully updated gnoll flavortext</span>")
 			log_game("[user] has set their gnoll flavortext'.")
+			gnoll_show_ui(user)
 		if("ooc_notes")
 			to_chat(user, "<span class='notice'>["<span class='bold'>OOC notes should be used for roleplay hooks and general information about your character.</span>"]</span>")
 			var/new_ooc_notes = tgui_input_text(user, "Input your OOC preferences:", "OOC notes", ooc_notes, multiline = TRUE,  encode = FALSE, bigmodal = TRUE)
@@ -562,6 +529,7 @@
 			ooc_notes = new_ooc_notes
 			to_chat(user, "<span class='notice'>Successfully updated gnoll OOC notes.</span>")
 			log_game("[user] has set their gnoll OOC notes'.")
+			gnoll_show_ui(user)
 		if("rumour")
 			to_chat(user, span_notice("Rumours are things others might know, or think they know about you, they don't necessarily have to be precise, or even true. But remember that they can provide a hint to another player on how to interact with, or even think about your character.\n<b>Avoid explicit bodily descriptions, though rumors like \"sleeps around a lot\" are fine.</b>"))
 			var/new_rumour = tgui_input_text(user, "Input rumours about your character: (400 Character Limit)", "Rumours", rumour, multiline = TRUE, encode = FALSE, bigmodal = TRUE)
@@ -578,6 +546,7 @@
 			rumour = new_rumour
 			to_chat(user, span_notice("Successfully updated gnoll rumours"))
 			log_game("[user] has set their gnoll's rumour'.")
+			gnoll_show_ui(user)
 		if("gossip")
 			to_chat(user, span_notice("Gossip is rumours spread around, and known only in Noble circles, only other well-born individuals are aware of it. Gossip, similarly to standard rumours does not need to be precise or true, but remember that it can provide hints and avenues for other Nobles to interact with, and judge your Character.\n<b>Avoid explicit bodily descriptions, though rumors like \"sleeps around a lot\" are fine.</b>"))
 			var/new_gossip = tgui_input_text(user, "Input noble gossip about your gnoll character: (400 Character Limit)", "Noble Gossip", noble_gossip, multiline = TRUE, encode = FALSE, bigmodal = TRUE)
@@ -594,6 +563,7 @@
 			noble_gossip = new_gossip
 			to_chat(user, span_notice("Successfully updated gnoll noble gossip"))
 			log_game("[user] has set their gnoll's noble gossip'.")
+			gnoll_show_ui(user)
 
 		if("nsfwflavortext")
 			to_chat(user, "<span class='notice'>["<span class='bold'>NSFW Flavortext can be used for setting things like body descriptions and other physical details that may be conisdered explicit.</span>"]</span>")
@@ -610,6 +580,7 @@
 			nsfwflavortext = new_nsfwflavortext
 			to_chat(user, "<span class='notice'>Successfully updated gnoll NSFW flavortext</span>")
 			log_game("[user] has set their gnoll NSFW flavortext'.")
+			gnoll_show_ui(user)
 		if("erpprefs")
 			to_chat(user, "<span class='notice'>["<span class='bold'>Erotic Roleplay preferences. If you put 'anything goes' or 'no limits' here, do not be surprised if people take you up on it.</span>"]</span>")
 			to_chat(user, "<font color = '#d6d6d6'>Leave blank to clear.</font>")
@@ -625,6 +596,7 @@
 			erpprefs = new_erpprefs
 			to_chat(user, "<span class='notice'>Successfully updated ERP Preferences.</span>")
 			log_game("[user] has set their ERP preferences'.")
+			gnoll_show_ui(user)
 
 		if("img_gallery")
 
@@ -653,6 +625,7 @@
 			img_gallery += new_galleryimg
 			to_chat(user, "<span class='notice'>Successfully added image to gnoll gallery.</span>")
 			log_game("[user] has added an image to their gnoll gallery: '[new_galleryimg]'.")
+			gnoll_show_ui(user)
 
 		if("nsfw_img_gallery")
 
@@ -681,6 +654,7 @@
 			nsfw_img_gallery += new_galleryimg
 			to_chat(user, "<span class='notice'>Successfully added gnoll image to nsfw gallery.</span>")
 			log_game("[user] has added an image to their gnoll nsfw gallery: '[new_galleryimg]'.")
+			gnoll_show_ui(user)
 
 		if("clear_gallery")
 			if(!img_gallery.len)
@@ -693,6 +667,7 @@
 			img_gallery = list()
 			to_chat(user, "<span class='notice'>Successfully cleared gnoll image gallery.</span>")
 			log_game("[user] has cleared their gnoll image gallery.")
+			gnoll_show_ui(user)
 
 		if("clear_nsfw_gallery")
 			if(!nsfw_img_gallery.len)
@@ -705,6 +680,7 @@
 			nsfw_img_gallery = list()
 			to_chat(user, "<span class='notice'>Successfully cleared gnoll nsfw image gallery.</span>")
 			log_game("[user] has cleared their gnoll nsfw image gallery.")
+			gnoll_show_ui(user)
 
 		if("ooc_preview")
 			var/datum/examine_panel/preview_examine_panel = new(user)
@@ -759,6 +735,7 @@
 				ooc_extra = new_extra_link
 				to_chat(user, "<span class='notice'>Successfully updated gnoll Song URL.</span>")
 				log_game("[user] has set their gnoll Song URL to '[ooc_extra]'.")
+				gnoll_show_ui(user)
 
 		if("change_artist")
 			var/new_artist = tgui_input_text(user, "Input your song's artist:", "Song Artist", song_artist,  encode = FALSE)
@@ -770,6 +747,7 @@
 			song_artist = new_artist
 			to_chat(user, "<span class='notice'>Successfully updated gnoll song artist.</span>")
 			log_game("[user] has set their gnoll song artist.")
+			gnoll_show_ui(user)
 
 		if("change_title")
 			var/new_title = tgui_input_text(user, "Input your song's title:", "Song title", song_title,  encode = FALSE)
@@ -781,6 +759,7 @@
 			song_title = new_title
 			to_chat(user, "<span class='notice'>Successfully updated gnoll song title.</span>")
 			log_game("[user] has set their gnoll song title.")
+			gnoll_show_ui(user)
 
 		if("ooc_extra_img")
 			to_chat(user, "<span class='notice'>Add a link to images/videos (jpg, png, gif, mp4) that will be displayed in your Flavor Text.</span>")
@@ -883,9 +862,10 @@
 			gnoll_show_ui(user)
 
 		if("voice_color")
-			var/new_voice = input(user, "Choose your gnoll's voice color:", "Character Preference","#"+gnoll_voice_color) as color|null
+			var/new_voice = tgui_color_picker(user, "Choose your gnoll's voice color:", "Character Preference", "#" + gnoll_voice_color)
 			if(new_voice)
-				if(color_hex2num(new_voice) < 230)
+				new_voice = sanitize_hexcolor(new_voice)
+				if(color_hex2num("#[new_voice]") < 230)
 					to_chat(user, "<font color='red'>This voice color is too dark for mortals.</font>")
 					return
 				gnoll_voice_color = sanitize_hexcolor(new_voice)

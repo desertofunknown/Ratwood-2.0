@@ -665,7 +665,7 @@
 	if(C.bodytemperature <= BODYTEMP_NORMAL_MAX)
 		if(!cure_timer)
 			to_chat(C, span_notice("The heat begins to slowly fade from my body..."))
-			cure_timer = addtimer(CALLBACK(src, PROC_REF(cure_heatstroke)), 2 MINUTES)
+			cure_timer = addtimer(CALLBACK(src, PROC_REF(cure_heatstroke)), 2 MINUTES, TIMER_STOPPABLE)
 
 	// If overheating again, cancel cure timer
 	else
@@ -673,27 +673,30 @@
 			deltimer(cure_timer)
 			cure_timer = null
 
-/datum/wound/heatstroke/on_mob_loss()
+/datum/wound/heatstroke/on_mob_loss(mob/living/affected)
 	. = ..()
 	if(cure_timer)
 		deltimer(cure_timer)
 		cure_timer = null
 
-	if(!iscarbon(owner))
+	if(!iscarbon(affected))
 		return
 
-	var/mob/living/carbon/C = owner
-	to_chat(owner, span_warning("The world has stopped spinning."))
+	var/mob/living/carbon/C = affected
+	to_chat(C, span_warning("The world has stopped spinning."))
+	C.clear_fullscreen("heatstroke")
 	C.set_dizziness(0)
 
 /datum/wound/heatstroke/proc/cure_heatstroke()
-	if(!owner)
+	cure_timer = null
+	if(!iscarbon(owner))
 		return
 
-	var/mob/living/carbon/human/H = owner
+	var/mob/living/carbon/H = owner
+	if(H.bodytemperature > BODYTEMP_NORMAL_MAX)
+		return
 
 	to_chat(H, span_notice("The world finally stops spinning as the heat leaves me."))
-	H.clear_fullscreen("heatstroke")
 	qdel(src)
 
 /datum/wound/frostbite

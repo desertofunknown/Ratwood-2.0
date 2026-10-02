@@ -1,17 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
-import {
-  FONT_BODY,
-  INK,
-  INK_FAINT,
-  pageStyle,
-  rulerStyle,
-  SEAL_AMBER,
-  subtitleStyle,
-  titleStyle,
-} from './common/parchment';
 import { AdvancedView } from './StewardTrade/AdvancedView';
 import { ArrearsBanner } from './StewardTrade/ArrearsBanner';
 import { ATCLoanBanner } from './StewardTrade/ATCLoanBanner';
@@ -34,105 +24,69 @@ import type { Data, TabKey } from './StewardTrade/types';
 export const StewardTrade = () => {
   const { data, act } = useBackend<Data>();
   const [tab, setTab] = useState<TabKey>('orders');
+  const bodyRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+  }, [tab]);
   const [tradeRequest, setTradeRequest] = useState<TradeModalRequest | null>(
     null,
   );
-
   useEffect(() => {
     if (tab === 'ledger') {
       act('ledger_open');
       return () => act('ledger_close');
     }
   }, [tab, act]);
-
-  const aldermanActing = !!data.is_alderman_acting;
   const warrant = data.alderman_warrant;
-
+  const net = data.expected_rural_revenue - data.expected_wage_outlay;
   return (
-    <Window
-      title="Market Scroll"
-      width={860}
-      height={820}
-      theme="parchment"
-    >
-      <Window.Content scrollable>
-        <div style={pageStyle}>
-          <div style={titleStyle}>Market & Stockpile</div>
-          <div style={subtitleStyle}>
-            Day {data.day} &middot; Crown's Purse:{' '}
-            <span style={{ color: SEAL_AMBER, fontWeight: 'bold' }}>
-              {data.treasury}m
+    <Window title="Market Scroll" width={860} height={820} theme="parchment">
+      <Window.Content fitted className="StewardDesk">
+        <header className="StewardDesk__heading">
+          <div className="StewardDesk__title">
+            <h1>Market &amp; Stockpile</h1>
+            <span>Day {data.day}</span>
+            <span>
+              Crown's Purse <strong>{data.treasury}m</strong>
             </span>
           </div>
-          <div
-            style={{
-              ...subtitleStyle,
-              color: INK_FAINT,
-              fontSize: FONT_BODY,
-              marginTop: '2px',
-            }}
-          >
-            At dawn:{' '}
-            <span style={{ color: SEAL_AMBER }}>
-              +{data.expected_rural_revenue}m
-            </span>{' '}
-            rural tax &middot;{' '}
-            <span style={{ color: SEAL_AMBER }}>
-              -{data.expected_wage_outlay}m
-            </span>{' '}
-            wages &middot; Net{' '}
-            <span style={{ color: SEAL_AMBER, fontWeight: 'bold' }}>
-              {data.expected_rural_revenue - data.expected_wage_outlay >= 0
-                ? '+'
-                : ''}
-              {data.expected_rural_revenue - data.expected_wage_outlay}m
-            </span>
-          </div>
-          <hr style={rulerStyle} />
-
-          {aldermanActing && warrant && (
-            <div
-              style={{
-                background: 'rgba(200,170,100,0.18)',
-                border: `1px solid ${SEAL_AMBER}`,
-                padding: '6px 12px',
-                marginBottom: '10px',
-                fontSize: FONT_BODY,
-                color: INK,
-              }}
-            >
-              <div
-                style={{
-                  color: SEAL_AMBER,
-                  fontWeight: 'bold',
-                  marginBottom: '2px',
-                }}
-              >
-                Alderman&apos;s Writ
-              </div>
-              <div>
-                Trade warrant:{' '}
-                <span style={{ color: SEAL_AMBER, fontWeight: 'bold' }}>
-                  {warrant.trade_remaining}m
-                </span>{' '}
-                of {warrant.trade_cap}m remaining today
-              </div>
-              <div style={{ color: INK_FAINT, fontSize: FONT_BODY }}>
-                Trades beyond the warrant are refused. Crown&apos;s Purse still pays the coin.
-              </div>
-            </div>
+          <p>
+            At dawn: +{data.expected_rural_revenue}m rural tax, −
+            {data.expected_wage_outlay}m wages; net{' '}
+            <strong>
+              {net >= 0 ? '+' : ''}
+              {net}m
+            </strong>
+          </p>
+          {!!data.is_alderman_acting && warrant && (
+            <details className="StewardDesk__warrant">
+              <summary>
+                Alderman's Writ: {warrant.trade_remaining}m of{' '}
+                {warrant.trade_cap}m remaining today
+              </summary>
+              <p>
+                Trades beyond the warrant are refused. Crown's Purse still pays
+                the coin.
+              </p>
+            </details>
           )}
-
+        </header>
+        <TabBar tab={tab} onSwitch={setTab} />
+        <main
+          ref={bodyRef}
+          className="StewardDesk__body"
+          tabIndex={0}
+          aria-label="Stewardship records"
+        >
           <SequestrationBanner sequestration={data.sequestration} />
           <ArrearsBanner sequestration={data.sequestration} />
           <ATCLoanBanner atc_loan={data.atc_loan} />
           <BlockadeBanner regions={data.blockaded_regions} />
           <BanditryBanner projection={data.banditry_projection} />
-          <EventsBanner events={data.active_events} goodCatalog={data.good_catalog} />
-
-          <TabBar tab={tab} onSwitch={setTab} />
-          <hr style={rulerStyle} />
-
+          <EventsBanner
+            events={data.active_events}
+            goodCatalog={data.good_catalog}
+          />
           {tab === 'orders' && <OrdersView data={data} />}
           {tab === 'market' && (
             <SequesteredOverlay
@@ -169,7 +123,7 @@ export const StewardTrade = () => {
               <AdvancedView data={data} />
             </SequesteredOverlay>
           )}
-        </div>
+        </main>
         <TradeModal
           request={tradeRequest}
           onClose={() => setTradeRequest(null)}

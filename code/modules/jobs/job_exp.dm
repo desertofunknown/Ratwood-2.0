@@ -8,8 +8,6 @@ GLOBAL_PROTECT(exp_to_update)
 		return 0
 	if(!CONFIG_GET(flag/use_exp_tracking))
 		return 0
-	if(!SSdbcore.Connect())
-		return 0
 	if(!exp_requirements || !exp_type)
 		return 0
 	if(!job_is_xp_locked(src.title))
@@ -18,6 +16,8 @@ GLOBAL_PROTECT(exp_to_update)
 		return 0
 	var/isexempt = C.prefs.db_flags & DB_FLAG_EXEMPT
 	if(isexempt)
+		return 0
+	if(!SSdbcore.Connect())
 		return 0
 	var/my_exp = C.calc_exp_type(get_exp_req_type())
 	var/job_requirement = get_exp_req_amount()
@@ -47,7 +47,7 @@ GLOBAL_PROTECT(exp_to_update)
 	return TRUE
 
 /client/proc/calc_exp_type(exptype)
-	var/list/explist = prefs.exp.Copy()
+	var/list/explist = prefs.exp
 	var/amount = 0
 	var/list/typelist = GLOB.exp_jobsmap[exptype]
 	if(!typelist)

@@ -87,13 +87,13 @@
 	if(!SSdbcore.Connect())
 		return
 	if(C && istype(C))
-		C.ban_cache = list()
+		var/list/bans = list()
 		var/is_admin = FALSE
 		if(GLOB.admin_datums[C.ckey] || GLOB.deadmins[C.ckey])
 			is_admin = TRUE
 		var/datum/DBQuery/query_build_ban_cache = SSdbcore.NewQuery(
-			"SELECT role, applies_to_admins FROM [format_table_name("ban")] WHERE ckey = :ckey AND unbanned_datetime IS NULL AND (expiration_time IS NULL OR expiration_time > NOW())",
-			list("ckey" = C.ckey)
+			"SELECT role, applies_to_admins FROM [format_table_name("ban")] WHERE (ckey = :ckey OR ip = INET_ATON(:ip) OR computerid = :computerid) AND unbanned_datetime IS NULL AND (expiration_time IS NULL OR expiration_time > NOW())",
+			list("ckey" = C.ckey, "ip" = C.address || null, "computerid" = C.computer_id || null)
 		)
 		if(!query_build_ban_cache.warn_execute())
 			qdel(query_build_ban_cache)
@@ -101,8 +101,10 @@
 		while(query_build_ban_cache.NextRow())
 			if(is_admin && !text2num(query_build_ban_cache.item[2]))
 				continue
-			C.ban_cache[query_build_ban_cache.item[1]] = TRUE
+			bans[query_build_ban_cache.item[1]] = TRUE
 		qdel(query_build_ban_cache)
+		if(C)
+			C.ban_cache = bans
 
 /datum/admins/proc/ban_panel(player_key, player_ip, player_cid, role, duration = 1440, applies_to_admins, reason, edit_id, page, admin_key)
 	var/panel_height = 620
@@ -522,11 +524,10 @@
 	if(roles_to_ban[1] == "Server" && AH)
 		AH.Resolve()
 	for(var/client/i in GLOB.clients - C)
-		if(i.address == player_ip || i.computer_id == player_cid)
+		if((player_ip && i.address == player_ip) || (player_cid && i.computer_id == player_cid))
 			build_ban_cache(i)
 			to_chat(i, span_boldannounce("You have been [applies_to_admins ? "admin " : ""]banned by [usr.client.key] from [roles_to_ban[1] == "Server" ? "the server" : " Roles: [roles_to_ban.Join(", ")]"].\nReason: [reason]</span><br><span class='danger'>This ban is [isnull(duration) ? "permanent." : "temporary, it will be removed in [time_message]."] The round ID is [GLOB.round_id].</span><br><span class='danger'>To appeal this ban go to [appeal_url]"))
-			if(GLOB.admin_datums[i.ckey] || GLOB.deadmins[i.ckey])
-				is_admin = TRUE
+			is_admin = !!(GLOB.admin_datums[i.ckey] || GLOB.deadmins[i.ckey])
 			if(roles_to_ban[1] == "Server" && (!is_admin || (is_admin && applies_to_admins)))
 				qdel(i)
 
@@ -704,7 +705,7 @@
 		build_ban_cache(C)
 		to_chat(C, span_boldannounce("[usr.client.key] has removed a ban from [role] for your key."))
 	for(var/client/i in GLOB.clients - C)
-		if(i.address == player_ip || i.computer_id == player_cid)
+		if((player_ip && i.address == player_ip) || (player_cid && i.computer_id == player_cid))
 			build_ban_cache(i)
 			to_chat(i, span_boldannounce("[usr.client.key] has removed a ban from [role] for your IP or CID."))
 	unban_panel(player_key, admin_key, player_ip, player_cid, page)
@@ -836,7 +837,7 @@
 		build_ban_cache(C)
 		to_chat(C, span_boldannounce("[usr.client.key] has edited the [changes_keys_text] of a ban for your key."))
 	for(var/client/i in GLOB.clients - C)
-		if(i.address == old_ip || i.computer_id == old_cid)
+		if((old_ip && i.address == old_ip) || (old_cid && i.computer_id == old_cid) || i.ckey == player_ckey || (player_ip && i.address == player_ip) || (player_cid && i.computer_id == player_cid))
 			build_ban_cache(i)
 			to_chat(i, span_boldannounce("[usr.client.key] has edited the [changes_keys_text] of a ban for your IP or CID."))
 	unban_panel(player_key, null, null, null, page)

@@ -1,22 +1,7 @@
 import { useState } from 'react';
 
 import { useBackend } from '../../backend';
-import {
-  badgeStyle,
-  cardStyle,
-  FONT_BODY,
-  INK,
-  INK_FAINT,
-  INK_SOFT,
-  inkButtonStyle,
-  SEAL_AMBER,
-  SEAL_GREEN,
-  SEAL_RED,
-  sectionHeaderStyle,
-} from '../common/parchment';
-import type { Data, PetitionCategory } from './types';
-
-const PETITION_PURPLE = '#a872c4';
+import type { Data } from './types';
 
 export const PetitionView = (props: { data: Data }) => {
   const { act } = useBackend<Data>();
@@ -27,281 +12,165 @@ export const PetitionView = (props: { data: Data }) => {
     petition,
     region_catalog,
   } = props.data;
-
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     petition_categories[0]?.id ?? null,
   );
-
-  const selectedCat = petition_categories.find((c) => c.id === selectedCategory);
-
-  const cannotAct =
-    !petition.is_steward_role || !!petition.is_alderman_acting;
-
+  const selectedCat = petition_categories.find(
+    (category) => category.id === selectedCategory,
+  );
   const cannotActReason = petition.is_alderman_acting
     ? "The Alderman's writ does not extend to petitioning the trade hall."
     : !petition.is_steward_role
       ? 'Only the Steward, Clerk, or Grand Duke may petition the trade hall.'
       : '';
+  const eligibility = selectedCat
+    ? petition.eligibility[selectedCat.id] || {}
+    : {};
 
   return (
-    <div>
-      <div style={sectionHeaderStyle}>Petition the Trade Hall</div>
-
-      <div
-        style={{
-          color: INK_SOFT,
-          fontSize: FONT_BODY,
-          marginBottom: '10px',
-          lineHeight: '1.5em',
-        }}
-      >
+    <section className="StewardPetition">
+      <h2>Petition the Trade Hall</h2>
+      <p className="StewardPetition__muted">
         Send envoys to a regional trade hall to commission a Standing Order of
-        your choosing. Costs Burgher Pledge. The hall takes a {petition_tax_pct}%
-        margin on petitioned orders &mdash; the price of certainty. The exact
+        your choosing. Costs Burgher Pledge. The hall takes a {petition_tax_pct}
+        % margin on petitioned orders &mdash; the price of certainty. The exact
         item mix is still set by the hall.
+      </p>
+      <div className="StewardPetition__status">
+        <span>
+          Pledge balance:{' '}
+          <strong className="StewardPetition__accent">
+            {petition.pledge_balance}p
+          </strong>
+        </span>
+        <span>
+          Petitions remaining today:{' '}
+          <strong
+            className={
+              petition.petitions_remaining > 0
+                ? 'StewardPetition__good'
+                : 'StewardPetition__bad'
+            }
+          >
+            {petition.petitions_remaining}
+          </strong>{' '}
+          / {petitions_per_day}
+        </span>
       </div>
-
-      <PetitionStatusStrip data={props.data} />
-
-      {cannotAct && (
-        <div
-          style={{
-            ...cardStyle,
-            borderLeft: `4px solid ${SEAL_RED}`,
-            color: SEAL_RED,
-          }}
-        >
-          {cannotActReason}
-        </div>
+      {cannotActReason && (
+        <p className="StewardPetition__bad">{cannotActReason}</p>
       )}
-
-      <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-        <div style={{ flex: '0 0 220px' }}>
-          <CategoryList
-            categories={petition_categories}
-            selected={selectedCategory}
-            onSelect={setSelectedCategory}
-          />
-        </div>
-        <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+      <div className="StewardPetition__body">
+        <nav
+          className="StewardPetition__categories"
+          aria-label="Petition category"
+        >
+          <h3>Commission</h3>
+          {petition_categories.length === 0 && (
+            <p className="StewardPetition__muted">No categories configured.</p>
+          )}
+          {petition_categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              aria-pressed={category.id === selectedCategory}
+              onClick={() => setSelectedCategory(category.id)}
+            >
+              <span>{category.label}</span>
+              <span className="StewardPetition__accent">
+                {category.cost}p pledge
+              </span>
+            </button>
+          ))}
+        </nav>
+        <div className="StewardPetition__destinations">
           {selectedCat ? (
-            <RegionPicker
-              category={selectedCat}
-              eligibility={petition.eligibility[selectedCat.id] || {}}
-              regionNames={region_catalog}
-              petitionsRemaining={petition.petitions_remaining}
-              pledgeBalance={petition.pledge_balance}
-              cannotAct={cannotAct}
-              onPetition={(region_id) =>
-                act('petition_for_order', {
-                  region_id,
-                  category_id: selectedCat.id,
-                })
-              }
-            />
+            <>
+              <h3>
+                {selectedCat.label}{' '}
+                <small className="StewardPetition__cost">
+                  {selectedCat.cost}p pledge
+                </small>
+              </h3>
+              <p className="StewardPetition__muted">
+                {selectedCat.description}
+              </p>
+              {Object.keys(eligibility).length === 0 ? (
+                <p className="StewardPetition__muted">No regions configured.</p>
+              ) : (
+                <table className="StewardPetition__register">
+                  <thead>
+                    <tr>
+                      <th scope="col">Trade hall</th>
+                      <th scope="col">Eligibility</th>
+                      <th scope="col">Writ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(eligibility).map(([regionId, blocker]) => {
+                      const regionName =
+                        region_catalog[regionId]?.name ?? regionId;
+                      const eligible = blocker === '';
+                      const reason =
+                        cannotActReason ||
+                        (!eligible
+                          ? blocker
+                          : petition.petitions_remaining <= 0
+                            ? 'no petitions remaining today'
+                            : petition.pledge_balance < selectedCat.cost
+                              ? `pledge short ${selectedCat.cost - petition.pledge_balance}p`
+                              : '');
+                      const disabled = !eligible || !!reason;
+                      return (
+                        <tr key={regionId}>
+                          <th scope="row">{regionName}</th>
+                          <td
+                            className={
+                              disabled
+                                ? 'StewardPetition__bad'
+                                : 'StewardPetition__good'
+                            }
+                          >
+                            {blocker ||
+                              reason ||
+                              (eligible ? 'Eligible' : 'Unavailable')}
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              disabled={disabled}
+                              title={
+                                reason ||
+                                `petition the ${regionName} hall for a ${selectedCat.label} order`
+                              }
+                              onClick={() =>
+                                act('petition_for_order', {
+                                  region_id: regionId,
+                                  category_id: selectedCat.id,
+                                })
+                              }
+                            >
+                              Petition
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </>
           ) : (
-            <div style={{ color: INK_FAINT, fontStyle: 'italic' }}>
-              Select a category at left.
-            </div>
+            <p className="StewardPetition__muted">Select a category at left.</p>
           )}
         </div>
       </div>
-
-      <div
-        style={{
-          marginTop: '14px',
-          color: INK_SOFT,
-          fontSize: FONT_BODY,
-          lineHeight: '1.5em',
-        }}
-      >
+      <p className="StewardPetition__notes">
         Limit: {petitions_per_day} petition{petitions_per_day === 1 ? '' : 's'}{' '}
         per day &middot; Regions freshly cleared of blockade need a recovery
         window before envoys return &middot; Petitioned orders are visibly
         tagged on the noticeboard and in the orders panel.
-      </div>
-    </div>
-  );
-};
-
-const PetitionStatusStrip = (props: { data: Data }) => {
-  const { petition, petitions_per_day } = props.data;
-  const remaining = petition.petitions_remaining;
-  const remainingColor = remaining > 0 ? SEAL_GREEN : SEAL_RED;
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '14px',
-        padding: '6px 10px',
-        marginBottom: '10px',
-        background: 'rgba(120,90,40,0.08)',
-        border: `1px solid ${INK_FAINT}`,
-        fontSize: FONT_BODY,
-        color: INK,
-      }}
-    >
-      <div>
-        Pledge balance:{' '}
-        <span style={{ color: SEAL_AMBER, fontWeight: 'bold' }}>
-          {petition.pledge_balance}p
-        </span>
-      </div>
-      <div>
-        Petitions today:{' '}
-        <span style={{ color: remainingColor, fontWeight: 'bold' }}>
-          {remaining}
-        </span>{' '}
-        / {petitions_per_day}
-      </div>
-    </div>
-  );
-};
-
-const CategoryList = (props: {
-  categories: PetitionCategory[];
-  selected: string | null;
-  onSelect: (id: string) => void;
-}) => {
-  const { categories, selected, onSelect } = props;
-  return (
-    <div>
-      {categories.map((c) => {
-        const isSel = c.id === selected;
-        return (
-          <div
-            key={c.id}
-            onClick={() => onSelect(c.id)}
-            style={{
-              cursor: 'pointer',
-              padding: '6px 8px',
-              marginBottom: '4px',
-              border: `1px solid ${isSel ? PETITION_PURPLE : INK_FAINT}`,
-              background: isSel
-                ? 'rgba(168,114,196,0.12)'
-                : 'rgba(120,90,40,0.05)',
-              fontSize: FONT_BODY,
-            }}
-          >
-            <div style={{ fontWeight: 'bold', color: INK, marginBottom: '2px' }}>
-              {c.label}
-            </div>
-            <div style={{ color: SEAL_AMBER, fontSize: FONT_BODY }}>
-              {c.cost}p pledge
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-const RegionPicker = (props: {
-  category: PetitionCategory;
-  eligibility: Record<string, string>;
-  regionNames: Record<string, { name: string; description: string }>;
-  petitionsRemaining: number;
-  pledgeBalance: number;
-  cannotAct: boolean;
-  onPetition: (region_id: string) => void;
-}) => {
-  const {
-    category,
-    eligibility,
-    regionNames,
-    petitionsRemaining,
-    pledgeBalance,
-    cannotAct,
-    onPetition,
-  } = props;
-
-  const regionIds = Object.keys(eligibility);
-
-  return (
-    <div>
-      <div
-        style={{
-          ...cardStyle,
-          borderLeft: `4px solid ${PETITION_PURPLE}`,
-          marginBottom: '10px',
-        }}
-      >
-        <div style={{ marginBottom: '4px' }}>
-          <span style={{ fontWeight: 'bold', fontSize: FONT_BODY }}>
-            {category.label}
-          </span>
-          <span style={badgeStyle(SEAL_AMBER)}>{category.cost}p</span>
-        </div>
-        <div style={{ color: INK_SOFT, fontSize: FONT_BODY }}>
-          {category.description}
-        </div>
-      </div>
-
-      {regionIds.length === 0 ? (
-        <div style={{ color: INK_FAINT, fontStyle: 'italic' }}>
-          No regions configured.
-        </div>
-      ) : (
-        regionIds.map((rid) => {
-          const blocker = eligibility[rid];
-          const eligible = blocker === '';
-          const regionName = regionNames[rid]?.name ?? rid;
-          const disabled =
-            cannotAct ||
-            !eligible ||
-            petitionsRemaining <= 0 ||
-            pledgeBalance < category.cost;
-          const tooltip = cannotAct
-            ? ''
-            : !eligible
-              ? blocker
-              : petitionsRemaining <= 0
-                ? 'no petitions remaining today'
-                : pledgeBalance < category.cost
-                  ? `pledge short ${category.cost - pledgeBalance}p`
-                  : `petition the ${regionName} hall for a ${category.label} order`;
-          return (
-            <div
-              key={rid}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '4px 6px',
-                marginBottom: '3px',
-                borderBottom: `1px dotted ${INK_FAINT}`,
-              }}
-            >
-              <div style={{ flex: '1 1 auto', color: INK, fontSize: FONT_BODY }}>
-                <span style={{ fontWeight: 'bold' }}>{regionName}</span>
-                {!eligible && (
-                  <span
-                    style={{
-                      color: SEAL_RED,
-                      fontSize: FONT_BODY,
-                      marginLeft: '6px',
-                    }}
-                  >
-                    {blocker}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                disabled={disabled}
-                title={tooltip}
-                onClick={() => onPetition(rid)}
-                style={inkButtonStyle({
-                  color: PETITION_PURPLE,
-                  disabled,
-                })}
-              >
-                Petition
-              </button>
-            </div>
-          );
-        })
-      )}
-    </div>
+      </p>
+    </section>
   );
 };

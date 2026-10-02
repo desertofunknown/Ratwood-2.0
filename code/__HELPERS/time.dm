@@ -27,7 +27,8 @@ GLOBAL_LIST_INIT(time_change_tips, world.file2list("strings/rt/timechangetips.tx
 GLOBAL_VAR_INIT(tod, FALSE)
 GLOBAL_VAR_INIT(forecast, FALSE)
 GLOBAL_VAR_INIT(todoverride, FALSE)
-GLOBAL_VAR_INIT(dayspassed, FALSE)
+// Elapsed daes in this round; weekday displays wrap independently.
+GLOBAL_VAR_INIT(dayspassed, 0)
 
 // IC calendar admin override (see __HELPERS/calendar.dm + admin/verbs/set_date.dm)
 GLOBAL_VAR_INIT(date_override_enabled, FALSE)
@@ -60,8 +61,6 @@ GLOBAL_VAR_INIT(date_override_offset, 0)
 			if(GLOB.mirage_controller)
 				GLOB.mirage_controller.MoveOasis()
 			GLOB.dayspassed++
-			if(GLOB.dayspassed == 8)
-				GLOB.dayspassed = 1
 			scom_announce_new_dawn() // IC calendar: announce active feast/holy daes
 			SStreasury.tick_rural_tax()
 			SStreasury.distribute_estate_incomes()
@@ -92,7 +91,7 @@ GLOBAL_VAR_INIT(date_override_offset, 0)
 		return
 	if(GLOB.tod == "dawn")
 		var/text_to_show
-		switch(GLOB.dayspassed)
+		switch(get_current_day_of_week())
 			if(1)
 				text_to_show = "DAWN OF THE FIRST DAE\nMOON'S DAE"
 			if(2)

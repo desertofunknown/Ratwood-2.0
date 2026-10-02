@@ -23,32 +23,27 @@
 		return
 
 	var/list/dat = list()
-		// --- Familiar species display using mapping ---
-	if (familiar_specie && GLOB.familiar_display_names[familiar_specie])
-		var/specie_type = GLOB.familiar_display_names[familiar_specie] ? GLOB.familiar_display_names[familiar_specie] : "Unknown Species"
-		dat += "<div align='center'><font size=4 color='#bbbbbb'>[specie_type]</font></div>"
+	var/list/missing_fields = list()
+	if (!familiar_name)
+		missing_fields += "name"
+	if (!familiar_flavortext_display)
+		missing_fields += "description"
+	if (!familiar_specie)
+		missing_fields += "familiar type"
 
-	dat += "<br><b>Familiar Name:</b> <a href='?_src_=familiar_prefs;preference=familiar_name;task=input'>[familiar_name] (Set name)</a>"
-
-	// --- Pronoun selection ---
-	var/list/pronoun_display = list(
-		HE_HIM = "he/him",
-		SHE_HER = "she/her",
-		THEY_THEM = "they/them",
-		IT_ITS = "it/its"
-	)
-	var/selected_pronoun = pronoun_display[familiar_pronouns] ? pronoun_display[familiar_pronouns] : "they/them"
-	dat += "<br><b>Pronouns:</b> <a href='?_src_=familiar_prefs;preference=familiar_pronouns;task=select'>[selected_pronoun]</a>"
-
-	dat += "<br><b>Familiar Headshot:</b> <a href='?_src_=familiar_prefs;preference=familiar_headshot;task=input'>Change</a>"
-	if (familiar_headshot_link)
-		dat += "<br><img src='[familiar_headshot_link]' width='100px' height='100px'>"
-
-	dat += "<br><b>Flavortext:</b> <a href='?_src_=familiar_prefs;preference=formathelp;task=input'>(?)</a> <a href='?_src_=familiar_prefs;preference=familiar_flavortext;task=input'>Change</a>"
-
-	dat += "<br><b>OOC Notes:</b> <a href='?_src_=familiar_prefs;preference=formathelp;task=input'>(?)</a> <a href='?_src_=familiar_prefs;preference=familiar_ooc_notes;task=input'>Change</a>"
-
-	dat += "<br><b>Familiar OOC Extra:</b> <a href='?_src_=familiar_prefs;preference=formathelp;task=input'>(?)</a> <a href='?_src_=familiar_prefs;preference=familiar_ooc_extra;task=input'>Change</a>"
+	dat += "<p class='familiar-intro'>Prepare your familiar's identity and description, then join the summoning queue.</p>"
+	dat += "<div class='familiar-card familiar-queue'><h2>Summoning queue</h2>"
+	if (client in GLOB.familiar_queue)
+		dat += "<p class='familiar-status'>You are in the familiar queue.</p>"
+		dat += "<a href='?_src_=familiar_prefs;preference=familiar_queue;task=leave'>Leave queue</a>"
+	else
+		dat += "<p class='familiar-status'>You are not in the familiar queue.</p>"
+		if (!length(missing_fields))
+			dat += "<p class='familiar-hint'>Your required fields are complete.</p>"
+		dat += "<a href='?_src_=familiar_prefs;preference=familiar_queue;task=join'>Join queue</a>"
+	if (length(missing_fields))
+		dat += "<p class='familiar-missing'>Required before joining: [missing_fields.Join(", ")].</p>"
+	dat += "</div>"
 
 	var/display_name = "None selected"
 	var/list/all_types = GLOB.familiar_types
@@ -56,20 +51,48 @@
 		if (all_types[name] == familiar_specie)
 			display_name = name
 			break
-	dat += "<br><b>Selected Familiar Type:</b> <a href='?_src_=familiar_prefs;preference=familiar_specie;task=select'>[display_name]</a>"
-
+	var/list/pronoun_display = list(
+		HE_HIM = "he/him",
+		SHE_HER = "she/her",
+		THEY_THEM = "they/them",
+		IT_ITS = "it/its"
+	)
+	var/selected_pronoun = pronoun_display[familiar_pronouns] ? pronoun_display[familiar_pronouns] : "they/them"
+	var/name_display = familiar_name ? html_encode(familiar_name) : "Set name"
+	dat += "<div class='familiar-card'><h2>Identity</h2>"
+	dat += "<div class='familiar-field'><span class='familiar-label'>Name <small>Required</small></span><span class='familiar-value'><a href='?_src_=familiar_prefs;preference=familiar_name;task=input'>[name_display]</a></span></div>"
+	dat += "<div class='familiar-field'><span class='familiar-label'>Familiar type <small>Required</small></span><span class='familiar-value'><a href='?_src_=familiar_prefs;preference=familiar_specie;task=select'>[html_encode(display_name)]</a></span></div>"
+	dat += "<div class='familiar-field'><span class='familiar-label'>Pronouns</span><span class='familiar-value'><a href='?_src_=familiar_prefs;preference=familiar_pronouns;task=select'>[selected_pronoun]</a></span></div>"
 	if (familiar_specie)
 		var/lore_blurb = GLOB.familiar_lore_blurbs[familiar_specie]
 		if (lore_blurb)
-			dat += "<br><i><b>Lore inspiration:</b> [lore_blurb]</i>"
+			dat += "<div class='familiar-lore'><strong>Lore inspiration</strong><br>[lore_blurb]</div>"
+	dat += "</div>"
 
-	if (client in GLOB.familiar_queue)
-		dat += "<br><a href='?_src_=familiar_prefs;preference=familiar_queue;task=leave'>Leave Queue</a>"
+	dat += "<div class='familiar-card'><h2>Description <small>Required</small></h2>"
+	dat += "<p class='familiar-hint'>Describe physical, sensory details rather than backstory or internal thoughts.</p>"
+	if (familiar_flavortext)
+		dat += "<p class='familiar-preview'>[html_encode(copytext(familiar_flavortext, 1, 241))][length(familiar_flavortext) > 240 ? "..." : ""]</p>"
 	else
-		dat += "<br><a href='?_src_=familiar_prefs;preference=familiar_queue;task=join'>Queue Up</a>"
+		dat += "<p class='familiar-hint'>No description set.</p>"
+	dat += "<a href='?_src_=familiar_prefs;preference=familiar_flavortext;task=input'>Edit description</a></div>"
 
-	var/datum/browser/popup = new(client?.mob, "Be a Familiar", "<center>Be a Familiar</center>", 330, 410)
-	popup.set_window_options("can_close=1")
+	dat += "<div class='familiar-card'><h2>Profile <small>Optional</small></h2>"
+	dat += "<div class='familiar-field'><span class='familiar-label'>Headshot</span><span class='familiar-value'><a href='?_src_=familiar_prefs;preference=familiar_headshot;task=input'>[familiar_headshot_link ? "Change headshot" : "Add headshot"]</a></span></div>"
+	if (familiar_headshot_link)
+		dat += "<div class='familiar-headshot'><img src='[html_encode(familiar_headshot_link)]' width='100' height='100' alt='Familiar headshot'></div>"
+	dat += "<div class='familiar-field'><span class='familiar-label'>OOC notes</span><span class='familiar-value'><a href='?_src_=familiar_prefs;preference=familiar_ooc_notes;task=input'>[familiar_ooc_notes ? "Edit notes" : "Add notes"]</a></span></div>"
+	if (familiar_ooc_notes)
+		dat += "<p class='familiar-preview'>[html_encode(copytext(familiar_ooc_notes, 1, 241))][length(familiar_ooc_notes) > 240 ? "..." : ""]</p>"
+	dat += "<div class='familiar-field'><span class='familiar-label'>OOC extra</span><span class='familiar-value'><a href='?_src_=familiar_prefs;preference=familiar_ooc_extra;task=input'>[familiar_ooc_extra_link ? "Change media link" : "Add media link"]</a></span></div>"
+	dat += "<p class='familiar-hint'>Optional image, video, or audio. Enter a single space in the media prompt to remove it.</p></div>"
+
+	var/datum/browser/popup = new(client.mob, "Be a Familiar", "Be a Familiar", 580, 740)
+	popup.set_window_options("can_close=1;can_resize=1;can_minimize=1;can_maximize=1;titlebar=1;")
+	popup.add_stylesheet("familiar_preferences", 'html/browser/familiar_preferences.css')
+	var/datum/asset/simple/roguefonts/familiar_fonts = get_asset_datum(/datum/asset/simple/roguefonts)
+	var/list/font_urls = familiar_fonts.get_url_mappings()
+	popup.add_head_content("<style>@font-face { font-family: 'Keep Lora'; src: url('[font_urls["lora-regular.ttf"]]'); } @font-face { font-family: 'Keep Lora'; font-weight: 700; src: url('[font_urls["lora-bold.ttf"]]'); } @font-face { font-family: 'Keep Pterra'; src: url('[font_urls["pterra.ttf"]]'); }</style>")
 	popup.set_content(dat.Join())
 	popup.open(FALSE)
 
@@ -81,7 +104,7 @@
 
 	switch(href_list["preference"])
 		if("familiar_name")
-			var/new_name = input(user, "Choose your Familiar character's name:", "Identity") as text|null
+			var/new_name = tgui_input_text(user, "Choose your Familiar character's name:", "Identity", familiar_name, encode = FALSE)
 			if(new_name)
 				new_name = reject_bad_name(new_name)
 				if(new_name)
@@ -97,7 +120,12 @@
 				"they/them" = THEY_THEM,
 				"it/its" = IT_ITS
 			)
-			var/choice = input(user, "Select your familiar's pronouns:", "Pronouns") as null|anything in pronoun_options
+			var/current_pronoun
+			for(var/label in pronoun_options)
+				if(pronoun_options[label] == familiar_pronouns)
+					current_pronoun = label
+					break
+			var/choice = tgui_input_list(user, "Select your familiar's pronouns:", "Pronouns", pronoun_options, current_pronoun)
 			if(choice)
 				familiar_pronouns = pronoun_options[choice]
 				to_chat(user, "<span class='notice'>Familiar pronouns set to [choice].</span>")
@@ -105,7 +133,7 @@
 		if("familiar_headshot")
 			to_chat(user, "<span class='notice'>Please use a relatively SFW image of the head and shoulder area to maintain immersion level. <b>Do not use a real life photo or unserious images.</b></span>")
 			to_chat(user, "<span class='notice'>Ensure it's a direct image link. The photo will be resized to 325x325 pixels.</span>")
-			var/new_headshot_link = input(user, "Input the headshot link (https, hosts: gyazo, discord, lensdump, imgbox, catbox, imgbb, filegarden):", "Headshot", familiar_headshot_link) as text|null
+			var/new_headshot_link = tgui_input_text(user, "Input the headshot link (https, hosts: gyazo, discord, lensdump, imgbox, catbox, imgbb, filegarden):", "Headshot", familiar_headshot_link, encode = FALSE)
 			if(new_headshot_link == null)
 				return
 			if(new_headshot_link == "")
@@ -122,7 +150,7 @@
 
 		if("familiar_flavortext")
 			to_chat(user, "<span class='notice'><b>Flavortext should not include nonphysical nonsensory attributes such as backstory or internal thoughts.</b></span>")
-			var/new_flavortext = input(user, "Input your Familiar character description:", "Flavortext", familiar_flavortext) as message|null
+			var/new_flavortext = tgui_input_text(user, "Input your Familiar character description:", "Flavortext", familiar_flavortext, multiline = TRUE, encode = FALSE)
 			if(new_flavortext == null)
 				return
 			if(new_flavortext == "")
@@ -138,7 +166,7 @@
 			log_game("[user] has set their familiar flavortext.")
 
 		if("familiar_ooc_notes")
-			var/new_ooc_notes = input(user, "Input your OOC preferences:", "OOC notes", familiar_ooc_notes) as message|null
+			var/new_ooc_notes = tgui_input_text(user, "Input your OOC preferences:", "OOC notes", familiar_ooc_notes, multiline = TRUE, encode = FALSE)
 			if(new_ooc_notes == null)
 				return
 			if(new_ooc_notes == "")
@@ -215,8 +243,12 @@
 
 		if ("familiar_specie")
 			var/list/all_types = GLOB.familiar_types
-
-			var/choice = input(user, "Select a Familiar type:", "Familiar Type") as null|anything in all_types
+			var/current_type
+			for(var/label in all_types)
+				if(all_types[label] == familiar_specie)
+					current_type = label
+					break
+			var/choice = tgui_input_list(user, "Select a Familiar type:", "Familiar Type", all_types, current_type)
 			if (choice)
 				var/path = all_types[choice]
 				if (path)
@@ -238,6 +270,8 @@
 	S["familiar_ooc_notes"]				>> familiar_ooc_notes
 	S["familiar_ooc_extra"]				>> familiar_ooc_extra
 	S["familiar_ooc_extra_link"]		>> familiar_ooc_extra_link
+	familiar_flavortext_display = familiar_flavortext ? replacetext(html_encode(parsemarkdown_basic(familiar_flavortext)), "\n", "<BR>") : null
+	familiar_ooc_notes_display = familiar_ooc_notes ? replacetext(html_encode(parsemarkdown_basic(familiar_ooc_notes)), "\n", "<BR>") : null
 	return TRUE
 
 /datum/familiar_prefs/proc/save_familiar_prefs(savefile/S)

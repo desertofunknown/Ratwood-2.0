@@ -1,0 +1,38 @@
+.VotePanel {
+  font: 14px/1.55 'Lora', Georgia, serif;
+  color: #e7dac2;
+
+  h2 { padding: 0; }
+
+  .Section { background: #241c19; border: 1px solid #65503c; }
+  .Section__title { border-bottom: 1px solid #65503c; padding: 10px 14px; }
+  .Section .Section__titleText { color: #e7dac2; font: 20px/1.3 'Pterra', Georgia, serif; }
+  .Section__content { padding: 14px; }
+  .Section__rest, .Stack__item { min-height: 0; }
+  .Button { white-space: normal; line-height: 1.5; padding: 6px 10px; }
+
+  &__question { margin: 0 0 8px; font: 20px/1.4 'Lora', Georgia, serif; color: #e7dac2; overflow-wrap: anywhere; }
+  &__instruction { color: #b9a88e; margin-bottom: 16px; }
+  &__muted { color: #b9a88e; font-size: 13px; margin: 6px 0; }
+  &__cooldown { color: #d4bb8f; border-left: 2px solid #a68a59; padding: 6px 10px; margin-bottom: 10px; background: #2d231c; }
+  &__time { color: #d4bb8f; font-variant-numeric: tabular-nums; }
+  &__newVotes { max-height: 155px; overflow-y: auto; padding-right: 6px; }
+  &__proposal { padding: 4px 0 12px; border-bottom: 1px solid #493a2e; }
+
+  .VotePanel__choice {
+    margin-bottom: 10px;
+    min-height: 48px;
+    padding: 12px;
+    border: 1px solid #65503c;
+    color: #e7dac2;
+    background: #211a17;
+
+    .Button__content { display: flex; align-items: baseline; gap: 12px; }
+    &.Button--selected { background: #592c28; border-color: #a68a59; color: #f2e3c8; box-shadow: inset 3px 0 #a68a59; }
+    &.Button--selected.Button--disabled { --button-background-disabled: #592c28; color: #f2e3c8 !important; opacity: 1; }
+  }
+
+  &__choiceName { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  &__selection { color: #bea174; flex-shrink: 0; }
+  &__count { color: #b9a88e; font-size: 13px; white-space: nowrap; }
+}

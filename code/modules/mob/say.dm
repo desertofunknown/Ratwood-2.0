@@ -9,7 +9,7 @@
 	set category = "IC"
 	
 	display_typing_indicator()
-	var/message = input(usr, "", "say") as text|null
+	var/message = tgui_input_text(src, "Speak to those around you. Enter sends; Escape cancels.", "Say", max_length = MAX_MESSAGE_LEN, encode = FALSE)
 	// If they don't type anything just drop the message.
 	clear_typing_indicator(length(message) ? "sent" : "closed input")
 	if(!length(message))
@@ -52,7 +52,7 @@
 	set category = "IC"
 
 	display_typing_indicator()
-	var/message = input(usr, "", "me") as text|null
+	var/message = tgui_input_text(src, "Describe your character's action. Enter sends; Escape cancels.", "Emote", max_length = MAX_MESSAGE_LEN, encode = FALSE)
 	// If they don't type anything just drop the message.
 	clear_typing_indicator(length(message) ? "sent" : "closed input")		// clear it immediately!
 	if(!length(message))
@@ -87,7 +87,7 @@
 	set hidden = 1
 
 	display_typing_indicator()
-	var/message = input(usr, "", "me") as message|null
+	var/message = tgui_input_text(src, "Describe your character's action. Shift+Enter adds a line; Enter sends.", "Long emote", max_length = MAX_MESSAGE_BIGME, multiline = TRUE, encode = FALSE)
 	// If they don't type anything just drop the message.
 	clear_typing_indicator(length(message) ? "sent" : "closed input")
 	if(!length(message))
@@ -126,7 +126,7 @@
 #ifndef MATURESERVER
 	return
 #endif
-	var/message = input(usr, "", "subtle") as text|null
+	var/message = tgui_input_text(src, "Describe a subtle action. Enter sends; Escape cancels.", "Subtle emote", max_length = MAX_MESSAGE_LEN, encode = FALSE)
 	// If they don't type anything just drop the message.
 	if(!length(message))
 		return
@@ -148,7 +148,7 @@
 #ifndef MATURESERVER
 	return
 #endif
-	var/message = input(usr, "", "subtle") as message|null
+	var/message = tgui_input_text(src, "Describe a subtle action. Shift+Enter adds a line; Enter sends.", "Long subtle emote", max_length = MAX_MESSAGE_LEN, multiline = TRUE, encode = FALSE)
 	// If they don't type anything just drop the message.
 	if(!length(message))
 		return

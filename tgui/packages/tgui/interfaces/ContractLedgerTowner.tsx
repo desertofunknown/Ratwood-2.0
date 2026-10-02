@@ -48,15 +48,15 @@ type TownerData = {
 const toggleStyle = (selected: boolean): React.CSSProperties =>
   selected
     ? {
-        backgroundColor: 'hsl(28, 40%, 22%)',
-        color: 'hsl(46, 55%, 92%)',
-        border: '2px solid hsl(28, 40%, 12%)',
+        backgroundColor: 'var(--p-tab-active-bg)',
+        color: 'var(--p-ink)',
+        border: '2px solid var(--p-bg-shadow)',
         fontWeight: 'bold',
       }
     : {
-        backgroundColor: 'hsl(34, 28%, 70%)',
-        color: 'hsl(28, 40%, 18%)',
-        border: '2px solid hsl(28, 40%, 22%)',
+        backgroundColor: 'var(--p-button-bg)',
+        color: 'var(--p-ink)',
+        border: '2px solid var(--p-tab-active-bg)',
       };
 
 const RulesBlock = (props: { rules?: string[] }) => {
@@ -114,7 +114,7 @@ const ActivePostingCard = (props: {
   const purse = crown ? props.purseBalance : props.balance;
   const canAfford = purse >= cost;
   return (
-    <div className="ContractLedger__Card" style={{ width: 300 }}>
+    <div className="ContractLedger__Card">
       <div className="ContractLedger__CardTitle">{props.posting.label}</div>
       <div className="ContractLedger__CardObjective">{props.posting.blurb}</div>
       {crown && (
@@ -129,7 +129,11 @@ const ActivePostingCard = (props: {
       {varieties.length > 1 && (
         <div
           className="ContractLedger__CardRow"
-          style={{ marginTop: 8, flexWrap: 'wrap', justifyContent: 'flex-start' }}
+          style={{
+            marginTop: 8,
+            flexWrap: 'wrap',
+            justifyContent: 'flex-start',
+          }}
         >
           {varieties.map((v) => (
             <Button
@@ -214,7 +218,7 @@ const ViewOnlyPostingCard = (props: { posting: Posting }) => {
       : 'unknown';
   const varieties = props.posting.varieties || [];
   return (
-    <div className="ContractLedger__Card" style={{ width: 300, opacity: 0.65 }}>
+    <div className="ContractLedger__Card" style={{ opacity: 0.8 }}>
       <div className="ContractLedger__CardTitle">{props.posting.label}</div>
       <div className="ContractLedger__CardObjective">{props.posting.blurb}</div>
       <RulesBlock rules={props.posting.rules} />
@@ -299,7 +303,8 @@ export const TownerPostingPanel = () => {
         </span>
       </div>
       <div style={blurbStyle}>
-        Post a contract with your own mammons. Whomever takes it must deliver the parcel to you, who is the only one that can open the package.
+        Post a contract with your own mammons. Whomever takes it must deliver
+        the parcel to you, who is the only one that can open the package.
       </div>
 
       {yourPostings.length > 0 && (

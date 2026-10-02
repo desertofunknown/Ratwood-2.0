@@ -9,6 +9,7 @@ export const GoblinoidWrit = (props: {
   groupWord?: string | null;
   namePlural?: string | null;
   reward: number;
+  deposit: number;
   levyRate: number;
   levyExempt: boolean;
   guildCutRate: number;
@@ -26,6 +27,7 @@ export const GoblinoidWrit = (props: {
     groupWord,
     namePlural,
     reward,
+    deposit,
     levyRate,
     levyExempt,
     guildCutRate,
@@ -59,6 +61,7 @@ export const GoblinoidWrit = (props: {
         Return the writ to the Contract Ledger and the bounty of{' '}
         <RewardClause
           reward={reward}
+          deposit={deposit}
           levyRate={levyRate}
           levyExempt={levyExempt}
           guildCutRate={guildCutRate}

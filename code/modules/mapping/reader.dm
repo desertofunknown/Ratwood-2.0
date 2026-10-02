@@ -176,6 +176,7 @@
 	return parsed_map
 
 /// Parse a map, possibly cropping it.
+/// With measureOnly, calculate bounds without retaining model strings or grid sets.
 /datum/parsed_map/New(tfile, x_lower = -INFINITY, x_upper = INFINITY, y_lower = -INFINITY, y_upper=INFINITY, z_lower = -INFINITY, z_upper=INFINITY, measureOnly=FALSE)
 	// This proc sleeps for like 6 seconds. why?
 	// Is it file accesses? if so, can those be done ahead of time, async to save on time here? I wonder.
@@ -238,18 +239,11 @@
 			if(curr_z < z_lower || curr_z > z_upper)
 				continue
 
-			var/datum/grid_set/gridSet = new
-
-			gridSet.xcrd = curr_x
-			gridSet.ycrd = curr_y
-			gridSet.zcrd = curr_z
-
 			bounds[MAP_MINX] = min(bounds[MAP_MINX], curr_x)
-			bounds[MAP_MINZ] = min(bounds[MAP_MINZ], curr_y)
+			bounds[MAP_MINZ] = min(bounds[MAP_MINZ], curr_z)
 			bounds[MAP_MAXZ] = max(bounds[MAP_MAXZ], curr_z)
 
 			var/list/gridLines = splittext(regexOutput[6], "\n")
-			gridSet.gridLines = gridLines
 
 			var/leadingBlanks = 0
 			while(leadingBlanks < length(gridLines) && gridLines[++leadingBlanks] == "")
@@ -259,14 +253,12 @@
 			if(!length(gridLines)) // Skip it if only blank lines exist.
 				continue
 
-			gridSets += gridSet
-
 			if(gridLines[length(gridLines)] == "")
 				gridLines.Cut(length(gridLines)) // Remove only one blank line at the end.
 
-			bounds[MAP_MINY] = min(bounds[MAP_MINY], gridSet.ycrd)
-			gridSet.ycrd += length(gridLines) - 1 // Start at the top and work down
-			bounds[MAP_MAXY] = max(bounds[MAP_MAXY], gridSet.ycrd)
+			bounds[MAP_MINY] = min(bounds[MAP_MINY], curr_y)
+			var/top_y = curr_y + length(gridLines) - 1 // Start at the top and work down
+			bounds[MAP_MAXY] = max(bounds[MAP_MAXY], top_y)
 
 			if(!line_len)
 				line_len = length(gridLines[1])
@@ -276,6 +268,14 @@
 				maxx = max(maxx, curr_x + line_len / key_len - 1)
 
 			bounds[MAP_MAXX] = max(bounds[MAP_MAXX], maxx)
+
+			if(!measureOnly)
+				var/datum/grid_set/gridSet = new
+				gridSet.xcrd = curr_x
+				gridSet.ycrd = top_y
+				gridSet.zcrd = curr_z
+				gridSet.gridLines = gridLines
+				gridSets += gridSet
 		CHECK_TICK
 
 	// Indicate failure to parse any coordinates by nulling bounds

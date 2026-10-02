@@ -63,21 +63,7 @@
 		bundling_time = 2 //if legendary skill, the move_after is fast, 0.2 seconds
 	to_chat(user, span_warning("I start to collect [src]..."))
 	if(move_after(user, bundling_time, target = src))
-		var/fibercount = 0
-		for(var/obj/item/natural/fibers/F in get_turf(src))
-			fibercount++
-		while(fibercount > 0)
-			if(fibercount == 1)
-				new /obj/item/natural/fibers(get_turf(user))
-				fibercount--
-			else if(fibercount >= 2)
-				var/obj/item/natural/bundle/fibers/B = new(get_turf(user))
-				B.amount = clamp(fibercount, 2, 6)
-				B.update_bundle()
-				fibercount -= clamp(fibercount, 2, 6)
-				user.put_in_hands(B)
-		for(var/obj/item/natural/fibers/F in get_turf(src))
-			qdel(F)
+		collect_material_bundles(user, /obj/item/natural/fibers, /obj/item/natural/bundle/fibers, FALSE, TRUE)
 
 /obj/item/natural/silk
 	name = "silk"
@@ -102,20 +88,7 @@
 /obj/item/natural/silk/attack_right(mob/user)
 	to_chat(user, span_warning("I start to collect [src]..."))
 	if(move_after(user, bundling_time, target = src))
-		var/silkcount = 0
-		for(var/obj/item/natural/silk/F in get_turf(src))
-			silkcount++
-		while(silkcount > 0)
-			if(silkcount == 1)
-				new /obj/item/natural/silk(get_turf(user))
-				silkcount--
-			else if(silkcount >= 2)
-				var/obj/item/natural/bundle/silk/B = new(get_turf(user))
-				B.amount = clamp(silkcount, 2, 6)
-				B.update_bundle()
-				silkcount -= clamp(silkcount, 2, 6)
-		for(var/obj/item/natural/silk/F in get_turf(src))
-			qdel(F)
+		collect_material_bundles(user, /obj/item/natural/silk, /obj/item/natural/bundle/silk, FALSE, FALSE)
 
 #ifdef TESTSERVER
 
@@ -174,22 +147,8 @@
 		return
 	to_chat(user, span_warning("I start to collect [src]..."))
 	if(move_after(user, bundling_time, target = src))
-		var/clothcount = 0
-		for(var/obj/item/natural/cloth/F in get_turf(src))
-			clothcount++
-		while(clothcount > 0)
-			if(clothcount == 1)
-				new /obj/item/natural/cloth(get_turf(user))
-				clothcount--
-			else if(clothcount >= 2)
-				var/obj/item/natural/bundle/cloth/B = new(get_turf(user))
-				B.amount = clamp(clothcount, 2, 10)
-				B.update_bundle()
-				clothcount -= clamp(clothcount, 2, 10)
-				user.put_in_hands(B)
-		for(var/obj/item/natural/cloth/F in get_turf(src))
+		if(collect_material_bundles(user, /obj/item/natural/cloth, /obj/item/natural/bundle/cloth, FALSE, TRUE))
 			playsound(user, "rustle", 70, FALSE, -4)
-			qdel(F)
 
 /obj/item/natural/cloth/examine(mob/user)
 	. = ..()
@@ -478,7 +437,7 @@
 			// If there's only one stick left in the bundle...
 			if (amount == 1)
 				// Replace the bundle with a single stick
-				var/obj/item/ST = new stacktype(T)
+				var/obj/item/ST = create_single_material(T)
 				if(user.is_holding(src))
 					user.doUnEquip(src, TRUE, T, silent = TRUE)
 				qdel(src)
@@ -595,20 +554,6 @@
 /obj/item/natural/worms/attack_right(mob/user)
 	to_chat(user, span_warning("I start to collect [src]..."))
 	if(move_after(user, bundling_time, target = src))
-		var/wormcount = 0
-		for(var/obj/item/natural/worms/F in get_turf(src))
-			wormcount++
-		while(wormcount > 0)
-			if(wormcount == 1)
-				new /obj/item/natural/worms(user.drop_location())
-				wormcount--
-			else if(wormcount >= 2)
-				var/obj/item/natural/bundle/worms/B = new(user.drop_location())
-				B.amount = clamp(wormcount, 2, 12)
-				B.update_bundle()
-				wormcount -= clamp(wormcount, 2, 12)
-				user.put_in_hands(B)
-		for(var/obj/item/natural/worms/F in get_turf(src))
-			qdel(F)
+		collect_material_bundles(user, /obj/item/natural/worms, /obj/item/natural/bundle/worms, FALSE, TRUE)
 
 

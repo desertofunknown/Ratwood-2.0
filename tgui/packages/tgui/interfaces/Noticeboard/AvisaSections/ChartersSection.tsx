@@ -40,6 +40,9 @@ const CharterRow = ({ charter }: { charter: Charter }) => {
   const [open, setOpen] = useState(false);
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-expanded={open}
       style={{
         ...cardStyle,
         paddingTop: 4,
@@ -48,6 +51,25 @@ const CharterRow = ({ charter }: { charter: Charter }) => {
         cursor: 'pointer',
       }}
       onClick={() => setOpen((v) => !v)}
+      onKeyDown={(event) => {
+        if (
+          event.target !== event.currentTarget || event.defaultPrevented ||
+          event.altKey || event.ctrlKey || event.metaKey ||
+          (event.key !== 'Enter' && event.key !== ' ')
+        ) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat) event.currentTarget.click();
+      }}
+      onKeyUp={(event) => {
+        if (
+          event.target === event.currentTarget &&
+          (event.key === 'Enter' || event.key === ' ')
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
     >
       <div
         style={{ display: 'flex', alignItems: 'center', gap: 8 }}

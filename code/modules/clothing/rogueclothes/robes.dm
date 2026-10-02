@@ -60,16 +60,18 @@
 
 /obj/item/clothing/suit/roguetown/shirt/robe/priest/equipped(mob/living/user, slot)
 	..()
-	if(slot != SLOT_ARMOR|SLOT_SHIRT)
+	if(slot != SLOT_ARMOR && slot != SLOT_SHIRT)
 		return
 	if(!HAS_TRAIT(user, TRAIT_CHOSEN)) //Requires this cus it's a priest-only thing.
 		return
-	ADD_TRAIT(user, TRAIT_MONK_ROBE, TRAIT_GENERIC)
+	ADD_TRAIT(user, TRAIT_MONK_ROBE, REF(src))
 	to_chat(user, span_notice("With my vows to poverty and my vestments, I feel vigorous - empowered by my God!"))
 
 /obj/item/clothing/suit/roguetown/shirt/robe/priest/dropped(mob/living/user)
 	..()
-	REMOVE_TRAIT(user, TRAIT_MONK_ROBE, TRAIT_GENERIC)
+	if(!HAS_TRAIT_FROM(user, TRAIT_MONK_ROBE, REF(src)))
+		return
+	REMOVE_TRAIT(user, TRAIT_MONK_ROBE, REF(src))
 	to_chat(user, span_notice("I must lay down my robes and rest; even God's chosen must rest.."))
 
 //This for adventurers. Base type, same armor. No holy-bonus.
@@ -103,14 +105,18 @@
 
 /obj/item/clothing/suit/roguetown/shirt/robe/monk/holy/equipped(mob/living/user, slot)
 	. = ..()
+	if(slot != SLOT_ARMOR && slot != SLOT_SHIRT)
+		return
 	if(!HAS_TRAIT(user, TRAIT_CIVILIZEDBARBARIAN))	//Requires this cus it's a monk-only thing.
 		return
-	ADD_TRAIT(user, TRAIT_MONK_ROBE, TRAIT_GENERIC)
+	ADD_TRAIT(user, TRAIT_MONK_ROBE, REF(src))
 	to_chat(user, span_notice("With my vows to poverty and my vestments, I feel vigorous - empowered by my God!"))
 
 /obj/item/clothing/suit/roguetown/shirt/robe/monk/holy/dropped(mob/living/user)
 	..()
-	REMOVE_TRAIT(user, TRAIT_MONK_ROBE, TRAIT_GENERIC)
+	if(!HAS_TRAIT_FROM(user, TRAIT_MONK_ROBE, REF(src)))
+		return
+	REMOVE_TRAIT(user, TRAIT_MONK_ROBE, REF(src))
 	to_chat(user, span_notice("I must lay down my robes and rest; even God's chosen must rest.."))
 
 /obj/item/clothing/suit/roguetown/shirt/robe/courtmage

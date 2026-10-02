@@ -29,6 +29,7 @@ import {
   removeChatPage,
   saveChatToDisk,
   toggleAcceptedType,
+  updateChatPage,
   updateMessageCount,
 } from './actions';
 import { MAX_PERSISTED_MESSAGES, MESSAGE_SAVE_INTERVAL } from './constants';
@@ -41,6 +42,8 @@ const FORBID_TAGS = ['a', 'iframe', 'link', 'video'];
 
 const saveChatToStorage = async (store: Store) => {
   const state = selectChat(store.getState());
+  // Never overwrite saved tabs while their initial read is still pending.
+  if (!state.initialized) return;
   const fromIndex = Math.max(
     0,
     chatRenderer.messages.length - MAX_PERSISTED_MESSAGES,
@@ -86,8 +89,11 @@ const loadChatFromStorage = async (store: Store) => {
 export const chatMiddleware = (store: Store) => {
   let initialized = false;
   let loaded = false;
-  const sequences: number[] = [];
-  const sequences_requested: number[] = [];
+  // Keep this window aligned with CHAT_RELIABILITY_HISTORY_SIZE on the server.
+  const historySize = 5;
+  const sequences = new Set<number>();
+  const requested = new Set<number>();
+  let highestSequence: number | undefined;
   chatRenderer.events.on('batchProcessed', (countByType) => {
     // Use this flag to workaround unread messages caused by
     // loading them from storage. Side effect of that, is that
@@ -108,7 +114,10 @@ export const chatMiddleware = (store: Store) => {
         saveChatToStorage(store);
       }, MESSAGE_SAVE_INTERVAL);
       initialized = true;
-      loadChatFromStorage(store);
+      loadChatFromStorage(store).catch((error) => {
+        console.error('Unable to restore saved chat settings:', error);
+        store.dispatch(loadChat());
+      });
     }
     if (type === 'chat/message') {
       let payload_obj;
@@ -119,34 +128,36 @@ export const chatMiddleware = (store: Store) => {
       }
 
       const sequence: number = payload_obj.sequence;
-      if (sequences.includes(sequence)) {
+      if (!Number.isInteger(sequence) || sequence < 0) {
         return;
       }
-
-      const sequence_count = sequences.length;
-      seq_check: if (sequence_count > 0) {
-        if (sequences_requested.includes(sequence)) {
-          sequences_requested.splice(sequences_requested.indexOf(sequence), 1);
-          // if we are receiving a message we requested, we can stop reliability checks
-          break seq_check;
-        }
-
-        // cannot do reliability if we don't have any messages
-        const expected_sequence = sequences[sequence_count - 1] + 1;
-        if (sequence !== expected_sequence) {
-          for (
-            let requesting = expected_sequence;
-            requesting < sequence;
-            requesting++
-          ) {
-            sequences_requested.push(requesting);
-            Byond.sendMessage('chat/resend', requesting);
+      const oldest = Math.max(0, (highestSequence ?? sequence) - historySize + 1);
+      if (sequence < oldest || sequences.has(sequence)) {
+        return;
+      }
+      if (highestSequence !== undefined && sequence > highestSequence + 1) {
+        const firstMissing = Math.max(
+          highestSequence + 1,
+          sequence - historySize + 1,
+        );
+        for (let missing = firstMissing; missing < sequence; missing++) {
+          if (!sequences.has(missing) && !requested.has(missing)) {
+            requested.add(missing);
+            Byond.sendMessage('chat/resend', missing);
           }
         }
       }
-
+      highestSequence = Math.max(highestSequence ?? sequence, sequence);
+      requested.delete(sequence);
+      sequences.add(sequence);
+      for (const retained of [sequences, requested]) {
+        for (const previous of retained) {
+          if (previous < highestSequence - historySize + 1) {
+            retained.delete(previous);
+          }
+        }
+      }
       chatRenderer.processBatch([payload_obj.content]);
-      sequences.push(sequence);
       return;
     }
     if (type === loadChat.type) {
@@ -161,13 +172,18 @@ export const chatMiddleware = (store: Store) => {
       type === changeChatPage.type ||
       type === addChatPage.type ||
       type === removeChatPage.type ||
+      type === updateChatPage.type ||
       type === toggleAcceptedType.type ||
       type === moveChatPageLeft.type ||
       type === moveChatPageRight.type
     ) {
       next(action);
-      const page = selectCurrentChatPage(store.getState());
-      chatRenderer.changePage(page);
+      if (type !== updateChatPage.type) {
+        const page = selectCurrentChatPage(store.getState());
+        chatRenderer.changePage(page);
+      }
+      // Tab edits should survive closing or reloading the panel immediately.
+      storage.set('chat-state', selectChat(store.getState()));
       return;
     }
     if (type === rebuildChat.type) {
@@ -184,6 +200,10 @@ export const chatMiddleware = (store: Store) => {
       type === importSettings.type
     ) {
       next(action);
+      if (type === importSettings.type) {
+        chatRenderer.changePage(selectCurrentChatPage(store.getState()));
+        storage.set('chat-state', selectChat(store.getState()));
+      }
       const nextSettings = selectSettings(store.getState());
       chatRenderer.setHighlight(
         nextSettings.highlightSettings,
@@ -193,6 +213,9 @@ export const chatMiddleware = (store: Store) => {
       return;
     }
     if (type === 'roundrestart') {
+      highestSequence = undefined;
+      sequences.clear();
+      requested.clear();
       // Save chat as soon as possible
       saveChatToStorage(store);
       return next(action);
