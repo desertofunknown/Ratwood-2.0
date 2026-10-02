@@ -358,34 +358,30 @@
 	LAZYINITLIST(src.effect_str)
 	var/list/effect_str = src.effect_str // local vars are faster to access than member vars
 	SETUP_CORNERS_CACHE(src)
-	var/list/L
-	if (needs_update == LIGHTING_VIS_UPDATE)
-		for (C as anything in corners - effect_str) // New corners
-			APPLY_CORNER(C)
-			if(. != 0)
-				LAZYADD(C.affecting, src)
-				effect_str[C] = .
-	else
-		L = corners - effect_str
-		for (C as anything in L) // New corners
-			APPLY_CORNER(C)
-			if(. != 0)
-				LAZYADD(C.affecting, src)
-				effect_str[C] = .
+	var/had_corners = length(effect_str)
+	// A newly applied light has no retained or departed contributions to compare.
+	var/list/new_corners = had_corners ? corners - effect_str : corners
+	for (C as anything in new_corners)
+		APPLY_CORNER(C)
+		if(. != 0)
+			LAZYADD(C.affecting, src)
+			effect_str[C] = .
 
-		for (C as anything in corners - L) // Existing corners
-			APPLY_CORNER(C)
-			if (. != 0)
-				effect_str[C] = .
-			else
-				LAZYREMOVE(C.affecting, src)
-				effect_str -= C
+	if (had_corners)
+		if (needs_update != LIGHTING_VIS_UPDATE)
+			for (C as anything in corners - new_corners) // Existing corners
+				APPLY_CORNER(C)
+				if (. != 0)
+					effect_str[C] = .
+				else
+					LAZYREMOVE(C.affecting, src)
+					effect_str -= C
 
-	L = effect_str - corners
-	for (C as anything in L) // Old, now gone, corners.
-		REMOVE_CORNER(C)
-		LAZYREMOVE(C.affecting, src)
-	effect_str -= L
+		var/list/old_corners = effect_str - corners
+		for (C as anything in old_corners)
+			REMOVE_CORNER(C)
+			LAZYREMOVE(C.affecting, src)
+		effect_str -= old_corners
 
 	applied_lum_r = lum_r
 	applied_lum_g = lum_g

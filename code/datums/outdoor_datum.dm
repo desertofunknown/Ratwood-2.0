@@ -83,10 +83,9 @@ Sunlight System
 		disable_sunlight()
 
 #define hardSun 0.5 /* our hyperboloidy modifyer funky times - I wrote this in like, 2020 and can't remember how it works - I think it makes a 3D cone shape with a flat top */
+
+
 /* calculate the indoor corners we are affecting */
-#define SUN_FALLOFF(C, T) (1 - CLAMP01(sqrt((C.x - T.x) ** 2 + (C.y - T.y) ** 2 - hardSun) / max(1, GLOB.GLOBAL_LIGHT_RANGE)))
-
-
 /datum/outdoor_info/proc/calc_sunlight_spread()
 
 	var/datum/lighting_corner/C
@@ -112,11 +111,15 @@ Sunlight System
 	LAZYINITLIST(affecting_corners)
 	var/list/L = corners - affecting_corners
 	affecting_corners += L
+	var/source_x = source_turf.x
+	var/source_y = source_turf.y
+	var/sunlight_range = max(1, GLOB.GLOBAL_LIGHT_RANGE)
 	for (C in L) // new corners
 		C.globAffect ||= alist() // todo: make lazyalist macros? alazylist?
-		C.globAffect[src] = SUN_FALLOFF(C,source_turf)
-		if(C.globAffect[src] > C.sunFalloff) /* if are closer than current dist, update the corner */
-			C.sunFalloff = C.globAffect[src]
+		var/falloff = 1 - CLAMP01(sqrt((C.x - source_x) ** 2 + (C.y - source_y) ** 2 - hardSun) / sunlight_range)
+		C.globAffect[src] = falloff
+		if(falloff > C.sunFalloff) /* if are closer than current dist, update the corner */
+			C.sunFalloff = falloff
 			for(var/turf/master as anything in C.masters)
 				SSoutdoor_effects.queue_corner(master)
 
@@ -143,7 +146,7 @@ Sunlight System
 /turf/var/tmp/datum/outdoor_info/outdoor_effect /* a turf's sunlight info */
 /turf/var/tmp/sunlight_work_queued = FALSE
 /turf/var/tmp/sunlight_corner_queued = FALSE
-/turf/var/turf/pseudo_roof /* our roof turf - may be a path for top z level, or a ref to the turf above*/
+/turf/var/turf/pseudo_roof // Explicit roof path, TRUE for tent coverage, or a cached turf above.
 
 //non-weatherproof turfs
 /turf/var/weatherproof = TRUE
@@ -163,16 +166,16 @@ Sunlight System
 		return
 	SSoutdoor_effects.clear_ceiling_cache()
 
-	/* remove roof refs (not path for psuedo roof) so we can recalculate it */
-	if(pseudo_roof && !ispath(pseudo_roof))
+	// Recalculate cached roof turfs, retaining explicit roofs such as tent coverage.
+	if(isturf(pseudo_roof))
 		pseudo_roof = null
 
 	//Add ourselves (we might not have corners initialized, and this handles it)
 	SSoutdoor_effects.queue_turf(src)
 
-	for(var/datum/lighting_corner/corner in corners)
-		for(var/turf/T as anything in corner.masters)
-			SSoutdoor_effects.queue_turf(T)
+	// A newly roofed tile also changes the sky border before it has lighting corners.
+	for(var/turf/T in orange(1, src))
+		SSoutdoor_effects.queue_turf(T)
 
 	var/turf/T = GET_TURF_BELOW(src)
 	if(T)
@@ -259,9 +262,10 @@ Sunlight System
 				. &= ~CEILING_SKY_VISIBLE
 			. |= ceilingStat & CEILING_WEATHERPROOF
 
-	var/area/turf_area = get_area(src)
-	if(!ceiling && !turf_area.outdoors)
-		. = CEILING_WEATHERPROOF
+	if(!ceiling)
+		var/area/turf_area = loc
+		if(!turf_area.outdoors)
+			. = CEILING_WEATHERPROOF
 
 #undef CEILING_SKY_VISIBLE
 #undef CEILING_WEATHERPROOF

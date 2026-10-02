@@ -226,15 +226,17 @@ GLOBAL_LIST_EMPTY(teleportlocs)
  * Ensures the item is added to the SSmapping.areas_in_z list for this z
  */
 /area/proc/reg_in_areas_in_z()
-	if(!length(contents))
+	// A mapped coordinate establishes turf membership without scanning area contents.
+	var/area_z = z
+	if(!area_z)
+		if(length(contents))
+			WARNING("No z found for [src]")
 		return
 	var/list/areas_in_z = SSmapping.areas_in_z
-	if(!z)
-		WARNING("No z found for [src]")
-		return
-	if(!areas_in_z["[z]"])
-		areas_in_z["[z]"] = list()
-	areas_in_z["[z]"] += src
+	var/z_key = "[area_z]"
+	if(!areas_in_z[z_key])
+		areas_in_z[z_key] = list()
+	areas_in_z[z_key] += src
 
 /**
  * Destroy an area and clean it up

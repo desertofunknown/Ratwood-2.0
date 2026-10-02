@@ -7,29 +7,48 @@ SUBSYSTEM_DEF(lighting)
 	var/static/list/sources_queue = list() // List of lighting sources queued for update.
 	var/static/list/corners_queue = list() // List of lighting corners queued for update.
 	var/static/list/objects_queue = list() // List of lighting objects queued for update.
+	var/static/list/overlay_queue = list() // Portable lights affected by opacity changes.
+	var/batch_underlays = FALSE
+	var/list/pending_underlay_turfs
 	processing_flag = PROCESSING_LIGHTING
 
 /datum/controller/subsystem/lighting/stat_entry()
-	..("L:[length(sources_queue)]|C:[length(corners_queue)]|O:[length(objects_queue)]")
+	..("L:[length(sources_queue)]|C:[length(corners_queue)]|O:[length(objects_queue)]|M:[length(overlay_queue)]")
 
 
 /datum/controller/subsystem/lighting/Initialize(timeofday)
-	if(!initialized)
-		if (CONFIG_GET(flag/starlight))
-			for(var/I in GLOB.sortedAreas)
-				var/area/A = I
-				if (A.dynamic_lighting == DYNAMIC_LIGHTING_IFSTARLIGHT)
-					A.luminosity = 0
+	try
+		if(!initialized)
+			// Outdoor initialization completes the same turfs immediately after lighting.
+			batch_underlays = !SSoutdoor_effects.initialized
+			if(batch_underlays)
+				pending_underlay_turfs = list()
+			if (CONFIG_GET(flag/starlight))
+				for(var/I in GLOB.sortedAreas)
+					var/area/A = I
+					if (A.dynamic_lighting == DYNAMIC_LIGHTING_IFSTARLIGHT)
+						A.luminosity = 0
 
-		create_all_lighting_objects()
-		initialized = TRUE
+			create_all_lighting_objects()
+			initialized = TRUE
 
-	fire(FALSE, TRUE)
+		fire(FALSE, TRUE)
+	catch(var/exception/error)
+		finish_underlay_batch()
+		throw error
 
 	return ..()
 
+/datum/controller/subsystem/lighting/proc/finish_underlay_batch()
+	batch_underlays = FALSE
+	var/list/pending = pending_underlay_turfs
+	pending_underlay_turfs = null
+	for(var/turf/T as anything in pending)
+		T?.flush_lighting_underlays()
+		CHECK_TICK
+
 /datum/controller/subsystem/lighting/fire(resumed, init_tick_checks)
-	MC_SPLIT_TICK_INIT(3)
+	MC_SPLIT_TICK_INIT(4)
 	if(!init_tick_checks)
 		MC_SPLIT_TICK
 	var/list/queue = sources_queue
@@ -103,6 +122,25 @@ SUBSYSTEM_DEF(lighting)
 	if(current_index)
 		queue.Cut(1, current_index + 1)
 		current_index = 0
+	if(!init_tick_checks)
+		MC_SPLIT_TICK
+
+	queue = overlay_queue
+	while(current_index < length(queue))
+		current_index += 1
+		var/datum/component/overlay_lighting/overlay_light = queue[current_index]
+		overlay_light.visibility_update_queued = FALSE
+		overlay_light.make_luminosity_update()
+		if(init_tick_checks)
+			if(!TICK_CHECK)
+				continue
+			queue.Cut(1, current_index + 1)
+			current_index = 0
+			stoplag()
+		else if(MC_TICK_CHECK)
+			break
+	if(current_index)
+		queue.Cut(1, current_index + 1)
 	if(!init_tick_checks)
 		MC_SPLIT_TICK
 

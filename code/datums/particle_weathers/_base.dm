@@ -103,6 +103,7 @@
 	var/severityStepsTaken = 0
 
 	var/running = FALSE
+	var/winding_down = FALSE
 
 	//Current severity - used for scaling effects, particle appearance, etc.
 	var/severity = 0
@@ -188,7 +189,7 @@
 	GLOB.forecast = null
 
 /datum/particle_weather/proc/ChangeSeverity()
-	if(!running)
+	if(!running || winding_down)
 		return
 	severityStepsTaken++
 
@@ -220,14 +221,17 @@
  *
  */
 /datum/particle_weather/proc/wind_down()
-	if(QDELETED(src))
+	if(QDELETED(src) || winding_down)
 		return
+	winding_down = TRUE
 	severity = 0
 	if(SSParticleWeather.particleEffect)
-		SSParticleWeather.particleEffect.animateSeverity(severityMod())
+		SSParticleWeather.particleEffect.animateSeverity(0)
 
 		//Wait for the last particle to fade, then qdel yourself
 		addtimer(CALLBACK(src, PROC_REF(end)), SSParticleWeather.particleEffect.lifespan + SSParticleWeather.particleEffect.fade)
+	else
+		end()
 
 
 
@@ -246,19 +250,15 @@
 	SSParticleWeather.stopWeather()
 
 
+/turf/proc/is_weather_exposed()
+	return outdoor_effect && !outdoor_effect.weatherproof
+
 /**
  * Returns TRUE if the living mob can hear the weather (you might be immune, but you get to listen to the pitter patter)
  */
 /datum/particle_weather/proc/can_weather(mob/living/mob_to_check)
 	var/turf/mob_turf = get_turf(mob_to_check)
-
-	if(!mob_turf)
-		return FALSE
-
-	if(!mob_turf.outdoor_effect || mob_turf.outdoor_effect.weatherproof)
-		return FALSE
-
-	return TRUE
+	return mob_turf?.is_weather_exposed() || FALSE
 
 /**
  * Returns TRUE if the living mob can be affected by the weather
@@ -310,15 +310,6 @@
 
 //Not using looping_sounds properly. somebody smart should fix this //actually this kind of works, just done a bit backwards
 /datum/particle_weather/proc/weather_sound_effect(mob/living/L, outside = TRUE)
-	var/datum/looping_sound/currentSound = currentSounds[L]
-	if(currentSound)
-		//SET VOLUME
-		if(scale_vol_with_severity)
-			currentSound.volume = initial(currentSound.volume) * severityMod()
-		if(!currentSound.loop_started) //don't restart already playing sounds
-			currentSound.start()
-		return
-
 	var/tempSound
 
 	if(!outside)
@@ -326,12 +317,20 @@
 	else
 		tempSound = scale_range_pick(minSeverity, maxSeverity, severity, weather_sounds)
 
-	if(tempSound)
+	var/datum/looping_sound/currentSound = currentSounds[L]
+	if(currentSound && currentSound.type != tempSound)
+		stop_weather_sound_effect(L)
+		currentSound = null
+	if(!tempSound)
+		return
+
+	if(!currentSound)
 		currentSound = new tempSound(L, FALSE, TRUE, CHANNEL_WEATHER)
 		currentSounds[L] = currentSound
-		//SET VOLUME
-		if(scale_vol_with_severity)
-			currentSound.volume = initial(currentSound.volume) * severityMod()
+	//SET VOLUME
+	if(scale_vol_with_severity)
+		currentSound.volume = initial(currentSound.volume) * severityMod()
+	if(!currentSound.loop_started) //don't restart already playing sounds
 		currentSound.start()
 
 /datum/particle_weather/proc/stop_weather_sound_effect(mob/living/L)
@@ -349,13 +348,7 @@
 
 /datum/particle_weather/proc/can_weather_act_obj(obj/obj_to_check)
 	var/turf/obj_turf = get_turf(obj_to_check)
-	if(!obj_turf)
-		return FALSE
-	if(!obj_turf.outdoor_effect)
-		return FALSE
-	if(obj_turf.outdoor_effect?.weatherproof)
-		return FALSE
-	return TRUE
+	return obj_turf?.is_weather_exposed() || FALSE
 
 /client/proc/run_particle_weather()
 	set category = "-GameMaster-"

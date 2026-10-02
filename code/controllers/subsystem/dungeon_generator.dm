@@ -85,17 +85,23 @@ SUBSYSTEM_DEF(dungeon_generator)
 
 	if(!try_pickedtype_first(picked_type, direction, creator, looking_for_love))
 		var/list/true_list = created_types.Copy()
+		var/total_weight = get_candidate_weight_sum(true_list)
+		var/list/excluded_types
 		while(picking)
 			if(!GET_TURF_ABOVE(creator))
 				message_admins("[ADMIN_JMP(creator)] A dungeon piece was set to spawn on a top level z. This is not intended, their is a bad template.")
 				return
 			if(!length(true_list))
 				return
-			var/datum/map_template/dungeon/template = pickweight(true_list)
+			var/datum/map_template/dungeon/template = pick_candidate(true_list, total_weight)
+			if(!isnull(total_weight))
+				total_weight -= true_list[template]
 			true_list -= template
 			if(is_abstract(template))
 				continue
-			if(is_type_in_list(template, list(subtypesof(picked_type) + subtypesof(/datum/map_template/dungeon/entry))))
+			if(!excluded_types)
+				excluded_types = list(subtypesof(picked_type) + subtypesof(/datum/map_template/dungeon/entry))
+			if(is_type_in_list(template, excluded_types))
 				continue
 			var/turf/true_spawn
 			switch(direction)
@@ -124,6 +130,7 @@ SUBSYSTEM_DEF(dungeon_generator)
 					if(fail)
 						continue
 					if(!template.load(true_spawn))
+						total_weight = null
 						continue
 
 				if(NORTH)
@@ -153,6 +160,7 @@ SUBSYSTEM_DEF(dungeon_generator)
 					if(fail)
 						continue
 					if(!template.load(true_spawn))
+						total_weight = null
 						continue
 
 				if(SOUTH)
@@ -180,6 +188,7 @@ SUBSYSTEM_DEF(dungeon_generator)
 					if(fail)
 						continue
 					if(!template.load(true_spawn))
+						total_weight = null
 						continue
 
 				if(EAST)
@@ -209,6 +218,7 @@ SUBSYSTEM_DEF(dungeon_generator)
 					if(fail)
 						continue
 					if(!template.load(true_spawn))
+						total_weight = null
 						continue
 
 			picking = FALSE
@@ -220,14 +230,20 @@ SUBSYSTEM_DEF(dungeon_generator)
 	var/picking = TRUE
 
 	var/list/true_list = created_types.Copy()
+	var/total_weight = get_candidate_weight_sum(true_list)
+	var/list/picked_subtypes
 	while(picking)
 		if(!length(true_list))
 			return FALSE
-		var/datum/map_template/dungeon/template = pickweight(true_list)
+		var/datum/map_template/dungeon/template = pick_candidate(true_list, total_weight)
+		if(!isnull(total_weight))
+			total_weight -= true_list[template]
 		true_list -= template
 		if(is_abstract(template))
 			continue
-		if(!is_type_in_list(template, subtypesof(picked_type)))
+		if(!picked_subtypes)
+			picked_subtypes = subtypesof(picked_type)
+		if(!is_type_in_list(template, picked_subtypes))
 			continue
 		var/turf/true_spawn
 		switch(direction)
@@ -256,6 +272,7 @@ SUBSYSTEM_DEF(dungeon_generator)
 				if(fail)
 					continue
 				if(!template.load(true_spawn))
+					total_weight = null
 					continue
 
 			if(NORTH)
@@ -285,6 +302,7 @@ SUBSYSTEM_DEF(dungeon_generator)
 				if(fail)
 					continue
 				if(!template.load(true_spawn))
+					total_weight = null
 					continue
 
 			if(SOUTH)
@@ -312,6 +330,7 @@ SUBSYSTEM_DEF(dungeon_generator)
 				if(fail)
 					continue
 				if(!template.load(true_spawn))
+					total_weight = null
 					continue
 
 			if(EAST)
@@ -341,6 +360,7 @@ SUBSYSTEM_DEF(dungeon_generator)
 				if(fail)
 					continue
 				if(!template.load(true_spawn))
+					total_weight = null
 					continue
 
 		picking = FALSE
@@ -351,3 +371,31 @@ SUBSYSTEM_DEF(dungeon_generator)
 		created_since = 0
 		unlinked_dungeon_length--
 	return TRUE
+
+// Only exact integer totals can be updated by subtraction without changing the draw.
+// Failed loads may yield; retries then use the ordinary picker instead.
+/datum/controller/subsystem/dungeon_generator/proc/get_candidate_weight_sum(list/candidates)
+	var/total_weight = 0
+	var/list/seen = list()
+	for(var/datum/map_template/dungeon/template as anything in candidates)
+		if(!istype(template) || seen[template])
+			return null
+		seen[template] = TRUE
+		var/weight = candidates[template]
+		if(!weight)
+			weight = 1
+			candidates[template] = weight
+		if(!isnum(weight) || weight < 1 || weight != round(weight) || weight > SHORT_REAL_LIMIT - total_weight)
+			return null
+		total_weight += weight
+	return total_weight
+
+/datum/controller/subsystem/dungeon_generator/proc/pick_candidate(list/candidates, total_weight)
+	if(isnull(total_weight))
+		return pickweight(candidates)
+	var/draw = rand(1, total_weight)
+	for(var/datum/map_template/dungeon/template as anything in candidates)
+		draw -= candidates[template]
+		if(draw <= 0)
+			return template
+	return null

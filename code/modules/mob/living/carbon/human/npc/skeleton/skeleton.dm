@@ -79,6 +79,17 @@
 	skeletonize()
 
 /mob/living/carbon/human/species/skeleton/proc/skeletonize()
+	defer_bodypart_updates()
+	// Render once after the limbs and eyes have reached their skeletal state.
+	try
+		. = skeletonize_internal()
+	catch(var/exception/error)
+		resume_bodypart_updates()
+		throw error
+	resume_bodypart_updates()
+
+/mob/living/carbon/human/species/skeleton/proc/skeletonize_internal()
+	PRIVATE_PROC(TRUE)
 	mob_biotypes |= MOB_UNDEAD
 	var/obj/item/bodypart/O = src.get_bodypart(BODY_ZONE_R_ARM)
 	if(O)

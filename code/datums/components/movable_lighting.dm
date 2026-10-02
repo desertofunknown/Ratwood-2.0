@@ -52,6 +52,9 @@
 	var/obj/effect/overlay/light_visible/visible_mask
 	///Lazy list to track the turfs being affected by our light, to determine their visibility.
 	var/list/turf/affected_turfs
+	/// Holder location used to find this light when nearby opacity changes.
+	var/turf/source_turf
+	var/visibility_update_queued = FALSE
 	///Movable atom currently holding the light. Parent might be a flashlight, for example, but that might be held by a mob or something else.
 	var/atom/movable/current_holder
 	///Movable atom the parent is attached to. For example, a flashlight into a helmet or gun. We'll need to track the thing the parent is attached to as if it were the parent itself.
@@ -128,6 +131,12 @@
 
 ///Clears the affected_turfs lazylist, removing from its contents the effects of being near the light.
 /datum/component/overlay_lighting/proc/clean_old_turfs()
+	if(visibility_update_queued)
+		SSlighting.overlay_queue -= src
+		visibility_update_queued = FALSE
+	if(source_turf)
+		LAZYREMOVE(source_turf.overlay_light_sources, src)
+		source_turf = null
 	for(var/turf/lit_turf as anything in affected_turfs)
 		lit_turf.dynamic_lumcount -= lum_power
 	affected_turfs = null
@@ -135,8 +144,10 @@
 
 ///Populates the affected_turfs lazylist, adding to its contents the effects of being near the light.
 /datum/component/overlay_lighting/proc/get_new_turfs()
-	if(!current_holder)
+	if(!isturf(current_holder?.loc))
 		return
+	source_turf = current_holder.loc
+	LAZYADD(source_turf.overlay_light_sources, src)
 	LAZYINITLIST(affected_turfs)
 	if(range <= 2) // lumcount_range is just range rounded up, so range <= 2 is basically lumcount_range < 3
 		//Range here is 1 because actual range of lighting mask is 1 tile even if it says that range is 2
@@ -155,6 +166,13 @@
 	if(!isturf(current_holder?.loc))
 		return
 	get_new_turfs()
+
+/// Defer opacity changes until turf replacement and movement have finished.
+/datum/component/overlay_lighting/proc/queue_visibility_update()
+	if(visibility_update_queued || !(overlay_lighting_flags & LIGHTING_ON))
+		return
+	visibility_update_queued = TRUE
+	SSlighting.overlay_queue += src
 
 
 ///Adds the luminosity and source for the afected movable atoms to keep track of their visibility.
@@ -279,17 +297,17 @@
 		return
 	if(range == 0)
 		turn_off()
-	range = clamp(CEILING(new_outer_range, 0.5), 1, 6)
+	range = clamp(CEILING(new_outer_range, 0.5), 1, MOVABLE_LIGHT_MAX_RANGE)
 	var/pixel_bounds = ((range - 1) * 64) + 32
 	lumcount_range = CEILING(range, 1)
 	visible_mask.icon = light_overlays["[pixel_bounds]"]
 	if(pixel_bounds == 32)
 		visible_mask.transform = null
-		return
-	var/offset = (pixel_bounds - 32) * 0.5
-	var/matrix/transform = new
-	transform.Translate(-offset, -offset)
-	visible_mask.transform = transform
+	else
+		var/offset = (pixel_bounds - 32) * 0.5
+		var/matrix/transform = new
+		transform.Translate(-offset, -offset)
+		visible_mask.transform = transform
 	if(overlay_lighting_flags & LIGHTING_ON)
 		make_luminosity_update()
 

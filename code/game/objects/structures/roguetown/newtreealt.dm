@@ -132,7 +132,7 @@
 	M.dir = dir
 	add_overlay(M)
 
-/obj/structure/flora/newtreealt/Initialize(mapload)
+/obj/structure/flora/newtreealt/Initialize(mapload, defer_initial_icon = FALSE)
 	. = ..()
 	tree_type = rand(1,2)
 	dir = pick(GLOB.cardinals)
@@ -142,7 +142,8 @@
 	else
 		build_branches()
 		build_leafs()
-	update_icon()
+	if(!defer_initial_icon)
+		update_icon()
 	if(istype(loc, /turf/open/floor/rogue/grass))
 		var/turf/T = loc
 		T.ChangeTurf(/turf/open/floor/rogue/dirt)
@@ -150,7 +151,8 @@
 /obj/structure/flora/newtreealt/proc/build_trees()
 	var/turf/target = get_step_multiz(src, UP)
 	if(istype(target, /turf/open/transparent/openspace))
-		var/obj/structure/flora/newtreealt/T = new(target)
+		// Draw the upper trunk once its base foliage has been chosen.
+		var/obj/structure/flora/newtreealt/T = new(target, TRUE)
 		T.base_state = "center-leaf[rand(1,2)]"
 		T.update_icon()
 

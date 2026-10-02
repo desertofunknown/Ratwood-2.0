@@ -67,8 +67,9 @@
 		if(AM.can_be_unanchored && !AM.anchored)
 			return 0
 
+	var/area/source_area = get_area(A)
 	for(var/direction in GLOB.cardinals)
-		AM = find_type_in_direction(A, direction)
+		AM = find_type_in_direction(A, direction, source_area)
 		if(AM == NULLTURF_BORDER)
 			if((A.smooth & SMOOTH_BORDER))
 				adjacencies |= 1 << direction
@@ -78,14 +79,14 @@
 	if(A.smooth_diag)
 		if(adjacencies & N_NORTH)
 			if(adjacencies & N_WEST)
-				AM = find_type_in_direction(A, NORTHWEST)
+				AM = find_type_in_direction(A, NORTHWEST, source_area)
 				if(AM == NULLTURF_BORDER)
 					if((A.smooth & SMOOTH_BORDER))
 						adjacencies |= N_NORTHWEST
 				else if( (AM && !istype(AM)) || (istype(AM) && AM.anchored) )
 					adjacencies |= N_NORTHWEST
 			if(adjacencies & N_EAST)
-				AM = find_type_in_direction(A, NORTHEAST)
+				AM = find_type_in_direction(A, NORTHEAST, source_area)
 				if(AM == NULLTURF_BORDER)
 					if((A.smooth & SMOOTH_BORDER))
 						adjacencies |= N_NORTHEAST
@@ -94,14 +95,14 @@
 
 		if(adjacencies & N_SOUTH)
 			if(adjacencies & N_WEST)
-				AM = find_type_in_direction(A, SOUTHWEST)
+				AM = find_type_in_direction(A, SOUTHWEST, source_area)
 				if(AM == NULLTURF_BORDER)
 					if((A.smooth & SMOOTH_BORDER))
 						adjacencies |= N_SOUTHWEST
 				else if( (AM && !istype(AM)) || (istype(AM) && AM.anchored) )
 					adjacencies |= N_SOUTHWEST
 			if(adjacencies & N_EAST)
-				AM = find_type_in_direction(A, SOUTHEAST)
+				AM = find_type_in_direction(A, SOUTHEAST, source_area)
 				if(AM == NULLTURF_BORDER)
 					if((A.smooth & SMOOTH_BORDER))
 						adjacencies |= N_SOUTHEAST
@@ -179,6 +180,7 @@
 			if(!T.get_smooth_underlay_icon(underlay_appearance, src, turned_adjacency) && !get_smooth_underlay_icon(underlay_appearance, src, turned_adjacency))
 				underlay_appearance.icon = DEFAULT_UNDERLAY_ICON
 				underlay_appearance.icon_state = DEFAULT_UNDERLAY_ICON_STATE
+		flush_lighting_underlays()
 		underlays = U
 
 /atom/proc/cardinal_smooth(adjacencies)
@@ -234,6 +236,14 @@
 		else if(adjacencies & N_EAST)
 			se = "4-e"
 
+	if(!top_left_corner && !top_right_corner && !bottom_right_corner && !bottom_left_corner)
+		top_left_corner = nw
+		top_right_corner = ne
+		bottom_right_corner = sw
+		bottom_left_corner = se
+		add_overlay(list(nw, ne, sw, se))
+		return
+
 	var/list/New
 
 	if(top_left_corner != nw)
@@ -259,13 +269,14 @@
 	if(New)
 		add_overlay(New)
 
-/proc/find_type_in_direction(atom/source, direction)
+/proc/find_type_in_direction(atom/source, direction, area/source_area)
 	var/turf/target_turf = get_step(source, direction)
 	if(!target_turf)
 		return NULLTURF_BORDER
 
-	var/area/target_area = get_area(target_turf)
-	var/area/source_area = get_area(source)
+	var/area/target_area = target_turf.loc
+	if(!source_area)
+		source_area = get_area(source)
 	if(source_area.canSmoothWithAreas && !is_type_in_typecache(target_area, source_area.canSmoothWithAreas))
 		return null
 	if(target_area.canSmoothWithAreas && !is_type_in_typecache(source_area, target_area.canSmoothWithAreas))

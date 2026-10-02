@@ -46,6 +46,7 @@ GLOBAL_DATUM_INIT(lighting_underlay_transparent, /mutable_appearance, create_lig
 
 	SSlighting.objects_queue -= src
 	if(isturf(affected_turf))
+		affected_turf.flush_lighting_underlays()
 		affected_turf.lighting_object = null
 		affected_turf.luminosity = 1
 		affected_turf.underlays -= current_underlay
@@ -108,7 +109,7 @@ GLOBAL_DATUM_INIT(lighting_underlay_transparent, /mutable_appearance, create_lig
 		set_luminosity = max(set_luminosity, affected_turf.outdoor_effect.sunlight_overlay.luminosity)
 
 	// Remove the old snapshot before mutating a reused appearance, then apply once.
-	var/list/next_underlays = affected_turf.underlays.Copy()
+	var/list/next_underlays = isnull(affected_turf.pending_lighting_underlays) ? affected_turf.underlays.Copy() : affected_turf.pending_lighting_underlays.Copy()
 	next_underlays -= current_underlay?.appearance
 
 	var/mutable_appearance/new_underlay
@@ -131,6 +132,10 @@ GLOBAL_DATUM_INIT(lighting_underlay_transparent, /mutable_appearance, create_lig
 		new_underlay = private_underlay
 
 	next_underlays += new_underlay
-	affected_turf.underlays = next_underlays
+	if(SSlighting.batch_underlays)
+		affected_turf.set_lighting_underlays(next_underlays)
+	else
+		affected_turf.pending_lighting_underlays = null
+		affected_turf.underlays = next_underlays
 	current_underlay = new_underlay
 	affected_turf.luminosity = set_luminosity

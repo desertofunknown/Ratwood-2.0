@@ -462,6 +462,7 @@
 
 // A proc in case it needs to be recreated or badmins want to change the baseturfs
 /turf/proc/assemble_baseturfs(turf/fake_baseturf_type)
+	// Paths stay scalar; list entries hold a private layer snapshot and its intern key.
 	var/static/list/created_baseturf_lists = list()
 	var/turf/current_target
 	if(fake_baseturf_type)
@@ -480,11 +481,17 @@
 
 	// If we've made the output before we don't need to regenerate it
 	if(created_baseturf_lists[current_target])
-		var/list/premade_baseturfs = created_baseturf_lists[current_target]
-		if(length(premade_baseturfs))
-			baseturfs = baseturfs_string_list(premade_baseturfs.Copy(), src)
+		var/list/cached_baseturfs = created_baseturf_lists[current_target]
+		if(islist(cached_baseturfs))
+			var/list/layers = cached_baseturfs[1]
+			var/list/interned_layers = GLOB.string_lists[cached_baseturfs[2]]
+			// Keep per-turf diagnostics and rebuild entries removed through variable editing.
+			if(length(layers) > 10 || !interned_layers)
+				baseturfs = baseturfs_string_list(layers.Copy(), src)
+			else
+				baseturfs = interned_layers
 		else
-			baseturfs = baseturfs_string_list(premade_baseturfs, src)
+			baseturfs = cached_baseturfs
 		return baseturfs
 
 	var/turf/next_target = initial(current_target.baseturfs)
@@ -506,7 +513,7 @@
 		next_target = initial(current_target.baseturfs)
 
 	baseturfs = baseturfs_string_list(new_baseturfs, src)
-	created_baseturf_lists[new_baseturfs[new_baseturfs.len]] = new_baseturfs.Copy()
+	created_baseturf_lists[new_baseturfs[new_baseturfs.len]] = list(new_baseturfs.Copy(), new_baseturfs.Join("-"))
 	return new_baseturfs
 
 /turf/proc/levelupdate()

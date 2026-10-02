@@ -3,6 +3,8 @@
 #define LIGHTING_INTERVAL       5
 
 #define MINIMUM_USEFUL_LIGHT_RANGE 1.4
+/// Largest supported overlay light, also bounds local visibility invalidation.
+#define MOVABLE_LIGHT_MAX_RANGE 6
 
 /// type of falloff to use for lighting; 1 for circular, 2 for square
 #define LIGHTING_FALLOFF        1

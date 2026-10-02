@@ -16,6 +16,10 @@ SUBSYSTEM_DEF(ParticleWeather)
 	var/list/weathered_turfs = list()
 
 	var/datum/forecast/selected_forecast
+
+/datum/controller/subsystem/ParticleWeather/proc/is_weather_active(weather_trait)
+	return runningWeather?.running && runningWeather.target_trait == weather_trait
+
 /datum/controller/subsystem/ParticleWeather/fire()
 	// process active weather
 	if(runningWeather)

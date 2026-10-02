@@ -377,11 +377,9 @@ GLOBAL_LIST_EMPTY(soil_list)
 	if(soil_decay_time <= 0)
 		decay_soil()
 	var/turf/obj_turf = get_turf(src)
-	if(!obj_turf)
+	if(!obj_turf?.is_weather_exposed())
 		return
-	if(obj_turf.outdoor_effect?.weatherproof)
-		return
-	if(SSParticleWeather?.runningWeather?.target_trait == PARTICLEWEATHER_RAIN)
+	if(SSParticleWeather?.is_weather_active(PARTICLEWEATHER_RAIN))
 		water = min(MAX_PLANT_WATER, water + min(5, 30 / 4))
 
 /obj/structure/soil/weather_act_on(weather_trait, severity)

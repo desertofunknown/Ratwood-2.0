@@ -7,11 +7,26 @@
 	var/tmp/datum/lighting_object/lighting_object // Our lighting object.
 	var/tmp/list/datum/lighting_corner/corners
 	var/tmp/opaque_atom_count = 0 // Not to be confused with opacity, this is the number of opaque atoms on the tile.
+	/// Active overlay lights whose holder is on this turf, including occluded sources.
+	var/tmp/list/datum/component/overlay_lighting/overlay_light_sources
 
 // Causes any affecting light sources to be queued for a visibility update, for example a door got opened.
 /turf/proc/reconsider_lights()
-	for(var/datum/lighting_corner/corner as anything in get_corners())
+	// A newly closed door must still notify the light sources it used to admit.
+	for(var/datum/lighting_corner/corner as anything in corners)
+		if(!corner)
+			continue
 		corner.vis_update()
+		for(var/datum/outdoor_info/sunlight_source as anything in corner.globAffect)
+			SSoutdoor_effects.queue_outdoor_effect(sunlight_source)
+
+	if(!SSlighting.initialized)
+		return
+	// Search holders rather than visible tiles so opening a door also finds hidden lights.
+	for(var/turf/source_turf as anything in RANGE_TURFS(MOVABLE_LIGHT_MAX_RANGE, src))
+		for(var/datum/component/overlay_lighting/overlay_light as anything in source_turf.overlay_light_sources)
+			if(get_dist(src, source_turf) <= overlay_light.lumcount_range)
+				overlay_light.queue_visibility_update()
 
 /turf/proc/has_dynamic_lighting()
 	if(lighting_object)
@@ -20,6 +35,7 @@
 	return IS_DYNAMIC_LIGHTING(src) && IS_DYNAMIC_LIGHTING(A)
 
 /turf/proc/lighting_clear_overlay()
+	flush_lighting_underlays()
 	if (lighting_object)
 		qdel(lighting_object, TRUE)
 	else

@@ -24,7 +24,7 @@
 	var/datum/controller/subsystem/ParticleWeather/PW = SSParticleWeather
 	visible_message(span_notice("[user] starts reading the [src]."))
 	if(do_after(user, 5 SECONDS, target = src))
-		if(PW.runningWeather)
+		if(PW.runningWeather?.running)
 			to_chat(user,span_notice("The fluid trembles steadily. The scale indicates the weather is currently [PW.runningWeather.name]."))
 			return
 

@@ -192,11 +192,9 @@
 					return
 		fuel = max(fuel - 10, 0)
 	var/turf/obj_turf = get_turf(src)
-	if(!obj_turf)
+	if(!obj_turf?.is_weather_exposed())
 		return
-	if(obj_turf.outdoor_effect?.weatherproof)
-		return
-	if(SSParticleWeather?.runningWeather?.target_trait == PARTICLEWEATHER_RAIN && !weather_resistant)
+	if(SSParticleWeather?.is_weather_active(PARTICLEWEATHER_RAIN) && !weather_resistant)
 		extinguish()
 
 /obj/item/flashlight/flare/torch/attack_self(mob/user)

@@ -16,7 +16,7 @@
 	var/assembled = FALSE
 	var/list/obj/structure/tent_wall/tent_walls = list()
 	var/list/obj/structure/roguetent/tent_doors = list()
-	var/list/turf/roof_tiles = list()
+	var/list/turf/roof_tiles = list() // Covered turfs mapped to their previous roof marker.
 	var/list/turf/roof_turfs = list()
 	
 	var/tent_width = 3 
@@ -61,6 +61,8 @@
 		tent_doors += door
 
 /obj/item/tent_kit/Destroy()
+	if(assembled)
+		disassemble_tent(null, TRUE)
 	QDEL_LIST(tent_walls)
 	QDEL_LIST(tent_doors)
 	roof_tiles.Cut()
@@ -225,6 +227,8 @@
 	return coords
 
 /obj/item/tent_kit/proc/assemble_tent(turf/center_turf, mob/user, assembly_dir)
+	if(assembled)
+		return
 	clean_components()
 	parts_destroyed_count = 0 
 	
@@ -284,8 +288,10 @@
 	// --- INTERNAL ROOF LOGIC ---
 	var/list/internal_coords = get_tent_coordinates(center_turf, assembly_dir)
 	for(var/turf/T in internal_coords)
+		roof_tiles[T] = T.pseudo_roof
 		T.pseudo_roof = TRUE
-		roof_tiles += T
+	for(var/turf/T in roof_tiles)
+		T.reassess_stack()
 
 	assembled = TRUE
 	forceMove(center_turf)
@@ -309,11 +315,13 @@
 		UnregisterSignal(door, COMSIG_QDELETING)
 		door.forceMove(src)
 	for(var/turf/T in roof_tiles)
-		T.pseudo_roof = FALSE
+		T.pseudo_roof = roof_tiles[T]
 	
 	// CLEANUP ROOF TURFS: Revert twig floors back to openspace
 	for(var/turf/RT in roof_turfs)
 		RT.ChangeTurf(/turf/open/transparent/openspace, flags = CHANGETURF_INHERIT_AIR)
+	for(var/turf/T in roof_tiles)
+		T.reassess_stack()
 	roof_turfs.Cut()
 	roof_tiles.Cut()
 

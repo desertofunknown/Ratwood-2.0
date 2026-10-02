@@ -69,16 +69,23 @@ SUBSYSTEM_DEF(outdoor_effects)
 	InitializeTurfs()
 
 /datum/controller/subsystem/outdoor_effects/Initialize(timeofday)
-	if(!initialized)
-		init_weather_overlay()
-		get_time_of_day()
-		InitializeTurfs()
-		initialized = TRUE
-		sky_status_cache = alist()
-		ceiling_status_cache = alist()
-	fire(FALSE, TRUE)
+	try
+		if(!initialized)
+			init_weather_overlay()
+			get_time_of_day()
+			InitializeTurfs()
+			initialized = TRUE
+			sky_status_cache = alist()
+			ceiling_status_cache = alist()
+		fire(FALSE, TRUE)
+	catch(var/exception/error)
+		sky_status_cache = null
+		ceiling_status_cache = null
+		SSlighting.finish_underlay_batch()
+		throw error
 	sky_status_cache = null
 	ceiling_status_cache = null
+	SSlighting.finish_underlay_batch()
 	..()
 
 /datum/controller/subsystem/outdoor_effects/stat_entry(msg)
@@ -300,7 +307,7 @@ SUBSYSTEM_DEF(outdoor_effects)
 	var/list/next_underlays
 	if(update_weather || update_sunlight)
 		// Apply both effects in one appearance change, retaining unrelated underlays.
-		next_underlays = source_turf.underlays.Copy()
+		next_underlays = isnull(source_turf.pending_lighting_underlays) ? source_turf.underlays.Copy() : source_turf.pending_lighting_underlays.Copy()
 
 	// Unions keep image operands; removals match their stored appearance snapshots.
 	if(update_weather)
@@ -325,7 +332,11 @@ SUBSYSTEM_DEF(outdoor_effects)
 		OE.sunlight_overlay = MA
 
 	if(!isnull(next_underlays))
-		source_turf.underlays = next_underlays
+		if(SSlighting.batch_underlays)
+			source_turf.set_lighting_underlays(next_underlays)
+		else
+			source_turf.pending_lighting_underlays = null
+			source_turf.underlays = next_underlays
 	OE.underlays_dirty = FALSE
 	source_turf.luminosity = max(source_turf.luminosity, MA.luminosity)
 

@@ -17,6 +17,8 @@ GLOBAL_LIST_INIT(blacklisted_automated_baseturfs, typecacheof(list(
 		CALCULATE_ADJACENT_TURFS(newT)
 
 /turf/proc/copyTurf(turf/T)
+	flush_lighting_underlays()
+	T.flush_lighting_underlays()
 	if(T.type != type)
 		var/obj/O
 		if(underlays.len)	//we have underlays, which implies some sort of transparency, so we want to a snapshot of the previous turf as an underlay
@@ -77,6 +79,7 @@ GLOBAL_LIST_INIT(blacklisted_automated_baseturfs, typecacheof(list(
 
 	if(!GLOB.use_preloader && path == type && !(flags & CHANGETURF_FORCEOP) && (baseturfs == new_baseturfs)) // Don't no-op if the map loader requires it to be reconstructed
 		return src
+	flush_lighting_underlays()
 	if(flags & CHANGETURF_SKIP)
 		testing("fuck3")
 		return new path(src)
@@ -93,6 +96,9 @@ GLOBAL_LIST_INIT(blacklisted_automated_baseturfs, typecacheof(list(
 	var/old_lighting_object = lighting_object
 	var/old_outdoor_effect = outdoor_effect
 	var/old_corners = corners
+	var/old_overlay_light_sources = overlay_light_sources
+	var/old_dynamic_lumcount = dynamic_lumcount
+	var/had_tent_roof = pseudo_roof == TRUE
 
 	var/old_exl = explosion_level
 	var/old_exi = explosion_id
@@ -114,6 +120,10 @@ GLOBAL_LIST_INIT(blacklisted_automated_baseturfs, typecacheof(list(
 	var/list/old_comp_lookup = comp_lookup?.Copy()
 	var/list/old_signal_procs = signal_procs?.Copy()
 	var/turf/W = new path(src)
+	W.overlay_light_sources = old_overlay_light_sources
+	W.dynamic_lumcount = old_dynamic_lumcount
+	if(had_tent_roof)
+		W.pseudo_roof = TRUE
 
 	// WARNING WARNING
 	// Turfs DO NOT lose their signals when they get replaced, REMEMBER THIS
