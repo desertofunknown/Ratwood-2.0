@@ -212,7 +212,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(

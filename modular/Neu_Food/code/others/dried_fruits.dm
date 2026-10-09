@@ -380,7 +380,7 @@
 /obj/item/reagent_containers/food/snacks/rogue/trailmix
 	name = "trail-mix"
 	desc = "A collection of dried and long lasting snacks tucked into a neat package to be indulged in as needed. Favorite of rangers due to its simplicity and availability."
-	icon = 'modular/Neu_food/icons/cookware/ration.dmi'
+	icon = 'modular/Neu_Food/icons/cookware/ration.dmi'
 	icon_state = "ration_large"//Prob give it'S own subtype later
 	eat_effect = null
 	fried_type = null

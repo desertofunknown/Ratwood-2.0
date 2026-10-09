@@ -110,7 +110,7 @@
 
 /obj/item/bomb/smoke/decoy/Initialize(mapload)
 	. = ..()
-	playsound(loc, 'sound/magic/decoylaugh.ogg', 50)
+	playsound(loc, 'sound/magic/Decoylaugh.ogg', 50)
 	explode()
 
 /mob/living/simple_animal/hostile/rogue/xylixdouble/Initialize(mapload, mob/living/carbon/human/copycat, icon/I, duration = 7 SECONDS)
@@ -477,7 +477,7 @@
 	qdel(src)
 
 /obj/item/melee/touch_attack/parlor_trick/proc/make_copy(atom/target, mob/user)
-	playsound(get_turf(src), 'sound/magic/decoylaugh.ogg', 20, TRUE, -6)
+	playsound(get_turf(src), 'sound/magic/Decoylaugh.ogg', 20, TRUE, -6)
 	to_chat(user, span_notice("Copied [target]."))
 	var/obj/temp = new /obj()
 	temp.appearance = target.appearance
@@ -493,13 +493,13 @@
 	var/obj/effect/dummy/parlor_trick/active_dummy = active_dummy_ref?.resolve()
 	if(active_dummy)
 		eject_all()
-		playsound(get_turf(src), 'sound/magic/decoylaugh.ogg', 20, TRUE, -6)
+		playsound(get_turf(src), 'sound/magic/Decoylaugh.ogg', 20, TRUE, -6)
 		qdel(active_dummy)
 		active_dummy_ref = null
 		to_chat(user, span_notice("You deactivate \the [src]."))
 		new /obj/effect/temp_visual/gravpush(get_turf(src))
 	else
-		playsound(get_turf(src), 'sound/magic/decoylaugh.ogg', 20, TRUE, -6)
+		playsound(get_turf(src), 'sound/magic/Decoylaugh.ogg', 20, TRUE, -6)
 		var/obj/effect/dummy/parlor_trick/C = new/obj/effect/dummy/parlor_trick(user.drop_location())
 		C.activate(user, saved_appearance, src)
 		to_chat(user, span_notice("You activate \the [src]."))

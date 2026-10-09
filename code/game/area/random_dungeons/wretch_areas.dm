@@ -25,9 +25,9 @@
 	name = "WRETCHED CAMP"
 	icon_state = "indoors"
 	first_time_text = ""
-	droning_sound = 'sound/music/impish.ogg'
-	droning_sound_dusk = 'sound/music/impish.ogg'
-	droning_sound_night = 'sound/music/impish.ogg'
+	droning_sound = 'sound/music/Impish.ogg'
+	droning_sound_dusk = 'sound/music/Impish.ogg'
+	droning_sound_night = 'sound/music/Impish.ogg'
 	converted_type = /area/rogue/outdoors/dungeon1
 	detail_text = DETAIL_TEXT_WRETCHED_CAMP
 
@@ -44,9 +44,9 @@
 /area/rogue/under/wretch/cavern
 	name = "WRETCHED CAVERN"
 	icon_state = "cavewet"
-	droning_sound = 'sound/music/impish.ogg'
-	droning_sound_dusk = 'sound/music/impish.ogg'
-	droning_sound_night = 'sound/music/impish.ogg'
+	droning_sound = 'sound/music/Impish.ogg'
+	droning_sound_dusk = 'sound/music/Impish.ogg'
+	droning_sound_night = 'sound/music/Impish.ogg'
 	ambientsounds = AMB_CAVEWATER
 	ambientnight = AMB_CAVEWATER
 	spookysounds = SPOOKY_CAVE

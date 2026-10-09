@@ -6,7 +6,7 @@
 	name = "ration wrapping paper"
 	desc = "A piece of paper greased with a thin layer of oil, used to wrap food and preserve it for a long journey. \
 	The final size of the ration depends on the size of the original food item. The food will last as long as the ration is wrapped."
-	icon = 'modular/Neu_food/icons/cookware/ration.dmi'
+	icon = 'modular/Neu_Food/icons/cookware/ration.dmi'
 	icon_state = "ration_wrapper"
 	w_class = WEIGHT_CLASS_TINY
 	grid_height = 32
