@@ -352,7 +352,7 @@
 	associated_skill = /datum/skill/magic/arcane
 	recharge_time = 60 SECONDS
 	miracle = FALSE
-	devotion cost = 0
+	devotion_cost = 0
 	range = 7
 
 // Ancient Champion-exclusive: An evil variant of Repulse. Longer charge time and CD, but greater maxthrow, push range and the affected people lose 50 stamina. The undead are immune.
