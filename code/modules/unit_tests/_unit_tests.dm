@@ -101,6 +101,7 @@
 #include "species_whitelists.dm"
 #include "subsystem_init.dm"
 #include "timer_sanity.dm"
+#include "twist_limb_damage.dm"
 #include "timers.dm"
 #include "unit_test.dm"
 // END_INCLUDE
