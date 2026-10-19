@@ -91,6 +91,8 @@
 #include "colorblind_hud_palette.dm"
 #include "component_tests.dm"
 #include "create_and_destroy.dm"
+#include "empty_held_slot.dm"
+#include "empty_held_slot_callers.dm"
 #include "focus_only_tests.dm"
 #include "harddels.dm"
 #include "hostile_target_scan.dm"

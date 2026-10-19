@@ -1,7 +1,7 @@
 /mob/living/carbon/spirit/can_equip(obj/item/I, slot, disable_warning = FALSE, bypass_equip_delay_self = FALSE)
 	switch(slot)
 		if(SLOT_HANDS)
-			if(get_empty_held_indexes())
+			if(has_empty_held_slot())
 				return TRUE
 			return FALSE
 		if(SLOT_WEAR_MASK)

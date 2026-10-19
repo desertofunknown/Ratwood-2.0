@@ -16,7 +16,7 @@
 		return
 
 	if(!(target in living_pawn.held_items))
-		if(!living_pawn.get_empty_held_indexes() || !living_pawn.put_in_hands(target))
+		if(!living_pawn.has_empty_held_slot() || !living_pawn.put_in_hands(target))
 			finish_action(controller, FALSE, target, hunger_timer_key)
 			return
 
