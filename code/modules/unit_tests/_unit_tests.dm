@@ -105,6 +105,7 @@
 #include "scheduler_suffix_accounting.dm"
 #include "spawn_humans.dm"
 #include "species_whitelists.dm"
+#include "status_effect_apply_lifetime.dm"
 #include "subsystem_init.dm"
 #include "subsystem_queue_order.dm"
 #include "timer_sanity.dm"

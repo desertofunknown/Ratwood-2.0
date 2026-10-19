@@ -1,0 +1,4 @@
+author: "Artur Lang (upstream); desertofunknown (backport and tests)"
+delete-after: true
+changes:
+  - bugfix: "Fixed weaker meal effects causing errors when a stronger meal effect is already active."
