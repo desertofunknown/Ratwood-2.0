@@ -85,6 +85,7 @@
 #define TRAIT_SOURCE_UNIT_TESTS "unit_tests"
 
 // BEGIN_INCLUDE
+#include "acorn_coffee_reaction.dm"
 #include "anchored_mobs.dm"
 #include "baseturfs.dm"
 #include "colorblind_hud_palette.dm"
