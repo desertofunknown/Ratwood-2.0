@@ -101,6 +101,7 @@
 #include "spawn_humans.dm"
 #include "species_whitelists.dm"
 #include "subsystem_init.dm"
+#include "subsystem_queue_order.dm"
 #include "timer_sanity.dm"
 #include "twist_limb_damage.dm"
 #include "timers.dm"
