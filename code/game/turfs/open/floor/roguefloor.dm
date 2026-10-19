@@ -68,7 +68,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 
 /turf/open/floor/rogue/twig
@@ -79,7 +79,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 
 /turf/open/floor/rogue/twig/Initialize(mapload)
@@ -215,7 +215,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/AzureSand,)
@@ -237,7 +237,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/snow,)
@@ -296,7 +296,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/snowrough,)
@@ -320,7 +320,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/snow,
@@ -340,7 +340,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/snowpatchy,
@@ -367,7 +367,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/grassred,
@@ -396,7 +396,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/grassred,
@@ -425,7 +425,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(
@@ -454,7 +454,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/grasscold,
@@ -481,7 +481,7 @@
 	barefootstep = FOOTSTEP_SOFT_BAREFOOT
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
 	tiled_dirt = FALSE
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	slowdown = 0
 	smooth = SMOOTH_TRUE
 	canSmoothWith = list(/turf/open/floor/rogue/dirt,
@@ -1639,7 +1639,7 @@
 /turf/open/floor/rogue/metal
 	icon_state = "plating1"
 	desc = "Covered in the tell-tale nicks of thousands of hammer-blows, this metal flooring clangs beneath your feet with every step."
-	landsound = 'sound/foley/jumpland/metalland.wav'
+	landsound = 'sound/foley/jumpland/metalland.WAV'
 	footstep = FOOTSTEP_PLATING
 	barefootstep = FOOTSTEP_HARD_BAREFOOT
 	clawfootstep = FOOTSTEP_HARD_CLAW
@@ -1764,7 +1764,7 @@
 	barefootstep = FOOTSTEP_HARD_BAREFOOT
 	clawfootstep = FOOTSTEP_HARD_CLAW
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	smooth = SMOOTH_MORE
 	canSmoothWith = list(/turf/open/floor/rogue,
 						/turf/closed/mineral,
@@ -1781,7 +1781,7 @@
 	barefootstep = FOOTSTEP_HARD_BAREFOOT
 	clawfootstep = FOOTSTEP_HARD_CLAW
 	heavyfootstep = FOOTSTEP_GENERIC_HEAVY
-	landsound = 'sound/foley/jumpland/grassland.wav'
+	landsound = 'sound/foley/jumpland/grassland.WAV'
 	smooth = SMOOTH_MORE
 	canSmoothWith = list(/turf/open/floor/rogue, /turf/open/floor/rogue/underworld)
 	temperature = 100

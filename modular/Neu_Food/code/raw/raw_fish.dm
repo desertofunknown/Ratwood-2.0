@@ -2,7 +2,7 @@
 	name = "fish"
 	desc = "Fresh blood stains its silvery skin. Silver-coloured scales shimmering softly.."
 	icon_state = "carp"
-	icon = 'modular/Neu_food/icons/raw/raw_fish.dmi'
+	icon = 'modular/Neu_Food/icons/raw/raw_fish.dmi'
 	verb_say = "glubs"
 	verb_yell = "glubs"
 	obj_flags = CAN_BE_HIT

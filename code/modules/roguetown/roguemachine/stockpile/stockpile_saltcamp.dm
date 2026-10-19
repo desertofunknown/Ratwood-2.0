@@ -258,7 +258,7 @@ GLOBAL_LIST_EMPTY(saltmineticketmachines)
 		playsound(src, 'sound/misc/machinetalk.ogg', 100, FALSE, -1)
 		gambling_active = FALSE
 		return TRUE
-	playsound(src, 'sound/misc/bug.ogg', 100, FALSE, -1)
+	playsound(src, 'sound/misc/Bug.ogg', 100, FALSE, -1)
 	gambling_active = FALSE
 	return FALSE
 

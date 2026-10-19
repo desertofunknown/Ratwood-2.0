@@ -124,7 +124,7 @@
 
 /obj/item/oystershell
 	name = "oyster shell"
-	icon = 'modular/Neu_food/icons/raw/raw_fish.dmi'
+	icon = 'modular/Neu_Food/icons/raw/raw_fish.dmi'
 	icon_state = "oyster_shell"
 	desc = ""
 	dropshrink = 0.5

@@ -78,7 +78,7 @@ There are several things that need to be remembered:
 		if(!sunder_light_obj)
 			sunder_light_obj = mob_light("#f5edda", 5, 5)
 		remove_overlay(SUNDER_LAYER)
-		var/mutable_appearance/new_fire_overlay = mutable_appearance('icons/mob/OnFire.dmi', "sunder_burning", -SUNDER_LAYER)
+		var/mutable_appearance/new_fire_overlay = mutable_appearance('icons/mob/onfire.dmi', "sunder_burning", -SUNDER_LAYER)
 		new_fire_overlay.appearance_flags = RESET_COLOR
 		overlays_standing[SUNDER_LAYER] = new_fire_overlay
 		apply_overlay(SUNDER_LAYER)
