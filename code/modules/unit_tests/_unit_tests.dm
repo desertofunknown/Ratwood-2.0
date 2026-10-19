@@ -95,6 +95,7 @@
 #include "harddels.dm"
 #include "hostile_target_scan.dm"
 #include "movespeed_modifier_updates.dm"
+#include "pronoun_obscurity.dm"
 #include "reach_dummy_pool.dm"
 #include "reagent_id_typos.dm"
 #include "reagent_recipe_collisions.dm"
