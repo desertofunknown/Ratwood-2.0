@@ -98,6 +98,7 @@
 #include "reach_dummy_pool.dm"
 #include "reagent_id_typos.dm"
 #include "reagent_recipe_collisions.dm"
+#include "scheduler_suffix_accounting.dm"
 #include "spawn_humans.dm"
 #include "species_whitelists.dm"
 #include "subsystem_init.dm"

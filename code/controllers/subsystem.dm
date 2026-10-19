@@ -87,6 +87,8 @@
 
 	/// Priority at enqueue time; null when not queued.
 	var/queued_priority
+	/// Class-local positive suffix sum, rebuilt before each queue traversal.
+	var/queue_budget
 
 	/// How many times we suspect a subsystem type has crashed the MC, 3 strikes and you're out!
 	var/static/list/failure_strikes
@@ -119,12 +121,16 @@
 	set waitfor = 0
 	. = SS_SLEEPING
 	fire(resumed)
+	if(QDELETED(src))
+		return
 	. = state
 	if (state == SS_SLEEPING)
 		state = SS_IDLE
 	if (state == SS_PAUSING)
 		var/QT = queued_time
-		enqueue()
+		if(!enqueue())
+			state = SS_IDLE
+			return
 		state = SS_PAUSED
 		queued_time = QT
 
@@ -147,8 +153,11 @@
 //	(this lets us sort our run order correctly without having to re-sort the entire already sorted list)
 /datum/controller/subsystem/proc/enqueue()
 	if(!isnull(queued_priority))
-		return
+		return TRUE
 	var/SS_priority = priority
+	if(!isnum(SS_priority) || !(SS_priority >= 0 && SS_priority <= 3.4028234663852886e38) || Master.queue_count >= 16777215)
+		log_world("MC: Cannot enqueue [src] with invalid priority or exhausted queue count.")
+		return FALSE
 	var/SS_flags = flags
 	var/datum/controller/subsystem/queue_node
 	var/queue_node_priority
@@ -204,6 +213,9 @@
 		queue_node.queue_prev.queue_next = src
 		queue_prev = queue_node.queue_prev
 		queue_node.queue_prev = src
+	Master.queue_count++
+	Master.queue_changed = TRUE
+	return TRUE
 
 
 /datum/controller/subsystem/proc/dequeue()
@@ -224,7 +236,13 @@
 	queue_next = null
 	queue_prev = null
 	queued_priority = null
+	queue_budget = null
 	queued_time = 0
+	Master.queue_count--
+	Master.queue_changed = TRUE
+	if(!Master.queue_head)
+		Master.queue_priority_count = 0
+		Master.queue_priority_count_bg = 0
 	if (state == SS_QUEUED)
 		state = SS_IDLE
 

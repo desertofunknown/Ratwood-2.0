@@ -45,8 +45,13 @@ GLOBAL_REAL(Master, /datum/controller/master)
 
 	var/datum/controller/subsystem/queue_head //Start of queue linked list
 	var/datum/controller/subsystem/queue_tail //End of queue linked list (used for appending to the list)
-	var/queue_priority_count = 0 //Running total so that we don't have to loop thru the queue each run to split up the tick
-	var/queue_priority_count_bg = 0 //Same, but for background subsystems
+	// Compatibility estimates only; dispatch uses freshly folded node budgets.
+	var/queue_priority_count = 0
+	var/queue_priority_count_bg = 0
+	/// Bounds the authoritative linked-list traversal, including cycle detection.
+	var/queue_count = 0
+	/// Membership changed since the current fire began; discard its old traversal.
+	var/queue_changed = FALSE
 	var/map_loading = FALSE	//Are we loading in a new map?
 
 	var/current_runlevel	//for scheduling different subsystems for different stages of the round
@@ -390,6 +395,7 @@ GLOBAL_REAL(Master, /datum/controller/master)
 		var/datum/controller/subsystem/SS = thing
 		SS.queued_time = 0
 		SS.queued_priority = null
+		SS.queue_budget = null
 		SS.queue_next = null
 		SS.queue_prev = null
 		SS.state = SS_IDLE
@@ -418,6 +424,8 @@ GLOBAL_REAL(Master, /datum/controller/master)
 	queue_tail = null
 	queue_priority_count = 0
 	queue_priority_count_bg = 0
+	queue_count = 0
+	queue_changed = TRUE
 	//these sort by lower priorities first to reduce the number of loops needed to add subsequent SS's to the queue
 	//(higher subsystems will be sooner in the queue, adding them later in the loop means we don't have to loop thru them next queue add)
 	sortTim(tickersubsystems, GLOBAL_PROC_REF(cmp_subsystem_priority))
@@ -566,7 +574,8 @@ GLOBAL_REAL(Master, /datum/controller/master)
 			continue
 		if ((SS_flags & (SS_TICKER|SS_KEEP_TIMING)) == SS_KEEP_TIMING && SS.last_fire + (SS.wait * 0.75) > world.time)
 			continue
-		SS.enqueue()
+		if(!SS.enqueue())
+			return -1
 	. = 1
 
 
@@ -584,15 +593,14 @@ GLOBAL_REAL(Master, /datum/controller/master)
 	var/tick_remaining
 	var/ran = TRUE //this is right
 	var/ran_non_ticker = FALSE
-	var/bg_calc //have we swtiched current_tick_budget to background mode yet?
 	var/tick_usage
 
 	//keep running while we have stuff to run and we haven't gone over a tick
 	//	this is so subsystems paused eariler can use tick time that later subsystems never used
 	while (ran && queue_head && TICK_USAGE < TICK_LIMIT_MC)
 		ran = FALSE
-		bg_calc = FALSE
-		current_tick_budget = queue_priority_count
+		if(!RebuildQueueBudgets())
+			return -1
 		queue_node = queue_head
 		while (queue_node)
 			if (ran && TICK_USAGE > TICK_LIMIT_RUNNING)
@@ -600,31 +608,14 @@ GLOBAL_REAL(Master, /datum/controller/master)
 
 			queue_node_flags = queue_node.flags
 			queue_node_priority = queue_node.queued_priority
+			current_tick_budget = queue_node.queue_budget
 
-			if ((queue_node_flags & SS_BACKGROUND))
-				if (!bg_calc)
-					current_tick_budget = queue_priority_count_bg
-					bg_calc = TRUE
-			else if (bg_calc)
-				//error state, do sane fallback behavior
-				if (. == 0)
-					log_world("MC: Queue logic failure, non-background subsystem queued to run after a background subsystem: [queue_node] queue_prev:[queue_node.queue_prev]")
-				. = -1
-				current_tick_budget = queue_priority_count //this won't even be right, but is the best we have.
-				bg_calc = FALSE
 
 			// Let indivisible work build priority when it cannot fit after other work.
 			if (queue_node_flags & SS_NO_TICK_CHECK)
 				if (queue_node.tick_usage > TICK_LIMIT_RUNNING - TICK_USAGE && ran_non_ticker)
-					var/priority_boost
-					if(queue_node_flags & SS_BACKGROUND)
-						priority_boost = queue_priority_count_bg * 0.1
-						queue_priority_count_bg += priority_boost
-					else
-						priority_boost = queue_priority_count * 0.1
-						queue_priority_count += priority_boost
-					queue_node.queued_priority += priority_boost
-					current_tick_budget -= queue_node_priority
+					if(!BoostQueuePriority(queue_node))
+						return -1
 					queue_node = queue_node.queue_next
 					continue
 
@@ -636,7 +627,7 @@ GLOBAL_REAL(Master, /datum/controller/master)
 			else
 				//error state
 				if (. == 0)
-					log_world("MC: tick_budget sync error. [json_encode(list(current_tick_budget, queue_priority_count, queue_priority_count_bg, bg_calc, queue_node, queue_node_priority))]")
+					log_world("MC: tick_budget sync error. [json_encode(list(current_tick_budget, queue_priority_count, queue_priority_count_bg, !!(queue_node_flags & SS_BACKGROUND), queue_node, queue_node_priority))]")
 				. = -1
 				tick_precentage = tick_remaining //just because we lost track of priority calculations doesn't mean we can't try to finish off the run, if the error state persists, we don't want to stop ticks from happening
 
@@ -654,7 +645,11 @@ GLOBAL_REAL(Master, /datum/controller/master)
 			queue_node.state = SS_RUNNING
 
 			tick_usage = TICK_USAGE
+			queue_changed = FALSE
 			var/state = queue_node.ignite(queue_node_paused)
+			var/membership_changed = queue_changed
+			if(QDELETED(queue_node))
+				return (. < 0) ? . : 1
 			tick_usage = max(0, TICK_USAGE - tick_usage)
 
 			if(use_rolling_usage)
@@ -662,7 +657,6 @@ GLOBAL_REAL(Master, /datum/controller/master)
 
 			if (state == SS_RUNNING)
 				state = SS_IDLE
-			current_tick_budget -= queue_node_priority
 
 
 			queue_node.tick_overrun = max(0, MC_AVG_FAST_UP_SLOW_DOWN(queue_node.tick_overrun, tick_usage-tick_precentage))
@@ -671,6 +665,8 @@ GLOBAL_REAL(Master, /datum/controller/master)
 			if (state == SS_PAUSED)
 				queue_node.paused_ticks++
 				queue_node.paused_tick_usage += tick_usage
+				if(membership_changed)
+					return (. < 0) ? . : 1
 				queue_node = queue_node.queue_next
 				continue
 
@@ -700,6 +696,8 @@ GLOBAL_REAL(Master, /datum/controller/master)
 			//remove from queue
 			var/datum/controller/subsystem/next_node = queue_node.queue_next
 			queue_node.dequeue()
+			if(membership_changed)
+				return (. < 0) ? . : 1
 
 			queue_node = next_node
 
@@ -736,6 +734,7 @@ GLOBAL_REAL(Master, /datum/controller/master)
 			log_world("MC: SoftReset: Found bad data in subsystem queue, queue_prev = '[SS.queue_prev]'")
 		SS.queue_prev = null
 		SS.queued_priority = null
+		SS.queue_budget = null
 		SS.queued_time = 0
 		SS.state = SS_IDLE
 	if (queue_head && !istype(queue_head))
@@ -746,6 +745,8 @@ GLOBAL_REAL(Master, /datum/controller/master)
 	queue_tail = null
 	queue_priority_count = 0
 	queue_priority_count_bg = 0
+	queue_count = 0
+	queue_changed = TRUE
 	log_world("MC: SoftReset: Finished.")
 	. = 1
 
@@ -787,3 +788,74 @@ GLOBAL_REAL(Master, /datum/controller/master)
 	for(var/thing in subsystems)
 		var/datum/controller/subsystem/SS = thing
 		SS.OnConfigLoad()
+
+// Queue links and stored weights are authoritative. Folding positive suffixes
+// avoids subtractive cancellation: each finite suffix is at least its own node.
+// Partial scratch writes on failure are harmless: no fire occurs before success.
+/datum/controller/master/proc/RebuildQueueBudgets()
+	if(!isnum(queue_count) || !(queue_count >= 0 && queue_count <= 16777215) || queue_count != round(queue_count))
+		log_world("MC: Invalid queue membership count.")
+		return FALSE
+	var/datum/controller/subsystem/node = queue_tail
+	var/datum/controller/subsystem/next_node
+	var/count = 0
+	var/foreground = 0
+	var/background = 0
+	var/seen_foreground = FALSE
+	while(node)
+		if(!istype(node) || ++count > queue_count || node.queue_next != next_node)
+			log_world("MC: Invalid, cyclic or nonreciprocal queue membership.")
+			return FALSE
+		var/weight = node.queued_priority
+		if(!isnum(weight) || !(weight >= 0 && weight <= 3.4028234663852886e38))
+			log_world("MC: Invalid queued priority on [node].")
+			return FALSE
+		if(node.flags & SS_BACKGROUND)
+			if(seen_foreground)
+				log_world("MC: Foreground subsystem follows background work.")
+				return FALSE
+			background += weight
+			node.queue_budget = background
+		else
+			seen_foreground = TRUE
+			foreground += weight
+			node.queue_budget = foreground
+		if(!(node.queue_budget <= 3.4028234663852886e38))
+			log_world("MC: Nonfinite queue class priority sum.")
+			return FALSE
+		next_node = node
+		node = node.queue_prev
+	if(next_node != queue_head || count != queue_count)
+		log_world("MC: Incomplete queue membership.")
+		return FALSE
+	queue_priority_count = foreground
+	queue_priority_count_bg = background
+	return TRUE
+
+// Called only within an already validated traversal. Completed nodes have left
+// the queue; paused and skipped nodes still contribute to the aging amount.
+// Check the entire prospective class sum before changing a stored weight.
+/datum/controller/master/proc/BoostQueuePriority(datum/controller/subsystem/boosted_node)
+	var/background_class = !!(boosted_node.flags & SS_BACKGROUND)
+	var/class_priority = 0
+	var/datum/controller/subsystem/node
+	for(node = queue_tail; node; node = node.queue_prev)
+		if(!!(node.flags & SS_BACKGROUND) == background_class)
+			class_priority += node.queued_priority
+	var/boosted_priority = boosted_node.queued_priority + class_priority * 0.1
+	if(!(boosted_priority >= 0 && boosted_priority <= 3.4028234663852886e38))
+		log_world("MC: Nonfinite subsystem priority boost on [boosted_node].")
+		return FALSE
+	var/prospective_priority = 0
+	for(node = queue_tail; node; node = node.queue_prev)
+		if(!!(node.flags & SS_BACKGROUND) == background_class)
+			prospective_priority += (node == boosted_node) ? boosted_priority : node.queued_priority
+	if(!(prospective_priority <= 3.4028234663852886e38))
+		log_world("MC: Nonfinite class priority after boost on [boosted_node].")
+		return FALSE
+	boosted_node.queued_priority = boosted_priority
+	if(background_class)
+		queue_priority_count_bg = prospective_priority
+	else
+		queue_priority_count = prospective_priority
+	return TRUE

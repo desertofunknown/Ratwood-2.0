@@ -1,0 +1,4 @@
+author: "desertofunknown"
+delete-after: True
+changes:
+  - bugfix: "Fix subsystem scheduling errors caused by rounded priority budgets and prevent nonfinite priority boosts."
