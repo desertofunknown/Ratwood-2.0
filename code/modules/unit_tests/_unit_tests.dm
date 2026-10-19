@@ -92,6 +92,7 @@
 #include "create_and_destroy.dm"
 #include "focus_only_tests.dm"
 #include "harddels.dm"
+#include "hostile_target_scan.dm"
 #include "reagent_id_typos.dm"
 #include "reagent_recipe_collisions.dm"
 #include "spawn_humans.dm"
