@@ -96,6 +96,8 @@ Run `bun install` once to install tgui dependencies.
 - `bun tgui:lint` - Show (and auto-fix) problems with the code.
 - `bun tgui:tsc` - Check code with TypeScript compiler.
 - `bun tgui:test` - Run unit and integration tests.
+- `bun tgui:test-lint` - Check TypeScript lint compatibility and unused-import
+  fixes using in-memory fixtures; no source files are changed.
 - `bun tgui:analyze` - Run a bundle analyzer.
 - `bun tgfont:build` - Build icon fonts.
 
