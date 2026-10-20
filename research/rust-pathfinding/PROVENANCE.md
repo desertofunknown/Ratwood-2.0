@@ -1,6 +1,6 @@
 # Source and license provenance
 
-Source baseline: desertofunknown/ratwood-engine commit
+Source baseline: desertofunknown/Ratwood-2.0 commit
 17a113941a81968bfe58820c1e7fd2791d72a78b.
 
 The experimental replay follows behavior studied in the project's production

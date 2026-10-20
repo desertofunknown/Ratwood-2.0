@@ -2,7 +2,8 @@
 
 License: AGPL-3.0, as retained in ../LICENSE and ../PROVENANCE.md.
 Original portable research baseline: research/rust-pathfinding at 9472d11 in
-private desertofunknown/ratwood-engine. The original crate is unchanged.
+private desertofunknown/Ratwood-2.0. The original crate code is unchanged;
+repository attribution in the parent provenance has been corrected.
 
 These source-only bridge modules and disposable DM harnesses were developed as an
 isolated research extension. The replay kernel remains the parent crate's source;

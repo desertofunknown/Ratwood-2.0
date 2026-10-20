@@ -1,8 +1,9 @@
 # Optional isolated BYOND string-ABI bridge research
 
 This opt-in, source-only extension adds experimental C-ABI libraries and tiny DM
-harnesses. The parent crate and its existing files are preserved unchanged; its
-README describes that original standalone crate. This extension is not linked
+harnesses. The parent crate code is preserved unchanged; its README describes
+that original standalone crate. Repository attribution in the parent provenance
+has been corrected. This extension is not linked
 into the game, does not apply paths to gameplay, and is not production-ready.
 
 All source and fixtures are covered by the parent AGPL-3.0 license (`../LICENSE`);
