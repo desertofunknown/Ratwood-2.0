@@ -1,0 +1,16 @@
+[
+  "count_zero",
+  "count_over",
+  "identity_overflow",
+  "plus_decimal",
+  "negative_parameter",
+  "nan_parameter",
+  "truncated",
+  "trailing",
+  "terminal_start",
+  "escape_closure",
+  "goal_cost_conflict",
+  "duplicate_conflict",
+  "cap_exact",
+  "cap_over"
+]
