@@ -1,0 +1,222 @@
+[
+  {
+    "name": "human_npc_same_turf",
+    "file": "payloads/human_npc_same_turf.txt",
+    "bytes": 8163,
+    "sha256": "38c788241a8fb01ef22831f2524ad2817119039a196c91cf996c29287134e85c",
+    "identity": [
+      "18446744073709551615",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "expected": "result|18446744073709551615|2|3|4|5|6|7|False|",
+    "dm": {
+      "kind": "false",
+      "path": []
+    },
+    "nodes": 144
+  },
+  {
+    "name": "human_npc_open_short",
+    "file": "payloads/human_npc_open_short.txt",
+    "bytes": 8163,
+    "sha256": "da5889f0ba976d9f7589c42673c63687aa9c8cb55d86606c9b7db68cbff1144a",
+    "identity": [
+      "18446744073709551614",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "expected": "result|18446744073709551614|2|3|4|5|6|7|Path|26,27,28,29,30",
+    "dm": {
+      "kind": "path",
+      "path": [
+        27,
+        28,
+        29,
+        30,
+        31
+      ]
+    },
+    "nodes": 144
+  },
+  {
+    "name": "human_npc_equal_routes",
+    "file": "payloads/human_npc_equal_routes.txt",
+    "bytes": 8163,
+    "sha256": "7faacf3810baf477389d32b91c9148eb101c0d9240398afd2815627969fecf8a",
+    "identity": [
+      "18446744073709551613",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "expected": "result|18446744073709551613|2|3|4|5|6|7|Path|26,38,50,62,74,86,87,88,89,90",
+    "dm": {
+      "kind": "path",
+      "path": [
+        27,
+        39,
+        51,
+        63,
+        75,
+        87,
+        88,
+        89,
+        90,
+        91
+      ]
+    },
+    "nodes": 144
+  },
+  {
+    "name": "human_npc_exclude",
+    "file": "payloads/human_npc_exclude.txt",
+    "bytes": 8164,
+    "sha256": "7f633eba05511cb3151b25958ed7e92b38773fe5f6e7d3db235c0a0d6fab0951",
+    "identity": [
+      "18446744073709551612",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "expected": "result|18446744073709551612|2|3|4|5|6|7|Path|26,27,28,40,41,42,30,31",
+    "dm": {
+      "kind": "path",
+      "path": [
+        27,
+        28,
+        29,
+        41,
+        42,
+        43,
+        31,
+        32
+      ]
+    },
+    "nodes": 144
+  },
+  {
+    "name": "human_cached_or_frenzy_same_turf",
+    "file": "payloads/human_cached_or_frenzy_same_turf.txt",
+    "bytes": 8163,
+    "sha256": "c57abde06d59a9d0db6f0be721729564ccd448252c959a929eacbc9b1670f347",
+    "identity": [
+      "18446744073709551611",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "expected": "result|18446744073709551611|2|3|4|5|6|7|False|",
+    "dm": {
+      "kind": "false",
+      "path": []
+    },
+    "nodes": 144
+  },
+  {
+    "name": "human_cached_or_frenzy_open_short",
+    "file": "payloads/human_cached_or_frenzy_open_short.txt",
+    "bytes": 8163,
+    "sha256": "67e01e732bcee2e41ebab86899d1f94fb693eb38de82b56cf04d8ddc022d16a4",
+    "identity": [
+      "18446744073709551610",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "expected": "result|18446744073709551610|2|3|4|5|6|7|Path|26,27,28,29,30",
+    "dm": {
+      "kind": "path",
+      "path": [
+        27,
+        28,
+        29,
+        30,
+        31
+      ]
+    },
+    "nodes": 144
+  },
+  {
+    "name": "human_cached_or_frenzy_equal_routes",
+    "file": "payloads/human_cached_or_frenzy_equal_routes.txt",
+    "bytes": 8163,
+    "sha256": "8f4e648f41bffeb18e77fdfd31906308e62a4f218fe7b864120da1eec98fa3f6",
+    "identity": [
+      "18446744073709551609",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "expected": "result|18446744073709551609|2|3|4|5|6|7|Path|26,38,50,62,74,86,87,88,89,90",
+    "dm": {
+      "kind": "path",
+      "path": [
+        27,
+        39,
+        51,
+        63,
+        75,
+        87,
+        88,
+        89,
+        90,
+        91
+      ]
+    },
+    "nodes": 144
+  },
+  {
+    "name": "human_cached_or_frenzy_exclude",
+    "file": "payloads/human_cached_or_frenzy_exclude.txt",
+    "bytes": 8164,
+    "sha256": "001adad28522128dfc08ad9f81ebea8645bba6a55a49ea57fb74748b5f7ebffc",
+    "identity": [
+      "18446744073709551608",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "expected": "result|18446744073709551608|2|3|4|5|6|7|Path|26,27,28,40,41,42,30,31",
+    "dm": {
+      "kind": "path",
+      "path": [
+        27,
+        28,
+        29,
+        41,
+        42,
+        43,
+        31,
+        32
+      ]
+    },
+    "nodes": 144
+  }
+]
