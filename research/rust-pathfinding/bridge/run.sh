@@ -4,16 +4,22 @@ B=$(cd "$(dirname "$0")" && pwd)
 python3 "$B/validate_fixtures.py"
 OUT_DIR=${OUT_DIR:-"$B/.build"}
 OUT_DIR=$(cd "$OUT_DIR" && pwd)
+python3 "$B/build_manifest.py" verify "$B/.." "$OUT_DIR"
 # Supplied executable wrappers can configure an existing QEMU/sysroot or native
 # execution. PROCESS_WRAPPER must enforce the caller's isolated offline policy.
 : "${PROCESS_WRAPPER:?Set PROCESS_WRAPPER to an existing process isolation wrapper}"
 EXEC_WRAPPER=${EXEC_WRAPPER:-}
 BYOND_DM=${BYOND_DM:-DreamMaker}
 BYOND_DD=${BYOND_DD:-DreamDaemon}
+export PROCESS_WRAPPER EXEC_WRAPPER BYOND_DM BYOND_DD
 RUN_DIR=${RUN_DIR:-"$OUT_DIR/run"}
-if [[ -e "$RUN_DIR" ]]; then echo 'Use a new RUN_DIR to preserve prior results' >&2; exit 2; fi
-mkdir -p "$RUN_DIR/logs"
+if [[ -e "$RUN_DIR" || -L "$RUN_DIR" ]]; then echo 'Use a new RUN_DIR to preserve prior results' >&2; exit 2; fi
+mkdir -p "$(dirname "$RUN_DIR")"
+mkdir "$RUN_DIR"
+mkdir "$RUN_DIR/logs"
 RUN_DIR=$(cd "$RUN_DIR" && pwd)
+cp "$OUT_DIR/build-manifest.json" "$RUN_DIR/"
+python3 "$B/build_manifest.py" record-run "$B/.." "$OUT_DIR" "$RUN_DIR"
 mkdir -p "$RUN_DIR/home"
 export HOME="$RUN_DIR/home"
 cp "$B/"*.dm "$B/"*.dme "$OUT_DIR/libbridge.so" "$OUT_DIR/libsnapshot.so" "$RUN_DIR/"
@@ -25,7 +31,12 @@ run_native "$OUT_DIR/parser-tests" --test-threads=1 >logs/parser-tests.log 2>&1
 run_native "$OUT_DIR/kernel-tests" --test-threads=1 >logs/kernel-tests.log 2>&1
 run_native "$OUT_DIR/direct" payloads/human_*.txt >logs/direct.log 2>&1
 # Test mode permits host-only parser/kernel checks without a BYOND installation.
-if [[ ${NATIVE_ONLY:-0} == 1 ]]; then python3 "$B/compare.py" "$B" "$RUN_DIR" --native-only; echo NATIVE_CHECKS_PASS; exit 0; fi
+if [[ ${NATIVE_ONLY:-0} == 1 ]]; then
+ python3 "$B/build_manifest.py" verify-run "$B/.." "$OUT_DIR" "$RUN_DIR"
+ python3 "$B/compare.py" "$B" "$RUN_DIR" --native-only
+ echo NATIVE_CHECKS_PASS
+ exit 0
+fi
 # BYOND 516 Linux requires ELF32. Reject accidental host x86_64 library builds.
 file libsnapshot.so | grep -q 'ELF 32-bit'
 flags=(-close -invisible)
@@ -37,5 +48,6 @@ for world in smoke harness; do
 done
 grep -q BRIDGE_SMOKE_PASS logs/smoke-runtime.log
 grep -q SNAPSHOT_BRIDGE_PASS logs/harness-runtime.log
+python3 "$B/build_manifest.py" verify-run "$B/.." "$OUT_DIR" "$RUN_DIR"
 python3 "$B/compare.py" "$B" "$RUN_DIR"
 echo PORTABLE_BRIDGE_PASS

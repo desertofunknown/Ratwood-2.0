@@ -12,7 +12,10 @@ raw capture fingerprints, binaries, runtime logs or toolchains are included.
 
 ## Prerequisites and configurable build
 
-Use already installed Rust, Python 3 and Bash. BYOND 516 Linux requires i686 Rust
+Use already installed Rust, Python 3.9 or newer, Bash, GNU `timeout`, and `file`.
+Do not use Python `-O` or `PYTHONOPTIMIZE`: all verification entry points reject
+optimization rather than silently skipping their assertion-based checks.
+BYOND 516 Linux requires i686 Rust
 std and a compatible 32-bit linker/libc development environment. Merely installing
 Rust target std does not supply CRT/libc objects. No script installs software or
 downloads dependencies. Rust 1.99.1 / BYOND 516.1673 were verified; other versions
@@ -29,11 +32,17 @@ Optional variables:
 - `LINKER`: existing linker executable or wrapper for the selected target.
 - `CC`: optional C compiler wrapper targeting i686; builds the null-pointer probe.
 - `OUT_DIR`: generated code/binaries only; defaults to `.build` (ignored by Git).
+  It must not exist, even if empty. Choose a fresh output directory for every
+  build, including after a failure; existing artifacts are never reused.
 
 The build copies the unchanged parent `src` into the output directory and verifies
 an exact single-match edit to set the worker stack to 2 MiB there. No parent source
 is modified. This build-only kernel matches the experimentally reviewed kernel.
 The original 30 tests remain included and are built alongside four parser tests.
+Only a completed build writes `build-manifest.json`, recording source and
+generated-kernel hashes, artifact hashes/modes, target, Rust version, and selected
+compiler/linker executable hashes. A runner refuses missing or mismatched evidence.
+The build records its inputs before compilation and requires them to match afterward.
 
 For a host-only portability check, set TARGET to the installed host target,
 leave RUST_SYSROOT/LINKER unset as appropriate, and run with NATIVE_ONLY=1. Host
@@ -65,6 +74,14 @@ The runner sets HOME to a fresh home subdirectory inside RUN_DIR for child proce
 The runner copies the small harness/fixtures/libraries there and retains logs and
 comparison.json only there. External timeouts apply. NATIVE_ONLY=1 executes the
 parser/kernel/direct replay checks without BYOND; it does not establish ABI parity.
+The runner freezes the build manifest in RUN_DIR and verifies the original source
+and build artifacts before and after execution. `run-manifest.json` records and rechecks the
+selected executable wrapper/tool hashes and Python version, without capturing the
+environment or wrapper contents. Use absolute paths or PATH-resolved command names
+for wrappers. These local evidence files may contain machine-specific paths; do
+not publish them. Hashes detect accidental drift, not malicious replacement, and
+do not fully inventory transitive linker/runtime/sysroot dependencies. BYOND version
+evidence remains in the compiler/runtime logs, not inferred from a wrapper name.
 
 ## What is tested
 

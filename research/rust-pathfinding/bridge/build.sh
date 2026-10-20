@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 B=$(cd "$(dirname "$0")" && pwd)
+python3 "$B/verify_source.py"
+python3 "$B/validate_fixtures.py"
 OUT_DIR=${OUT_DIR:-"$B/.build"}
-mkdir -p "$OUT_DIR"
+if [[ -e "$OUT_DIR" || -L "$OUT_DIR" ]]; then echo 'Use a new OUT_DIR; existing build outputs are never reused' >&2; exit 2; fi
+mkdir -p "$(dirname "$OUT_DIR")"
+mkdir "$OUT_DIR"
 OUT_DIR=$(cd "$OUT_DIR" && pwd)
 RUSTC=${RUSTC:-rustc}
 TARGET=${TARGET:-i686-unknown-linux-gnu}
+export RUSTC TARGET
 common=(--target="$TARGET" -C opt-level=1 -C debuginfo=0)
 if [[ -n ${RUST_SYSROOT:-} ]]; then common+=(--sysroot="$RUST_SYSROOT"); fi
 if [[ -n ${LINKER:-} ]]; then common+=(-C linker="$LINKER"); fi
+python3 "$B/build_manifest.py" begin "$B/.." "$OUT_DIR"
 # Preserve original research crate. This generated build-only copy matches the
 # reviewed bridge kernel: a single explicit 2 MiB stack configuration difference.
 python3 - "$B/../src" "$OUT_DIR/kernel-src" <<'PY'
@@ -25,4 +31,5 @@ PY
 "$RUSTC" "$OUT_DIR/kernel-src/lib.rs" --edition=2021 --test "${common[@]}" -o "$OUT_DIR/kernel-tests"
 # Native null-pointer probe is optional; CC must already target TARGET.
 if [[ -n ${CC:-} ]]; then "$CC" "$B/native.c" -L"$OUT_DIR" -lbridge -o "$OUT_DIR/native-probe"; fi
+python3 "$B/build_manifest.py" create "$B/.." "$OUT_DIR"
 printf 'Source-only bridge built in %s for %s\n' "$OUT_DIR" "$TARGET"

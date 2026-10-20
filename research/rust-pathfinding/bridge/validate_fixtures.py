@@ -1,4 +1,6 @@
 """Offline integrity check for sanitized numeric fixtures; no original capture needed."""
+if not __debug__:
+ raise SystemExit("Python optimization is unsupported; unset PYTHONOPTIMIZE and omit -O.")
 import hashlib,json,pathlib
 b=pathlib.Path(__file__).resolve().parent
 manifest=json.loads((b/'FIXTURE-SHA256.json').read_text())

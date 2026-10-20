@@ -1,4 +1,6 @@
 """Verify retained core and extension source inventories without external services."""
+if not __debug__:
+ raise SystemExit("Python optimization is unsupported; unset PYTHONOPTIMIZE and omit -O.")
 import pathlib,json,hashlib
 b=pathlib.Path(__file__).resolve().parent;root=b.parent
 for manifest in (root/'SOURCE-SHA256.json',b/'SOURCE-SHA256.json'):

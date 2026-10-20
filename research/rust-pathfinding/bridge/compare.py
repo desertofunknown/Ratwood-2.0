@@ -1,4 +1,6 @@
 """Compare generated output to frozen controls; native-only mode makes no ABI claim."""
+if not __debug__:
+ raise SystemExit("Python optimization is unsupported; unset PYTHONOPTIMIZE and omit -O.")
 import pathlib,json,sys
 b=pathlib.Path(sys.argv[1]);run=pathlib.Path(sys.argv[2]);native_only='--native-only' in sys.argv[3:]
 cases=json.loads((b/'cases.json').read_text());direct=(run/'logs/direct.log').read_text().splitlines();seen={}
