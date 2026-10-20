@@ -99,6 +99,7 @@
 #include "focus_only_tests.dm"
 #include "harddels.dm"
 #include "hostile_target_scan.dm"
+#include "loudmouth_mask_icon.dm"
 #include "movespeed_modifier_updates.dm"
 #include "pronoun_obscurity.dm"
 #include "reach_dummy_pool.dm"
