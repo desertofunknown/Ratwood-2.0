@@ -88,6 +88,7 @@
 #include "acorn_coffee_reaction.dm"
 #include "anchored_mobs.dm"
 #include "baseturfs.dm"
+#include "blade_burst_antimagic.dm"
 #include "collision_zero_resistance.dm"
 #include "colorblind_hud_palette.dm"
 #include "component_tests.dm"
