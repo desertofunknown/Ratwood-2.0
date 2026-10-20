@@ -93,6 +93,7 @@
 #include "colorblind_hud_palette.dm"
 #include "component_tests.dm"
 #include "create_and_destroy.dm"
+#include "dungeon_mover_lifecycle.dm"
 #include "empty_held_slot.dm"
 #include "empty_held_slot_callers.dm"
 #include "focus_only_tests.dm"
