@@ -104,6 +104,7 @@
 #include "reagent_id_typos.dm"
 #include "reagent_recipe_collisions.dm"
 #include "scheduler_suffix_accounting.dm"
+#include "soak_head_coverage.dm"
 #include "spawn_humans.dm"
 #include "species_whitelists.dm"
 #include "status_effect_apply_lifetime.dm"

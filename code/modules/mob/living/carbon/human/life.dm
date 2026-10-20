@@ -169,20 +169,17 @@
 
 /mob/living/carbon/human/SoakMob(locations)
 	. = ..()
-	var/coverhead
-//	var/coverfeet
-	//add belt slots to this for rusting
-	var/list/body_parts = list(head, wear_mask, wear_wrists, wear_shirt, wear_neck, cloak, wear_armor, wear_pants, backr, backl, gloves, shoes, belt, s_store, glasses, ears, wear_ring) //Everything but pockets. Pockets are l_store and r_store. (if pockets were allowed, putting something armored, gloves or hats for example, would double up on the armor)
-	for(var/bp in body_parts)
-		if(!bp)
-			continue
-		if(bp && istype(bp , /obj/item/clothing))
-			var/obj/item/clothing/C = bp
-			if(zone2covered(BODY_ZONE_HEAD, C.body_parts_covered))
-				coverhead = TRUE
-//			if(zone2covered(BODY_ZONE_PRECISE_L_FOOT, C.body_parts_covered))
-//				coverfeet = TRUE
 	if(locations & HEAD)
+		var/coverhead
+		var/list/body_parts = list(head, wear_mask, wear_wrists, wear_shirt, wear_neck, cloak, wear_armor, wear_pants, backr, backl, gloves, shoes, belt, s_store, glasses, ears, wear_ring) //Everything but pockets. Pockets are l_store and r_store. (if pockets were allowed, putting something armored, gloves or hats for example, would double up on the armor)
+		for(var/bp in body_parts)
+			if(!bp)
+				continue
+			if(bp && istype(bp , /obj/item/clothing))
+				var/obj/item/clothing/C = bp
+				if(zone2covered(BODY_ZONE_HEAD, C.body_parts_covered))
+					coverhead = TRUE
+					break
 		if(!coverhead && patron?.type != /datum/patron/divine/abyssor) //abyssor friends don't care about a bit of water!!!
 			if(!is_holding_item_of_type(/obj/item/rogueweapon/mace/parasol))
 				if(!isaxian(src) && !islamia(src))//if you aren't an abyssor spawn creature
@@ -190,10 +187,6 @@
 	if(HAS_TRAIT(src, TRAIT_NOBLE)) // Allows nobles who are holding a parasol & its raining to get a mood buff
 		if(is_holding_item_of_type(/obj/item/rogueweapon/mace/parasol/noble)) 
 			add_stress(/datum/stressevent/parasolrain)
-//	if(locations & FEET)
-//		if(!coverfeet && patron?.type != /datum/patron/divine/abyssor)
-//			if(!isaxian(src) && !islamia(src))
-//				add_stress(/datum/stressevent/coldfeet)
 
 //END FIRE CODE
 

@@ -1,0 +1,4 @@
+author: "desertofunknown"
+delete-after: true
+changes:
+  - code_imp: "Skip unnecessary head-coverage scans when soaking does not reach the head, and stop scanning after finding cover."
