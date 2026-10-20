@@ -320,7 +320,7 @@
 		knockitoff += 1
 		visible_message(span_info("The covetous crab is knocked slightly more loose from [src]! <b>[knockitoff]</b>!"))
 		if(knockitoff >= 10)
-			playsound(src, 'sound/misc/bug.ogg', 70, TRUE)
+			playsound(src, 'sound/misc/Bug.ogg', 70, TRUE)
 			message_admins("[usr.key] has knocked the Crustacean off of [src].")
 			visible_message(span_warning("The crab falls off of [src]!"))
 			knockedoffbefore = 1

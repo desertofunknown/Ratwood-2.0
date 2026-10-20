@@ -82,7 +82,7 @@
 	if(.)
 		return
 	user.changeNext_move(CLICK_CD_MELEE)
-	playsound(loc, 'sound/misc/bug.ogg', 50, FALSE, -1)
+	playsound(loc, 'sound/misc/Bug.ogg', 50, FALSE, -1)
 	active = !active
 	if(active)
 		icon_state = "[initial(icon_state)]_active"

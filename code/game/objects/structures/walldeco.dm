@@ -357,7 +357,7 @@
 		say("REMOVE THINE HAND FROM THE ALARM, CREATURE!")
 		return
 
-	playsound(src, 'sound/misc/bug.ogg', 100, FALSE, -1)
+	playsound(src, 'sound/misc/Bug.ogg', 100, FALSE, -1)
 	if(onoff == 0)
 		onoff = 1
 		icon_state = "alarm"

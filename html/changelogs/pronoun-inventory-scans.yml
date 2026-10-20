@@ -1,0 +1,4 @@
+author: "desertofunknown"
+delete-after: true
+changes:
+  - code_imp: "Avoid unnecessary inventory scans when generating pronouns for characters with visible faces."

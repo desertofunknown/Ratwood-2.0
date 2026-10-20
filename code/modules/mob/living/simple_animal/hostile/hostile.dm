@@ -103,8 +103,10 @@
 	if(target)
 		possible_targets = ListTargets()
 	else
+		var/full_scan_done = FALSE
 		if(search_objects || !use_lazy_target_scan)
 			possible_targets = ListTargets()
+			full_scan_done = TRUE
 		else if(world.time >= next_seek)
 			next_seek = world.time + lazy_seek_interval
 			var/turf/search_turf = get_turf(targets_from)
@@ -114,11 +116,13 @@
 		// Periodically run a full scan so object searches and non-player interactions still function.
 		if(world.time >= next_full_seek)
 			next_full_seek = world.time + full_seek_interval
-			var/list/full_targets = ListTargets()
-			if(possible_targets)
-				possible_targets |= full_targets
-			else
-				possible_targets = full_targets
+			// Object searches and mobs without lazy scanning already have a full snapshot.
+			if(!full_scan_done)
+				var/list/full_targets = ListTargets()
+				if(possible_targets)
+					possible_targets |= full_targets
+				else
+					possible_targets = full_targets
 
 		if(!possible_targets)
 			possible_targets = list()

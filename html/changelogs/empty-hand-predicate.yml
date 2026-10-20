@@ -1,0 +1,4 @@
+author: "desertofunknown"
+delete-after: true
+changes:
+  - code_imp: "Avoid temporary hand-index lists when checking food pickup and hand-slot eligibility."

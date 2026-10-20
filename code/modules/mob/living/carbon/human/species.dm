@@ -720,7 +720,7 @@ GLOBAL_LIST_EMPTY(roundstart_races)
 
 	switch(slot)
 		if(SLOT_HANDS)
-			if(H.get_empty_held_indexes())
+			if(H.has_empty_held_slot())
 				return TRUE
 			return FALSE
 		if(SLOT_WEAR_MASK)

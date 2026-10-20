@@ -1,0 +1,4 @@
+author: "Sauna38 (upstream); desertofunknown (backport and tests)"
+delete-after: true
+changes:
+  - bugfix: "Town Crier headcovers no longer disappear when worn in the mask slot."

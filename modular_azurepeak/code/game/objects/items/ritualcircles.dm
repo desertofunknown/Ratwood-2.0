@@ -143,7 +143,7 @@
 			if(!do_after(user, 30))
 				return
 			user.say("Hahaha! Your slippery fate awaits every move! A pratfall a day keeps the dignity away!")
-			playsound(loc, 'sound/magic/decoylaugh.ogg', 90, FALSE)
+			playsound(loc, 'sound/magic/Decoylaugh.ogg', 90, FALSE)
 
 			icon_state = "xylix_active"
 			loc.visible_message(span_warning("[user] traces a mocking sigil upon the rune."))

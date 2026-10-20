@@ -1,0 +1,4 @@
+author: "desertofunknown"
+delete-after: true
+changes:
+  - bugfix: "Fixed Blade Burst disappearing from learned spells after hitting an anti-magic target."

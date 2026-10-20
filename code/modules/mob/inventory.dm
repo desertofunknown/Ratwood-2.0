@@ -82,6 +82,13 @@
 	return holding_items
 
 
+// Boolean-only callers do not need a list of every available hand index.
+/mob/proc/has_empty_held_slot()
+	for(var/i in 1 to held_items.len)
+		if(!held_items[i])
+			return TRUE
+	return FALSE
+
 /mob/proc/get_empty_held_indexes()
 	var/list/L
 	for(var/i in 1 to held_items.len)

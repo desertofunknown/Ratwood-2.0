@@ -1,0 +1,4 @@
+author: "desertofunknown"
+delete-after: true
+changes:
+  - bugfix: "Fixed dungeon movers stopping after their first processing pass."

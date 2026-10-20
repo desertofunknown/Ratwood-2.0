@@ -6,13 +6,13 @@
 	slot_flags = ITEM_SLOT_HIP|ITEM_SLOT_NECK
 	w_class = WEIGHT_CLASS_NORMAL
 	possible_item_intents = list(/datum/intent/war_horn/retreat, /datum/intent/war_horn/rally, /datum/intent/war_horn/hold, /datum/intent/war_horn/charge)
-	var/retreatsound = 'modular_hearthstone/sound/items/bogguardhorn.ogg'
-	var/rallysound = 'modular_hearthstone/sound/items/watchhorn.ogg'
-	var/holdsound = 'modular_hearthstone/sound/items/rghorn.ogg'
+	var/retreatsound = 'modular_hearthstone/sound/items/BogGuardHorn.ogg'
+	var/rallysound = 'modular_hearthstone/sound/items/WatchHorn.ogg'
+	var/holdsound = 'modular_hearthstone/sound/items/RGHorn.ogg'
 	var/chargesound = 'modular_hearthstone/sound/items/signalhorn.ogg'
-	var/farretreatsound = 'modular_hearthstone/sound/items/bogguardhorn.ogg'
-	var/farrallysound = 'modular_hearthstone/sound/items/watchhorn.ogg'
-	var/farholdsound = 'modular_hearthstone/sound/items/rghorn.ogg'
+	var/farretreatsound = 'modular_hearthstone/sound/items/BogGuardHorn.ogg'
+	var/farrallysound = 'modular_hearthstone/sound/items/WatchHorn.ogg'
+	var/farholdsound = 'modular_hearthstone/sound/items/RGHorn.ogg'
 	var/farchargesound = 'modular_hearthstone/sound/items/signalhorn.ogg'
 	var/hornchannel
 

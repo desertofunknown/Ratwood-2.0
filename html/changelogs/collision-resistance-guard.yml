@@ -1,0 +1,4 @@
+author: "Artur Lang (upstream); desertofunknown (backport and tests)"
+delete-after: true
+changes:
+  - bugfix: "Fixed runtime errors when pushing zero-resistance objects such as dinghies."
