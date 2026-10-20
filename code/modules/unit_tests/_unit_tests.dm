@@ -108,6 +108,7 @@
 #include "spawn_humans.dm"
 #include "species_whitelists.dm"
 #include "status_effect_apply_lifetime.dm"
+#include "storage_underlay_cache.dm"
 #include "subsystem_init.dm"
 #include "subsystem_queue_order.dm"
 #include "timer_sanity.dm"

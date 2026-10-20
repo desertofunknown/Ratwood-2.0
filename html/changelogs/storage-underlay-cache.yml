@@ -1,0 +1,4 @@
+author: "desertofunknown"
+delete-after: true
+changes:
+  - code_imp: "Reuse cached grid-storage underlays for matching item sizes and styles instead of regenerating them on every redraw."

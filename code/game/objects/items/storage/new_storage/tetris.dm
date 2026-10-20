@@ -128,7 +128,6 @@
 				bound_underlay = get_bound_underlay(used_gridwidth, used_gridheight)
 				if(!bound_underlay)
 					bound_underlay = generate_bound_underlay(used_gridwidth, used_gridheight)
-					underlay_appearances_by_size["[used_gridwidth]x[used_gridheight]"] = bound_underlay
 				stored_item.underlays += bound_underlay
 				screen_loc = LAZYACCESSASSOC(master.item_to_grid_coordinates, stored_item, 1)
 				screen_loc = master.grid_coordinates_to_screen_loc(screen_loc)
@@ -154,7 +153,6 @@
 				bound_underlay = get_bound_underlay(used_gridwidth, used_gridheight)
 				if(!bound_underlay)
 					bound_underlay = generate_bound_underlay(used_gridwidth, used_gridheight)
-					underlay_appearances_by_size["[used_gridwidth]x[used_gridheight]"] = bound_underlay
 				stored_item.underlays += bound_underlay
 				screen_loc = LAZYACCESSASSOC(master.item_to_grid_coordinates, stored_item, 1)
 				screen_loc = master.grid_coordinates_to_screen_loc(screen_loc)
@@ -545,8 +543,8 @@
 				testing("validate_grid_coordinates FAILED, coordinates already occupied, final_coordinates: ([final_coordinates])")
 				return FALSE
 	return TRUE
-/datum/component/storage/proc/get_bound_underlay(grid_width = world.icon_size, grid_height = world.icon_size, enchanted)
-	return LAZYACCESS(underlay_appearances_by_size, "[grid_width]x[grid_height]_[enchanted]")
+/datum/component/storage/proc/get_bound_underlay(grid_width = world.icon_size, grid_height = world.icon_size, enchanted = FALSE)
+	return LAZYACCESS(underlay_appearances_by_size, "[grid_width]x[grid_height]_[!!enchanted]")
 
 /**
  * Generates and caches an underlay for the given width and height.
@@ -604,6 +602,7 @@
 
 	final_appearance.icon = final_icon
 	final_appearance.transform = final_appearance.transform.Translate(-width_offset/2, -height_offset/2)
+	underlay_appearances_by_size["[grid_width]x[grid_height]_[!!enchanted]"] = final_appearance
 	return final_appearance
 
 /datum/component/storage/proc/grid_add_item(obj/item/storing, coordinates)
