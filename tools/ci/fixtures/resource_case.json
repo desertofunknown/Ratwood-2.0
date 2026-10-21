@@ -1,0 +1,116 @@
+[
+  {
+    "before": "icons/mob/OnFire.dmi",
+    "after": "icons/mob/onfire.dmi",
+    "sources": {
+      "code/modules/flufftext/Hallucination.dm": 1,
+      "code/modules/mob/living/carbon/carbon.dm": 1,
+      "code/modules/mob/living/carbon/human/update_icons.dm": 1,
+      "code/modules/mob/living/update_icons.dm": 1,
+      "code/modules/spells/roguetown/acolyte/astrata.dm": 1
+    }
+  },
+  {
+    "before": "icons/testing/turf_analysis.dmi",
+    "after": "icons/Testing/turf_analysis.dmi",
+    "sources": {
+      "code/datums/ai/hostile/_hostile_controller.dm": 1,
+      "code/game/machinery/trams_and_elevators/industrial_lift.dm": 10
+    }
+  },
+  {
+    "before": "icons/turf/floors/Chasms.dmi",
+    "after": "icons/turf/floors/chasms.dmi",
+    "sources": {
+      "code/modules/flufftext/Hallucination.dm": 1
+    }
+  },
+  {
+    "before": "modular/Neu_food/icons/cookware/ration.dmi",
+    "after": "modular/Neu_Food/icons/cookware/ration.dmi",
+    "sources": {
+      "modular/Neu_Food/code/cookware/ration.dm": 1,
+      "modular/Neu_Food/code/others/dried_fruits.dm": 1
+    }
+  },
+  {
+    "before": "modular/Neu_food/icons/raw/raw_fish.dmi",
+    "after": "modular/Neu_Food/icons/raw/raw_fish.dmi",
+    "sources": {
+      "modular/Neu_Food/code/raw/raw_fish.dm": 1,
+      "modular/Neu_Food/code/raw/raw_shellfish.dm": 2
+    }
+  },
+  {
+    "before": "modular_hearthstone/sound/items/bogguardhorn.ogg",
+    "after": "modular_hearthstone/sound/items/BogGuardHorn.ogg",
+    "sources": {
+      "modular_hearthstone/code/game/objects/items/signal_horn.dm": 2,
+      "modular_helmsguard/code/game/objects/items/war_horn.dm": 2
+    }
+  },
+  {
+    "before": "modular_hearthstone/sound/items/rghorn.ogg",
+    "after": "modular_hearthstone/sound/items/RGHorn.ogg",
+    "sources": {
+      "modular_hearthstone/code/game/objects/items/signal_horn.dm": 2,
+      "modular_helmsguard/code/game/objects/items/war_horn.dm": 2
+    }
+  },
+  {
+    "before": "modular_hearthstone/sound/items/watchhorn.ogg",
+    "after": "modular_hearthstone/sound/items/WatchHorn.ogg",
+    "sources": {
+      "modular_hearthstone/code/game/objects/items/signal_horn.dm": 2,
+      "modular_helmsguard/code/game/objects/items/war_horn.dm": 2
+    }
+  },
+  {
+    "before": "sound/foley/jumpland/grassland.wav",
+    "after": "sound/foley/jumpland/grassland.WAV",
+    "sources": {
+      "code/game/turfs/open/floor/roguefloor.dm": 14,
+      "modular_deserttown/desertfloor.dm": 1
+    }
+  },
+  {
+    "before": "sound/foley/jumpland/metalland.wav",
+    "after": "sound/foley/jumpland/metalland.WAV",
+    "sources": {
+      "code/game/turfs/open/floor/roguefloor.dm": 1
+    }
+  },
+  {
+    "before": "sound/magic/decoylaugh.ogg",
+    "after": "sound/magic/Decoylaugh.ogg",
+    "sources": {
+      "code/modules/spells/roguetown/acolyte/xylix.dm": 4,
+      "modular_azurepeak/code/game/objects/items/ritualcircles.dm": 1
+    }
+  },
+  {
+    "before": "sound/misc/bug.ogg",
+    "after": "sound/misc/Bug.ogg",
+    "sources": {
+      "code/game/objects/structures/walldeco.dm": 1,
+      "code/modules/roguetown/roguemachine/lottery.dm": 13,
+      "code/modules/roguetown/roguemachine/scomm/listener.dm": 1,
+      "code/modules/roguetown/roguemachine/stockpile/stockpile_saltcamp.dm": 1,
+      "code/modules/roguetown/roguemachine/vaultbank.dm": 1
+    }
+  },
+  {
+    "before": "sound/music/impish.ogg",
+    "after": "sound/music/Impish.ogg",
+    "sources": {
+      "code/game/area/random_dungeons/wretch_areas.dm": 6
+    }
+  },
+  {
+    "before": "sound/weather/tornado/tornado.ogg",
+    "after": "sound/weather/tornado/Tornado.ogg",
+    "sources": {
+      "code/datums/particle_weathers/datum_types/gale_winds.dm": 1
+    }
+  }
+]

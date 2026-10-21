@@ -21,7 +21,7 @@ GLOBAL_LIST_EMPTY(active_abyssors_rage)
 	var/next_drift_time
 	var/current_drift_dir = SOUTH
 	var/next_dir_change = 0
-	var/sound/tornado_loop = 'sound/weather/tornado/tornado.ogg'
+	var/sound/tornado_loop = 'sound/weather/tornado/Tornado.ogg'
 	var/sound_volume = 75
 	var/sound_range = 20
 	var/sound_loop_delay = 450   // ticks (5 seconds default)

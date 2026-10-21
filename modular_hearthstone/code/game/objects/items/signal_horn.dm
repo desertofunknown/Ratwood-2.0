@@ -50,11 +50,11 @@
 	user.visible_message(span_userdanger("[user] blows the horn!"))
 	switch(user.job)
 		if("Warden")
-			playsound(src, 'modular_hearthstone/sound/items/bogguardhorn.ogg', 100, TRUE)
+			playsound(src, 'modular_hearthstone/sound/items/BogGuardHorn.ogg', 100, TRUE)
 		if("Town Sheriff", "Watchman", "Sergeant", "Man at Arms")
-			playsound(src, 'modular_hearthstone/sound/items/watchhorn.ogg', 100, TRUE)
+			playsound(src, 'modular_hearthstone/sound/items/WatchHorn.ogg', 100, TRUE)
 		if("Knight Captain", "Royal Guard")
-			playsound(src, 'modular_hearthstone/sound/items/rghorn.ogg', 100, TRUE)
+			playsound(src, 'modular_hearthstone/sound/items/RGHorn.ogg', 100, TRUE)
 		else
 			playsound(src, 'modular_hearthstone/sound/items/signalhorn.ogg', 100, TRUE)
 
@@ -91,11 +91,11 @@
 
 		switch(user.job)
 			if("Warden")
-				player.playsound_local(get_turf(player), 'modular_hearthstone/sound/items/bogguardhorn.ogg', 35, FALSE, pressure_affected = FALSE)
+				player.playsound_local(get_turf(player), 'modular_hearthstone/sound/items/BogGuardHorn.ogg', 35, FALSE, pressure_affected = FALSE)
 			if("Marshal", "Watchman", "Sergeant", "Man at Arms")
-				player.playsound_local(get_turf(player), 'modular_hearthstone/sound/items/watchhorn.ogg', 35, FALSE, pressure_affected = FALSE)
+				player.playsound_local(get_turf(player), 'modular_hearthstone/sound/items/WatchHorn.ogg', 35, FALSE, pressure_affected = FALSE)
 			if("Knight Captain", "Knight")
-				player.playsound_local(get_turf(player), 'modular_hearthstone/sound/items/rghorn.ogg', 35, FALSE, pressure_affected = FALSE)
+				player.playsound_local(get_turf(player), 'modular_hearthstone/sound/items/RGHorn.ogg', 35, FALSE, pressure_affected = FALSE)
 			else
 				player.playsound_local(get_turf(player), 'modular_hearthstone/sound/items/signalhorn.ogg', 35, FALSE, pressure_affected = FALSE)
 		to_chat(player, span_warning("I hear the horn of the Wardens somewhere [dirtext]"))

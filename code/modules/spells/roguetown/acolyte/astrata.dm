@@ -453,7 +453,7 @@
 	if(flaming_hot)
 		new/obj/effect/dummy/lighting_obj/moblight/fire(owner)
 		var/fire_icon = "Generic_mob_burning"
-		var/mutable_appearance/new_fire_overlay = mutable_appearance('icons/mob/OnFire.dmi', fire_icon, -FIRE_LAYER)
+		var/mutable_appearance/new_fire_overlay = mutable_appearance('icons/mob/onfire.dmi', fire_icon, -FIRE_LAYER)
 		new_fire_overlay.color = list(0,0,0, 0,0,0, 0,0,0, 1,1,1)
 		new_fire_overlay.appearance_flags = RESET_COLOR
 		owner.overlays_standing[FIRE_LAYER] = new_fire_overlay
