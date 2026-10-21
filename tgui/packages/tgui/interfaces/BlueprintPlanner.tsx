@@ -3,22 +3,13 @@ import { Box, Button, Icon, Input, Modal, Section, Stack, Tabs } from 'tgui-core
 
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
-
-type BuildableType = {
-  name: string;
-  category: string;
-  layer_type: 'floor' | 'wall' | 'obj' | 'border';
-  reqs_text: string;
-  image: string;
-};
-
-type GridCell = {
-  x: number;
-  y: number;
-  z: number;
-  type: string;
-  dir?: number;
-};
+import {
+  type BuildableType,
+  buildCellSummaries,
+  emptyBuildableTypes,
+  emptyCellSummary,
+  type GridCell,
+} from './BlueprintPlanner/cellSummary';
 
 type ScannedCell = {
   x: number;
@@ -291,7 +282,7 @@ export const BlueprintPlanner = () => {
     }
   }, [data.saved_grid, data.saved_floors]);
 
-  const buildableTypes = data.buildable_types || {};
+  const buildableTypes = data.buildable_types || emptyBuildableTypes;
   const libraryBlueprints = data.library_blueprints || [];
   const userCkey = data.user_ckey || '';
 
@@ -521,15 +512,11 @@ export const BlueprintPlanner = () => {
     return result;
   }, [gridRadius]);
 
-  const cellMap = useMemo(() => {
-    const map: Record<string, GridCell[]> = {};
-    grid.forEach((c) => {
-      const key = `${c.x}_${c.y}_${c.z}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(c);
-    });
-    return map;
-  }, [grid]);
+  // Edits/catalog updates replace these references; hover and focus do not.
+  const cellSummaries = useMemo(
+    () => buildCellSummaries(grid, buildableTypes),
+    [grid, buildableTypes],
+  );
 
   const scannedMap = useMemo(() => {
     const map: Record<string, ScannedCell> = {};
@@ -1085,34 +1072,20 @@ export const BlueprintPlanner = () => {
                           }}
                         >
                           {cells.map((cell) => {
-                            const currentLayerCells = cellMap[`${cell.x}_${cell.y}_${activeZ}`] || [];
-                            const lowerLayerCells =
-                              activeZ > 0 ? cellMap[`${cell.x}_${cell.y}_${activeZ - 1}`] || [] : [];
-
+                            const {
+                              floorTile,
+                              wallTile,
+                              objTile,
+                              borderTiles,
+                              hasNorthBorder,
+                              hasSouthBorder,
+                              hasEastBorder,
+                              hasWestBorder,
+                            } = cellSummaries[`${cell.x}_${cell.y}_${activeZ}`] || emptyCellSummary;
+                            const lowerTile = activeZ > 0
+                              ? cellSummaries[`${cell.x}_${cell.y}_${activeZ - 1}`]?.lowerTile
+                              : undefined;
                             const scannedCell = scannedMap[`${cell.x}_${cell.y}_${activeZ}`];
-
-                            const floorTile = currentLayerCells.find(
-                              (c) => buildableTypes[c.type]?.layer_type === 'floor'
-                            );
-                            const wallTile = currentLayerCells.find(
-                              (c) => buildableTypes[c.type]?.layer_type === 'wall'
-                            );
-                            const objTile = currentLayerCells.find(
-                              (c) => buildableTypes[c.type]?.layer_type === 'obj'
-                            );
-                            const borderTiles = currentLayerCells.filter(
-                              (c) => buildableTypes[c.type]?.layer_type === 'border'
-                            );
-
-                            const lowerTile =
-                              lowerLayerCells.find((c) => buildableTypes[c.type]?.layer_type === 'wall') ||
-                              lowerLayerCells.find((c) => buildableTypes[c.type]?.layer_type === 'floor') ||
-                              lowerLayerCells[0];
-
-                            const hasNorthBorder = borderTiles.some((b) => b.dir === DIRS.NORTH);
-                            const hasSouthBorder = borderTiles.some((b) => b.dir === DIRS.SOUTH);
-                            const hasEastBorder = borderTiles.some((b) => b.dir === DIRS.EAST);
-                            const hasWestBorder = borderTiles.some((b) => b.dir === DIRS.WEST);
 
                             const isCenter = cell.x === 0 && cell.y === 0;
 
