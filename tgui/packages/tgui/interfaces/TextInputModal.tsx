@@ -23,11 +23,11 @@ type TextInputData = {
 };
 
 export const sanitizeMultiline = (toSanitize: string) => {
-  return toSanitize.replace(/(\n|\r\n){3,}/, '\n\n');
+  return toSanitize.replace(/(\n|\r\n){3,}/g, '\n\n');
 };
 
 export const removeAllSkiplines = (toSanitize: string) => {
-  return toSanitize.replace(/[\r\n]+/, '');
+  return toSanitize.replace(/[\r\n]+/g, '');
 };
 
 const pauseEvent = (event) => {
