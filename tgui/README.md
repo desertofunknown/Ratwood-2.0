@@ -37,6 +37,7 @@ translate concepts between old and new tgui, read this
 - [Using TGUI and Byond API for custom HTML popups](docs/tgui-for-custom-html-popups.md)
 - [Chat Embedded Components](docs/chat-embedded-components.md)
 - [Writing Tests](docs/writing-tests.md)
+- [Project validation commands and limits](../VALIDATION.md)
 
 ## Pre-requisites
 
@@ -93,7 +94,7 @@ Run `bun install` once to install tgui dependencies.
 - `bun tgui:dev` - Launch a development server.
   - `bun tgui:dev --reload` - Reload byond cache once.
   - `bun tgui:dev --debug` - Run server with debug logging enabled.
-- `bun tgui:lint` - Show (and auto-fix) problems with the code.
+- `bun tgui:lint` - Report lint problems without changing files.
 - `bun tgui:tsc` - Check code with TypeScript compiler.
 - `bun tgui:test` - Run unit and integration tests.
 - `bun tgui:test-lint` - Check TypeScript lint compatibility and unused-import
@@ -103,12 +104,11 @@ Run `bun install` once to install tgui dependencies.
 
 ## Important Memo
 
-Remember to always run a full build of tgui before submitting a PR, because it
-comes with the full suite of CI checks, and runs much faster on your computer
-than on GitHub servers. It will save you some time and possibly a few broken
-commits! Address the issues that are reported by the tooling as much as
-possible, because maintainers will beat you with a ruler and force you to
-address them anyway (unless it's a false positive or something unfixable).
+Run the production build, tests, TypeScript check and lint separately before
+submitting a PR. The build creates assets; it does not implicitly run the other
+checks. Record actual results, including pre-existing lint findings, and do not
+report an absent CI run as a successful one. See the
+[validation guide](../VALIDATION.md) for reproducible commands and coverage limits.
 
 ## Troubleshooting
 
