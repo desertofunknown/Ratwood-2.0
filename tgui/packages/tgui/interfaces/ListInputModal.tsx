@@ -84,7 +84,8 @@ export const ListInputModal = (props) => {
       !event.ctrlKey &&
       !event.altKey &&
       !event.metaKey &&
-      (isAlphabetic(key) || isNumeric(key)) &&
+      key.length === 1 &&
+      (isAlphabetic(key.toLowerCase()) || isNumeric(key)) &&
       event.target !== searchRef.current
     ) {
       event.preventDefault();
