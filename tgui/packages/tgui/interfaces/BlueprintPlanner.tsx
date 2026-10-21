@@ -471,6 +471,9 @@ export const BlueprintPlanner = () => {
 
     const safeGrid: GridCell[] = parsed.grid.filter((c) => {
       return (
+        c !== null &&
+        typeof c === 'object' &&
+        !Array.isArray(c) &&
         typeof c.x === 'number' &&
         typeof c.y === 'number' &&
         typeof c.z === 'number' &&
