@@ -164,7 +164,7 @@ if (!process.env.TGUI_CHANGELOG_TEST_CHILD) {
     await act(async () => callback());
   };
 
-  for (const failure of ['network', 'body', 'yaml'] as const) {
+  for (const failure of ['network', 'body', 'yaml', 'shape'] as const) {
     test(`${failure} failure retries and recovers through the mounted component`, async () => {
       fetchMock
         .mockImplementationOnce(() => {
@@ -176,7 +176,13 @@ if (!process.env.TGUI_CHANGELOG_TEST_CHILD) {
               text: () => Promise.reject(new Error('Body unavailable')),
             } as Response);
           }
-          return Promise.resolve(response('invalid: [unterminated'));
+          return Promise.resolve(
+            response(
+              failure === 'shape'
+                ? '2026-10-01: null'
+                : 'invalid: [unterminated',
+            ),
+          );
         })
         .mockResolvedValue(response(archive('Recovered archive')));
       await render();
@@ -286,7 +292,7 @@ if (!process.env.TGUI_CHANGELOG_TEST_CHILD) {
     expect(calls()).toHaveLength(2);
     expect(descriptions()).toContain('Reopened archive');
   });
-  for (const failure of ['network', 'body', 'yaml'] as const) {
+  for (const failure of ['network', 'body', 'yaml', 'shape'] as const) {
     test(`repeated ${failure} failures are bounded to six attempts`, async () => {
       fetchMock.mockImplementation(() => {
         if (failure === 'network') {
@@ -297,7 +303,11 @@ if (!process.env.TGUI_CHANGELOG_TEST_CHILD) {
             text: () => Promise.reject(new Error('Body unavailable')),
           } as Response);
         }
-        return Promise.resolve(response('invalid: [unterminated'));
+        return Promise.resolve(
+          response(
+            failure === 'shape' ? '2026-10-01: null' : 'invalid: [unterminated',
+          ),
+        );
       });
       await render();
       for (let index = 0; index < 6 && retries.size; index++) {
@@ -557,4 +567,27 @@ if (!process.env.TGUI_CHANGELOG_TEST_CHILD) {
     expect(calls()).toHaveLength(2);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  for (const [name, body] of [
+    ['null authors', '2026-10-01: null'],
+    ['non-list changes', '2026-10-01:\n  Tester: {bugfix: broken}'],
+    ['null entry', '2026-10-01:\n  Tester: [null]'],
+    [
+      'object description',
+      '2026-10-01:\n  Tester:\n    - bugfix: {unexpected: object}',
+    ],
+    ['invalid date', 'not-a-date:\n  Tester:\n    - bugfix: broken'],
+  ]) {
+    test(`invalid archive shape (${name}) retries without crashing and can recover`, async () => {
+      fetchMock
+        .mockResolvedValueOnce(response(body))
+        .mockResolvedValue(response(archive('Recovered valid archive')));
+      await render();
+      expect(retries.size).toBe(1);
+      await retry();
+      expect(descriptions()).toContain('Recovered valid archive');
+      expect(calls()).toHaveLength(2);
+      expect(retries.size).toBe(0);
+    });
+  }
 }

@@ -40,3 +40,14 @@ and the no-results message appear only after an archive loads. Clear resets the
 query and returns focus to the search input; reopening the window starts with an
 empty query. Enter and Escape keep the input component's normal blur behavior
 without submitting a server action or resetting the query.
+
+## Malformed archive data
+
+Parsed YAML is checked before rendering: dates must be accepted by the existing
+formatter, author groups must be records, changes must be lists of records, and
+the displayed first description must be a scalar (or absent). Invalid shapes use
+the same bounded retry path as syntax failures instead of throwing during render.
+No entries are rewritten or silently removed. Empty groups/rows, unknown
+categories, extra undisplayed keys and scalar descriptions remain accepted.
+Compatibility tests cover every checked-in monthly archive; mounted tests verify
+malformed-data recovery. These are not native-client or full-game tests.

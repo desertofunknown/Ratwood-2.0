@@ -1,7 +1,6 @@
-export type ChangelogArchive = Record<
-  string,
-  Record<string, Record<string, string>[]>
->;
+import type { ChangelogArchive } from './archive';
+
+export type { ChangelogArchive } from './archive';
 
 /** Search only the author and category/description actually displayed per row. */
 export function filterChangelog(archive: ChangelogArchive, query: string) {

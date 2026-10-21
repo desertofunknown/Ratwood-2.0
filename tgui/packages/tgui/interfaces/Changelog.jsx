@@ -17,6 +17,7 @@ import { resolveAsset } from '../assets';
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
 
+import { isChangelogArchive } from './Changelog/archive';
 import { filterChangelog } from './Changelog/filter';
 
 const icons = {
@@ -111,7 +112,11 @@ export class Changelog extends Component {
         const result = await changelogData.text();
         if (!isCurrent()) return;
         if (!/^Cannot find/.test(result)) {
-          this.setData(yaml.load(result, { schema: yaml.CORE_SCHEMA }));
+          const archive = yaml.load(result, { schema: yaml.CORE_SCHEMA });
+          if (!isChangelogArchive(archive)) {
+            throw new Error('Invalid changelog archive');
+          }
+          this.setData(archive);
           return;
         }
       } catch {
