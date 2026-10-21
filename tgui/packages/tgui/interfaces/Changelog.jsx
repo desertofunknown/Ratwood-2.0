@@ -54,6 +54,8 @@ export class Changelog extends Component {
     };
     this.dateChoices = [];
     this.entriesRef = createRef();
+    this.requestId = 0;
+    this.mounted = false;
   }
 
   setData(data) {
@@ -68,38 +70,57 @@ export class Changelog extends Component {
     this.setState({ selectedIndex });
   }
 
-  getData = (date, attemptNumber = 1) => {
+  cancelRequest() {
+    this.requestId++;
+    clearTimeout(this.retryTimer);
+    this.retryTimer = undefined;
+  }
+
+  getData = (date) => {
+    this.cancelRequest();
+    const requestId = this.requestId;
     const { act } = useBackend();
-    const self = this;
     const maxAttempts = 6;
-    if (attemptNumber === 1) this.requestedDate = date;
-    if (date !== this.requestedDate) return;
-
-    if (attemptNumber > maxAttempts) {
-      return this.setData(`Failed to load data after ${maxAttempts} attempts`);
-    }
-
-    act('get_month', { date });
-
-    fetch(resolveAsset(`${date}.yml`)).then(async (changelogData) => {
-      const result = await changelogData.text();
-      if (date !== this.requestedDate) return;
-      const errorRegex = /^Cannot find/;
-
-      if (errorRegex.test(result)) {
-        const timeout = 50 + attemptNumber * 50;
-
-        self.setData(`Loading changelog data${'.'.repeat(attemptNumber + 3)}`);
-        setTimeout(() => {
-          self.getData(date, attemptNumber + 1);
-        }, timeout);
-      } else {
-        self.setData(yaml.load(result, { schema: yaml.CORE_SCHEMA }));
+    // A date may be selected again before an older request for it resolves.
+    const isCurrent = () => this.mounted && requestId === this.requestId;
+    const request = async (attemptNumber = 1) => {
+      if (!isCurrent()) return;
+      if (attemptNumber > maxAttempts) {
+        this.setData(`Failed to load data after ${maxAttempts} attempts`);
+        return;
       }
-    });
+
+      act('get_month', { date });
+      try {
+        const changelogData = await fetch(resolveAsset(`${date}.yml`));
+        if (!isCurrent()) return;
+        const result = await changelogData.text();
+        if (!isCurrent()) return;
+        if (!/^Cannot find/.test(result)) {
+          this.setData(yaml.load(result, { schema: yaml.CORE_SCHEMA }));
+          return;
+        }
+      } catch {
+        if (!isCurrent()) return;
+      }
+
+      this.setData(`Loading changelog data${'.'.repeat(attemptNumber + 3)}`);
+      this.retryTimer = setTimeout(() => {
+        if (!isCurrent()) return;
+        this.retryTimer = undefined;
+        request(attemptNumber + 1);
+      }, 50 + attemptNumber * 50);
+    };
+    request();
   };
 
+  componentWillUnmount() {
+    this.mounted = false;
+    this.cancelRequest();
+  }
+
   componentDidMount() {
+    this.mounted = true;
     const {
       data: { dates = [] },
     } = useBackend();
