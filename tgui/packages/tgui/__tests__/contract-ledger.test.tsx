@@ -427,3 +427,133 @@ test('towner posting preserves tier, delivery and variety; losing eligibility re
   expect(container.querySelector('.ContractLedger__SignButton')).toBeNull();
   expect(container.textContent).toContain('Miner');
 });
+
+const commissionData = {
+  dynamic_roles: ['steward'],
+  pledge_available: true,
+  is_alderman_acting: false,
+  pledge_balance: 100,
+  crown_purse_balance: 100,
+  defense_costs: { Recovery: 7.9 },
+  defense_regions_by_type: { Recovery: ['North'] },
+  defense_destinations: ['Town'],
+  defense_log: [],
+  pledge_refill_base: 5,
+  pledge_refill_per_player: 1,
+  pledge_active_players: 2,
+  directives_per_day: 2,
+  directives_issued_today: 0,
+};
+
+test.each([true, false])(
+  'directive quota fallback preserves the draft and debounce when pledge availability is %p',
+  async (pledgeAvailable) => {
+    await update(commissionData);
+    await render();
+    await click(button('Commissions'));
+    await changeSelect(1, 'North');
+    await changeSelect(2, 'Town');
+    await click(
+      Array.from(container.querySelectorAll('button')).find((element) =>
+        element.textContent?.startsWith('Full'),
+      )!,
+    );
+    await click(container.querySelector('input[type=checkbox]')!);
+    const funding = () =>
+      container.querySelectorAll<HTMLInputElement>('input[name=fundingSource]');
+    await click(funding()[2]);
+    expect(container.textContent).not.toContain('Bonus Pay');
+    expect(container.querySelector('input[type=checkbox]')).toBeNull();
+    const submit = button('Submit Request');
+    await click(submit);
+    expect(submit.disabled).toBe(true);
+    expect(submit.title).toBe('Drafting...');
+    await click(submit);
+    expect(sendMessage.mock.calls).toEqual([
+      [
+        'act/commission_defense',
+        {
+          type: 'Recovery',
+          region: 'North',
+          destination: 'Town',
+          in_hands: 1,
+          levy_exempt: 0,
+          bonus_pay_level: 0,
+          funding: 'directive',
+        },
+      ],
+    ]);
+    await update({
+      directives_issued_today: 2,
+      pledge_available: pledgeAvailable,
+    });
+    expect(funding()[pledgeAvailable ? 0 : 1].checked).toBe(true);
+    expect(funding()[2].disabled).toBe(true);
+    expect(container.querySelectorAll('select')[1].value).toBe('North');
+    expect(container.querySelectorAll('select')[2].value).toBe('Town');
+    expect(
+      container.querySelector<HTMLInputElement>('input[type=checkbox]')!
+        .checked,
+    ).toBe(true);
+    const commission = button('Commission (11m)');
+    expect(commission.disabled).toBe(true);
+    expect(commission.title).toBe('Drafting...');
+    await click(commission);
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 550));
+    });
+    expect(commission.disabled).toBe(false);
+    await click(commission);
+    await click(commission);
+    expect(sendMessage).toHaveBeenCalledTimes(2);
+    expect(sendMessage.mock.calls[1]).toEqual([
+      'act/commission_defense',
+      {
+        type: 'Recovery',
+        region: 'North',
+        destination: 'Town',
+        in_hands: 0,
+        levy_exempt: 1,
+        bonus_pay_level: 2,
+        funding: pledgeAvailable ? 'pledge' : 'crown',
+      },
+    ]);
+  },
+);
+
+test('live acting-alderman status resets stale crown funding and levy exemption before dispatch', async () => {
+  await update(commissionData);
+  await render();
+  await click(button('Commissions'));
+  await changeSelect(1, 'North');
+  await changeSelect(2, 'Town');
+  const funding = () =>
+    container.querySelectorAll<HTMLInputElement>('input[name=fundingSource]');
+  await click(funding()[1]);
+  await click(container.querySelector('input[type=checkbox]')!);
+  await update({ is_alderman_acting: true });
+  expect(funding()[0].checked).toBe(true);
+  expect(funding()[1].disabled).toBe(true);
+  expect(funding()[2].disabled).toBe(true);
+  const levy = container.querySelector<HTMLInputElement>(
+    'input[type=checkbox]',
+  )!;
+  expect(levy.checked).toBe(false);
+  expect(levy.disabled).toBe(true);
+  await click(button('Commission (7.9m)'));
+  expect(sendMessage.mock.calls).toEqual([
+    [
+      'act/commission_defense',
+      {
+        type: 'Recovery',
+        region: 'North',
+        destination: 'Town',
+        in_hands: 0,
+        levy_exempt: 0,
+        bonus_pay_level: 0,
+        funding: 'pledge',
+      },
+    ],
+  ]);
+});

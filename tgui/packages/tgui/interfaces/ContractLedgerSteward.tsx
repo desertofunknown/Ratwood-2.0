@@ -1,63 +1,26 @@
 import { type ReactNode, useState } from 'react';
 
 import { useBackend } from '../backend';
-
-type DefenseLogEntry = {
-  title: string;
-  type: string;
-  region: string;
-  cost: number;
-  day: number;
-};
-
-type BlockadeRecallEntry = {
-  region: string;
-  recall_eligible: number | boolean;
-  recall_blocker: string | null;
-  seconds_until_recallable: number;
-  refund: number;
-  refund_fund: string | null;
-};
-
-type StewardData = {
-  pledge_balance: number;
-  pledge_refill_base: number;
-  pledge_refill_per_player: number;
-  pledge_active_players: number;
-  pledge_available: number | boolean;
-  pledge_guild_bonus: number;
-  pledge_golden_active: number | boolean;
-  crown_purse_balance: number;
-  defense_costs: Record<string, number>;
-  defense_regions_by_type: Record<string, string[]>;
-  blockade_region_labels: Record<string, string>;
-  region_tp_multipliers: Record<string, number>;
-  defense_destinations: string[];
-  defense_log: DefenseLogEntry[];
-  blockade_recall_list: BlockadeRecallEntry[];
-  blockade_recall_window_seconds: number;
-  bonus_pay_light_mult: number;
-  bonus_pay_full_mult: number;
-  directives_per_day: number;
-  directives_issued_today: number;
-  is_alderman_acting: number | boolean;
-};
-
-type FundingSource = 'pledge' | 'crown' | 'directive';
+import {
+  coin,
+  deriveCommissionState,
+  getCommissionDisabledReason,
+  RECOVERY_TYPE,
+} from './ContractLedgerSteward/commissionState';
+import type {
+  DefenseLogEntry,
+  FundingSource,
+  StewardData,
+} from './ContractLedgerSteward/types';
 
 type SubTab = 'compose' | 'history';
-const RECOVERY_TYPE = 'Recovery';
-const BLOCKADE_TYPE = 'Blockade Defense';
 const DISPATCH_DEBOUNCE_MS = 500;
 
 const COMMISSION_LABELS: Record<string, string> = {
   'Blockade Defense': 'Clear Blockade',
 };
 
-const coin = (n: number) => `${n}m`;
-
-// Reduces a decimal (like 0.5, 0.2, 0.25) to a simple X/Y fraction via gcd on
-// percentage integers. Works cleanly for the multipliers we ship (0.75, 1.2, 1.5).
+// Formats a multiplier delta as a rounded percentage.
 const formatMultiplierDelta = (delta: number): string => {
   const pct = Math.round(delta * 100);
   return `${pct}%`;
@@ -261,35 +224,26 @@ const ComposeView = () => {
   const [funding, setFunding] = useState<FundingSource>('pledge');
   const [inflight, setInflight] = useState<boolean>(false);
 
-  const aldermanActing = !!data.is_alderman_acting;
-  const regionsForType = data.defense_regions_by_type?.[type] || [];
-  const cost = data.defense_costs?.[type] ?? 0;
-  const needsDestination = type === RECOVERY_TYPE;
-  const isBlockade = type === BLOCKADE_TYPE;
-  // The picked blockade's recall entry, if any. Present when a writ is already in
-  // circulation for that region - the entry tells us whether it is still recallable
-  // and drives the Recall button below.
-  const recallEntry =
-    isBlockade && region
-      ? (data.blockade_recall_list || []).find((e) => e.region === region)
-      : undefined;
-  const regionHasActiveWrit = !!recallEntry;
-  const directivesRemaining =
-    (data.directives_per_day ?? 0) - (data.directives_issued_today ?? 0);
-  const pledgeAvailable = !!data.pledge_available;
-  const bonusLightMult = data.bonus_pay_light_mult ?? 1.25;
-  const bonusFullMult = data.bonus_pay_full_mult ?? 1.5;
-  // Bonus Pay is disabled for Requests (no reward to sweeten, no coin to burn).
-  const bonusPayEligible = funding !== 'directive';
-  const effectiveLevel = bonusPayEligible ? bonusPayLevel : 0;
-  const bonusMult =
-    effectiveLevel === 2
-      ? bonusFullMult
-      : effectiveLevel === 1
-        ? bonusLightMult
-        : 1;
-  const scaledCost = effectiveLevel !== 0 ? Math.floor(cost * bonusMult) : cost;
-  const effectiveCost = funding === 'directive' ? 0 : scaledCost;
+  const commissionState = deriveCommissionState(data, {
+    type,
+    region,
+    funding,
+    bonusPayLevel,
+  });
+  const {
+    aldermanActing,
+    regionsForType,
+    needsDestination,
+    isBlockade,
+    recallEntry,
+    directivesRemaining,
+    pledgeAvailable,
+    bonusLightMult,
+    bonusFullMult,
+    bonusPayEligible,
+    effectiveLevel,
+    effectiveCost,
+  } = commissionState;
 
   // If the currently-selected funding disappears (pledge repealed, quota spent), fall back.
   if (funding === 'pledge' && !pledgeAvailable && !aldermanActing) {
@@ -314,30 +268,11 @@ const ComposeView = () => {
     if (next !== RECOVERY_TYPE) setDestination('');
   };
 
-  const fundingDisabledReason =
-    funding === 'pledge' && !pledgeAvailable
-      ? 'The Burgher Pledge is unavailable.'
-      : funding === 'pledge' && data.pledge_balance < scaledCost
-        ? `Insufficient Pledge (need ${coin(scaledCost)}, have ${coin(data.pledge_balance)}).`
-        : funding === 'crown' && data.crown_purse_balance < scaledCost
-          ? `Insufficient Crown's Purse (need ${coin(scaledCost)}, have ${coin(data.crown_purse_balance)}).`
-          : funding === 'directive' && directivesRemaining <= 0
-            ? "Today's directive quota is spent."
-            : undefined;
-
-  const disabledReason = inflight
-    ? 'Drafting...'
-    : !type
-      ? 'Pick a commission type.'
-      : !region
-        ? isBlockade
-          ? 'No blockade to clear.'
-          : 'Pick a region.'
-        : isBlockade && regionHasActiveWrit
-          ? 'A writ is already in circulation for this blockade.'
-          : needsDestination && !destination
-            ? 'Pick the shipment destination.'
-            : fundingDisabledReason;
+  const disabledReason = getCommissionDisabledReason(
+    data,
+    { funding, inflight, type, region, destination },
+    commissionState,
+  );
 
   const dispatch = () => {
     if (disabledReason) return;
