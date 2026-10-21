@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent, WheelEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Input, NoticeBox } from 'tgui-core/components';
 
 import { resolveAsset } from '../assets';

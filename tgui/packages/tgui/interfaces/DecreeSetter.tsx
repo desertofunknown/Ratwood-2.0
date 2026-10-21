@@ -1,5 +1,4 @@
 import { Window } from '../layouts';
-
 import { DecreeRegister } from './DecreeSetter/DecreeRegister';
 
 export const DecreeSetter = () => (

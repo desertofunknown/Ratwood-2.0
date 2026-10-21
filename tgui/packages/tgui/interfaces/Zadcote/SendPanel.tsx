@@ -1,12 +1,12 @@
 import { useId, useState } from 'react';
 
+import type { ZadcoteAct, ZadcoteData, ZadcoteSlot } from './types';
 import {
   formatCountdown,
   maxWeightForTier,
   MESSAGE_MAX,
   weightLabel,
 } from './types';
-import type { ZadcoteAct, ZadcoteData, ZadcoteSlot } from './types';
 
 const Picker = ({
   label,

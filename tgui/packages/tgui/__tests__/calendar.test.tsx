@@ -4,8 +4,8 @@ import { act, useSyncExternalStore } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
 import type {
-  CalendarEvent,
   CalendarData,
+  CalendarEvent,
 } from '../interfaces/Calendar/shared';
 
 const initialByond = Object.getOwnPropertyDescriptor(globalThis, 'Byond');

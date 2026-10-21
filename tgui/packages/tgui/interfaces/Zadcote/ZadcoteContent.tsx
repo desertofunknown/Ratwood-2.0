@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useBackend } from '../../backend';
 import { MailLog } from './MailLog';
 import { SlotRow } from './SlotRow';
-import { formatCountdown } from './types';
 import type { ZadcoteData } from './types';
+import { formatCountdown } from './types';
 
 export const ZadcoteContent = () => {
   const { data, act } = useBackend<ZadcoteData>();

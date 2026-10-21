@@ -1,6 +1,6 @@
 import { RoleEntry } from './RoleEntry';
-import { fmtClock } from './types';
 import type { FormingWave, MigrantAct } from './types';
+import { fmtClock } from './types';
 
 export const FormingTrack = ({
   label,

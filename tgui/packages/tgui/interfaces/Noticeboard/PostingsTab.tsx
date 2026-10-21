@@ -16,9 +16,9 @@ import {
   SERIF,
 } from '../common/parchment';
 import {
+  type Posting,
   POSTING_TIER_LISTING,
   POSTING_TIER_NOTICE,
-  type Posting,
   type PostingTier,
   type TabProps,
 } from './types';

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useBackend } from '../../backend';
 import { FormingTrack } from './FormingTrack';
 import { PledgeEntry } from './PledgeEntry';
-import { fmtClock } from './types';
 import type { MigrantData } from './types';
+import { fmtClock } from './types';
 
 export const MigrantPanelContent = () => {
   const { data, act } = useBackend<MigrantData>();

@@ -13,8 +13,8 @@ import {
   PARCHMENT_SHADOW,
   SEAL_AMBER,
   SEAL_GREEN,
-  SERIF,
   sectionHeaderStyle,
+  SERIF,
 } from './common/parchment';
 import { PackRow } from './Goldface/PackRow';
 import { SearchBar } from './Goldface/SearchBar';

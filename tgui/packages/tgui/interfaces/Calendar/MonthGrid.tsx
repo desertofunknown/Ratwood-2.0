@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+
 import { DayCell } from './DayCell';
 import {
   assignBarSlots,

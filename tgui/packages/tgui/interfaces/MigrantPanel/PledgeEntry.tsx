@@ -1,6 +1,6 @@
 import { RoleEntry } from './RoleEntry';
-import { fmtClock } from './types';
 import type { MigrantAct, WaveInfo } from './types';
+import { fmtClock } from './types';
 
 export const PledgeEntry = ({
   wave,

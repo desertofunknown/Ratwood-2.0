@@ -1,8 +1,8 @@
 import { useEffect, useId, useState } from 'react';
 
 import { SendPanel } from './SendPanel';
-import { formatCountdown } from './types';
 import type { ZadcoteAct, ZadcoteData, ZadcoteSlot } from './types';
+import { formatCountdown } from './types';
 
 const Status = ({ slot }: { slot: ZadcoteSlot }) => {
   if (slot.in_flight) {

@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 
-import { formatCountdown, maxWeightForTier, weightLabel } from './types';
 import type { ZadcageAct, ZadcageData } from './types';
+import { formatCountdown, maxWeightForTier, weightLabel } from './types';
 
 export const OccupancyPanel = ({
   data,
