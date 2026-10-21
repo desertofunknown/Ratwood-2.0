@@ -175,8 +175,10 @@ if (!process.env.TGUI_LIST_SHORTCUT_TEST_CHILD) {
       await new Promise((done) => setTimeout(done, 10));
     });
   const render = async (data: Partial<ReturnType<typeof initialData>> = {}) => {
-    store.dispatch(backend.backendUpdate({ data }));
-    await act(async () => root.render(<Connected />));
+    await act(async () => {
+      store.dispatch(backend.backendUpdate({ data }));
+      root.render(<Connected />);
+    });
     await settleAutofocus();
   };
   const option = (index = 0) =>
@@ -397,4 +399,145 @@ if (!process.env.TGUI_LIST_SHORTCUT_TEST_CHILD) {
       });
     }
   }
+  test('letter shortcuts cycle matching choices and wrap without submitting', async () => {
+    await render({ items: ['apple', 'banana', 'blueberry', 'carrot'] });
+    const target = option();
+    for (const [key, expected] of [
+      ['b', 'Banana'],
+      ['B', 'Blueberry'],
+      ['b', 'Banana'],
+    ] as const) {
+      const { down } = await stroke(target, key);
+      expect(selected()).toContain(expected);
+      expect(down.defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(target);
+    }
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(command).not.toHaveBeenCalled();
+  });
+  test('numeric shortcuts cycle from the current selection and wrap', async () => {
+    await render({
+      items: ['2 pears', 'apple', '2 plums'],
+      init_value: '2 pears',
+    });
+    // Focus the currently selected option, not a different choice.
+    const target = option();
+    await stroke(target, '2');
+    expect(selected()).toContain('2 pears');
+    await stroke(target, '2');
+    expect(selected()).toContain('2 plums');
+    await stroke(target, '2');
+    expect(selected()).toContain('2 pears');
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(command).not.toHaveBeenCalled();
+  });
+  test('one matching choice remains selected and no match leaves it unchanged', async () => {
+    await render();
+    const target = option();
+    for (const key of ['b', 'B', 'z']) {
+      await stroke(target, key);
+      expect(selected()).toContain('Banana');
+    }
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(command).not.toHaveBeenCalled();
+  });
+  test('letter shortcut on an empty list is consumed without submitting', async () => {
+    await render({ items: [], init_value: '' });
+    const target = button('.InputModal');
+    const { down } = await stroke(target, 'B');
+    expect(selected()).toBeUndefined();
+    expect(down.defaultPrevented).toBe(true);
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(command).not.toHaveBeenCalled();
+  });
+
+  test('duplicate values do not trap repeated letters on an indistinguishable choice', async () => {
+    await render({ items: ['apple', 'banana', 'banana', 'blueberry'] });
+    const target = option();
+    for (const expected of ['Banana', 'Blueberry', 'Banana']) {
+      await stroke(target, 'b');
+      expect(selected()).toContain(expected);
+    }
+    expect(command).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+  test('arrow selection changes reset cycling so the next letter uses the first match', async () => {
+    await render({ items: ['apple', 'banana', 'blueberry', 'carrot'] });
+    const target = option();
+    await stroke(target, 'b');
+    await stroke(target, 'ArrowDown');
+    expect(selected()).toContain('Blueberry');
+    await stroke(target, 'b');
+    expect(selected()).toContain('Banana');
+    await stroke(target, 'b');
+    expect(selected()).toContain('Blueberry');
+    expect(command).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+  test('changing the choice list resets letter cycling', async () => {
+    await render({ items: ['apple', 'banana', 'blueberry'] });
+    await stroke(option(), 'b');
+    await render({ items: ['apple', 'banana', 'blackberry'] });
+    await stroke(option(), 'b');
+    expect(selected()).toContain('Banana');
+    await stroke(option(), 'b');
+    expect(selected()).toContain('Blackberry');
+    expect(command).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+  test('toggling search resets letter cycling without changing search typing behavior', async () => {
+    await render({ items: ['apple', 'banana', 'blueberry'] });
+    await stroke(option(), 'b');
+    await act(async () => button('.ListInput__searchToggle').click());
+    await settleAutofocus();
+    await stroke(search()!, 'b', {}, 'b');
+    await act(async () => button('.ListInput__searchToggle').click());
+    await settleAutofocus();
+    await stroke(option(), 'b');
+    expect(selected()).toContain('Banana');
+    await stroke(option(), 'b');
+    expect(selected()).toContain('Blueberry');
+    expect(command).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+  test('clicking the selected choice restarts first-match behavior', async () => {
+    await render({ items: ['apple', 'banana', 'blueberry'] });
+    const target = option();
+    await stroke(target, 'b');
+    await act(async () => option(1).click());
+    await stroke(target, 'b');
+    expect(selected()).toContain('Banana');
+    await stroke(target, 'b');
+    expect(selected()).toContain('Blueberry');
+    expect(command).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+  test('case-distinct values retain their exact submission identity when cycling', async () => {
+    await render({ items: ['apple', 'banana', 'Banana'] });
+    const target = option();
+    await stroke(target, 'b');
+    await stroke(target, 'b');
+    await stroke(target, 'Enter');
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/submit', { entry: 'Banana' }],
+    ]);
+    expect(command).not.toHaveBeenCalled();
+  });
+  test('different and unmatched shortcuts restart first-match behavior without clearing selection', async () => {
+    await render({ items: ['apple', 'banana', 'blueberry', 'carrot'] });
+    const target = option();
+    await stroke(target, 'b');
+    await stroke(target, 'b');
+    expect(selected()).toContain('Blueberry');
+    await stroke(target, 'z');
+    expect(selected()).toContain('Blueberry');
+    await stroke(target, 'b');
+    expect(selected()).toContain('Banana');
+    await stroke(target, 'c');
+    expect(selected()).toContain('Carrot');
+    await stroke(target, 'b');
+    expect(selected()).toContain('Banana');
+    expect(command).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
 }

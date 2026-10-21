@@ -34,6 +34,15 @@ export const ListInputModal = (props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocus, setSearchFocus] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
+  const lastShortcut = useRef<{ key: string; selection: string } | null>(null);
+  const selectChoice = (item: string) => {
+    lastShortcut.current = null;
+    setSelection(item);
+  };
+
+  useEffect(() => {
+    lastShortcut.current = null;
+  }, [items, searchBarVisible, searchQuery]);
   const filteredItems = items.filter((item) =>
     item.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -73,7 +82,7 @@ export const ListInputModal = (props) => {
         const direction = key === KEY.Down ? 1 : -1;
         const index =
           (selected + direction + filteredItems.length) % filteredItems.length;
-        setSelection(filteredItems[index]);
+        selectChoice(filteredItems[index]);
       }
     } else if (key === KEY.Enter) {
       event.preventDefault();
@@ -93,9 +102,20 @@ export const ListInputModal = (props) => {
         setSearchQuery(key);
         setSearchFocus((value) => value + 1);
       } else {
-        const match = items.find((item) =>
-          item.toLowerCase().startsWith(key.toLowerCase()),
-        );
+        const letter = key.toLowerCase();
+        // First press keeps first-match behavior; repeats cycle distinct values.
+        const matches = [...new Set(
+          items.filter((item) => item.toLowerCase().startsWith(letter)),
+        )];
+        const repeat =
+          lastShortcut.current?.key === letter &&
+          lastShortcut.current.selection === selection;
+        const index = repeat
+          ? (matches.indexOf(selection) + 1) % matches.length
+          : 0;
+        const match = matches[index];
+        lastShortcut.current =
+          match === undefined ? null : { key: letter, selection: match };
         if (match !== undefined) {
           setSelection(match);
         }
@@ -146,14 +166,14 @@ export const ListInputModal = (props) => {
             <Stack.Item grow className="ListInput__choices">
               <Section fill scrollable>
                 {filteredItems.length ? filteredItems.map((item, index) => (
-                  <div key={index} onFocusCapture={() => setSelection(item)}>
+                  <div key={index} onFocusCapture={() => selectChoice(item)}>
                     <Button
                       className="ListInput__option"
                       color="transparent"
                       captureKeys={false}
                       fluid
                       id={`list-input-option-${index}`}
-                      onClick={() => setSelection(item)}
+                      onClick={() => selectChoice(item)}
                       onDoubleClick={(event) => {
                         event.preventDefault();
                         act('submit', { entry: item });

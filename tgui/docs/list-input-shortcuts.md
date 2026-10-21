@@ -18,3 +18,16 @@ recorded rather than sent. Tests pair keydown/keyup and clean held-key state.
 They verify uppercase/lowercase selection, search/focus, modifiers, footer actions
 and non-character keys. These are synthetic DOM events, not native-client or
 live-game keyboard acceptance tests.
+
+## Repeated-letter choice cycling
+
+With search hidden, the first letter or digit press still selects the first
+matching choice. Pressing the same character again cycles through distinct
+matching values and wraps to the start, without submitting or moving focus.
+Case does not affect the shortcut, but case-distinct choice values remain distinct
+for submission. Duplicate identical values do not trap the cycle.
+
+Arrow or pointer selection, changing the available choices, and search changes
+reset the cycle. A different shortcut starts at its first match; an unmatched key
+leaves selection unchanged. Search-visible typing retains its existing behavior.
+No timers, extra controls or backend actions were added.
