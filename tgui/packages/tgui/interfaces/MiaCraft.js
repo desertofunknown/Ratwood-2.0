@@ -9,12 +9,13 @@ import {
 
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
+import { isRecipeCraftable } from './MiaCraft/craftability';
 
 // Keep these function outside to prevent re-render
 const CraftingCategory = ({ crafties, key3, onlyCraftable, craftability, key, actfunc, searchText }) => {
     const visibleElements = useMemo(() => {
       return Object.entries(crafties).filter(([key2, item2]) => !onlyCraftable || 
-      craftability.some(object => object[0] === item2.name && object[1] === 1))
+      craftability(item2.name))
       .sort(([, aVal], [, bVal]) => String(aVal.name).localeCompare(String(bVal.name)))
       .filter(([id, item]) => 
       { return item.name.toLowerCase().includes(searchText); });
@@ -41,7 +42,7 @@ const CraftingCategory = ({ crafties, key3, onlyCraftable, craftability, key, ac
           />
         </Stack.Item>
         <Stack.Item basis="80%">
-          <Collapsible title={recipe.name} style={{ backgroundColor: craftability.some(object => object[0] === recipe.name && object[1] === 1) ? "" : "grey" }}>
+          <Collapsible title={recipe.name} style={{ backgroundColor: craftability(recipe.name) ? "" : "grey" }}>
             <LabeledList >
               <LabeledList.Item label="Ingredients" style={{ 'margin-left': '20px' }}>
                 {recipe.req_text}
@@ -110,7 +111,7 @@ export const MiaCraft = (props, context) => {
   const busy = data.busy;
   const [category, setCategory] = useState();
   const [subcategory, setSubcategory] = useState();
-  const craftability = Object.entries(data.craftability);
+  const craftability = (name) => isRecipeCraftable(data.craftability, name);
   const [crafting_recipes] = useState(data.crafting_recipes);
   let onlyCraftable = data.showonlycraftable;
   const [searchText, setSearchText] = useState("");
