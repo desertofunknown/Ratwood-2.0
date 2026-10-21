@@ -134,7 +134,7 @@ export const DmTestTarget = new Juke.Target({
     NoWarningParameter,
   ],
   dependsOn: ({ get }) => [
-    get(DefineParameter).includes("ALL_MAPS") && DmMapsIncludeTarget,
+    get(DefineParameter).includes("ALL_TEMPLATES") && DmMapsIncludeTarget,
   ],
   executes: async ({ get }) => {
     fs.copyFileSync(`${DME_NAME}.dme`, `${DME_NAME}.test.dme`);

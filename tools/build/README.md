@@ -53,3 +53,12 @@ Example dm_versions.json file:
   }
 ]
 ```
+
+## Dependency-planning regression tests
+
+Run `bun test tools/build/build-dependencies.test.js` from the repository root.
+These tests exercise the bundled argument parser and the compile/test targets'
+dependency predicates without importing the build entry point or running any
+compiler, server, download, or generated-file step. Both targets must prepare
+`_maps/templates.dm` when `ALL_TEMPLATES` is selected; `ALL_MAPS` alone does not
+include that file. This verifies planning only, not a live `dm-test` run.
