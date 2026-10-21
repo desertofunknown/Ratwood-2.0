@@ -10,3 +10,45 @@ index fdfe5129226bdca6d819d41ea2d5df7612f5fd81..d54b7e752f7fbcfabdea656bf20c4bd5
 \ No newline at end of file
 +import{Fragment as e,jsx as t,jsxs as n}from"react/jsx-runtime";import{classes as o}from"../common/react.js";import{FloatingPortal as i,autoUpdate as r,flip as a,offset as l,shift as s,size as c,useClick as d,useDismiss as m,useFloating as p,useHover as g,useInteractions as f,useTransitionStatus as h}from"@floating-ui/react";import{cloneElement as u,isValidElement as C,useEffect as v,useState as w}from"react";function F(F){let b,{allowedOutsideClasses:x,animationDuration:y,children:O,closeAfterInteract:R,content:j,contentAutoWidth:k,contentClasses:z,contentOffset:E=6,contentStyles:M,disabled:P,hoverDelay:S,hoverOpen:N,handleOpen:$,onMounted:q,placement:A,preventPortal:B,stopChildPropagation:D,onOpenChange:G}=F,[H,I]=w(!1),{refs:J,floatingStyles:K,context:L}=p({middleware:[l(E),a({padding:6}),s(),k&&c({apply({rects:e,elements:t}){t.floating.style.width=`${e.reference.width}px`}})],onOpenChange(e){I(e),G?.(e)},open:H,placement:A||"bottom",transform:!1,whileElementsMounted:(e,t,n)=>(void 0!==q&&q(),r(e,t,n,{ancestorResize:!1,ancestorScroll:!1,elementResize:!1}))}),{isMounted:Q,status:T}=h(L,{duration:y||200}),U=m(L,{ancestorScroll:!0,outsidePress:e=>!x||e.target instanceof Element&&!e.target.closest(x)}),V=d(L,{enabled:!P}),W=g(L,{enabled:!P,restMs:S||200}),X=void 0!==$,{getReferenceProps:Y,getFloatingProps:Z}=f(X?[]:[U,N?W:V]),_=Y({...C(O)&&O.props,ref:J.setReference,...D&&{onClick:e=>{e.stopPropagation();C(O)&&O.props.onClick?.(e)}}}),ee=Z({onClick:()=>{R&&L.onOpenChange(!1)},ref:J.setFloating});v(()=>{X&&L.onOpenChange($)},[$]),b=C(O)?u(O,_):t("div",{..._,children:O});let et=t("div",{className:o(["Floating",!y&&"Floating--animated",z]),"data-position":L.placement,"data-transition":T,style:{...K,...M},...ee,children:j});return n(e,{children:[b,Q&&!!j&&(B?et:t(i,{id:"tgui-root",children:et}))]})}export{F as Floating};
 \ No newline at end of file
+diff --git a/dist/components/DraggableControl.js b/dist/components/DraggableControl.js
+index 0eb718cf7dee4e56cdf496a10a084cbac0f57703..c5a5392cb124a521dbb6fe8f0112c5c6a8612f2c 100644
+--- a/dist/components/DraggableControl.js
++++ b/dist/components/DraggableControl.js
+@@ -1 +1,34 @@
+-import{Fragment as e,jsx as r,jsxs as t}from"react/jsx-runtime";import{KEY as n,isEscape as u}from"../common/keys.js";import{clamp as c}from"../common/math.js";import{useEffect as o,useRef as i,useState as l}from"react";import{AnimatedNumber as m}from"./AnimatedNumber.js";function a(e,r){return e.screenX*r[0]+e.screenY*r[1]}function v(v){let{animated:s,children:d,dragMatrix:f=[1,0],format:p,maxValue:N=Number.POSITIVE_INFINITY,minValue:I=Number.NEGATIVE_INFINITY,onChange:E,onDrag:b,step:g=1,stepPixelSize:y=1,unclamped:T,unit:h,updateRate:j=400,fontSize:F,height:L,lineHeight:S}=v,[_,k]=l(v.value),[D,Y]=l(!1),x=i(!1),A=i(v.value),V=i(0),w=i(-1),z=i(null),B=i(null),C=i(null);function G(e){let r=a(e,f),t=r-w.current,n=Number.isFinite(I)?I%g:0;V.current=c(V.current+t*g/y,I-g,N+g);let u=c(V.current-V.current%g+n,I,N);A.current=u,k(u),w.current=r}function H(e){document.body.style["pointer-events"]="auto",B.current&&clearInterval(B.current),w.current=-1,document.removeEventListener("mousemove",G),document.removeEventListener("mouseup",H),x.current&&(E?.(e,A.current),b?.(e,A.current),x.current=!1)}o(()=>{v.value!==A.current&&(A.current=v.value,k(v.value))},[v.value]);let K=v.value;x.current&&(K=A.current);let O=t(e,{children:[s&&!x.current?r(m,{format:p,value:K}):p?p(K):K,h?` ${h}`:""]}),P=r("input",{className:"NumberInput__input",onBlur:function(e){let r=Number.parseFloat(e.currentTarget.value);if(T||(r=c(r,I,N)),Number.isNaN(r))return void Y(!1);V.current=r,A.current=r,k(r),E?.(e.nativeEvent,r),D&&Y(!1)},onKeyDown:function(e){(e.key===n.Enter||u(e.key))&&Y(!1)},ref:z,style:{display:D?void 0:"none",fontSize:F,height:L,lineHeight:S}});return d({displayElement:O,displayValue:K,dragging:x.current,editing:D,handleDragStart:function(e){D||(document.body.style["pointer-events"]="none",w.current=a(e.nativeEvent,f),V.current=v.value,x.current=!0,document.addEventListener("mouseup",H),C.current=setTimeout(()=>{var r=e.nativeEvent;if(x.current)document.addEventListener("mousemove",G),B.current=setInterval(()=>{x.current&&b?.(r,v.value)},j);else if(Y(!0),z.current){let e=z.current;e.value=V.current.toString(),setTimeout(()=>{e.focus(),e.select()},10)}C.current&&clearTimeout(C.current)},100))},inputElement:P})}export{v as DraggableControl};
+\ No newline at end of file
++import{Fragment as e,jsx as r,jsxs as t}from"react/jsx-runtime";import{KEY as n,isEscape as u}from"../common/keys.js";import{clamp as c}from"../common/math.js";import{useEffect as o,useRef as i,useState as l}from"react";import{AnimatedNumber as m}from"./AnimatedNumber.js";const dragOwners=new WeakMap;function a(e,r){return e.screenX*r[0]+e.screenY*r[1]}function v(v){let{animated:s,children:d,dragMatrix:f=[1,0],format:p,maxValue:N=Number.POSITIVE_INFINITY,minValue:I=Number.NEGATIVE_INFINITY,onChange:E,onDrag:b,step:g=1,stepPixelSize:y=1,unclamped:T,unit:h,updateRate:j=400,fontSize:F,height:L,lineHeight:S}=v,[_,k]=l(v.value),[D,Y]=l(!1),x=i(!1),A=i(v.value),V=i(0),w=i(-1),z=i(null),B=i(null),C=i(null),sessionRef=i(null),focusTimeout=i(null),[,renderAfterCancel]=l(0);
++// Each session retains the exact listeners installed by its render.
++o(()=>()=>{sessionRef.current?.cancel()},[]);
++function beginDragSession(){
++ sessionRef.current?.cancel();
++ const body=document.body;
++ dragOwners.get(body)?.cancel(true);
++ const pointerValue=body.style.getPropertyValue("pointer-events");
++ const pointerPriority=body.style.getPropertyPriority("pointer-events");
++ const session={body,cancel(refresh=false){
++  if(sessionRef.current!==session)return;
++  sessionRef.current=null;
++  clearTimeout(C.current);
++  clearTimeout(focusTimeout.current);
++  clearInterval(B.current);
++  document.removeEventListener("mousemove",G);
++  document.removeEventListener("mouseup",H);
++  x.current=false;
++  if(dragOwners.get(body)===session){
++   dragOwners.delete(body);
++   if(body.style.getPropertyValue("pointer-events")==="none"&&body.style.getPropertyPriority("pointer-events")===""){
++    if(pointerValue)body.style.setProperty("pointer-events",pointerValue,pointerPriority);
++    else body.style.removeProperty("pointer-events");
++   }
++  }
++  if(refresh)renderAfterCancel(value=>value+1);
++ }};
++ sessionRef.current=session;
++ dragOwners.set(body,session);
++}
++function G(e){let r=a(e,f),t=r-w.current,n=Number.isFinite(I)?I%g:0;V.current=c(V.current+t*g/y,I-g,N+g);let u=c(V.current-V.current%g+n,I,N);A.current=u,k(u),w.current=r}function H(e){
++ const session=sessionRef.current;
++ if(session&&dragOwners.get(session.body)===session)dragOwners.delete(session.body);
++ document.body.style["pointer-events"]="auto",B.current&&clearInterval(B.current),w.current=-1,document.removeEventListener("mousemove",G),document.removeEventListener("mouseup",H),x.current&&(E?.(e,A.current),b?.(e,A.current),x.current=!1)}o(()=>{v.value!==A.current&&(A.current=v.value,k(v.value))},[v.value]);let K=v.value;x.current&&(K=A.current);let O=t(e,{children:[s&&!x.current?r(m,{format:p,value:K}):p?p(K):K,h?` ${h}`:""]}),P=r("input",{className:"NumberInput__input",onBlur:function(e){let r=Number.parseFloat(e.currentTarget.value);if(T||(r=c(r,I,N)),Number.isNaN(r))return void Y(!1);V.current=r,A.current=r,k(r),E?.(e.nativeEvent,r),D&&Y(!1)},onKeyDown:function(e){(e.key===n.Enter||u(e.key))&&Y(!1)},ref:z,style:{display:D?void 0:"none",fontSize:F,height:L,lineHeight:S}});return d({displayElement:O,displayValue:K,dragging:x.current,editing:D,handleDragStart:function(e){D||(beginDragSession(),document.body.style["pointer-events"]="none",w.current=a(e.nativeEvent,f),V.current=v.value,x.current=!0,document.addEventListener("mouseup",H),C.current=setTimeout(()=>{var r=e.nativeEvent;if(x.current)document.addEventListener("mousemove",G),B.current=setInterval(()=>{x.current&&b?.(r,v.value)},j);else if(Y(!0),z.current){let e=z.current;e.value=V.current.toString(),focusTimeout.current=setTimeout(()=>{e.focus(),e.select()},10)}C.current&&clearTimeout(C.current)},100))},inputElement:P})}export{v as DraggableControl};
+\ No newline at end of file
