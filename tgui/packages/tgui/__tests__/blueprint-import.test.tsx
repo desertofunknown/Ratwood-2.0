@@ -176,4 +176,125 @@ if (!process.env.TGUI_BLUEPRINT_IMPORT_TEST_CHILD) {
       ],
     ]);
   });
+  test('uncoercible floor metadata is rejected without replacing the design', async () => {
+    await paste({
+      max_floors: { toString: null },
+      grid: [{ x: 0, y: 0, z: 0, type: 'floor' }],
+    });
+    expect(document.body.textContent).toContain(
+      'Invalid blueprint string or empty design!',
+    );
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+  test('structured directions cannot enter the design and crash its save', async () => {
+    await paste({
+      grid: [{ x: 0, y: 0, z: 0, type: 'floor', dir: { toString: null } }],
+    });
+    if (
+      !document.querySelector('input[placeholder="Paste BP:... code here"]')
+    ) {
+      await click('Finish Blueprint');
+    }
+    expect(document.body.textContent).toContain(
+      'No valid tiles found in blueprint!',
+    );
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  test('type names matching object properties are packed as own entries', async () => {
+    await paste({
+      grid: ['__proto__', 'constructor', 'toString'].map((type, x) => ({
+        x,
+        y: 0,
+        z: 0,
+        type,
+      })),
+    });
+    await click('Finish Blueprint');
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    const packed = sendMessage.mock.calls[0][1].packed_data;
+    for (const [index, name] of [
+      '__proto__',
+      'constructor',
+      'toString',
+    ].entries()) {
+      expect(Object.prototype.hasOwnProperty.call(packed, name)).toBe(true);
+      expect(packed[name]).toEqual([`${index},0,0,2`]);
+    }
+  });
+
+  for (const [name, dir] of [
+    ['object', {}],
+    ['array', [4]],
+    ['string', '4'],
+    ['boolean', true],
+    ['null', null],
+  ] as const) {
+    test(`invalid ${name} direction is skipped while valid neighboring tiles remain`, async () => {
+      await paste({
+        grid: [
+          { x: 0, y: 0, z: 0, type: 'floor', dir },
+          { x: 1, y: 0, z: 0, type: 'wall', dir: 8 },
+        ],
+      });
+      await click('Finish Blueprint');
+      expect(sendMessage.mock.calls).toEqual([
+        [
+          'act/save_design',
+          { packed_data: { wall: ['1,0,0,8'] }, max_floors: 2 },
+        ],
+      ]);
+    });
+  }
+  for (const [name, max_floors, expected] of [
+    ['number', 3, 3],
+    ['numeric string', '4', 4],
+    ['missing', undefined, 2],
+    ['null', null, 2],
+    ['invalid string', 'not a number', 2],
+    ['large', 20, 4],
+    ['small', 1, 2],
+    ['coercible array', [3], 3],
+  ] as const) {
+    test(`existing ${name} floor conversion is preserved`, async () => {
+      await paste({
+        max_floors,
+        grid: [{ x: 0, y: 0, z: 0, type: 'floor', dir: 4 }],
+      });
+      await click('Finish Blueprint');
+      expect(sendMessage.mock.calls).toEqual([
+        [
+          'act/save_design',
+          { packed_data: { floor: ['0,0,0,4'] }, max_floors: expected },
+        ],
+      ]);
+    });
+  }
+  test('floor conversion failure leaves an existing design intact and can recover', async () => {
+    await paste({ max_floors: 3, grid: [{ x: 0, y: 0, z: 0, type: 'floor' }] });
+    await paste({
+      max_floors: { toString: null },
+      grid: [{ x: 8, y: 8, z: 0, type: 'wall' }],
+    });
+    await click('Cancel');
+    await click('Finish Blueprint');
+    expect(sendMessage.mock.calls).toEqual([
+      [
+        'act/save_design',
+        { packed_data: { floor: ['0,0,0,2'] }, max_floors: 3 },
+      ],
+    ]);
+    sendMessage.mockClear();
+    await paste({
+      max_floors: 4,
+      grid: [{ x: 2, y: 1, z: 0, type: 'wall', dir: 8 }],
+    });
+    await click('Finish Blueprint');
+    expect(sendMessage.mock.calls).toEqual([
+      [
+        'act/save_design',
+        { packed_data: { wall: ['2,1,0,8'] }, max_floors: 4 },
+      ],
+    ]);
+  });
 }

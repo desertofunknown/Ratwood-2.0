@@ -394,7 +394,7 @@ export const BlueprintPlanner = () => {
   };
 
   const getPackedData = () => {
-    const packed_data: Record<string, string[]> = {};
+    const packed_data: Record<string, string[]> = Object.create(null);
     grid.forEach((c) => {
       if (c.z >= totalFloors) return;
       if (!packed_data[c.type]) packed_data[c.type] = [];
@@ -478,6 +478,7 @@ export const BlueprintPlanner = () => {
         typeof c.y === 'number' &&
         typeof c.z === 'number' &&
         typeof c.type === 'string' &&
+        (c.dir === undefined || typeof c.dir === 'number') &&
         Math.abs(c.x) <= maxRadiusAllowed &&
         Math.abs(c.y) <= maxRadiusAllowed &&
         c.z >= 0 &&
@@ -490,13 +491,20 @@ export const BlueprintPlanner = () => {
       return;
     }
 
+    let importedFloors: number;
+    try {
+      importedFloors = Math.max(2, Math.min(4, Number(parsed.max_floors) || 2));
+    } catch {
+      setImportError('Invalid blueprint string or empty design!');
+      return;
+    }
+
     let maxDist = 3;
     safeGrid.forEach((c) => {
       maxDist = Math.max(maxDist, Math.abs(c.x), Math.abs(c.y));
     });
     setGridRadius(Math.min(maxRadiusAllowed, maxDist));
 
-    const importedFloors = Math.max(2, Math.min(4, Number(parsed.max_floors) || 2));
     setGrid(safeGrid);
     setTotalFloors(importedFloors);
     setActiveZ(0);
