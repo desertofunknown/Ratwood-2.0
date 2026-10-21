@@ -258,6 +258,7 @@ export function Dropdown(props: Props) {
             } else focusEntry(selectedIndex >= 0 ? selectedIndex : 0);
           }}
           onKeyUp={(event) => {
+            if (event.altKey || event.ctrlKey || event.metaKey) return;
             if (menuKeys.includes(event.key)) {
               event.preventDefault();
               event.stopPropagation();
@@ -280,6 +281,7 @@ export function Dropdown(props: Props) {
           aria-label={direction < 0 ? 'Previous option' : 'Next option'}
           onClick={() => cycle(direction)}
           onKeyDown={(event) => {
+            if (event.altKey || event.ctrlKey || event.metaKey) return;
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
               event.stopPropagation();
@@ -287,6 +289,7 @@ export function Dropdown(props: Props) {
             }
           }}
           onKeyUp={(event) => {
+            if (event.altKey || event.ctrlKey || event.metaKey) return;
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
               event.stopPropagation();
