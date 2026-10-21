@@ -1,0 +1,173 @@
+[
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_aavnr.dm",
+    "realm": "aavnr",
+    "pack": "/datum/supply_pack/rogue/aavnr/freifechter_boots",
+    "contains": [
+      "/obj/item/clothing/shoes/roguetown/boots/grenzelhoft/freifechter"
+    ],
+    "fields": {
+      "name": "\"Fencing Boots\"",
+      "cost": "50",
+      "ship_qty_min": "1",
+      "ship_qty_max": "2"
+    },
+    "realm_registrations": 0
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_aavnr.dm",
+    "realm": "aavnr",
+    "pack": "/datum/supply_pack/rogue/aavnr/freifechter_gloves",
+    "contains": [
+      "/obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter"
+    ],
+    "fields": {
+      "name": "\"Fencing Gloves\"",
+      "cost": "45",
+      "ship_qty_min": "1",
+      "ship_qty_max": "2"
+    },
+    "realm_registrations": 0
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_aavnr.dm",
+    "realm": "aavnr",
+    "pack": "/datum/supply_pack/rogue/aavnr/freifechter_kit",
+    "contains": [
+      "/obj/item/clothing/suit/roguetown/shirt/freifechter",
+      "/obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter",
+      "/obj/item/clothing/under/roguetown/heavy_leather_pants/otavan/generic",
+      "/obj/item/clothing/shoes/roguetown/boots/grenzelhoft/freifechter",
+      "/obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter",
+      "/obj/item/clothing/wrists/roguetown/bracers/jackchain",
+      "/obj/item/clothing/neck/roguetown/psicross/reform",
+      "/obj/item/rogueweapon/sword/sabre/freifechter",
+      "/obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter"
+    ],
+    "fields": {
+      "name": "\"Freifechter Sabrist Wares\"",
+      "no_name_quantity": "TRUE",
+      "cost": "340",
+      "ship_qty_min": "1",
+      "ship_qty_max": "1"
+    },
+    "realm_registrations": 1
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_gronn.dm",
+    "realm": "gronn",
+    "pack": "/datum/supply_pack/rogue/gronn/battleaxe",
+    "contains": [
+      "/obj/item/rogueweapon/stoneaxe/woodcut/steel/atgervi"
+    ],
+    "fields": {
+      "name": "\"Zayran Battleaxe\"",
+      "cost": "130",
+      "ship_qty_min": "1",
+      "ship_qty_max": "3"
+    },
+    "realm_registrations": 1
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_hammerhold.dm",
+    "realm": "hammerhold",
+    "pack": "/datum/supply_pack/rogue/hammerhold/dwarven_maul",
+    "contains": [
+      "/obj/item/rogueweapon/mace/maul/steel"
+    ],
+    "fields": {
+      "name": "\"Dwarvish Maul\"",
+      "cost": "240",
+      "ship_qty_min": "1",
+      "ship_qty_max": "2"
+    },
+    "realm_registrations": 1
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_hammerhold.dm",
+    "realm": "hammerhold",
+    "pack": "/datum/supply_pack/rogue/hammerhold/spiked_maul",
+    "contains": [
+      "/obj/item/rogueweapon/mace/maul/spiked"
+    ],
+    "fields": {
+      "name": "\"Spiked Maul\"",
+      "cost": "260",
+      "ship_qty_min": "1",
+      "ship_qty_max": "2"
+    },
+    "realm_registrations": 1
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_hammerhold.dm",
+    "realm": "hammerhold",
+    "pack": "/datum/supply_pack/rogue/hammerhold/iron_fullplate",
+    "contains": [
+      "/obj/item/clothing/suit/roguetown/armor/plate/full/iron"
+    ],
+    "fields": {
+      "name": "\"Hammerhold Iron Plate\"",
+      "cost": "380",
+      "ship_qty_min": "1",
+      "ship_qty_max": "1"
+    },
+    "realm_registrations": 1
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_hammerhold.dm",
+    "realm": "hammerhold",
+    "pack": "/datum/supply_pack/rogue/hammerhold/ironclad_kit",
+    "contains": [
+      "/obj/item/clothing/suit/roguetown/armor/gambeson",
+      "/obj/item/clothing/suit/roguetown/armor/plate/full/iron",
+      "/obj/item/clothing/head/roguetown/helmet/heavy/knight/iron",
+      "/obj/item/clothing/neck/roguetown/chaincoif/iron",
+      "/obj/item/clothing/gloves/roguetown/plate/iron",
+      "/obj/item/clothing/wrists/roguetown/bracers/iron",
+      "/obj/item/clothing/under/roguetown/platelegs/iron",
+      "/obj/item/clothing/shoes/roguetown/boots/armor/iron"
+    ],
+    "fields": {
+      "name": "\"Hammerhold Ironclad Harness\"",
+      "no_name_quantity": "TRUE",
+      "cost": "410",
+      "ship_qty_min": "1",
+      "ship_qty_max": "1"
+    },
+    "realm_registrations": 1
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_hammerhold.dm",
+    "realm": "hammerhold",
+    "pack": "/datum/supply_pack/rogue/hammerhold/grudgebearer_smith_kit",
+    "contains": [
+      "/obj/item/clothing/suit/roguetown/armor/plate/full/dwarven/smith",
+      "/obj/item/clothing/head/roguetown/helmet/heavy/dwarven/smith",
+      "/obj/item/clothing/gloves/roguetown/plate/dwarven",
+      "/obj/item/clothing/shoes/roguetown/boots/armor/dwarven"
+    ],
+    "fields": {
+      "name": "\"Grudgebearer Smith Harness\"",
+      "no_name_quantity": "TRUE",
+      "cost": "720",
+      "ship_qty_min": "1",
+      "ship_qty_max": "1"
+    },
+    "realm_registrations": 1
+  },
+  {
+    "file": "code/modules/cargo/packsrogue/merchant/foreign/cultural_zybantium.dm",
+    "realm": "zybantium",
+    "pack": "/datum/supply_pack/rogue/zybantine/makhaira",
+    "contains": [
+      "/obj/item/rogueweapon/sword/short/messer/bronze"
+    ],
+    "fields": {
+      "name": "\"Makhaira\"",
+      "cost": "75",
+      "ship_qty_min": "2",
+      "ship_qty_max": "3"
+    },
+    "realm_registrations": 1
+  }
+]
