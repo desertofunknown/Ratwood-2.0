@@ -214,7 +214,7 @@ export function Dropdown(props: Props) {
               <button
                 type="button"
                 role="option"
-                key={valueOf(option)}
+                key={`${typeof valueOf(option)}:${valueOf(option)}`}
                 tabIndex={-1}
                 disabled={!open || !!disabled}
                 aria-selected={selectedValue === valueOf(option)}

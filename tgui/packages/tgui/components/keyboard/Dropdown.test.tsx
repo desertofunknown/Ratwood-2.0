@@ -554,3 +554,147 @@ for (const modifier of ['altKey', 'ctrlKey', 'metaKey'] as const) {
     });
   }
 }
+
+for (const [index, value] of [
+  [0, 'other'],
+  [1, 0],
+  [2, '0'],
+] as const) {
+  test(`mixed numeric/string keys preserve reordered option ${index} and callback type`, async () => {
+    const number = { value: 0, displayText: 'Number' };
+    const string = { value: '0', displayText: 'String' };
+    const other = { value: 'other', displayText: 'Other' };
+    const onSelected = mock();
+    await render(
+      <Dropdown
+        options={[number, string, other]}
+        selected={number}
+        onSelected={onSelected}
+      />,
+    );
+    await open();
+    const focusedNumber = active();
+    await render(
+      <Dropdown
+        options={[other, number, string]}
+        selected={string}
+        onSelected={onSelected}
+      />,
+    );
+    expect(entries().map((entry) => entry.textContent)).toEqual([
+      'Other',
+      'Number',
+      'String',
+    ]);
+    expect(
+      entries().map((entry) => entry.getAttribute('aria-selected')),
+    ).toEqual(['false', 'false', 'true']);
+    expect(active()).toBe(focusedNumber);
+    expect(active()).toBe(entries()[1]);
+    await act(async () => entries()[index].focus());
+    await key(active(), 'Enter');
+    expect(onSelected).toHaveBeenCalledTimes(1);
+    expect(onSelected).toHaveBeenLastCalledWith(value);
+    expect(typeof onSelected.mock.calls[0][0]).toBe(typeof value);
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    expect(active()).toBe(trigger());
+  });
+}
+
+test('removing numeric zero leaves no stale option beside string zero', async () => {
+  const number = { value: 0, displayText: 'Number' };
+  const string = { value: '0', displayText: 'String' };
+  const other = { value: 'other', displayText: 'Other' };
+  const onSelected = mock();
+  await render(
+    <Dropdown
+      options={[number, string, other]}
+      selected={string}
+      onSelected={onSelected}
+    />,
+  );
+  await open();
+  const focusedString = active();
+  await render(
+    <Dropdown
+      options={[other, string]}
+      selected={string}
+      onSelected={onSelected}
+    />,
+  );
+  expect(entries().map((entry) => entry.textContent)).toEqual([
+    'Other',
+    'String',
+  ]);
+  expect(entries().map((entry) => entry.getAttribute('aria-selected'))).toEqual(
+    ['false', 'true'],
+  );
+  expect(active()).toBe(focusedString);
+  expect(active()).toBe(entries()[1]);
+  await key(active(), 'Enter');
+  expect(onSelected).toHaveBeenCalledTimes(1);
+  expect(onSelected).toHaveBeenLastCalledWith('0');
+});
+
+test('type-prefixed string values stay distinct across insertion and reorder', async () => {
+  const initial = [
+    { value: 0, displayText: 'Number' },
+    { value: 'number:0', displayText: 'Number-prefixed string' },
+    { value: '0', displayText: 'String' },
+    { value: 'string:0', displayText: 'String-prefixed string' },
+  ];
+  const onSelected = mock();
+  await render(
+    <Dropdown
+      options={initial}
+      selected={initial[1]}
+      onSelected={onSelected}
+    />,
+  );
+  await open();
+  const focusedOption = active();
+  const reordered = [
+    { value: 'new', displayText: 'Inserted' },
+    initial[3],
+    initial[2],
+    initial[1],
+    initial[0],
+  ];
+  await render(
+    <Dropdown
+      options={reordered}
+      selected={initial[1]}
+      onSelected={onSelected}
+    />,
+  );
+  expect(entries().map((entry) => entry.textContent)).toEqual(
+    reordered.map((option) => option.displayText),
+  );
+  expect(active()).toBe(focusedOption);
+  expect(active()).toBe(entries()[3]);
+  expect(
+    entries().filter((entry) => entry.getAttribute('aria-selected') === 'true'),
+  ).toEqual([entries()[3]]);
+  await key(active(), 'Enter');
+  expect(onSelected).toHaveBeenCalledTimes(1);
+  expect(onSelected).toHaveBeenLastCalledWith('number:0');
+});
+
+test('negative zero selection keeps the existing numeric zero equality contract', async () => {
+  const onSelected = mock();
+  await render(
+    <Dropdown
+      options={[{ value: 0, displayText: 'Zero' }]}
+      selected={{ value: -0, displayText: 'Negative zero' }}
+      onSelected={onSelected}
+    />,
+  );
+  await open();
+  expect(entries()).toHaveLength(1);
+  expect(active()).toBe(entries()[0]);
+  expect(entries()[0].getAttribute('aria-selected')).toBe('true');
+  await key(active(), 'Enter');
+  expect(onSelected).toHaveBeenCalledTimes(1);
+  expect(onSelected).toHaveBeenLastCalledWith(0);
+  expect(Object.is(onSelected.mock.calls[0][0], 0)).toBe(true);
+});
