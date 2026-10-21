@@ -2,6 +2,91 @@ import { cloneElement, type KeyboardEvent } from 'react';
 import { NumberInput as CoreNumberInput } from 'tgui-core/base-components';
 
 export class NumberInput extends CoreNumberInput {
+  private static dragOwners = new WeakMap<HTMLElement, NumberInput>();
+  private dragSession?: {
+    document: Document;
+    body: HTMLElement;
+    pointerEvents: string;
+    pointerPriority: string;
+  };
+  private coreDragStart: CoreNumberInput['handleDragStart'];
+  private coreDragEnd: CoreNumberInput['handleDragEnd'];
+
+  constructor(props: ConstructorParameters<typeof CoreNumberInput>[0]) {
+    super(props);
+    // Core handlers are instance fields, not prototype methods.
+    this.coreDragStart = this.handleDragStart;
+    this.coreDragEnd = this.handleDragEnd;
+    this.handleDragStart = this.startDrag;
+    this.handleDragEnd = this.endDrag;
+  }
+
+  private startDrag: CoreNumberInput['handleDragStart'] = (event) => {
+    if (this.props.disabled || this.state.editing) return;
+    const body = document.body;
+    // Only one adapter owns a mouse gesture on each body.
+    NumberInput.dragOwners.get(body)?.cancelDrag();
+    this.dragSession = {
+      document,
+      body,
+      pointerEvents: body.style.getPropertyValue('pointer-events'),
+      pointerPriority: body.style.getPropertyPriority('pointer-events'),
+    };
+    NumberInput.dragOwners.set(body, this);
+    this.coreDragStart(event);
+  };
+
+  private endDrag: CoreNumberInput['handleDragEnd'] = (event) => {
+    const session = this.dragSession;
+    if (!session) return;
+    if (this.props.disabled) {
+      this.cancelDrag();
+      return;
+    }
+    this.dragSession = undefined;
+    if (NumberInput.dragOwners.get(session.body) === this) {
+      NumberInput.dragOwners.delete(session.body);
+    }
+    this.coreDragEnd(event);
+  };
+
+  private cancelDrag(resetState = true) {
+    const session = this.dragSession;
+    if (!session) return;
+    this.dragSession = undefined;
+    clearTimeout(this.dragTimeout);
+    clearInterval(this.dragInterval);
+    session.document.removeEventListener('mousemove', this.handleDragMove);
+    session.document.removeEventListener('mouseup', this.handleDragEnd);
+    if (NumberInput.dragOwners.get(session.body) === this) {
+      NumberInput.dragOwners.delete(session.body);
+      const style = session.body.style;
+      if (
+        style.getPropertyValue('pointer-events') === 'none' &&
+        style.getPropertyPriority('pointer-events') === ''
+      ) {
+        if (session.pointerEvents) {
+          style.setProperty(
+            'pointer-events',
+            session.pointerEvents,
+            session.pointerPriority,
+          );
+        } else {
+          style.removeProperty('pointer-events');
+        }
+      }
+    }
+    if (resetState) this.setState({ dragging: false, editing: false });
+  }
+
+  componentDidUpdate() {
+    if (this.props.disabled) this.cancelDrag();
+  }
+
+  componentWillUnmount() {
+    this.cancelDrag(false);
+  }
+
   handleControlKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const control = event.currentTarget;
     if (event.target !== control) {
