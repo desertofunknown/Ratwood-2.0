@@ -365,4 +365,196 @@ if (!process.env.TGUI_CHANGELOG_TEST_CHILD) {
     expect(descriptions()).toContain('Current archive');
     expect(retries.size).toBe(0);
   });
+  const searchInput = () => {
+    const input = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Search this month"]',
+    );
+    if (!input) throw new Error('Missing labeled current-month search input');
+    return input;
+  };
+  const enterSearch = async (value: string) => {
+    await act(async () => {
+      searchInput().focus();
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value',
+      )!.set!.call(searchInput(), value);
+      searchInput().dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  };
+  const searchCount = () =>
+    container.querySelector('.Changelog__matchCount')?.textContent;
+  const noResults = () =>
+    container.querySelector('.Changelog__noResults')?.textContent;
+  const richArchive = `2026-10-01:
+  Alice:
+    - bugfix: Fixed iron gates
+    - rscadd: Added BLUE lamps
+  Bob:
+    - map: Moved the harbor
+2026-10-03:
+  Carla:
+    - sound: Quiet gates
+`;
+
+  test('real search input filters author, category and text without backend requests, and Clear restores focus', async () => {
+    fetchMock.mockResolvedValue(response(richArchive));
+    await render();
+    const original = descriptions();
+    expect(original).toEqual([
+      'Quiet gates',
+      'Fixed iron gates',
+      'Added BLUE lamps',
+      'Moved the harbor',
+    ]);
+    const originalCalls = sendMessage.mock.calls.slice();
+    await enterSearch('  ALICE  ');
+    expect(descriptions()).toEqual(['Fixed iron gates', 'Added BLUE lamps']);
+    expect(searchCount()).toMatch(/2.*4/);
+    await enterSearch('BUGFIX');
+    expect(descriptions()).toEqual(['Fixed iron gates']);
+    await enterSearch('gates');
+    expect(descriptions()).toEqual(['Quiet gates', 'Fixed iron gates']);
+    await enterSearch('nobody-matches-this');
+    expect(descriptions()).toEqual([]);
+    expect(searchCount()).toMatch(/0.*4/);
+    expect(noResults()).toBeTruthy();
+    expect(container.querySelectorAll('.Changelog__day')).toHaveLength(0);
+    expect(
+      container.querySelector('.Changelog__credits')?.textContent,
+    ).toContain('Credits & licenses');
+    await click('Clear search');
+    expect(searchInput().value).toBe('');
+    expect(document.activeElement).toBe(searchInput());
+    expect(descriptions()).toEqual(original);
+    expect(noResults()).toBeUndefined();
+    for (const query of ['blue', 'BUGFIX']) {
+      await enterSearch(query);
+      expect(descriptions()).toHaveLength(1);
+      const oldInput = searchInput();
+      await click('Clear search');
+      expect(searchInput().value).toBe('');
+      expect(document.activeElement).toBe(searchInput());
+      expect(oldInput.isConnected).toBe(false);
+      expect(descriptions()).toEqual(original);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sendMessage.mock.calls).toEqual(originalCalls);
+  });
+
+  test('Enter and Escape preserve the typed filter and do not request data', async () => {
+    fetchMock.mockResolvedValue(response(richArchive));
+    await render();
+    const originalCalls = sendMessage.mock.calls.slice();
+    for (const key of ['Enter', 'Escape']) {
+      await enterSearch('blue');
+      const event = new KeyboardEvent('keydown', {
+        key,
+        bubbles: true,
+        cancelable: true,
+      });
+      await act(async () => {
+        searchInput().dispatchEvent(event);
+      });
+      expect(event.defaultPrevented).toBe(true);
+      expect(document.activeElement).not.toBe(searchInput());
+      expect(searchInput().value).toBe('blue');
+      expect(descriptions()).toEqual(['Added BLUE lamps']);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sendMessage.mock.calls).toEqual(originalCalls);
+  });
+
+  test('query survives month navigation, loading, terminal error and recovery with no stale match status', async () => {
+    const september = deferred<Response>();
+    fetchMock
+      .mockResolvedValueOnce(response(richArchive))
+      .mockImplementationOnce(() => september.promise)
+      .mockResolvedValue(response('Cannot find archive'));
+    await render();
+    await enterSearch('gates');
+    expect(searchCount()).toMatch(/2.*4/);
+    await click('Older month');
+    expect(searchInput().value).toBe('gates');
+    expect(status()).toContain('Loading changelog data');
+    expect(searchCount()).toBeUndefined();
+    expect(noResults()).toBeUndefined();
+    expect(descriptions()).toEqual([]);
+    await enterSearch('blue');
+    expect(calls()).toHaveLength(2);
+    await act(async () => september.resolve(response('Cannot find archive')));
+    for (let index = 0; index < 6 && retries.size; index++) await retry();
+    expect(status()).toBe('Failed to load data after 6 attempts');
+    expect(searchInput().value).toBe('blue');
+    expect(searchCount()).toBeUndefined();
+    expect(noResults()).toBeUndefined();
+    expect(container.querySelector('.Changelog__credits')).not.toBeNull();
+    expect(calls()).toHaveLength(7);
+    await enterSearch('gates');
+    expect(calls()).toHaveLength(7);
+    fetchMock.mockResolvedValue(response(richArchive));
+    await click('Newer month');
+    expect(searchInput().value).toBe('gates');
+    expect(descriptions()).toEqual(['Quiet gates', 'Fixed iron gates']);
+    expect(searchCount()).toMatch(/2.*4/);
+    expect(status()).toBeUndefined();
+    expect(calls()).toHaveLength(8);
+    expect(calls().map(([, data]) => data.date)).toEqual([
+      dates[0],
+      ...Array(6).fill(dates[1]),
+      dates[0],
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(8);
+  });
+
+  test('filter applies to the newly loaded month rather than cached prior rows', async () => {
+    const september = deferred<Response>();
+    fetchMock
+      .mockResolvedValueOnce(response(richArchive))
+      .mockImplementationOnce(() => september.promise);
+    await render();
+    await enterSearch('gates');
+    await click('Older month');
+    await act(async () =>
+      september.resolve(response(archive('September gates repaired'))),
+    );
+    expect(searchInput().value).toBe('gates');
+    expect(descriptions()).toEqual(['September gates repaired']);
+    expect(searchCount()).toMatch(/1.*1/);
+    expect(calls()).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test('whitespace restores every row and an empty loaded archive supports search without requests', async () => {
+    fetchMock
+      .mockResolvedValueOnce(response(richArchive))
+      .mockResolvedValue(response('{}'));
+    await render();
+    const original = descriptions();
+    await enterSearch('missing');
+    await enterSearch('   ');
+    expect(descriptions()).toEqual(original);
+    expect(noResults()).toBeUndefined();
+    await click('Older month');
+    await enterSearch('missing');
+    expect(descriptions()).toEqual([]);
+    expect(searchCount()).toMatch(/0.*0/);
+    expect(noResults()).toBeTruthy();
+    expect(container.querySelector('.Changelog__credits')).not.toBeNull();
+    expect(calls()).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test('a reopened window starts unfiltered rather than retaining the previous session query', async () => {
+    fetchMock.mockResolvedValue(response(richArchive));
+    await render();
+    await enterSearch('blue');
+    expect(descriptions()).toEqual(['Added BLUE lamps']);
+    await act(async () => root.render(null));
+    await render();
+    expect(searchInput().value).toBe('');
+    expect(descriptions()).toHaveLength(4);
+    expect(calls()).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 }

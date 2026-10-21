@@ -25,3 +25,18 @@ Success assertions inspect rendered change-description cells.
 The Window shell is substituted because the real layout imports webpack-only
 debug discovery. These are component request-lifecycle tests, not native-window,
 DreamSeeker, visual, network-transport cancellation or full-game acceptance.
+
+## Search the loaded month
+
+Search matches a trimmed, case-insensitive substring of the displayed author,
+category key, or description. It filters only the loaded archive, never fetches
+other months, and preserves matching rows and their original order. Blank or
+whitespace-only queries show the unfiltered archive. Credits and license links
+remain visible even when no change matches.
+
+The query stays in place while navigating months, loading, or showing a load
+failure, so the same topic can be followed through adjacent months. Match counts
+and the no-results message appear only after an archive loads. Clear resets the
+query and returns focus to the search input; reopening the window starts with an
+empty query. Enter and Escape keep the input component's normal blur behavior
+without submitting a server action or resetting the query.

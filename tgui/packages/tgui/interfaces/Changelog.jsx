@@ -6,6 +6,7 @@ import {
   Button,
   Dropdown,
   Icon,
+  Input,
   Section,
   Stack,
   Table,
@@ -15,6 +16,8 @@ import { classes } from 'tgui-core/react';
 import { resolveAsset } from '../assets';
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
+
+import { filterChangelog } from './Changelog/filter';
 
 const icons = {
   add: { icon: 'check-circle' },
@@ -51,9 +54,12 @@ export class Changelog extends Component {
       data: 'Loading changelog data...',
       selectedDate: '',
       selectedIndex: 0,
+      query: '',
+      searchReset: 0,
     };
     this.dateChoices = [];
     this.entriesRef = createRef();
+    this.searchRef = createRef();
     this.requestId = 0;
     this.mounted = false;
   }
@@ -69,6 +75,14 @@ export class Changelog extends Component {
   setSelectedIndex(selectedIndex) {
     this.setState({ selectedIndex });
   }
+
+  handleClearSearch = () => {
+    // Core Input retains its focused internal value; reset it before refocusing.
+    this.setState(
+      ({ searchReset }) => ({ query: '', searchReset: searchReset + 1 }),
+      () => this.searchRef.current?.focus(),
+    );
+  };
 
   cancelRequest() {
     this.requestId++;
@@ -137,7 +151,7 @@ export class Changelog extends Component {
   }
 
   render() {
-    const { data, selectedDate, selectedIndex } = this.state;
+    const { data, selectedDate, selectedIndex, query, searchReset } = this.state;
     const {
       data: { dates },
     } = useBackend();
@@ -310,11 +324,12 @@ export class Changelog extends Component {
       </details>
     );
 
+    const filtered =
+      data && typeof data === 'object' ? filterChangelog(data, query) : null;
     const changes =
-      data &&
-      typeof data === 'object' &&
-      Object.keys(data).length > 0 &&
-      Object.entries(data)
+      filtered &&
+      Object.keys(filtered.archive).length > 0 &&
+      Object.entries(filtered.archive)
         .reverse()
         .map(([date, authors]) => (
           <Section className="Changelog__day" key={date} title={dateformat(date, 'd mmmm yyyy', true)}>
@@ -366,6 +381,40 @@ export class Changelog extends Component {
               <nav className="Changelog__navigation" aria-label="Changelog month">
                 {dateDropdown}
               </nav>
+              <Stack mt={1}>
+                <Stack.Item grow>
+                  <Input
+                    key={searchReset}
+                    ref={this.searchRef}
+                    fluid
+                    aria-label="Search this month"
+                    placeholder="Search author, description, or category..."
+                    value={query}
+                    onChange={(value) => this.setState({ query: value })}
+                  />
+                </Stack.Item>
+                <Stack.Item>
+                  <Button
+                    aria-label="Clear search"
+                    disabled={!query}
+                    onClick={this.handleClearSearch}
+                  >
+                    Clear
+                  </Button>
+                </Stack.Item>
+              </Stack>
+              {filtered && (
+                <Box className="Changelog__search-summary" role="status" mt={1}>
+                  <span className="Changelog__matchCount">
+                    {filtered.matchingEntries} of {filtered.totalEntries} changes
+                  </span>
+                  {query.trim() && filtered.matchingEntries === 0 && (
+                    <span className="Changelog__noResults">
+                      . No changes match this search.
+                    </span>
+                  )}
+                </Box>
+              )}
             </header>
             <div className="Changelog__entries" ref={this.entriesRef}>
               {credits}
