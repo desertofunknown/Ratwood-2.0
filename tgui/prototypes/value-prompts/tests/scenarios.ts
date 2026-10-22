@@ -251,6 +251,23 @@ export async function runScenarios(make: Factory) {
       },
     );
   }
+  await scenario(
+    'number/equivalent-numeric-spelling',
+    'number',
+    { init_value: 0, min_value: 0, max_value: 20, round_value: false },
+    async (h, r) => {
+      r();
+      // Native value assignment plus input reproduces the final spelling, not
+      // physical key insertion. Keep the real production controlled input as
+      // the oracle for leading zeros and equivalent fractional spellings.
+      for (const draft of ['', '07', '007.50', '7.500', '7.50']) {
+        await type(h, draft);
+        r({ typed: draft });
+        await click(h, 'confirm');
+        r();
+      }
+    },
+  );
   for (const recovery of ['min', 'max', 'reset'] as const) {
     await scenario(
       `number/invalid-recover-${recovery}`,

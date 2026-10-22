@@ -24,6 +24,19 @@
       if (s.kind === 'text' && value !== textDraft) textDraft = (value as string) ?? '';
     });
   });
+  // React DOM's controlled-number update compares numeric equivalence rather
+  // than spelling, preserving edits such as "07" and "007.50". The explicit
+  // zero/empty branch still restores empty edits to the local numeric zero.
+  $effect(() => {
+    const value = numberDraft;
+    const target = editor;
+    untrack(() => {
+      if (s.kind !== 'number' || !target) return;
+      if ((value === 0 && target.value === '') || Number(target.value) !== value) {
+        target.value = String(value);
+      }
+    });
+  });
   // Native bounds updates are deliberately not dependencies of this effect.
   $effect(() => {
     numberDraft;
@@ -104,7 +117,7 @@
         <div class="ValuePrompt__editor ValuePrompt__number">
           <button type="button" class="TithewoodControl" data-testid="min" aria-label="Minimum" title="Minimum" aria-disabled={s.minDisabled} tabindex={s.minDisabled ? -1 : 0} onkeydown={e => controlKey(e, controller.min, s.minDisabled)} onclick={() => { if (!s.minDisabled) controller.min(); }}>≪</button>
           <button type="button" class="TithewoodControl" data-testid="decrease" aria-label={`Decrease by ${s.step}`} title={`Decrease by ${s.step}`} aria-disabled={s.decreaseDisabled} tabindex={s.decreaseDisabled ? -1 : 0} onkeydown={e => controlKey(e, () => controller.adjust(-1), s.decreaseDisabled)} onclick={() => { if (!s.decreaseDisabled) controller.adjust(-1); }}>−</button>
-          <input bind:this={editor} class={`Input RestrictedInput Input--fluid TithewoodControl${!localValid ? ' RestrictedInput--invalid' : ''}`} data-testid="input" aria-label="Number" type="number" autocomplete="off" spellcheck={false} min={s.minValue} max={s.maxValue} step={s.data.round_value ? '1' : 'any'} value={numberDraft} oninput={input} onkeydown={editorKey} />
+          <input bind:this={editor} class={`Input RestrictedInput Input--fluid TithewoodControl${!localValid ? ' RestrictedInput--invalid' : ''}`} data-testid="input" aria-label="Number" type="number" autocomplete="off" spellcheck={false} min={s.minValue} max={s.maxValue} step={s.data.round_value ? '1' : 'any'} oninput={input} onkeydown={editorKey} />
           <button type="button" class="TithewoodControl" data-testid="increase" aria-label={`Increase by ${s.step}`} title={`Increase by ${s.step}`} aria-disabled={s.increaseDisabled} tabindex={s.increaseDisabled ? -1 : 0} onkeydown={e => controlKey(e, () => controller.adjust(1), s.increaseDisabled)} onclick={() => { if (!s.increaseDisabled) controller.adjust(1); }}>+</button>
           <button type="button" class="TithewoodControl" data-testid="max" aria-label="Maximum" title="Maximum" aria-disabled={s.maxDisabled} tabindex={s.maxDisabled ? -1 : 0} onkeydown={e => controlKey(e, controller.max, s.maxDisabled)} onclick={() => { if (!s.maxDisabled) controller.max(); }}>≫</button>
           <button type="button" class="TithewoodControl" data-testid="reset" aria-label="Reset to initial value" title="Reset to initial value" aria-disabled={s.resetDisabled} tabindex={s.resetDisabled ? -1 : 0} onkeydown={e => controlKey(e, controller.reset, s.resetDisabled)} onclick={() => { if (!s.resetDisabled) controller.reset(); }}>↺</button>

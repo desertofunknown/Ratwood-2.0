@@ -90,13 +90,13 @@ test(`${selected}: exact production DOM/event/native-validity parity`, async () 
       process.env.VALUE_CANDIDATE_PATH,
       JSON.stringify(actual, null, 2),
     );
-  expect(Object.keys(expected)).toHaveLength(24);
+  expect(Object.keys(expected)).toHaveLength(25);
   expect(
     Object.values(expected).reduce(
       (n: number, values: any) => n + values.length,
       0,
     ),
-  ).toBe(140);
+  ).toBe(151);
   expect(Object.keys(actual)).toEqual(Object.keys(expected));
   for (const scenario of Object.keys(expected))
     expect(actual[scenario], `${selected} / ${scenario}`).toEqual(
@@ -104,7 +104,7 @@ test(`${selected}: exact production DOM/event/native-validity parity`, async () 
     );
   expect(attempted()).toEqual([]);
   console.log(
-    `${selected} matched 24 production scenarios / 140 observations.`,
+    `${selected} matched 25 production scenarios / 151 observations.`,
   );
 }, 30000);
 
