@@ -10,7 +10,11 @@ const frame = () =>
   new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 // Two animation frames bound a visible update opportunity, not exact paint time.
-export function installBenchmark(adapter: DemoAdapter) {
+export function installBenchmark(
+  adapter: DemoAdapter,
+  visibleControls = false,
+) {
+  let controls: HTMLElement | undefined;
   const target = window as typeof window & {
     workbenchDemo?: DemoAdapter;
     workbenchBenchmark?: { run(): Promise<unknown> };
@@ -28,6 +32,7 @@ export function installBenchmark(adapter: DemoAdapter) {
     },
     async unmount() {
       closed = true;
+      controls?.remove();
       await adapter.unmount();
     },
   };
@@ -114,4 +119,36 @@ export function installBenchmark(adapter: DemoAdapter) {
       }
     },
   };
+  if (visibleControls) {
+    controls = document.createElement('details');
+    controls.className = 'demo-benchmark';
+    const summary = document.createElement('summary');
+    summary.textContent = 'Comparison tools';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Run sample update benchmark';
+    const note = document.createElement('p');
+    note.textContent =
+      'Changes the sample catalog. Reload for design browsing. Keep this tab visible; timings include two animation frames, not exact paint.';
+    const output = document.createElement('pre');
+    output.setAttribute('aria-live', 'polite');
+    output.setAttribute('aria-label', 'Benchmark results');
+    button.onclick = async () => {
+      button.disabled = true;
+      output.textContent = 'Running…';
+      try {
+        output.textContent = JSON.stringify(
+          await target.workbenchBenchmark!.run(),
+          null,
+          2,
+        );
+      } catch (error) {
+        output.textContent = `Benchmark rejected: ${error instanceof Error ? error.message : String(error)}`;
+      } finally {
+        button.disabled = false;
+      }
+    };
+    controls.append(summary, note, button, output);
+    document.body.prepend(controls);
+  }
 }

@@ -14,4 +14,4 @@ const adapter: DemoAdapter = {
   unmount: () => unmount(component),
   actions,
 };
-installBenchmark(adapter);
+installBenchmark(adapter, true);

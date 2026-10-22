@@ -39,12 +39,15 @@ function Demo() {
 
 const root = createRoot(document.getElementById('root')!);
 flushSync(() => root.render(<Demo />));
-installBenchmark({
-  actions,
-  async update(data) {
-    flushSync(() => deliver(data));
+installBenchmark(
+  {
+    actions,
+    async update(data) {
+      flushSync(() => deliver(data));
+    },
+    async unmount() {
+      flushSync(() => root.unmount());
+    },
   },
-  async unmount() {
-    flushSync(() => root.unmount());
-  },
-});
+  true,
+);

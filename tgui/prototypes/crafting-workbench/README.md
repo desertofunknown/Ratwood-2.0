@@ -49,6 +49,12 @@ Measure separately:
 - Real keyboard activation/focus, narrow and wide layout, 200% zoom, long text,
   short windows and theme contrast; then native window/bridge lifecycle.
 
+The collapsed “Comparison tools” panel provides a visible run button and raw JSON
+results for supported browser testing. Nothing runs automatically; the button is
+disabled during a run, failures are shown, and the panel is removed on teardown.
+It replaces the sample catalog, so reload before returning to design browsing.
+The same panel and layout are used in each candidate.
+
 Each demo exposes `window.workbenchDemo` (update, unmount, captured actions) and
 an opt-in `window.workbenchBenchmark.run()`. The latter applies identical
 synthetic 1,282-recipe snapshots, including nested in-place updates, with five
@@ -96,7 +102,7 @@ python3 tools/extract-miacraft-workload.py /tmp/crafting-fixture.json
 bun run prototypes/crafting-workbench/benchmark.ts /tmp/crafting-fixture.json /tmp/crafting-derived-results.json
 ```
 
-### Matched standalone build observation
+### Matched standalone build observation at `e93f118`
 
 Both arms use Bun 1.2.16, minification, IIFE browser output, production conditions,
 identical shared CSS/fonts/fixture, and the opt-in harness. React is 19.1.0;
@@ -115,3 +121,8 @@ comparison, not proof of lower browser CPU or heap usage. Bun retains some
 inactive Svelte diagnostic branches despite the production setting; this is not
 a claim about the smallest output another bundler could produce. No production
 React cost is removed by this disconnected prototype.
+
+The later hosted-preview controls add the same shared panel to both demos.
+Their current JavaScript is 198,963 bytes (React) and 74,713 bytes (Svelte);
+regenerate gzip counts and artifact hashes before each hosted comparison.
+Do not compare a controls-enabled build with the earlier controls-free build.
