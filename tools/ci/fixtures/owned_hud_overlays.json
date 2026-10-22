@@ -1,0 +1,39 @@
+{
+  "baseline_commit": "2c25b283ff24191a456a2e956ce0d22cdcb5c283",
+  "scope": "Source-bound Python overlay ownership model only; not DM execution, rendering, save I/O or full observer behavior.",
+  "callbacks": {
+    "crtmode": "\tset category = \"Options\"\n\tset name = \"ToggleCRT\"\n\tset hidden = 1\n\tif(!prefs)\n\t\treturn\n\tif(prefs.crt == TRUE)\n\t\twinset(src, \"mapwindow.map\", \"zoom-mode=normal\")\n\t\tprefs.crt = FALSE\n\t\tprefs.save_preferences()\n\t\tto_chat(src, \"CRT... OFF\")\n\t\tfor(var/atom/movable/screen/scannies/S in screen)\n\t\t\tS.alpha = 0\n\telse\n\t\twinset(src, \"mapwindow.map\", \"zoom-mode=blur\")\n\t\tprefs.crt = TRUE\n\t\tprefs.save_preferences()\n\t\tto_chat(src, \"CRT... ON\")\n\t\tfor(var/atom/movable/screen/scannies/S in screen)\n\t\t\tS.alpha = 70\n\n",
+    "grainfilter": "\tset category = \"Options\"\n\tset name = \"ToggleGrain\"\n\tset hidden = 1\n\tif(!prefs)\n\t\treturn\n\tif(prefs.grain == TRUE)\n\t\tprefs.grain = FALSE\n\t\tprefs.save_preferences()\n\t\tto_chat(src, \"Grain is <font color='gray'>OFF.</font>\")\n\t\tfor(var/atom/movable/screen/grain/S in screen)\n\t\t\tS.alpha = 0\n\telse\n\t\tprefs.grain = TRUE\n\t\tprefs.save_preferences()\n\t\tto_chat(src, \"Grain is <font color='#007fff'>ON.</font>\")\n\t\tfor(var/atom/movable/screen/grain/S in screen)\n\t\t\tS.alpha = 55\n\n"
+  },
+  "dispatch": {
+    "crt": "\t\t\tif(\"crt\")\n\t\t\t\towner.crtmode()\n",
+    "grain": "\t\t\tif(\"grain\")\n\t\t\t\towner.grainfilter()\n"
+  },
+  "source_contracts": [
+    {
+      "path": "code/_onclick/hud/hud.dm",
+      "header": "/mob/proc/create_mob_hud()",
+      "sha256": "8194c492b81100f27c536c551a7e7956a27930e511b52b10003413d395f140e9"
+    },
+    {
+      "path": "code/_onclick/hud/hud.dm",
+      "header": "/datum/hud/proc/show_hud(version = 0, mob/viewmob)",
+      "sha256": "17cb728cff9beefa0f11c81c695bf199282caea868b1589838ba9308bb4b3801"
+    },
+    {
+      "path": "code/_onclick/hud/human.dm",
+      "header": "/datum/hud/human/New(mob/living/carbon/human/owner)",
+      "sha256": "e38e1fc6739964658800ad0dc3c30ffffc8d54adf77964453e459c1c6bc04951"
+    },
+    {
+      "path": "code/_onclick/hud/ghost.dm",
+      "header": "/datum/hud/ghost/New(mob/owner)",
+      "sha256": "0365cffddbac7285399d226ea48f15afc882dc6ddd36fdf616de10229f7ea1c6"
+    },
+    {
+      "path": "code/modules/mob/dead/observer/observer.dm",
+      "header": "/mob/dead/observer/proc/do_observe(mob/mob_eye)",
+      "sha256": "a6a160eadafd4f126a5f5df8a1e055e24b7636d5c2761645987932e39e1a9247"
+    }
+  ]
+}

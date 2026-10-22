@@ -179,15 +179,15 @@ Hotkey-Mode: (hotkey-mode must be on)
 		prefs.crt = FALSE
 		prefs.save_preferences()
 		to_chat(src, "CRT... OFF")
-		for(var/atom/movable/screen/scannies/S in screen)
-			S.alpha = 0
+		if(mob?.hud_used?.scannies)
+			mob.hud_used.scannies.alpha = 0
 	else
 		winset(src, "mapwindow.map", "zoom-mode=blur")
 		prefs.crt = TRUE
 		prefs.save_preferences()
 		to_chat(src, "CRT... ON")
-		for(var/atom/movable/screen/scannies/S in screen)
-			S.alpha = 70
+		if(mob?.hud_used?.scannies)
+			mob.hud_used.scannies.alpha = 70
 
 /client/verb/grainfilter()
 	set category = "Options"
@@ -199,14 +199,14 @@ Hotkey-Mode: (hotkey-mode must be on)
 		prefs.grain = FALSE
 		prefs.save_preferences()
 		to_chat(src, "Grain is <font color='gray'>OFF.</font>")
-		for(var/atom/movable/screen/grain/S in screen)
-			S.alpha = 0
+		if(mob?.hud_used?.grain)
+			mob.hud_used.grain.alpha = 0
 	else
 		prefs.grain = TRUE
 		prefs.save_preferences()
 		to_chat(src, "Grain is <font color='#007fff'>ON.</font>")
-		for(var/atom/movable/screen/grain/S in screen)
-			S.alpha = 55
+		if(mob?.hud_used?.grain)
+			mob.hud_used.grain.alpha = 55
 
 /client/verb/triggercommend()
 	set category = "OOC"
