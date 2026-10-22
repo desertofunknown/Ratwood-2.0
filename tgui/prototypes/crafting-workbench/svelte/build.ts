@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
@@ -25,11 +25,9 @@ if (!result.success) throw new Error(result.logs.map(String).join('\n'));
 for (const style of ['workbench.css', 'demo.css']) {
   await copyFile(join(shared, style), join(output, style));
 }
+// Remove obsolete copies from earlier demo builds; game assets are untouched.
 for (const font of ['lora-regular.ttf', 'lora-bold.ttf', 'pterra.ttf']) {
-  await copyFile(
-    resolve(shared, '../../../interface/fonts', font),
-    join(output, font),
-  );
+  await rm(join(output, font), { force: true });
 }
 await writeFile(
   join(output, 'index.html'),
@@ -39,14 +37,7 @@ await writeFile(
 <title>Tithewood crafting workbench prototype</title><link rel="stylesheet" href="demo.css"><link rel="stylesheet" href="workbench.css"><script defer src="demo.js"></script></head>
 <body><div id="root"></div></body></html>`,
 );
-const files = [
-  'demo.js',
-  'workbench.css',
-  'demo.css',
-  'lora-regular.ttf',
-  'lora-bold.ttf',
-  'pterra.ttf',
-];
+const files = ['demo.js', 'workbench.css', 'demo.css'];
 const sizes = await Promise.all(
   files.map(async (file) => {
     const bytes = await readFile(join(output, file));

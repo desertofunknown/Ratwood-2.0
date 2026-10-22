@@ -5,7 +5,7 @@ This is a standalone comparison of the adjacent React prototype, not a productio
 ## Boundary
 
 - `Workbench.svelte` uses Svelte 5 runes and imports the exact shared `../model.ts`. It matches the React element hierarchy, CSS classes, copy, filters, identity selection, 40-row pagination and action payloads.
-- Both demos use `../fixtures.ts`, `../workbench.css`, `../demo.css`, the same local fonts and `../browser-harness.ts`. No duplicate stylesheet or smaller fixture is substituted.
+- Both demos use `../fixtures.ts`, `../workbench.css`, `../demo.css`, the same system-font stack and `../browser-harness.ts`. No duplicate stylesheet or smaller fixture is substituted.
 - `Demo.svelte` / `demo.ts` reproduce the demo shell, action log and explicit data-delivery API. `Delivery.svelte` / `adapter.ts` provide the same delivery semantics for mounted component checks. Each delivered object receives a new outer envelope, even when nested backend records were mutated in place. Passing a mutated plain object without a delivery is not a supported update mechanism.
 - The material checkbox remains server-controlled. The demo alone simulates acknowledgement. Missing hints never disable crafting or imply readiness.
 - Local state belongs to the selected identity, not a recipe snapshot. Removal/replacement closes details; disappearing categories reset to all categories; updates to the same selected recipe preserve active filter focus and detail scroll.
@@ -42,7 +42,7 @@ These are mounted semantic checks, not a browser rendering or keyboard simulatio
 
 ## Evidence and measurement limits
 
-`dist/bundle-sizes.json` records raw and level-9 gzip transfer bytes per output, SHA-256 artifact and source hashes, compiler/bundler versions, resolution conditions and scope. It includes the standalone framework runtime, demo fixture, demo shell and opt-in benchmark harness. Identical CSS and font costs are reported separately.
+`dist/bundle-sizes.json` records raw and level-9 gzip transfer bytes per output, SHA-256 artifact and source hashes, compiler/bundler versions, resolution conditions and scope. It includes the standalone framework runtime, demo fixture, demo shell and opt-in benchmark harness. Identical CSS costs are reported separately; the current previews redistribute no font files.
 
 This standalone size comparison does not equal the incremental cost in an existing React-based TGUI bundle. Loading Svelte alongside the existing runtime can add rather than replace framework cost. No recommendation to migrate production follows from bytes alone.
 

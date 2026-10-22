@@ -1,4 +1,4 @@
-import { copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,11 +18,9 @@ if (!result.success) {
   throw new Error(result.logs.map(String).join('\n'));
 }
 await copyFile(join(here, 'workbench.css'), join(output, 'workbench.css'));
+// Remove obsolete copies from earlier demo builds; game assets are untouched.
 for (const font of ['lora-regular.ttf', 'lora-bold.ttf', 'pterra.ttf']) {
-  await copyFile(
-    resolve(here, '../../../interface/fonts', font),
-    join(output, font),
-  );
+  await rm(join(output, font), { force: true });
 }
 await copyFile(join(here, 'demo.css'), join(output, 'demo.css'));
 await writeFile(

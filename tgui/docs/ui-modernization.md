@@ -2,10 +2,10 @@
 
 ## Decision status: compare before choosing
 
-Preserve the existing BYOND protocol while comparing React and Svelte with the
+Preserve the existing BYOND protocol while comparing React, Svelte and browser Lua with the
 same [standalone crafting workbench](../prototypes/crafting-workbench/README.md),
 data, CSS and actions. React is the baseline, not the predetermined winner.
-Neither prototype activates a production interface. A new framework must earn
+None of the prototypes activates a production interface. A new framework must earn
 its migration cost through relevant measurements and native-client acceptance.
 
 The current stack is tgui 6, React 19, Rspack and Bun 1.2.16; its
@@ -44,7 +44,10 @@ older-client compatibility based on frontend tests.
 ## First workflow: workshop ledger
 
 Use the existing bone/burgundy family, restrained binding rules, clear text
-labels and bundled Lora/Pterra fonts. Body text must remain readable; decorative
+labels and a consistent serif hierarchy. The disconnected previews use the same
+system font stack rather than redistribute the inherited Pterra font with its
+ambiguous license notice; production fonts remain untouched. Body text must
+remain readable; decorative
 type belongs in short headings rather than ingredients or controls. Selection,
 material hints and focus must not rely on color alone.
 
@@ -137,6 +140,14 @@ The current asset loader recognizes JS/CSS, not automatic Lua/WASM execution.
 Any browser-Lua trial needs explicit asset mapping, schema conversion (including
 Lua's truthy zero versus DM's 0/1 flags), action chunking and deterministic
 cleanup across pooled-window suspension/reuse. Keep the current transport shell
-and test one equivalent UI body before considering migration. No Lua runtime has
-been installed or benchmarked here. Language choice alone establishes neither
-visual quality nor a speedup; native LuaJIT rankings do not measure browser Lua.
+and test one equivalent UI body before considering migration.
+
+The isolated [Lua workbench](../prototypes/crafting-workbench/lua/README.md) uses
+Fengari 0.1.5 and interop 0.1.4. Lua owns its UI state and keyed DOM updates;
+the shared search/data model remains JavaScript. Its adapter must explicitly
+retain JavaScript listener identities and close the VM only after active calls
+finish. These are additional maintenance obligations, not framework features
+provided by the existing tgui shell. Lua source is parsed at mount, so that cost
+belongs in startup measurements. This candidate does not evaluate Wasmoon or
+native LuaJIT. Language choice alone establishes neither visual quality nor a
+speedup, and transfer sizes do not establish browser performance.

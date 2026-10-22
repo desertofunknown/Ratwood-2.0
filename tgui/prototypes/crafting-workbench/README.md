@@ -2,7 +2,10 @@
 
 Experimental, disconnected UI candidates. No production interface, DM action,
 asset registration, package manifest or lockfile is changed. All displayed demo
-recipes are illustrative. Existing game fonts retain their original attribution.
+recipes are illustrative. All three previews use the same system serif font stack
+(Georgia, Times New Roman, serif), with no redistributed font files. This
+preview-only substitution avoids an ambiguous license notice in the inherited
+Pterra font. Production game fonts and their attribution are unchanged.
 
 ## Reproduce the React baseline
 
@@ -19,6 +22,8 @@ The last command produces an ignored `dist/index.html`; it starts no server and
 imports no BYOND connection. The Svelte comparison has an isolated pinned
 subproject in `svelte/`. It shares the data model, styles, fonts and sample data;
 its dependencies are not added to the production application.
+The [browser-Lua candidate](lua/README.md) is likewise isolated and uses the same
+model, assets and actions. It runs Lua through Fengari, not native LuaJIT.
 
 ## What to compare
 
@@ -32,7 +37,7 @@ the best run. Compare fresh/cold contexts separately from warmed interactions.
 The [JS Framework Benchmark](https://github.com/krausest/js-framework-benchmark)
 provides useful methodological examples: common DOM/CSS, correct keyed identity,
 visible browser execution and separate CPU/startup/memory cases. Its generic
-rankings are not measurements of this game. Both candidates here retain keyed
+rankings are not measurements of this game. All candidates here retain keyed
 recipe identities and perform the same interactions.
 
 Measure separately:
@@ -122,7 +127,20 @@ inactive Svelte diagnostic branches despite the production setting; this is not
 a claim about the smallest output another bundler could produce. No production
 React cost is removed by this disconnected prototype.
 
-The later hosted-preview controls add the same shared panel to both demos.
-Their current JavaScript is 198,963 bytes (React) and 74,713 bytes (Svelte);
-regenerate gzip counts and artifact hashes before each hosted comparison.
-Do not compare a controls-enabled build with the earlier controls-free build.
+### Three-candidate build observation with visible controls
+
+All three current demos share the visible comparison panel, system-font CSS,
+sample catalog and action contract. No font files are redistributed. Using the
+same Node 24.19.0 gzip-9 compressor for each artifact:
+
+| Standalone demo JavaScript | Raw bytes | Gzip level 9 bytes |
+| -------------------------- | --------: | -----------------: |
+| React                      |   198,963 |             63,314 |
+| Svelte                     |    74,713 |             27,826 |
+| Browser Lua (Fengari)      |   234,355 |             77,758 |
+
+Lua includes its VM, interop and Lua source, which is parsed at mount. It is not
+native LuaJIT. The shared CSS adds the same bytes to every candidate; these are
+JS-only transfer measurements, not startup, update CPU, memory or game-speed
+results. Regenerate sizes and hashes before hosted comparisons, and do not mix
+these controls-enabled builds with the earlier controls-free snapshot.

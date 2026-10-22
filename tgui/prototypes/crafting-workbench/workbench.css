@@ -24,8 +24,8 @@
 	color: var(--wb-text);
 	background: var(--wb-canvas);
 	font:
-		14px/1.45 Lora,
-		Georgia,
+		14px/1.45 Georgia,
+		'Times New Roman',
 		serif;
 	color-scheme: dark;
 }
@@ -86,9 +86,8 @@
 .Workbench h1 {
 	color: var(--wb-heading);
 	font:
-		24px/1.25 Pterra,
-		Lora,
-		Georgia,
+		24px/1.25 Georgia,
+		'Times New Roman',
 		serif;
 	margin: 2px 0 4px;
 }
@@ -263,9 +262,8 @@
 .Workbench__folio-title {
 	color: var(--wb-heading);
 	font:
-		24px/1.3 Pterra,
-		Lora,
-		Georgia,
+		24px/1.3 Georgia,
+		'Times New Roman',
 		serif;
 	margin: 4px 0 8px !important;
 	overflow-wrap: anywhere;

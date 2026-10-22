@@ -1,0 +1,20 @@
+{
+  "name": "ratwood-crafting-workbench-lua-comparison",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.2.16",
+  "scripts": {
+    "build": "bun run build.ts",
+    "test": "bun run test.ts",
+    "check": "tsc --project tsconfig.json",
+    "format:check": "prettier --check \"*.{ts,json,md}\""
+  },
+  "dependencies": {
+    "fengari": "0.1.5",
+    "fengari-interop": "0.1.4"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2",
+    "typescript": "5.8.3"
+  }
+}
