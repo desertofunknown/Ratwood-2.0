@@ -1,0 +1,182 @@
+body {
+	margin: 0;
+	padding: 16px;
+	background: #100d0e;
+}
+.SelectionPrompt {
+	width: min(100%, 500px);
+	margin: 16px auto;
+	border: 1px solid var(--tw-border);
+	border-top: 3px solid var(--tw-accent);
+	box-shadow: 0 10px 30px #0008;
+}
+.SelectionPrompt__titlebar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--tw-border);
+	background: var(--tw-surface);
+}
+.SelectionPrompt__titlebar h1 {
+	margin: 0;
+	font-size: 22px;
+	color: var(--tw-heading);
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}
+.SelectionPrompt__eyebrow {
+	margin: 0 0 3px;
+	color: var(--tw-muted);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+.SelectionPrompt__timeout {
+	display: block;
+	width: 100%;
+	height: 4px;
+	border: 0;
+	appearance: none;
+	background: var(--tw-surface);
+}
+.SelectionPrompt__timeout::-webkit-progress-bar {
+	background: var(--tw-surface);
+}
+.SelectionPrompt__timeout::-webkit-progress-value {
+	background: var(--tw-copper);
+}
+.SelectionPrompt__timeout::-moz-progress-bar {
+	background: var(--tw-copper);
+}
+.SelectionPrompt__body {
+	padding: 14px;
+}
+.SelectionPrompt__prompt {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+.SelectionPrompt__prompt p {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.SelectionPrompt__search {
+	display: grid;
+	gap: 4px;
+	margin: 0 0 10px;
+	color: var(--tw-muted);
+	font-size: 12px;
+}
+.SelectionPrompt__search input {
+	width: 100%;
+	font-size: 14px !important;
+}
+.SelectionPrompt__choices {
+	max-height: 352px;
+	overflow: auto;
+	border: 1px solid var(--tw-border);
+	background: var(--tw-surface);
+}
+.SelectionPrompt__option {
+	display: flex;
+	gap: 10px;
+	padding: 10px 12px;
+	min-height: 44px;
+	border-bottom: 1px solid var(--tw-border);
+	cursor: pointer;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.SelectionPrompt__option > span:first-child {
+	color: var(--tw-copper);
+	flex: 0 0 14px;
+}
+.SelectionPrompt__option > span:last-child {
+	min-width: 0;
+}
+.SelectionPrompt__option:last-child {
+	border-bottom: 0;
+}
+.SelectionPrompt__option:hover {
+	background: var(--tw-raised);
+}
+.SelectionPrompt__option[aria-pressed='true'] {
+	background: var(--tw-selected);
+	box-shadow: inset 3px 0 var(--tw-accent);
+}
+.SelectionPrompt__option:focus-visible {
+	outline-offset: -3px;
+}
+.SelectionPrompt__empty {
+	padding: 16px;
+	margin: 0;
+	color: var(--tw-muted);
+}
+.SelectionPrompt__hint {
+	color: var(--tw-muted);
+	font-size: 12px;
+	margin: 10px 0 14px;
+}
+.SelectionPrompt__footer {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	border-top: 1px solid var(--tw-border);
+	padding-top: 12px;
+}
+.SelectionPrompt__buttons {
+	flex: 1;
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+}
+.SelectionPrompt__buttons--swapped {
+	flex-direction: row-reverse;
+}
+.SelectionPrompt__footer--large .SelectionPrompt__buttons button {
+	flex: 1;
+}
+.SelectionPrompt [data-testid='confirm'] {
+	border-color: var(--tw-accent);
+	background: var(--tw-selected);
+}
+.SelectionPreview {
+	max-width: 760px;
+	margin: auto;
+	padding: 14px;
+	border: 1px solid var(--tw-border);
+}
+.SelectionPreview h1 {
+	margin: 0;
+	font-size: 18px;
+}
+.SelectionPreview p {
+	margin: 8px 0;
+	overflow-wrap: anywhere;
+}
+.SelectionPreview__actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.SelectionPreview__actions label {
+	display: grid;
+	gap: 4px;
+}
+@media (max-width: 360px) {
+	body {
+		padding: 8px;
+	}
+	.SelectionPrompt__body {
+		padding: 10px;
+	}
+	.SelectionPrompt__footer {
+		gap: 8px;
+	}
+}
