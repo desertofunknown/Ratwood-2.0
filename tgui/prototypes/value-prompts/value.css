@@ -1,0 +1,236 @@
+/* Disconnected value study. Shared tokens/controls remain unmodified. */
+html {
+	background: #100d0e;
+	color-scheme: dark;
+}
+body {
+	margin: 0;
+	padding: 24px 16px 48px;
+}
+#root,
+#controls {
+	width: 100%;
+	max-width: 760px;
+	margin: 0 auto;
+}
+#root {
+	display: flex;
+	justify-content: center;
+	padding-top: 24px;
+}
+.ValuePreview {
+	border: 1px solid var(--tw-border);
+	padding: 16px;
+}
+.ValuePreview summary {
+	cursor: pointer;
+	color: var(--tw-heading);
+	font-size: 17px;
+}
+.ValuePreview p {
+	color: var(--tw-muted);
+	margin: 12px 0;
+	overflow-wrap: anywhere;
+}
+.ValuePreview__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: end;
+}
+.ValuePreview__actions label {
+	display: grid;
+	gap: 4px;
+	min-width: 0;
+	max-width: 100%;
+}
+.ValuePreview__actions select,
+.ValuePreview__actions button {
+	max-width: 100%;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+.ValuePreview__record {
+	margin: 12px 0 0;
+	padding: 12px;
+	border: 1px solid var(--tw-border);
+	background: var(--tw-surface);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	max-height: 220px;
+	overflow-y: auto;
+	font:
+		12px/1.5 ui-monospace,
+		monospace;
+}
+.ValuePrompt {
+	width: 100%;
+	min-width: 0;
+	border: 1px solid var(--tw-border);
+	box-shadow: 0 8px 32px #0006;
+}
+.ValuePrompt__titlebar {
+	display: flex;
+	align-items: start;
+	gap: 12px;
+	justify-content: space-between;
+	padding: 16px 18px;
+	background: var(--tw-surface);
+	border-bottom: 1px solid var(--tw-border);
+}
+.ValuePrompt__titlebar > div {
+	min-width: 0;
+}
+.ValuePrompt__titlebar h1 {
+	margin: 3px 0 0;
+	font-size: 24px;
+	line-height: 1.2;
+	font-weight: normal;
+	color: var(--tw-heading);
+	overflow-wrap: anywhere;
+}
+.ValuePrompt__eyebrow {
+	color: var(--tw-copper);
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font:
+		10px/1.5 system-ui,
+		sans-serif;
+	margin: 0;
+}
+.ValuePrompt__titlebar > button {
+	flex: 0 0 34px;
+}
+.ValuePrompt__timeout {
+	height: 3px;
+	background: var(--tw-raised);
+}
+.ValuePrompt__timeout-progress {
+	height: 100%;
+	background: var(--tw-copper);
+}
+.ValuePrompt__body {
+	padding: 18px;
+}
+.ValuePrompt__prompt {
+	margin: 0 0 18px;
+	line-height: 1.6;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	max-height: 240px;
+	overflow-y: auto;
+}
+.ValuePrompt__editor {
+	min-width: 0;
+}
+.ValuePrompt__text textarea {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	min-height: 2.8rem;
+	resize: none;
+	padding: 10px;
+	border: 1px solid var(--tw-control-border);
+	border-radius: 2px;
+	color: var(--tw-text);
+	background: var(--tw-raised);
+	font:
+		14px/1.5 system-ui,
+		sans-serif;
+}
+.ValuePrompt__text textarea::placeholder {
+	color: var(--tw-muted);
+	opacity: 1;
+}
+.ValuePrompt__number {
+	display: grid;
+	grid-template-columns: 34px 34px minmax(50px, 1fr) 34px 34px 34px;
+	gap: 6px;
+	align-items: center;
+}
+.ValuePrompt__number > .TithewoodControl {
+	min-width: 0;
+	width: 100%;
+	padding: 7px 4px;
+}
+.ValuePrompt__number input {
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+.ValuePrompt__number input.RestrictedInput--invalid {
+	border-color: #ef9a91;
+	outline: 1px solid #ef9a91;
+}
+.ValuePrompt__hint {
+	color: var(--tw-muted);
+	font-size: 12px;
+	line-height: 1.5;
+	margin: 12px 0;
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+	max-height: 180px;
+	overflow-y: auto;
+}
+.ValuePrompt__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 18px;
+	padding-top: 14px;
+	border-top: 1px solid var(--tw-border);
+}
+.ValuePrompt__footer > button {
+	flex: 0 1 auto;
+}
+.ValuePrompt__footer > [data-testid='confirm'] {
+	border-color: var(--tw-copper);
+}
+.ValuePrompt__footer > p {
+	margin: 0;
+	flex: 1;
+	text-align: center;
+}
+.ValuePrompt__footer--large > button {
+	flex: 1 1 70px;
+	min-height: 44px;
+}
+@media (max-width: 380px) {
+	body {
+		padding: 12px 8px 32px;
+	}
+	.ValuePreview {
+		padding: 12px;
+	}
+	.ValuePrompt__titlebar,
+	.ValuePrompt__body {
+		padding: 12px;
+	}
+	.ValuePrompt__number {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.ValuePrompt__number > input {
+		grid-column: span 2;
+	}
+	.ValuePrompt__number > [data-testid='reset'] {
+		grid-column: span 2;
+	}
+	.ValuePrompt__footer {
+		gap: 8px;
+	}
+	.ValuePrompt__footer > p {
+		flex-basis: 100%;
+		order: 1;
+	}
+}
+
+.ValuePrompt .TithewoodControl[aria-disabled='true'] {
+	opacity: 0.5;
+	cursor: default;
+}
+.ValuePrompt button.TithewoodControl[aria-disabled='true']:hover,
+.ValuePrompt button.TithewoodControl[aria-disabled='true']:active {
+	background: var(--tw-raised);
+	border-color: var(--tw-control-border);
+}
