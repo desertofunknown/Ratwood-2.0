@@ -34,6 +34,8 @@ engine-free test above.
 
 ## Regression coverage
 
+- [Crafting search](tgui/docs/crafting-search.md): name/ingredient matching, existing
+  craftability filters, ordering and exact crafting actions.
 - [Changes loading and filtering](tgui/docs/changelog-loading.md): failed and stale
   requests, bounded retries, archive-shape validation and current-month search.
 - [Blueprint import](tgui/docs/blueprint-import.md): malformed records/fields and

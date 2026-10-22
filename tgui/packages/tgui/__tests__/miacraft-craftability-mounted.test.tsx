@@ -51,10 +51,24 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
   if (initialByond) Object.defineProperty(globalThis, 'Byond', initialByond);
   else Reflect.deleteProperty(globalThis, 'Byond');
 
-  const recipe = (name: string, path: string) => ({
+  type Recipe = {
+    name: string;
+    path: string;
+    req_text?: string | null;
+    craftingdifficulty: string;
+    tool_text: string;
+    catalyst_text: string;
+    sellprice: string;
+    ref?: string;
+  };
+  const recipe = (
+    name: string,
+    path: string,
+    reqText: string | null = ' 1 Iron ingot, 1 Stick',
+  ): Recipe => ({
     name,
     path,
-    req_text: `Materials for ${path}`,
+    req_text: reqText,
     craftingdifficulty: 'Easy',
     tool_text: 'Knife',
     catalyst_text: 'Water',
@@ -92,7 +106,7 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
         cord: recipe('Cord', '/recipe/cord'),
         dye: recipe('Dye', '/recipe/dye'),
       },
-    } as Record<string, Record<string, ReturnType<typeof recipe>>>,
+    } as Record<string, Record<string, Recipe> | Recipe[]>,
   });
   type Data = ReturnType<typeof initialData>;
   type BackendState = NonNullable<Parameters<typeof backend.backendReducer>[0]>;
@@ -194,7 +208,7 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
   };
   const search = async (value: string) => {
     const input = container.querySelector<HTMLInputElement>(
-      'input[placeholder="Search..."]',
+      'input[aria-label="Search recipes by name or ingredients"]',
     );
     if (!input) throw new Error('Missing production search input');
     await act(async () => {
@@ -331,7 +345,7 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
     await click('Zeta');
     await click('🛠', 0);
     await click('Hammer');
-    expect(container.textContent).toContain('Materials for /recipe/hammer');
+    expect(container.textContent).toContain('1 Iron ingot, 1 Stick');
     expect(container.textContent).toContain('Easy');
     expect(container.textContent).toContain('Knife');
     expect(container.textContent).toContain('Water');
@@ -403,5 +417,200 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
     await update({ showonlycraftable: true });
     expect(titles()).toEqual(['Keys', '__proto__', 'constructor']);
     expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  test('ingredient search uses name OR visible ingredients with mixed case, array categories, no results, and clear', async () => {
+    // ui_static_data supplies a category map of recipe arrays. Ingredient text
+    // mirrors build_display_cache rather than embedding hidden recipe paths.
+    await render({
+      crafting_recipes: {
+        Zeta: [recipe('Brace', '/recipe/brace', ' 2 Iron ingot, 1 Stick')],
+        Alpha: [
+          recipe('Unrelated', '/recipe/unrelated', ' 1 Cloth'),
+          recipe('Iron ring', '/recipe/ring', ' 1 Gold ingot'),
+          recipe('Iron nail', '/recipe/nail', ' 1 Iron ingot'),
+        ],
+      },
+    });
+    const input = await search('IrOn');
+    expect(input.placeholder).toBe('Name or ingredients...');
+    expect(titles()).toEqual(['Alpha', 'Zeta']);
+    await expandCategories();
+    expect(titles()).toEqual([
+      'Alpha',
+      'Iron nail', // Matches both fields, but appears only once.
+      'Iron ring', // Name-only match.
+      'Zeta',
+      'Brace', // Ingredient-only match.
+    ]);
+    await search('ON inG');
+    expect(titles()).toEqual(['Alpha', 'Iron nail', 'Zeta', 'Brace']);
+    await click('Brace');
+    expect(container.textContent).toContain('2 Iron ingot, 1 Stick');
+    await search('NO SUCH MATERIAL');
+    expect(titles()).toEqual([]);
+    await search('');
+    expect(titles()).toEqual(['Alpha', 'Zeta']);
+    await expandCategories();
+    expect(titles()).toEqual([
+      'Alpha',
+      'Iron nail',
+      'Iron ring',
+      'Unrelated',
+      'Zeta',
+      'Brace',
+    ]);
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  test('missing, null, and empty ingredient text retain name search without inventing ingredients', async () => {
+    const missing = recipe('Missing ingredients', '/recipe/missing');
+    delete missing.req_text;
+    await render({
+      crafting_recipes: {
+        Sewing: [
+          missing,
+          recipe('Null ingredients', '/recipe/null', null),
+          recipe('Empty ingredients', '/recipe/empty', ''),
+          recipe('Bandage', '/recipe/bandage', ' 1 Cloth'),
+        ],
+      },
+    });
+    await search('ingredients');
+    await expandCategories();
+    expect(titles()).toEqual([
+      'Sewing',
+      'Empty ingredients',
+      'Missing ingredients',
+      'Null ingredients',
+    ]);
+    await search('cLoTh');
+    expect(titles()).toEqual(['Sewing', 'Bandage']);
+    await search('undefined');
+    expect(titles()).toEqual([]);
+    await search('');
+    await expandCategories();
+    expect(titles()).toEqual([
+      'Sewing',
+      'Bandage',
+      'Empty ingredients',
+      'Missing ingredients',
+      'Null ingredients',
+    ]);
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  test('search ignores categories, tools, catalysts, hidden metadata, and recipes outside the received catalog', async () => {
+    await render({
+      craftability: { Belt: 1, 'Forbidden relic': 1 },
+      crafting_recipes: {
+        Tailoring: [
+          {
+            ...recipe('Belt', '/datum/crafting_recipe/secret_path', ' 2 Cloth'),
+            ref: 'hidden-reference-marker',
+          },
+        ],
+      },
+    });
+    for (const query of [
+      'tailoring',
+      'knife',
+      'water',
+      'easy',
+      '4',
+      'secret_path',
+      'hidden-reference-marker',
+      'forbidden relic',
+      'belt cloth',
+      'cloths',
+      ' cloth ',
+    ]) {
+      await search(query);
+      expect(titles()).toEqual([]);
+    }
+    await search('cloth');
+    expect(titles()).toEqual(['Tailoring']);
+    await expandCategories();
+    expect(titles()).toEqual(['Tailoring', 'Belt']);
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  test('ingredient-filtered duplicate variants retain stable order and exact craft paths', async () => {
+    await render({
+      craftability: { Ribbon: 1 },
+      crafting_recipes: {
+        Sewing: [
+          recipe('Ribbon', '/recipe/ribbon-second', ' 2 Hemp fibre'),
+          recipe('Awl', '/recipe/awl', ' 1 Iron ingot'),
+          recipe('Ribbon', '/recipe/ribbon-first', ' 2 Silk fibre'),
+        ],
+      },
+    });
+    await search('fIbRe');
+    await expandCategories();
+    expect(titles()).toEqual(['Sewing', 'Ribbon', 'Ribbon']);
+    expect(sendMessage).not.toHaveBeenCalled();
+    await click('🛠', 0);
+    await click('🛠', 1);
+    await search('silk');
+    expect(titles()).toEqual(['Sewing', 'Ribbon']);
+    await click('Ribbon');
+    expect(container.textContent).toContain('2 Silk fibre');
+    await click('2x');
+    await click('∞');
+    await search('');
+    expect(titles()).toEqual(['Sewing', 'Awl', 'Ribbon', 'Ribbon']);
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/craft', { item: '/recipe/ribbon-second' }],
+      ['act/craft', { item: '/recipe/ribbon-first' }],
+      ['act/craft', { item: '/recipe/ribbon-first', amount: 2 }],
+      ['act/craft', { item: '/recipe/ribbon-first', auto: true }],
+    ]);
+  });
+
+  test('ingredient search composes with confirmed checkbox state and fresh strict craftability', async () => {
+    await render({
+      craftability: { Hammer: 1, Brace: true, Awl: 1, Sword: 0 },
+      crafting_recipes: {
+        Zeta: [recipe('Sword', '/recipe/sword', ' 2 Iron ingot')],
+        Alpha: [
+          recipe('Hammer', '/recipe/hammer', ' 1 Iron ingot'),
+          recipe('Brace', '/recipe/brace', ' 1 Iron ingot'),
+          recipe('Awl', '/recipe/awl', ' 1 Cloth'),
+        ],
+      },
+    });
+    await search('iron');
+    await expandCategories();
+    expect(titles()).toEqual(['Alpha', 'Brace', 'Hammer', 'Zeta', 'Sword']);
+    expect(button('Hammer').style.backgroundColor).toBe('');
+    expect(button('Brace').style.backgroundColor).toBe('grey');
+    expect(button('Sword').style.backgroundColor).toBe('grey');
+    expect(sendMessage).not.toHaveBeenCalled();
+    await act(async () => checkbox().click());
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/checkboxonlycraftable', { state: true }],
+    ]);
+    expect(titles()).toEqual(['Alpha', 'Brace', 'Hammer', 'Zeta', 'Sword']);
+    await update({ showonlycraftable: true });
+    expect(titles()).toEqual(['Alpha', 'Hammer']);
+    const replacement = { Hammer: 0, Brace: 1, Sword: 0 };
+    await update({ craftability: replacement });
+    expect(titles()).toEqual(['Alpha', 'Brace']);
+    expect(button('Brace').style.backgroundColor).toBe('');
+    replacement.Brace = 0;
+    replacement.Sword = 1;
+    await update({ craftability: replacement });
+    expect(titles()).toEqual(['Zeta']);
+    await expandCategories();
+    expect(titles()).toEqual(['Zeta', 'Sword']);
+    expect(button('Sword').style.backgroundColor).toBe('');
+    await search('cloth');
+    expect(titles()).toEqual([]);
+    await search('');
+    expect(titles()).toEqual(['Zeta']);
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/checkboxonlycraftable', { state: true }],
+    ]);
   });
 }

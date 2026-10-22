@@ -10,6 +10,7 @@ import {
 import { useBackend } from '../backend';
 import { Window } from '../layouts';
 import { isRecipeCraftable } from './MiaCraft/craftability';
+import { matchesRecipeSearch } from './MiaCraft/search';
 
 // Keep these function outside to prevent re-render
 const CraftingCategory = ({ crafties, key3, onlyCraftable, craftability, key, actfunc, searchText }) => {
@@ -18,7 +19,7 @@ const CraftingCategory = ({ crafties, key3, onlyCraftable, craftability, key, ac
       craftability(item2.name))
       .sort(([, aVal], [, bVal]) => String(aVal.name).localeCompare(String(bVal.name)))
       .filter(([id, item]) => 
-      { return item.name.toLowerCase().includes(searchText); });
+      { return matchesRecipeSearch(item, searchText); });
     }, [crafties, onlyCraftable, craftability, searchText]);
     return (visibleElements.length > 0 ? 
         <Collapsible title={key3}>
@@ -130,7 +131,7 @@ export const MiaCraft = (props, context) => {
           <Stack.Item style={{ 'position': 'sticky' }}>
               <Stack>
                 <Stack.Item>
-                  <Input placeholder="Search..." autoFocus value={searchText} onInput={(e) => SearchTextModify(e.target.value.toLowerCase())} />
+                  <Input placeholder="Name or ingredients..." aria-label="Search recipes by name or ingredients" autoFocus value={searchText} onInput={(e) => SearchTextModify(e.target.value.toLowerCase())} />
                 </Stack.Item>
                 <Stack.Item>
                   <label>Show only craftables</label>
