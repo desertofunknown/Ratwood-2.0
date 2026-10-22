@@ -596,11 +596,12 @@
 /proc/avoid_assoc_duplicate_keys(input_key, list/used_key_list)
 	if(!input_key || !istype(used_key_list))
 		return
-	if(used_key_list[input_key])
-		used_key_list[input_key]++
-		input_key = "[input_key] ([used_key_list[input_key]])"
-	else
-		used_key_list[input_key] = 1
+	var/base_key = input_key
+	while(used_key_list[input_key])
+		used_key_list[base_key]++
+		input_key = "[base_key] ([used_key_list[base_key]])"
+	// Reserve generated labels too, since an original name may already contain a suffix.
+	used_key_list[input_key] = 1
 	return input_key
 
 //Flattens a keyed list into a list of it's contents
