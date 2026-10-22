@@ -1846,7 +1846,14 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 				for(var/color_name in GLOB.colorlist)
 					color_choices += color_name
 				
-				var/new_color = tgui_input_list(usr, "Choose a color for this item:", "Item Color", color_choices, vars["loadout_[slot]_hex"])
+				// The picker takes a palette name, while loadout colors are stored as hex.
+				var/default_color = vars["loadout_[slot]_hex"]
+				for(var/color_name in GLOB.colorlist)
+					if(GLOB.colorlist[color_name] == default_color)
+						default_color = color_name
+						break
+
+				var/new_color = tgui_input_list(usr, "Choose a color for this item:", "Item Color", color_choices, default_color)
 				
 				if(new_color)
 					if(new_color == "None")
