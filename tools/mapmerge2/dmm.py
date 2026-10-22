@@ -4,6 +4,7 @@ import io
 import bidict
 import random
 from collections import namedtuple
+from functools import lru_cache
 
 TGM_HEADER = "//MAP CONVERTED BY dmm2tgm.py THIS HEADER COMMENT PREVENTS RECONVERSION, DO NOT REMOVE"
 ENCODING = 'utf-8'
@@ -270,13 +271,15 @@ def fix_atom_ordering(atoms):
 # TGM writer
 
 def save_tgm(dmm, output):
+    # Reuse encoded integer keys only within this save; types must stay distinct.
+    encode_key = lru_cache(maxsize=None, typed=True)(num_to_key)
     output.write(f"{TGM_HEADER}\n")
     if dmm.header:
         output.write(f"{dmm.header}\n")
 
     # write dictionary in tgm format
     for key, value in sorted(dmm.dictionary.items()):
-        output.write(f'"{num_to_key(key, dmm.key_length)}" = (\n')
+        output.write(f'"{encode_key(key, dmm.key_length)}" = (\n')
         for idx, thing in enumerate(value):
             in_quote_block = False
             in_varedit_block = False
@@ -312,19 +315,21 @@ def save_tgm(dmm, output):
         for x in range(1, max_x + 1):
             output.write(f"({x},{1},{z}) = {{\"\n")
             for y in range(max_y, 0, -1):
-                output.write(f"{num_to_key(dmm.grid[x, y, z], dmm.key_length)}\n")
+                output.write(f"{encode_key(dmm.grid[x, y, z], dmm.key_length)}\n")
             output.write("\"}\n")
 
 # ----------
 # DMM writer
 
 def save_dmm(dmm, output):
+    # Reuse encoded integer keys only within this save; types must stay distinct.
+    encode_key = lru_cache(maxsize=None, typed=True)(num_to_key)
     if dmm.header:
         output.write(f"{dmm.header}\n")
 
     # writes a tile dictionary the same way Dreammaker does
     for key, value in sorted(dmm.dictionary.items()):
-        output.write(f'"{num_to_key(key, dmm.key_length)}" = ({",".join(value)})\n')
+        output.write(f'"{encode_key(key, dmm.key_length)}" = ({",".join(value)})\n')
 
     output.write("\n")
 
@@ -336,7 +341,7 @@ def save_dmm(dmm, output):
         for y in range(max_y, 0, -1):
             for x in range(1, max_x + 1):
                 try:
-                    output.write(num_to_key(dmm.grid[x, y, z], dmm.key_length))
+                    output.write(encode_key(dmm.grid[x, y, z], dmm.key_length))
                 except KeyError:
                     print(f"Key error: ({x}, {y}, {z})")
             output.write("\n")

@@ -1,0 +1,402 @@
+{
+  "recorded_at_utc": "2026-10-22T16:56:40.203426+00:00",
+  "comparison": "Frozen verbatim baseline writers vs actual imported production writers",
+  "baseline_commit": "a529d4ddd18b3b0387829dcace31fad2887603c5",
+  "baseline_source_sha256": "ea4e8665ab6e7e1ff0ec45df5bfb9ef97dd36877e70466cbc7e63d63a45d455e",
+  "baseline_function_sha256": {
+    "save_tgm": "1672cb89675a7abd44fad36a32457515fe766fc60b407aa941373cbfb0d544e8",
+    "save_dmm": "419cb370fce66d8d14c36881d38ec65770441f9daaeeae04422be1fad8011ed2",
+    "num_to_key": "4be46bebd5f57c96f27826a2d9d8923530f500fe854c7f2e34138780e3de0045",
+    "max_key_for": "4f720c82fda0187c6dc68cdbaee66cbc8512075026f42529d0cef8ed0929519e"
+  },
+  "production_writer_sha256": {
+    "tgm": "b2af2c94b4c6baaf8b51e91ba31a29acee9d3146da43625720b15f12312432a3",
+    "dmm": "f394ceb7027f02f32bf89687ce8712c809b483745e527c49487406eb9283c40d"
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "implementation": "CPython",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "bidict": "0.22.0"
+  },
+  "inputs_sha256": {
+    "_maps/map_files/roguetest/roguetest.dmm": "507053d78157fd597fc5a6d353ca19d2ca74fa070848fbcde505bec92b9c5212",
+    "_maps/map_files/rogueworld/rogueworld.dmm": "179cf19ea8ca79120134106d0a1f13cffe3b5175a70578ffd535841113f7e7a3",
+    "_maps/map_files/deserttown/deserttown.dmm": "eebde27aeffcaffe6b6376fdc862e6f303b4e5de429d04de6f7265f3e482860b"
+  },
+  "timing_scope": "Save helper to StringIO only; includes cache construction; excludes parsing, presave checks, getvalue, equality checks, hashing and filesystem I/O. Alternating A/B order, one warmup each, GC disabled only within timed calls.",
+  "memory_scope": "Separate tracemalloc runs from an existing parsed map to StringIO; includes cache and output allocations, excludes parsing and later getvalue/equality allocations from the recorded peak. Not RSS or whole-map/game memory.",
+  "structural_scope": "Separate untimed instrumentation observes the cache factory and last write. Timed and memory calls use unpatched production helpers.",
+  "results": [
+    {
+      "map": "_maps/map_files/roguetest/roguetest.dmm",
+      "input_bytes": 61037,
+      "cells": 5000,
+      "dictionary_keys": 248,
+      "size": [
+        50,
+        50,
+        2
+      ],
+      "key_length": 2,
+      "serializers": [
+        {
+          "format": "tgm",
+          "output_utf8_bytes": 61037,
+          "output_sha256": "507053d78157fd597fc5a6d353ca19d2ca74fa070848fbcde505bec92b9c5212",
+          "exact_output_equal_for_every_call": true,
+          "repeats_per_helper": 5,
+          "baseline": {
+            "samples_ms": [
+              5.004819,
+              4.803907,
+              5.583701,
+              4.55406,
+              4.574541
+            ],
+            "median_ms": 4.803907,
+            "min_ms": 4.55406,
+            "max_ms": 5.583701,
+            "incremental_peak_bytes_including_output": 87041,
+            "retained_bytes_with_output": 86779,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "current_production": {
+            "samples_ms": [
+              3.864341,
+              3.052778,
+              3.404529,
+              3.576428,
+              3.130226
+            ],
+            "median_ms": 3.404529,
+            "min_ms": 3.052778,
+            "max_ms": 3.864341,
+            "incremental_peak_bytes_including_output": 125961,
+            "retained_bytes_with_output": 105179,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "median_saved_ms": 1.3993779999999996,
+          "median_time_reduction_percent": 29.12999772893188,
+          "cache_structure": {
+            "baseline_encoder_calls_from_existing_call_sites": 5248,
+            "production_cache_hits_observed": 5000,
+            "production_encoder_calls_and_entries_observed": 248,
+            "distinct_integer_keys": 248,
+            "cached_text_characters": 496,
+            "key_argument_types": [
+              "int",
+              "int"
+            ],
+            "typed": true,
+            "maxsize": null,
+            "cache_released_after_save": true,
+            "scope": "One cache entry per distinct (key, key_length, argument types); text character count excludes Python object and hash-table overhead."
+          }
+        },
+        {
+          "format": "dmm",
+          "output_utf8_bytes": 52513,
+          "output_sha256": "bdd28fd364c2355eba73a9b6ba60aa255259952c9045052eb57fa7629037b60b",
+          "exact_output_equal_for_every_call": true,
+          "repeats_per_helper": 5,
+          "baseline": {
+            "samples_ms": [
+              2.606486,
+              2.530602,
+              3.225088,
+              2.480346,
+              2.383631
+            ],
+            "median_ms": 2.530602,
+            "min_ms": 2.383631,
+            "max_ms": 3.225088,
+            "incremental_peak_bytes_including_output": 69491,
+            "retained_bytes_with_output": 67044,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "current_production": {
+            "samples_ms": [
+              1.283183,
+              1.172686,
+              1.168651,
+              1.043943,
+              1.066146
+            ],
+            "median_ms": 1.168651,
+            "min_ms": 1.043943,
+            "max_ms": 1.283183,
+            "incremental_peak_bytes_including_output": 108296,
+            "retained_bytes_with_output": 85444,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "median_saved_ms": 1.361951,
+          "median_time_reduction_percent": 53.819249332767455,
+          "cache_structure": {
+            "baseline_encoder_calls_from_existing_call_sites": 5248,
+            "production_cache_hits_observed": 5000,
+            "production_encoder_calls_and_entries_observed": 248,
+            "distinct_integer_keys": 248,
+            "cached_text_characters": 496,
+            "key_argument_types": [
+              "int",
+              "int"
+            ],
+            "typed": true,
+            "maxsize": null,
+            "cache_released_after_save": true,
+            "scope": "One cache entry per distinct (key, key_length, argument types); text character count excludes Python object and hash-table overhead."
+          }
+        }
+      ],
+      "parsed_map_unchanged": true
+    },
+    {
+      "map": "_maps/map_files/rogueworld/rogueworld.dmm",
+      "input_bytes": 1008357,
+      "cells": 325125,
+      "dictionary_keys": 115,
+      "size": [
+        255,
+        255,
+        5
+      ],
+      "key_length": 2,
+      "serializers": [
+        {
+          "format": "tgm",
+          "output_utf8_bytes": 1008357,
+          "output_sha256": "179cf19ea8ca79120134106d0a1f13cffe3b5175a70578ffd535841113f7e7a3",
+          "exact_output_equal_for_every_call": true,
+          "repeats_per_helper": 5,
+          "baseline": {
+            "samples_ms": [
+              172.826259,
+              164.052692,
+              175.197611,
+              167.751625,
+              165.951652
+            ],
+            "median_ms": 167.751625,
+            "min_ms": 164.052692,
+            "max_ms": 175.197611,
+            "incremental_peak_bytes_including_output": 1074440,
+            "retained_bytes_with_output": 1074176,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "current_production": {
+            "samples_ms": [
+              75.288236,
+              75.995049,
+              79.81242,
+              77.160596,
+              77.211433
+            ],
+            "median_ms": 77.160596,
+            "min_ms": 75.288236,
+            "max_ms": 79.81242,
+            "incremental_peak_bytes_including_output": 1093449,
+            "retained_bytes_with_output": 1083000,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "median_saved_ms": 90.59102899999999,
+          "median_time_reduction_percent": 54.003070909149166,
+          "cache_structure": {
+            "baseline_encoder_calls_from_existing_call_sites": 325240,
+            "production_cache_hits_observed": 325125,
+            "production_encoder_calls_and_entries_observed": 115,
+            "distinct_integer_keys": 115,
+            "cached_text_characters": 230,
+            "key_argument_types": [
+              "int",
+              "int"
+            ],
+            "typed": true,
+            "maxsize": null,
+            "cache_released_after_save": true,
+            "scope": "One cache entry per distinct (key, key_length, argument types); text character count excludes Python object and hash-table overhead."
+          }
+        },
+        {
+          "format": "dmm",
+          "output_utf8_bytes": 661747,
+          "output_sha256": "59e81978e20833c1e7223d8bc59e8af170cf8535fec911d02b348459ef269256",
+          "exact_output_equal_for_every_call": true,
+          "repeats_per_helper": 5,
+          "baseline": {
+            "samples_ms": [
+              201.302269,
+              175.624763,
+              181.353253,
+              173.686402,
+              163.683153
+            ],
+            "median_ms": 175.624763,
+            "min_ms": 163.683153,
+            "max_ms": 201.302269,
+            "incremental_peak_bytes_including_output": 761859,
+            "retained_bytes_with_output": 761659,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "current_production": {
+            "samples_ms": [
+              76.56983,
+              77.289534,
+              84.904165,
+              81.788271,
+              94.179543
+            ],
+            "median_ms": 81.788271,
+            "min_ms": 76.56983,
+            "max_ms": 94.179543,
+            "incremental_peak_bytes_including_output": 780836,
+            "retained_bytes_with_output": 770483,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "median_saved_ms": 93.836492,
+          "median_time_reduction_percent": 53.43010313414629,
+          "cache_structure": {
+            "baseline_encoder_calls_from_existing_call_sites": 325240,
+            "production_cache_hits_observed": 325125,
+            "production_encoder_calls_and_entries_observed": 115,
+            "distinct_integer_keys": 115,
+            "cached_text_characters": 230,
+            "key_argument_types": [
+              "int",
+              "int"
+            ],
+            "typed": true,
+            "maxsize": null,
+            "cache_released_after_save": true,
+            "scope": "One cache entry per distinct (key, key_length, argument types); text character count excludes Python object and hash-table overhead."
+          }
+        }
+      ],
+      "parsed_map_unchanged": true
+    },
+    {
+      "map": "_maps/map_files/deserttown/deserttown.dmm",
+      "input_bytes": 4638576,
+      "cells": 589000,
+      "dictionary_keys": 13229,
+      "size": [
+        380,
+        310,
+        5
+      ],
+      "key_length": 3,
+      "serializers": [
+        {
+          "format": "tgm",
+          "output_utf8_bytes": 4638576,
+          "output_sha256": "eebde27aeffcaffe6b6376fdc862e6f303b4e5de429d04de6f7265f3e482860b",
+          "exact_output_equal_for_every_call": true,
+          "repeats_per_helper": 5,
+          "baseline": {
+            "samples_ms": [
+              569.13259,
+              582.118558,
+              590.959161,
+              523.926308,
+              529.457986
+            ],
+            "median_ms": 569.13259,
+            "min_ms": 523.926308,
+            "max_ms": 590.959161,
+            "incremental_peak_bytes_including_output": 10300048,
+            "retained_bytes_with_output": 10299752,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "current_production": {
+            "samples_ms": [
+              341.387555,
+              372.49513,
+              305.166913,
+              287.104253,
+              299.928513
+            ],
+            "median_ms": 305.166913,
+            "min_ms": 287.104253,
+            "max_ms": 372.49513,
+            "incremental_peak_bytes_including_output": 12425564,
+            "retained_bytes_with_output": 10444112,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "median_saved_ms": 263.965677,
+          "median_time_reduction_percent": 46.38034820673334,
+          "cache_structure": {
+            "baseline_encoder_calls_from_existing_call_sites": 602229,
+            "production_cache_hits_observed": 589000,
+            "production_encoder_calls_and_entries_observed": 13229,
+            "distinct_integer_keys": 13229,
+            "cached_text_characters": 39687,
+            "key_argument_types": [
+              "int",
+              "int"
+            ],
+            "typed": true,
+            "maxsize": null,
+            "cache_released_after_save": true,
+            "scope": "One cache entry per distinct (key, key_length, argument types); text character count excludes Python object and hash-table overhead."
+          }
+        },
+        {
+          "format": "dmm",
+          "output_utf8_bytes": 3918857,
+          "output_sha256": "a3da419b760bd1237af46b141852cdaa03a43a120303aeb105dec681067167d4",
+          "exact_output_equal_for_every_call": true,
+          "repeats_per_helper": 5,
+          "baseline": {
+            "samples_ms": [
+              537.580795,
+              547.309913,
+              531.183178,
+              626.298928,
+              584.257496
+            ],
+            "median_ms": 547.309913,
+            "min_ms": 531.183178,
+            "max_ms": 626.298928,
+            "incremental_peak_bytes_including_output": 8003680,
+            "retained_bytes_with_output": 8003384,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "current_production": {
+            "samples_ms": [
+              297.753707,
+              292.382117,
+              278.239545,
+              288.202857,
+              286.284007
+            ],
+            "median_ms": 288.202857,
+            "min_ms": 278.239545,
+            "max_ms": 297.753707,
+            "incremental_peak_bytes_including_output": 10129196,
+            "retained_bytes_with_output": 8147744,
+            "retained_bytes_after_output_release_and_gc": 64
+          },
+          "median_saved_ms": 259.10705600000006,
+          "median_time_reduction_percent": 47.34192636485282,
+          "cache_structure": {
+            "baseline_encoder_calls_from_existing_call_sites": 602229,
+            "production_cache_hits_observed": 589000,
+            "production_encoder_calls_and_entries_observed": 13229,
+            "distinct_integer_keys": 13229,
+            "cached_text_characters": 39687,
+            "key_argument_types": [
+              "int",
+              "int"
+            ],
+            "typed": true,
+            "maxsize": null,
+            "cache_released_after_save": true,
+            "scope": "One cache entry per distinct (key, key_length, argument types); text character count excludes Python object and hash-table overhead."
+          }
+        }
+      ],
+      "parsed_map_unchanged": true
+    }
+  ],
+  "inputs_unchanged": true
+}
