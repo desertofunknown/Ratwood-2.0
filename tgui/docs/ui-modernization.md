@@ -1,0 +1,142 @@
+# Tithewood UI modernization: staged decision
+
+## Decision status: compare before choosing
+
+Preserve the existing BYOND protocol while comparing React and Svelte with the
+same [standalone crafting workbench](../prototypes/crafting-workbench/README.md),
+data, CSS and actions. React is the baseline, not the predetermined winner.
+Neither prototype activates a production interface. A new framework must earn
+its migration cost through relevant measurements and native-client acceptance.
+
+The current stack is tgui 6, React 19, Rspack and Bun 1.2.16; its
+[build target](../rspack.config.ts) is Edge 123 or later. Being modern does not
+establish that it is the fastest option. Conversely, generic benchmark rankings
+do not establish crafting performance. Compare production client builds, cold
+startup, repeated updates, memory and teardown on the same supported client.
+Bundle size and pure-data timings are separate evidence, not substitutes for
+browser measurements. SvelteKit and a new application server are unnecessary.
+
+## Four surfaces, not one web application
+
+| Surface            | Existing owner                                     | Safe modernization boundary                                                                                                                       |
+| ------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Popup interfaces   | `packages/tgui`, DM tgui data/actions              | Scoped visual primitives and workflow layouts; preserve interface names, window lifecycle and action payloads.                                    |
+| Chat panel         | `packages/tgui-panel` and its custom chat renderer | First improve chrome and readability; separately validate ordering, sanitization, scrolling, history and root disposal before changing rendering. |
+| Native window skin | [`interface/skin.dmf`](../../interface/skin.dmf)   | Preserve map, splitters, command input and legacy output; validate changes in the supported native client.                                        |
+| Sprite HUD         | [`code/_onclick/hud`](../../code/_onclick/hud)     | Preserve hit targets, screen locations, inventory/combat actions and colorblind variants; treat artwork/scaling as a separate phase.              |
+
+The existing browser bridge handles asset delivery, ready queues, refresh,
+suspension, visibility and chunked messages. DM remains authoritative. A React
+screen can use the normal `Window`, `useBackend` and `act` adapter; a Svelte
+screen needs an equivalent lifecycle/state/action adapter without replacing the
+transport. A React-hosted Svelte island retains both runtimes, so its incremental
+cost must be reported separately from standalone bundle size. In either case, the standalone demo deliberately has no such connection.
+
+## Compatibility gate
+
+`dependencies.sh` pins BYOND 516.1673 and the frontend assumes modern Chromium,
+but [`config/config.txt`](../../config/config.txt) still declares client minimum
+511/build 1421. That is a checked-in support-policy mismatch, not proof of the
+configuration used by a deployed server. Establish the supported DreamSeeker /
+WebView2 matrix before rollout. Do not silently raise the minimum or promise
+older-client compatibility based on frontend tests.
+
+## First workflow: workshop ledger
+
+Use the existing bone/burgundy family, restrained binding rules, clear text
+labels and bundled Lora/Pterra fonts. Body text must remain readable; decorative
+type belongs in short headings rather than ingredients or controls. Selection,
+material hints and focus must not rely on color alone.
+
+The existing crafting window requests 340×600 despite a larger DM declaration.
+Design compact-first, with a recipe index and working folio that can sit beside
+each other when space permits. Search, filter, back navigation and craft actions
+must remain usable at small sizes and enlarged text. Avoid ornamental cards,
+blur, remote assets, idle animations or a second hidden copy of the interface.
+
+The prototype preserves these contracts:
+
+- Search recipe name OR displayed ingredients using the existing literal,
+  case-insensitive matcher, including its whitespace behavior.
+- Preserve category/recipe ordering and distinct same-name variants.
+- Treat the strict numeric-1, name-keyed material record as advisory. The backend
+  combines same-name variants; it is not full per-path readiness or permission.
+- Send exactly `craft` with `item`, optional `amount` 2/3/5, or `auto: true`.
+  A single craft omits `amount`. The filter action remains
+  `checkboxonlycraftable` with `state`, following backend acknowledgement.
+- Do not infer progress, a queue, cancellation, exact missing quantities or
+  guaranteed success from the current schema. The transmitted `busy` field does
+  not currently supply a dependable crafting lifecycle.
+
+## Performance and accessibility gates
+
+Keep optimization work independently reviewable from visual changes. Preserve
+same-reference backend updates; memoizing only by object identity can hide
+changes already covered by the crafting tests. Do not add lazy chunks without
+validating the game's asset registration and recovery path.
+
+Initial prototype budgets are targets, not measured claims:
+
+- No production bundle changes, runtime dependencies, polling or remote assets.
+- One mounted folio; a bounded initial recipe list with all remaining entries
+  reachable through labelled pagination, not silently omitted.
+- Measure source-derived large catalogs as well as the small illustrative demo.
+  Record derivation, DOM work and browser interaction separately.
+- Aim for ordinary rendering work within a 16 ms frame and search response below
+  100 ms on a specified test machine. Investigate attributable tasks over 50 ms.
+  Native client results, not a synthetic DOM or Bun benchmark, govern rollout.
+- Body/control text contrast at least 4.5:1, essential non-text/focus indicators
+  at least 3:1, controls at least 24 CSS pixels, visible labels and focus.
+- Exercise Tab/Enter/Space, repeated actions, clear/no-results, filter changes,
+  removed selections, back/close/reopen and same-reference data updates.
+
+## Rollout sequence
+
+1. Review the standalone crafting design and interaction evidence. Keep existing
+   production behavior unchanged during this stage.
+2. Resolve client support and validate a reversible opt-in integration using the
+   existing bridge, preferences, themes and `Window` shell.
+3. Test native scaling, small windows, fancy/native chrome, resize cancellation,
+   keyboard-to-map focus, refresh/reconnect and disabled interaction states.
+4. Extract only proven reusable tokens and primitives. Expand by workflow family
+   to ledgers/trade, modals and preferences rather than replacing every screen.
+5. Modernize chat chrome separately from its message renderer, then native
+   skin/HUD with dedicated client acceptance.
+
+Production activation is a separate reviewed change. Existing backend gameplay,
+licensing, attribution and compatibility identifiers remain intact. Source,
+static browser rendering and synthetic tests do not establish native gameplay
+or a universal performance improvement.
+
+## Language/framework alternatives
+
+[Svelte's compiler](https://svelte.dev/docs/svelte/svelte-compiler) produces client
+JavaScript; external CSS keeps the stylesheet boundary equivalent to React.
+Use its [documented browser support](https://svelte.dev/docs/svelte/browser-support)
+as another client-matrix input, not evidence that an untested DreamSeeker works.
+The isolated candidate pins Svelte 5.57.2. Preserve the explicit delivered-update
+contract even when a backend mutates nested records in place. A production
+adapter still needs ready/suspend/resume, chunked actions, focus and game-key
+passthrough, not merely a call to `Byond.sendMessage`.
+
+Lua is a separate, plausible scripting choice, not an automatic renderer:
+
+- [Fengari](https://github.com/fengari-lua/fengari) runs Lua in JavaScript;
+  [its browser integration](https://github.com/fengari-lua/fengari-web) and
+  [interop](https://github.com/fengari-lua/fengari-interop) can expose DOM/CSS and
+  the existing JS bridge. This is browser Lua, not native LuaJIT.
+- [Wasmoon](https://github.com/ceifa/wasmoon) provides a WebAssembly Lua runtime
+  and JS bindings. It likewise needs rendering and bridge glue; frequent
+  cross-language calls, initialization and memory must be measured.
+- [Native LuaJIT](https://luajit.org/install.html) builds a native executable or
+  library. This repository's browser asset path does not host it. A native
+  renderer/companion would add distribution and integration work outside this
+  prototype, not become a drop-in replacement for tgui.
+
+The current asset loader recognizes JS/CSS, not automatic Lua/WASM execution.
+Any browser-Lua trial needs explicit asset mapping, schema conversion (including
+Lua's truthy zero versus DM's 0/1 flags), action chunking and deterministic
+cleanup across pooled-window suspension/reuse. Keep the current transport shell
+and test one equivalent UI body before considering migration. No Lua runtime has
+been installed or benchmarked here. Language choice alone establishes neither
+visual quality nor a speedup; native LuaJIT rankings do not measure browser Lua.

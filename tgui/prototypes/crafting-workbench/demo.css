@@ -1,0 +1,57 @@
+@font-face {
+	font-family: Lora;
+	src: url('./lora-regular.ttf');
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+}
+@font-face {
+	font-family: Lora;
+	src: url('./lora-bold.ttf');
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+}
+@font-face {
+	font-family: Pterra;
+	src: url('./pterra.ttf');
+	font-display: swap;
+}
+* {
+	box-sizing: border-box;
+}
+html,
+body,
+#root {
+	margin: 0;
+	width: 100%;
+	min-height: 100%;
+}
+body {
+	background: #100d0e;
+	color: #ded1c2;
+	font-family: Lora, Georgia, serif;
+}
+.demo-shell {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	height: 100dvh;
+	min-height: 0;
+}
+.demo-notice,
+.demo-event {
+	flex-shrink: 0;
+	padding: 6px 12px;
+	font:
+		11px/1.4 system-ui,
+		sans-serif;
+	color: #b9a6a0;
+	background: #191416;
+	border-bottom: 1px solid #594046;
+	overflow-wrap: anywhere;
+}
+.demo-event {
+	border-top: 1px solid #594046;
+	border-bottom: 0;
+}
