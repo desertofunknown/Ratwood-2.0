@@ -1,6 +1,6 @@
 # Tithewood UI modernization: staged decision
 
-## Decision status: compare before choosing
+## Decision status: provisional Svelte integration candidate
 
 Preserve the existing BYOND protocol while comparing React, Svelte and browser Lua with the
 same [standalone crafting workbench](../prototypes/crafting-workbench/README.md),
@@ -15,6 +15,34 @@ do not establish crafting performance. Compare production client builds, cold
 startup, repeated updates, memory and teardown on the same supported client.
 Bundle size and pure-data timings are separate evidence, not substitutes for
 browser measurements. SvelteKit and a new application server are unnecessary.
+
+### Measured checkpoint, not production approval
+
+The [fresh hosted comparison](../prototypes/crafting-workbench/lua/browser-row-value.md)
+is pinned to source `f796d58e5126b6e88d3fa61e3a91f952dba26731` and exact artifact
+hashes. In the same visible Chromium at 1180×757, three rotated rounds per cell
+retained 90 samples for each of three scenarios and four arms. Lua row-value
+tracking lowered pooled delivery-to-DOM-commit medians from 8.20 to 4.85 ms
+(catalog), 6.80 to 3.85 ms (selected first), and 14.95 to 13.20 ms (selected
+off-page). Off-page P90/maximum worsened, so the gain is not universal.
+Fresh React medians were 1.45/1.40/1.60 ms and Svelte 1.30/1.10/1.30 ms in the
+same scenario order. These are warmed wall-clock observations, not CPU time.
+
+Svelte is the **provisional browser-integration candidate**, combining favorable
+tested results with smaller standalone JavaScript: 77,053 raw/28,621 gzip bytes
+versus React's 201,301/64,106 at those hashes. React's standalone total includes
+a runtime already loaded by production; this is not a Svelte island's marginal
+cost or a production saving. The small React/Svelte timing gaps, overlapping
+spreads, shared-cloud noise and only three rounds do not establish a definitive
+framework ranking. The experiment says nothing about startup, CPU, heap, exact
+paint, native BYOND, native LuaJIT or AAA game quality.
+
+Keep the Lua experiment and its measured gains without further tuning just to
+force a win. The next step is isolated, protocol-preserving Svelte adapter tests
+and native acceptance, with React retained as the production baseline. Existing
+production interfaces remain unchanged. This recommendation is neither automatic
+activation nor a framework-wide replacement; the compatibility and rollout gates
+below still apply. Later builds need their own measurements and acceptance.
 
 ## Four surfaces, not one web application
 

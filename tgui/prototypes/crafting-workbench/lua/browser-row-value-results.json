@@ -1,0 +1,2792 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-22",
+  "measurementWindowUtc": {
+    "date": "2026-10-22",
+    "startMinute": "08:59",
+    "endMinute": "09:01",
+    "precision": "Minute-level observation window, not per-run timestamps."
+  },
+  "scope": "Disconnected hosted Chromium, warmed synthetic updates. Wall-clock delivery-to-DOM-commit and update-through-two-animation-frame observations; not CPU, exact paint, input latency, startup, heap, native BYOND, native LuaJIT or game FPS.",
+  "provenance": {
+    "sourceCommit": "f796d58e5126b6e88d3fa61e3a91f952dba26731",
+    "baselineRendererCommit": "fe543e16f56032100b197f3d9452767a1db56e5b",
+    "hostingCommit": "fe7baee04c6dac51e5a5aa79fc224327d26572b0",
+    "deployment": "appgdep_6ad9d02bca148191bb41335464497296",
+    "version": 6,
+    "jsSha256": {
+      "lua-row-baseline": "5f24c3bb6357c91a86bb7c6dd02fab7abbb5fa9c022ac55d3e2aaf7c1cf0aa62",
+      "lua": "92c28a8f10338b017dcebf3431790bc6bd0fd355825548572c1e256a47db406a",
+      "react": "694f76abd53326f35caaa1bb8eb5ed97cb326f383b77a55a691590a5ff0a6211",
+      "svelte": "25a1f30ae1d7071640bf8c961b31f94ed2813d223ea6a37567c8f6d2ac0964f9"
+    },
+    "previewUrl": "https://ratwood-crafting-comparison-20261022.bloomy-pixie-6942.chatgpt.site",
+    "sourceUrl": "https://github.com/desertofunknown/Ratwood-2.0/commit/f796d58e5126b6e88d3fa61e3a91f952dba26731",
+    "baselineDefinition": "Hybrid: only workbench.lua comes from fe543e16f56032100b197f3d9452767a1db56e5b; shared harness, adapters, data model, CSS, build code and pinned dependencies come from f796d58e5126b6e88d3fa61e3a91f952dba26731. Not a whole fe543e build and not the historical lua-baseline route.",
+    "matchedLuaBuildInputs": {
+      "baselineRendererCommit": "fe543e16f56032100b197f3d9452767a1db56e5b",
+      "note": "Both arms use reviewed f796d58e shared harness, adapters, models and pinned dependencies. Baseline substitutes only exact fe543e Lua renderer.",
+      "changedSourceInputs": ["workbench.lua"],
+      "baselineSourceSha256": {
+        "workbench.lua": "b92bd42974211d91c4ee029e8b0e678634c4a36cd8991f3a1c101de5857a7446",
+        "adapter.ts": "ff8f0158634c4e4ef5b7fcc449a79d9f54e471a5601a0de5f5affd3999c2c909",
+        "demo.ts": "6934068bff7100cfdf52fe5f752e2b7370eeb4e5d8fa3dce3d021f6929937499",
+        "build.ts": "7649ea20ec430295ddd8f232b35981a63fad240efe654ecbd77136c7a3171630",
+        "package.json": "37b39e08a755a32084712fadc98f8e71909ee64f8dc364dc8c64b24985f2fb3a",
+        "bun.lock": "53ce8063c47933b3904e9ef0839670427998e250b2f652745cc2cfbff28b43cb",
+        "README.md": "6d43f41900b4c44c4815aefff0ff35fcb05514d50174d12ae7cb794b97242ba2",
+        "../model.ts": "c5fb4bd45be88ae389146370694027f116bb4f64a0ac8efb20d83f3b1cd64355",
+        "../fixtures.ts": "caffa42ff1dc3647d473d6aa61f75736e42769d665edb45cf38e6bc4e71f8be2",
+        "../browser-harness.ts": "6e530ce976f6b7d7dafe8d3912559ec6c1ce5633c64da79ee6625e198bda2ff2",
+        "../workbench.css": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2",
+        "../demo.css": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+      },
+      "candidateSourceSha256": {
+        "workbench.lua": "cbf2ddc2faf454d5c7808a22f1d8c21d8a297ecd1844a33067d1e5ac62716a1a",
+        "adapter.ts": "ff8f0158634c4e4ef5b7fcc449a79d9f54e471a5601a0de5f5affd3999c2c909",
+        "demo.ts": "6934068bff7100cfdf52fe5f752e2b7370eeb4e5d8fa3dce3d021f6929937499",
+        "build.ts": "7649ea20ec430295ddd8f232b35981a63fad240efe654ecbd77136c7a3171630",
+        "package.json": "37b39e08a755a32084712fadc98f8e71909ee64f8dc364dc8c64b24985f2fb3a",
+        "bun.lock": "53ce8063c47933b3904e9ef0839670427998e250b2f652745cc2cfbff28b43cb",
+        "README.md": "6d43f41900b4c44c4815aefff0ff35fcb05514d50174d12ae7cb794b97242ba2",
+        "../model.ts": "c5fb4bd45be88ae389146370694027f116bb4f64a0ac8efb20d83f3b1cd64355",
+        "../fixtures.ts": "caffa42ff1dc3647d473d6aa61f75736e42769d665edb45cf38e6bc4e71f8be2",
+        "../browser-harness.ts": "6e530ce976f6b7d7dafe8d3912559ec6c1ce5633c64da79ee6625e198bda2ff2",
+        "../workbench.css": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2",
+        "../demo.css": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+      },
+      "baselineJavaScriptSha256": "5f24c3bb6357c91a86bb7c6dd02fab7abbb5fa9c022ac55d3e2aaf7c1cf0aa62",
+      "candidateJavaScriptSha256": "92c28a8f10338b017dcebf3431790bc6bd0fd355825548572c1e256a47db406a",
+      "candidateAndSharedSourceCommit": "f796d58e5126b6e88d3fa61e3a91f952dba26731"
+    },
+    "sourceManifests": {
+      "lua-row-baseline": {
+        "pathBase": "tgui/prototypes/crafting-workbench/lua",
+        "sourceSha256": {
+          "workbench.lua": "b92bd42974211d91c4ee029e8b0e678634c4a36cd8991f3a1c101de5857a7446",
+          "adapter.ts": "ff8f0158634c4e4ef5b7fcc449a79d9f54e471a5601a0de5f5affd3999c2c909",
+          "demo.ts": "6934068bff7100cfdf52fe5f752e2b7370eeb4e5d8fa3dce3d021f6929937499",
+          "build.ts": "7649ea20ec430295ddd8f232b35981a63fad240efe654ecbd77136c7a3171630",
+          "package.json": "37b39e08a755a32084712fadc98f8e71909ee64f8dc364dc8c64b24985f2fb3a",
+          "bun.lock": "53ce8063c47933b3904e9ef0839670427998e250b2f652745cc2cfbff28b43cb",
+          "README.md": "6d43f41900b4c44c4815aefff0ff35fcb05514d50174d12ae7cb794b97242ba2",
+          "../model.ts": "c5fb4bd45be88ae389146370694027f116bb4f64a0ac8efb20d83f3b1cd64355",
+          "../fixtures.ts": "caffa42ff1dc3647d473d6aa61f75736e42769d665edb45cf38e6bc4e71f8be2",
+          "../browser-harness.ts": "6e530ce976f6b7d7dafe8d3912559ec6c1ce5633c64da79ee6625e198bda2ff2",
+          "../workbench.css": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2",
+          "../demo.css": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+        },
+        "origin": "Build-generated source hash manifest, independently checked against the stated Git source."
+      },
+      "lua": {
+        "pathBase": "tgui/prototypes/crafting-workbench/lua",
+        "sourceSha256": {
+          "workbench.lua": "cbf2ddc2faf454d5c7808a22f1d8c21d8a297ecd1844a33067d1e5ac62716a1a",
+          "adapter.ts": "ff8f0158634c4e4ef5b7fcc449a79d9f54e471a5601a0de5f5affd3999c2c909",
+          "demo.ts": "6934068bff7100cfdf52fe5f752e2b7370eeb4e5d8fa3dce3d021f6929937499",
+          "build.ts": "7649ea20ec430295ddd8f232b35981a63fad240efe654ecbd77136c7a3171630",
+          "package.json": "37b39e08a755a32084712fadc98f8e71909ee64f8dc364dc8c64b24985f2fb3a",
+          "bun.lock": "53ce8063c47933b3904e9ef0839670427998e250b2f652745cc2cfbff28b43cb",
+          "README.md": "6d43f41900b4c44c4815aefff0ff35fcb05514d50174d12ae7cb794b97242ba2",
+          "../model.ts": "c5fb4bd45be88ae389146370694027f116bb4f64a0ac8efb20d83f3b1cd64355",
+          "../fixtures.ts": "caffa42ff1dc3647d473d6aa61f75736e42769d665edb45cf38e6bc4e71f8be2",
+          "../browser-harness.ts": "6e530ce976f6b7d7dafe8d3912559ec6c1ce5633c64da79ee6625e198bda2ff2",
+          "../workbench.css": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2",
+          "../demo.css": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+        },
+        "origin": "Build-generated source hash manifest, independently checked against the stated Git source."
+      },
+      "svelte": {
+        "pathBase": "tgui/prototypes/crafting-workbench/svelte",
+        "sourceSha256": {
+          "Workbench.svelte": "2f256b74ce411f14493c8205cf3fb4f8780ad3ffeaa07586ee9f4b0ecac57da6",
+          "Demo.svelte": "ca2c022ff3c1fcba01d70f5f43f2428c17169f277b784c3bf2b501a6826aa819",
+          "demo.ts": "2d8675bc6dd418ba15868fd889226642b6d0be0844ee54bd6d42395679527e8c",
+          "compiler.ts": "d5f0d17464544414968a9c6a79bbb4e17a834e70c329e9482487788ace323fa4",
+          "build.ts": "90d5632c9a34f08c77bcff52e2033089b713756d6c7995539dabc67df421ec5e",
+          "package.json": "269638f9d6440458587aa52270e741edc490e3f3c4a61d1863d84365cad0249f",
+          "bun.lock": "99fe9718c49ba266424a2cc2e0d4f9338ff8c128f0965b13f72e28b33c9cbaca",
+          "../model.ts": "c5fb4bd45be88ae389146370694027f116bb4f64a0ac8efb20d83f3b1cd64355",
+          "../fixtures.ts": "caffa42ff1dc3647d473d6aa61f75736e42769d665edb45cf38e6bc4e71f8be2",
+          "../browser-harness.ts": "6e530ce976f6b7d7dafe8d3912559ec6c1ce5633c64da79ee6625e198bda2ff2",
+          "../workbench.css": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2",
+          "../demo.css": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+        },
+        "origin": "Build-generated source hash manifest, independently checked against the stated Git source."
+      },
+      "react": {
+        "pathBase": "tgui/prototypes/crafting-workbench",
+        "sourceSha256": {
+          "Workbench.tsx": "107a29bd45452f8cc3d5ebcb40c159c027e0c1b2a76eeeaf5e80d3b998efdc49",
+          "demo.tsx": "60b668009a963f861ee28d3da1f458d05eebd31f376c7944d2f731796b1e0418",
+          "build.ts": "3688e251f740a5e414b7fd0034d673c741a1f82dd3ac0b91462d0410c4da630c",
+          "model.ts": "c5fb4bd45be88ae389146370694027f116bb4f64a0ac8efb20d83f3b1cd64355",
+          "fixtures.ts": "caffa42ff1dc3647d473d6aa61f75736e42769d665edb45cf38e6bc4e71f8be2",
+          "browser-harness.ts": "6e530ce976f6b7d7dafe8d3912559ec6c1ce5633c64da79ee6625e198bda2ff2",
+          "workbench.css": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2",
+          "demo.css": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32",
+          "tsconfig.json": "66b11e9a91e7b66951f88209a60dfc1c600088f2e0c163c7f97d4a7f2366c5d8",
+          "../../package.json": "e061a4e5da72405b7d40029526e9c37a62f9446e1d80225a6711a6d5ed0c5ab9",
+          "../../bun.lock": "38ca438fe36b736dd238c67d7e61ed69768e5b9d8979c2011c5754719b110bee",
+          "../../packages/tgui/package.json": "625d319505747788ebba1db55b923d3c57b37c1f51a4e1f15541d00fcbd2ad10"
+        },
+        "origin": "Reconstructed from the stated Git source for this report; the React build does not emit a source hash manifest."
+      }
+    },
+    "artifactVerification": "Recorded demo.js hashes match deployment provenance; all listed existing artifact bytes match the hosting Git commit. All recorded source hashes match the stated source Git objects. No rebuild was used to substitute later bytes."
+  },
+  "method": {
+    "runs": 36,
+    "arms": ["lua-row-baseline", "lua", "react", "svelte"],
+    "scenarios": ["catalog", "selected-first", "selected-off-page"],
+    "roundsPerCell": 3,
+    "warmupsPerRun": 5,
+    "samplesPerRunPerClock": 30,
+    "samplesPerCellPerClock": 90,
+    "totalSamplesPerClock": 1080,
+    "browser": "Existing visible cloud Chromium, reduced user agent Chrome/155.0.0.0 on Linux x86_64; exact installed patch version not captured.",
+    "viewportCssPixels": [1180, 757],
+    "zoomPercent": 100,
+    "deviceScaleFactor": null,
+    "cpuModel": null,
+    "hardwareResourceIsolation": false,
+    "uncapturedEnvironment": "CPU model, device scale factor, power settings and competing cloud workload were not recorded; no exclusive machine reservation is claimed.",
+    "navigation": "Fresh navigation before every run; this is not a cold-cache measurement.",
+    "trigger": "Visible comparison controls; no injected evaluation.",
+    "catalogRecipes": 1282,
+    "renderedRows": 40,
+    "scenarioDefinitions": {
+      "catalog": "Blank search and no selection. Each iteration clears one successive visible material flag; including warmups, recipes 0000 through 0034.",
+      "selected-first": "Recipe 0000 selected via its rendered row before timing; its folio stays open and the recipe stays first on-page. Toggle the selected material flag each iteration.",
+      "selected-off-page": "Select Recipe 0000, then rename the same source-slot/path identity to Recipe 9999 (selected off-page) and move its material-name key before timing. Folio/identity survive; rows 0001 through 0040 are mounted. Toggle the selected material flag each iteration."
+    },
+    "setupExcluded": true,
+    "roundOrderRepeatedForEachScenario": [
+      ["lua-row-baseline", "lua", "react", "svelte"],
+      ["lua", "react", "svelte", "lua-row-baseline"],
+      ["react", "svelte", "lua-row-baseline", "lua"]
+    ],
+    "clockDefinitions": {
+      "deliveryToCommitSamplesMs": "performance.now wall-clock interval around adapter.update until its DOM-commit promise resolves: React flushSync, Svelte tick, synchronous Fengari renderer plus promise settlement. Excludes subsequent frame waits, not browser scheduling.",
+      "samplesMs": "The corresponding delivery interval through two subsequent requestAnimationFrame waits. It includes frame scheduling and is not an exact paint duration."
+    },
+    "correctness": "Harness validates visible mounted state, blank search, 40 rows, selected identity/on-page status, folio title and selected material state before/after deliveries. All 36 records passed metadata and sample-count validation.",
+    "outlierPolicy": "Retain every recorded sample, in its original per-run order, without trimming or replacement.",
+    "summaryMethod": "Independently recomputed from the 36 raw records. Median averages the middle pair for even n. P10/P90 use nearest rank: sort ascending, take 1-based ceil(p*n); at n=90 these are zero-based indices 8 and 80. Minimum and maximum retain outliers. Per-run and pooled summaries are descriptive, not independent statistical replicates or population significance estimates.",
+    "historicalSeries": "Not pooled with earlier harnesses, the scan-guard A/B, layout QA or local synthetic timings."
+  },
+  "artifactMeasurements": {
+    "scope": "Standalone production demo transfer bytes, including each runtime, shared fixture, adapter and opt-in harness. Not marginal production-island cost; React is already loaded by the production application.",
+    "build": "Bun 1.2.16, browser IIFE, production conditions, minified JavaScript with identical external CSS; Svelte compiler dev=false, generate=client, css=external, runes=true.",
+    "versions": {
+      "react": "19.1.0",
+      "react-dom": "19.1.0",
+      "svelte": "5.57.2",
+      "fengari": "0.1.5",
+      "fengari-interop": "0.1.4"
+    },
+    "luaRuntime": "Fengari implements Lua 5.3 in JavaScript. Not WASM, Wasmoon or native LuaJIT. Lua source is parsed at mount.",
+    "gzip": "node:zlib gzipSync with level 9, each file separately; Node 24.19.0, zlib 1.3.2.1-motley-3246f1b.",
+    "sharedAssets": "System serif font stack; no font files redistributed. CSS hashes/bytes are identical across all four arms.",
+    "arms": {
+      "lua-row-baseline": [
+        {
+          "file": "demo.js",
+          "raw": 237006,
+          "gzip": 78650,
+          "sha256": "5f24c3bb6357c91a86bb7c6dd02fab7abbb5fa9c022ac55d3e2aaf7c1cf0aa62"
+        },
+        {
+          "file": "workbench.css",
+          "raw": 7541,
+          "gzip": 2062,
+          "sha256": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2"
+        },
+        {
+          "file": "demo.css",
+          "raw": 1623,
+          "gzip": 705,
+          "sha256": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+        }
+      ],
+      "lua": [
+        {
+          "file": "demo.js",
+          "raw": 237778,
+          "gzip": 78839,
+          "sha256": "92c28a8f10338b017dcebf3431790bc6bd0fd355825548572c1e256a47db406a"
+        },
+        {
+          "file": "workbench.css",
+          "raw": 7541,
+          "gzip": 2062,
+          "sha256": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2"
+        },
+        {
+          "file": "demo.css",
+          "raw": 1623,
+          "gzip": 705,
+          "sha256": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+        }
+      ],
+      "react": [
+        {
+          "file": "demo.js",
+          "raw": 201301,
+          "gzip": 64106,
+          "sha256": "694f76abd53326f35caaa1bb8eb5ed97cb326f383b77a55a691590a5ff0a6211"
+        },
+        {
+          "file": "workbench.css",
+          "raw": 7541,
+          "gzip": 2062,
+          "sha256": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2"
+        },
+        {
+          "file": "demo.css",
+          "raw": 1623,
+          "gzip": 705,
+          "sha256": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+        }
+      ],
+      "svelte": [
+        {
+          "file": "demo.js",
+          "raw": 77053,
+          "gzip": 28621,
+          "sha256": "25a1f30ae1d7071640bf8c961b31f94ed2813d223ea6a37567c8f6d2ac0964f9"
+        },
+        {
+          "file": "workbench.css",
+          "raw": 7541,
+          "gzip": 2062,
+          "sha256": "413b9bb09d6556b61feb3790bd70a6d6318ce4a7713579ec8ec4574494ea13e2"
+        },
+        {
+          "file": "demo.css",
+          "raw": 1623,
+          "gzip": 705,
+          "sha256": "86ac42fe9e1f4b87ff91ad3b9d4c61fc549e783b4ab62505060222e28b99fa32"
+        }
+      ]
+    }
+  },
+  "pooledStatistics": [
+    {
+      "scenario": "catalog",
+      "arm": "lua-row-baseline",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 4.099999999627471,
+          "median": 8.200000000186265,
+          "p10": 4.800000000745058,
+          "p90": 15.800000000745058,
+          "maximum": 36.59999999962747,
+          "runMedians": [
+            8.149999999441206, 10.550000000745058, 5.650000000372529
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 14.599999999627471,
+          "median": 33.15000000130385,
+          "p10": 31.5,
+          "p90": 35.09999999962747,
+          "maximum": 52.20000000111759,
+          "runMedians": [
+            32.950000000186265, 33.34999999962747, 33.30000000074506
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "catalog",
+      "arm": "lua",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 2.5,
+          "median": 4.8500000005587935,
+          "p10": 2.900000000372529,
+          "p90": 10.099999999627471,
+          "maximum": 20.90000000037253,
+          "runMedians": [5.0, 4.1499999994412065, 4.750000000931323]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 29.09999999962747,
+          "median": 33.10000000055879,
+          "p10": 32.09999999962747,
+          "p90": 34.30000000074506,
+          "maximum": 36.70000000111759,
+          "runMedians": [
+            33.09999999962747, 33.15000000037253, 33.20000000111759
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "catalog",
+      "arm": "react",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 0.900000000372529,
+          "median": 1.4500000001862645,
+          "p10": 1.099999999627471,
+          "p90": 3,
+          "maximum": 7.299999998882413,
+          "runMedians": [
+            1.900000000372529, 1.300000000745058, 1.4500000001862645
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 24,
+          "median": 33.10000000055879,
+          "p10": 32.40000000037253,
+          "p90": 33.90000000037253,
+          "maximum": 42.79999999888241,
+          "runMedians": [
+            33.09999999962747, 33.049999999813735, 33.20000000111759
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "catalog",
+      "arm": "svelte",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 0.7999999988824129,
+          "median": 1.300000000745058,
+          "p10": 0.900000000372529,
+          "p90": 2.699999999254942,
+          "maximum": 3.699999999254942,
+          "runMedians": [1.5499999998137355, 1.599999999627471, 1.0]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 28.40000000037253,
+          "median": 33.200000000186265,
+          "p10": 31.40000000037253,
+          "p90": 34.70000000111759,
+          "maximum": 51.5,
+          "runMedians": [
+            33.299999999813735, 33.09999999962747, 33.34999999962747
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "selected-first",
+      "arm": "lua-row-baseline",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 4,
+          "median": 6.800000000745058,
+          "p10": 4.5,
+          "p90": 15.099999999627471,
+          "maximum": 73.90000000037253,
+          "runMedians": [
+            6.300000000745058, 6.900000000372529, 7.650000000372529
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 26.699999999254942,
+          "median": 33.09999999962747,
+          "p10": 32.19999999925494,
+          "p90": 34,
+          "maximum": 86.09999999962747,
+          "runMedians": [
+            33.15000000037253, 33.10000000055879, 33.049999999813735
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "selected-first",
+      "arm": "lua",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 2.400000000372529,
+          "median": 3.8500000005587935,
+          "p10": 3,
+          "p90": 8.899999998509884,
+          "maximum": 26.100000001490116,
+          "runMedians": [
+            3.599999999627471, 4.950000001117587, 3.7000000001862645
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 27.300000000745058,
+          "median": 33.09999999962747,
+          "p10": 31.90000000037253,
+          "p90": 34.19999999925494,
+          "maximum": 50.20000000111759,
+          "runMedians": [
+            33.09999999962747, 33.05000000074506, 33.14999999944121
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "selected-first",
+      "arm": "react",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 0.8000000007450581,
+          "median": 1.400000000372529,
+          "p10": 1,
+          "p90": 2.199999999254942,
+          "maximum": 4,
+          "runMedians": [1.5499999998137355, 1.5, 1.200000001117587]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 30.700000001117587,
+          "median": 33.15000000037253,
+          "p10": 32.40000000037253,
+          "p90": 33.79999999888241,
+          "maximum": 35.20000000111759,
+          "runMedians": [
+            33.09999999962747, 33.24999999906868, 33.049999999813735
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "selected-first",
+      "arm": "svelte",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 0.7999999988824129,
+          "median": 1.1000000014901161,
+          "p10": 0.8999999985098839,
+          "p90": 1.6000000014901161,
+          "maximum": 2.800000000745058,
+          "runMedians": [
+            1.199999999254942, 1.150000000372529, 1.099999999627471
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 31.40000000037253,
+          "median": 33.09999999962747,
+          "p10": 32.5,
+          "p90": 33.90000000037253,
+          "maximum": 34.30000000074506,
+          "runMedians": [
+            33.09999999962747, 33.09999999962747, 33.14999999944121
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "selected-off-page",
+      "arm": "lua-row-baseline",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 9.600000001490116,
+          "median": 14.950000000186265,
+          "p10": 11.900000000372529,
+          "p90": 20,
+          "maximum": 40.5,
+          "runMedians": [
+            14.300000000745058, 14.950000000186265, 16.049999999813735
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 30.40000000037253,
+          "median": 33.200000000186265,
+          "p10": 32.19999999925494,
+          "p90": 34.19999999925494,
+          "maximum": 66.5,
+          "runMedians": [33.25, 33.25000000093132, 33.0]
+        }
+      }
+    },
+    {
+      "scenario": "selected-off-page",
+      "arm": "lua",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 8.900000000372529,
+          "median": 13.200000001117587,
+          "p10": 9.800000000745058,
+          "p90": 21.800000000745058,
+          "maximum": 42.40000000037253,
+          "runMedians": [
+            11.899999999441206, 14.150000000372529, 14.549999999813735
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 28.40000000037253,
+          "median": 33.19999999925494,
+          "p10": 32,
+          "p90": 34.600000001490116,
+          "maximum": 203.80000000074506,
+          "runMedians": [
+            33.19999999925494, 33.05000000074506, 33.25000000093132
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "selected-off-page",
+      "arm": "react",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 1.099999999627471,
+          "median": 1.6000000005587935,
+          "p10": 1.200000001117587,
+          "p90": 2.600000001490116,
+          "maximum": 11.300000000745058,
+          "runMedians": [
+            1.400000000372529, 1.599999999627471, 1.8999999994412065
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 27.699999999254942,
+          "median": 33.09999999962747,
+          "p10": 31.90000000037253,
+          "p90": 34.09999999962747,
+          "maximum": 129.19999999925494,
+          "runMedians": [
+            33.15000000037253, 33.049999999813735, 33.09999999962747
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "selected-off-page",
+      "arm": "svelte",
+      "rounds": 3,
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 90,
+          "minimum": 0.7999999988824129,
+          "median": 1.2999999998137355,
+          "p10": 1,
+          "p90": 2,
+          "maximum": 3.599999999627471,
+          "runMedians": [
+            1.150000000372529, 1.400000000372529, 1.3999999994412065
+          ]
+        },
+        "samplesMs": {
+          "n": 90,
+          "minimum": 30,
+          "median": 33.19999999925494,
+          "p10": 32.5,
+          "p90": 33.80000000074506,
+          "maximum": 34.69999999925494,
+          "runMedians": [
+            33.14999999944121, 33.200000000186265, 33.19999999925494
+          ]
+        }
+      }
+    }
+  ],
+  "runsInExecutionOrder": [
+    {
+      "executionIndex": 1,
+      "arm": "lua-row-baseline",
+      "round": 1,
+      "rawRecordFile": "catalog-lua-row-baseline-run1.json",
+      "rawRecordSha256": "67ba5544ba22e33d3947e0c236d0293a3c2789fba4fa9d75f426d6ac89d85d05",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          26.90000000037253, 17.200000001117587, 15.5, 19.09999999962747,
+          8.900000000372529, 14.099999999627471, 12.300000000745058,
+          8.199999999254942, 10.099999999627471, 6.5, 7.399999998509884,
+          11.799999998882413, 7.300000000745058, 8.5, 6.099999999627471,
+          6.899999998509884, 11.100000001490116, 6.900000000372529,
+          6.699999999254942, 6.400000000372529, 7.100000001490116,
+          8.099999999627471, 6, 5.800000000745058, 9.400000000372529, 6.5,
+          13.599999999627471, 10.200000001117587, 4.400000000372529,
+          6.299999998882413
+        ],
+        "samplesMs": [
+          39.20000000111759, 24.800000000745058, 32.70000000111759,
+          34.09999999962747, 32.40000000037253, 32.59999999962747,
+          33.20000000111759, 34.79999999888241, 32.399999998509884,
+          32.899999998509884, 33, 35.5, 31.5, 33.40000000037253,
+          32.19999999925494, 33.899999998509884, 33, 33.600000001490116,
+          32.59999999962747, 34.5, 32.20000000111759, 34.5, 32.5,
+          32.90000000037253, 32.90000000037253, 33.100000001490116,
+          34.29999999888241, 33.70000000111759, 32.29999999888241,
+          32.59999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 4.400000000372529,
+          "median": 8.149999999441206,
+          "p10": 6,
+          "p90": 15.5,
+          "maximum": 26.90000000037253
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 24.800000000745058,
+          "median": 32.950000000186265,
+          "p10": 32.19999999925494,
+          "p90": 34.5,
+          "maximum": 39.20000000111759
+        }
+      }
+    },
+    {
+      "executionIndex": 2,
+      "arm": "lua",
+      "round": 1,
+      "rawRecordFile": "catalog-lua-run1.json",
+      "rawRecordSha256": "e86ae3eb7732307d68c918dd3518db37498103749380c8c8ebd17e3e5f037303",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          10, 12.5, 11.099999999627471, 6.300000000745058, 12.800000000745058,
+          3.699999999254942, 3.399999998509884, 5, 5.699999999254942,
+          5.600000001490116, 7.900000000372529, 3.400000000372529,
+          4.900000000372529, 5.099999999627471, 5, 2.5, 4.800000000745058,
+          3.599999999627471, 9.5, 5, 2.900000000372529, 3, 5, 3.5,
+          5.800000000745058, 7.799999998882413, 3.299999998882413, 6.5, 4,
+          3.300000000745058
+        ],
+        "samplesMs": [
+          32.80000000074506, 33.40000000037253, 32.80000000074506,
+          34.40000000037253, 31.59999999962747, 33.899999998509884,
+          33.09999999962747, 32.90000000037253, 33.09999999962747,
+          34.30000000074506, 32.19999999925494, 33.29999999888241,
+          34.09999999962747, 32.09999999962747, 33.29999999888241, 32.5,
+          34.09999999962747, 32.59999999962747, 34.80000000074506,
+          31.40000000037253, 33.19999999925494, 33.600000001490116,
+          32.79999999888241, 34.29999999888241, 32.600000001490116, 33, 33.5,
+          32.69999999925494, 33.59999999962747, 33.09999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 2.5,
+          "median": 5.0,
+          "p10": 3,
+          "p90": 10,
+          "maximum": 12.800000000745058
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.40000000037253,
+          "median": 33.09999999962747,
+          "p10": 32.09999999962747,
+          "p90": 34.29999999888241,
+          "maximum": 34.80000000074506
+        }
+      }
+    },
+    {
+      "executionIndex": 3,
+      "arm": "react",
+      "round": 1,
+      "rawRecordFile": "catalog-react-run1.json",
+      "rawRecordSha256": "95878ef6db7f40b80fb034176b59e4cdcc0be2fd87d93fd77e35a3db03f8e35b",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          2.699999999254942, 1.400000000372529, 1.400000000372529, 2,
+          2.200000001117587, 1.300000000745058, 1.099999999627471,
+          2.300000000745058, 5, 4.099999999627471, 0.900000000372529, 1.5, 2,
+          7.299999998882413, 1.800000000745058, 4, 1.400000000372529, 2,
+          0.900000000372529, 1.800000000745058, 1.300000000745058,
+          2.799999998882413, 1.300000000745058, 1.200000001117587,
+          1.099999999627471, 1.599999999627471, 2.099999999627471,
+          4.100000001490116, 2.5, 3.099999999627471
+        ],
+        "samplesMs": [
+          33.09999999962747, 32.90000000037253, 34.30000000074506,
+          32.69999999925494, 33, 33.40000000037253, 33.59999999962747,
+          32.40000000037253, 32.79999999888241, 35.79999999888241,
+          30.600000001490116, 33.29999999888241, 32.899999998509884, 33.5,
+          33.30000000074506, 32.30000000074506, 33.69999999925494,
+          33.09999999962747, 34.40000000037253, 32.90000000037253,
+          32.80000000074506, 33.29999999888241, 32.80000000074506,
+          32.09999999962747, 33.19999999925494, 33.69999999925494,
+          32.59999999962747, 33.70000000111759, 33.09999999962747,
+          34.30000000074506
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.900000000372529,
+          "median": 1.900000000372529,
+          "p10": 1.099999999627471,
+          "p90": 4.099999999627471,
+          "maximum": 7.299999998882413
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 30.600000001490116,
+          "median": 33.09999999962747,
+          "p10": 32.30000000074506,
+          "p90": 34.30000000074506,
+          "maximum": 35.79999999888241
+        }
+      }
+    },
+    {
+      "executionIndex": 4,
+      "arm": "svelte",
+      "round": 1,
+      "rawRecordFile": "catalog-svelte-run1.json",
+      "rawRecordSha256": "1cf476f76d26819db2a7514de736b02e3603fdbf7e325a440e1c5913c5fab1e0",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          3.300000000745058, 3.199999999254942, 2.699999999254942,
+          1.900000000372529, 2.200000001117587, 2.100000001490116,
+          2.600000001490116, 1.900000000372529, 0.900000000372529,
+          0.900000000372529, 0.900000000372529, 1.400000000372529, 1,
+          1.300000000745058, 2.299999998882413, 3, 3.599999999627471, 1.5,
+          1.299999998882413, 1, 1.099999999627471, 1, 1.599999999627471, 1,
+          0.900000000372529, 1, 1.700000001117587, 1.700000001117587,
+          3.299999998882413, 0.900000000372529
+        ],
+        "samplesMs": [
+          32.40000000037253, 33.19999999925494, 33.29999999888241,
+          32.90000000037253, 33.30000000074506, 37.90000000037253,
+          28.40000000037253, 33.30000000074506, 33.600000001490116,
+          31.800000000745058, 34, 33, 36, 30, 33.09999999962747, 33.5,
+          33.59999999962747, 34.70000000111759, 30.299999998882413, 32.5,
+          33.69999999925494, 33.59999999962747, 32.09999999962747,
+          33.79999999888241, 34, 32.30000000074506, 33.30000000074506,
+          34.30000000074506, 33.09999999962747, 31.59999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.900000000372529,
+          "median": 1.5499999998137355,
+          "p10": 0.900000000372529,
+          "p90": 3.199999999254942,
+          "maximum": 3.599999999627471
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 28.40000000037253,
+          "median": 33.299999999813735,
+          "p10": 30.299999998882413,
+          "p90": 34.30000000074506,
+          "maximum": 37.90000000037253
+        }
+      }
+    },
+    {
+      "executionIndex": 5,
+      "arm": "lua",
+      "round": 2,
+      "rawRecordFile": "catalog-lua-run2.json",
+      "rawRecordSha256": "ac181b74313bf11c595eddaf961a93687261df21717e7fb5a2eeb0740a111879",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          5.5, 7, 6.900000000372529, 11.199999999254942, 10.699999999254942,
+          7.900000000372529, 8.599999999627471, 13.300000000745058, 9, 10,
+          20.90000000037253, 3.800000000745058, 5.400000000372529,
+          2.599999999627471, 2.600000001490116, 4.400000000372529,
+          3.099999999627471, 3, 3.200000001117587, 3.400000000372529, 3, 4,
+          4.199999999254942, 4.099999999627471, 3.699999999254942,
+          4.400000000372529, 3.099999999627471, 3.899999998509884,
+          2.699999999254942, 3.300000000745058
+        ],
+        "samplesMs": [
+          34, 32.40000000037253, 32.70000000111759, 33.69999999925494,
+          32.90000000037253, 33.59999999962747, 34.5, 31.40000000037253,
+          33.80000000074506, 32.100000001490116, 35, 31.90000000037253,
+          34.30000000074506, 32.19999999925494, 33.30000000074506,
+          33.30000000074506, 33.09999999962747, 33.09999999962747,
+          33.30000000074506, 33.5, 33.20000000111759, 32.90000000037253,
+          32.90000000037253, 32.90000000037253, 33.09999999962747,
+          33.40000000037253, 33, 33.399999998509884, 33.09999999962747,
+          34.09999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 2.599999999627471,
+          "median": 4.1499999994412065,
+          "p10": 2.699999999254942,
+          "p90": 10.699999999254942,
+          "maximum": 20.90000000037253
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.40000000037253,
+          "median": 33.15000000037253,
+          "p10": 32.100000001490116,
+          "p90": 34.09999999962747,
+          "maximum": 35
+        }
+      }
+    },
+    {
+      "executionIndex": 6,
+      "arm": "react",
+      "round": 2,
+      "rawRecordFile": "catalog-react-run2.json",
+      "rawRecordSha256": "e27f564bab5b956af82e8e0c674f043490aad840bc74a94d0fd06d36bbf5c3fb",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.099999999627471, 1.1000000014901161, 1.300000000745058, 1,
+          1.300000000745058, 1.400000000372529, 2.299999998882413,
+          1.199999999254942, 2.300000000745058, 1.300000000745058,
+          1.200000001117587, 1.199999999254942, 2.5, 3.699999999254942,
+          2.400000000372529, 1.099999999627471, 1.799999998882413,
+          1.299999998882413, 1.199999999254942, 1.199999999254942, 2,
+          1.199999999254942, 3, 2.100000001490116, 1.199999999254942,
+          2.199999999254942, 2, 1.099999999627471, 1.3999999985098839,
+          1.099999999627471
+        ],
+        "samplesMs": [
+          33.79999999888241, 32.30000000074506, 33.100000001490116, 33,
+          33.40000000037253, 33.29999999888241, 32.19999999925494,
+          34.09999999962747, 33, 32.80000000074506, 33.90000000037253,
+          33.09999999962747, 33, 33.59999999962747, 32.90000000037253,
+          33.80000000074506, 33, 32.90000000037253, 33.5, 32.90000000037253, 33,
+          33, 33.59999999962747, 33.20000000111759, 32.899999998509884,
+          33.899999998509884, 32.5, 33.40000000037253, 35.19999999925494,
+          31.200000001117587
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 1,
+          "median": 1.300000000745058,
+          "p10": 1.099999999627471,
+          "p90": 2.400000000372529,
+          "maximum": 3.699999999254942
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.200000001117587,
+          "median": 33.049999999813735,
+          "p10": 32.30000000074506,
+          "p90": 33.899999998509884,
+          "maximum": 35.19999999925494
+        }
+      }
+    },
+    {
+      "executionIndex": 7,
+      "arm": "svelte",
+      "round": 2,
+      "rawRecordFile": "catalog-svelte-run2.json",
+      "rawRecordSha256": "69c0cd11102e5efdd202fe03e9e60a554b29483e2da8c411daba274867b41c30",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          2.699999999254942, 1.1000000014901161, 1.800000000745058,
+          0.900000000372529, 1.099999999627471, 1.5, 2.200000001117587,
+          1.599999999627471, 2.300000000745058, 3.699999999254942,
+          0.900000000372529, 1.099999999627471, 1.900000000372529,
+          0.8000000007450581, 2.299999998882413, 1.299999998882413, 2,
+          2.200000001117587, 2, 0.8000000007450581, 1, 1, 1, 1,
+          2.899999998509884, 2, 1.300000000745058, 1.599999999627471,
+          2.200000001117587, 2
+        ],
+        "samplesMs": [
+          34.5, 32.600000001490116, 33, 32.80000000074506, 34.09999999962747,
+          33.30000000074506, 32.09999999962747, 33, 33.09999999962747,
+          32.90000000037253, 33.30000000074506, 36.90000000037253,
+          29.90000000037253, 33.80000000074506, 32.79999999888241, 33,
+          33.09999999962747, 33.70000000111759, 34.80000000074506,
+          31.200000001117587, 33.69999999925494, 36.5, 29.59999999962747,
+          32.59999999962747, 33.899999998509884, 33.09999999962747,
+          32.59999999962747, 33.09999999962747, 33.20000000111759, 34.5
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.8000000007450581,
+          "median": 1.599999999627471,
+          "p10": 0.900000000372529,
+          "p90": 2.300000000745058,
+          "maximum": 3.699999999254942
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 29.59999999962747,
+          "median": 33.09999999962747,
+          "p10": 31.200000001117587,
+          "p90": 34.5,
+          "maximum": 36.90000000037253
+        }
+      }
+    },
+    {
+      "executionIndex": 8,
+      "arm": "lua-row-baseline",
+      "round": 2,
+      "rawRecordFile": "catalog-lua-row-baseline-run2.json",
+      "rawRecordSha256": "adb8c8e84b213ce89e2e263799fdb1e804211ca0a16178829f904bc6741630dc",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          36.59999999962747, 14.699999999254942, 14.099999999627471,
+          14.800000000745058, 20.90000000037253, 12.200000001117587,
+          17.899999998509884, 6.899999998509884, 14.5, 10.300000000745058,
+          10.800000000745058, 8.199999999254942, 15.599999999627471, 19,
+          13.400000000372529, 15.800000000745058, 8.799999998882413,
+          10.300000000745058, 8.200000001117587, 6.5, 9.300000000745058,
+          7.900000000372529, 6, 9.5, 11.400000000372529, 19.399999998509884,
+          9.800000000745058, 7.800000000745058, 5.899999998509884,
+          7.199999999254942
+        ],
+        "samplesMs": [
+          48, 34, 33, 34.09999999962747, 31, 34, 32.399999998509884,
+          33.29999999888241, 50.30000000074506, 33.40000000037253,
+          33.59999999962747, 32.5, 34, 28.800000000745058, 33.40000000037253,
+          32.90000000037253, 37.5, 29.90000000037253, 32.5, 32.69999999925494,
+          32.69999999925494, 33.40000000037253, 33.59999999962747,
+          31.899999998509884, 35, 31.09999999962747, 32.80000000074506,
+          33.70000000111759, 32.399999998509884, 33.5
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 5.899999998509884,
+          "median": 10.550000000745058,
+          "p10": 6.5,
+          "p90": 19,
+          "maximum": 36.59999999962747
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 28.800000000745058,
+          "median": 33.34999999962747,
+          "p10": 31,
+          "p90": 35,
+          "maximum": 50.30000000074506
+        }
+      }
+    },
+    {
+      "executionIndex": 9,
+      "arm": "react",
+      "round": 3,
+      "rawRecordFile": "catalog-react-run3.json",
+      "rawRecordSha256": "8177c0ed669a1c9b5b8c35cfdd6dda5dcf2ff7060b97c38c05c1e678aa12967a",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          2.099999999627471, 1.699999999254942, 1.099999999627471,
+          2.300000000745058, 1.400000000372529, 1.199999999254942, 2.5,
+          1.299999998882413, 5.400000000372529, 1.199999999254942,
+          1.1000000014901161, 2.5, 2, 4.399999998509884, 3, 2.5,
+          1.200000001117587, 1.300000000745058, 2.299999998882413,
+          1.199999999254942, 1.099999999627471, 1.599999999627471,
+          1.1000000014901161, 1.199999999254942, 2, 1.1000000014901161,
+          1.199999999254942, 2.400000000372529, 1.5, 1.400000000372529
+        ],
+        "samplesMs": [
+          33.59999999962747, 33.29999999888241, 32.59999999962747,
+          33.80000000074506, 33.40000000037253, 32.5, 33.600000001490116,
+          33.59999999962747, 33.09999999962747, 32.79999999888241,
+          33.20000000111759, 33.40000000037253, 32.80000000074506,
+          33.69999999925494, 32.59999999962747, 33.69999999925494,
+          33.40000000037253, 32.70000000111759, 33.79999999888241,
+          32.899999998509884, 34.09999999962747, 33.09999999962747,
+          32.80000000074506, 33, 33.20000000111759, 32.20000000111759, 34,
+          42.79999999888241, 24, 33.20000000111759
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 1.099999999627471,
+          "median": 1.4500000001862645,
+          "p10": 1.1000000014901161,
+          "p90": 2.5,
+          "maximum": 5.400000000372529
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 24,
+          "median": 33.20000000111759,
+          "p10": 32.5,
+          "p90": 33.80000000074506,
+          "maximum": 42.79999999888241
+        }
+      }
+    },
+    {
+      "executionIndex": 10,
+      "arm": "svelte",
+      "round": 3,
+      "rawRecordFile": "catalog-svelte-run3.json",
+      "rawRecordSha256": "21735ffbf639f2b5d28576825bc85618c1ac28878e2d90c4f184df3ef7cddd94",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          2.699999999254942, 1.300000000745058, 0.900000000372529,
+          1.400000000372529, 1.099999999627471, 1, 1.099999999627471,
+          0.900000000372529, 2.400000000372529, 1, 1.799999998882413,
+          1.699999999254942, 0.8000000007450581, 1, 1.300000000745058,
+          0.8000000007450581, 1, 2.799999998882413, 0.900000000372529,
+          0.900000000372529, 0.7999999988824129, 1, 2.200000001117587,
+          0.8000000007450581, 0.8999999985098839, 1.599999999627471, 1,
+          1.599999999627471, 0.8999999985098839, 3.699999999254942
+        ],
+        "samplesMs": [
+          33.09999999962747, 34.80000000074506, 31.40000000037253,
+          33.70000000111759, 34.5, 32.09999999962747, 33.59999999962747,
+          33.09999999962747, 33.29999999888241, 32.70000000111759, 33.5,
+          32.80000000074506, 35.70000000111759, 31.09999999962747, 33.5,
+          33.40000000037253, 32.5, 33.69999999925494, 33.09999999962747, 33,
+          33.5, 33.59999999962747, 32.80000000074506, 35.19999999925494,
+          31.09999999962747, 33.90000000037253, 33.5, 32.29999999888241, 51.5,
+          31.90000000037253
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.7999999988824129,
+          "median": 1.0,
+          "p10": 0.8000000007450581,
+          "p90": 2.400000000372529,
+          "maximum": 3.699999999254942
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.09999999962747,
+          "median": 33.34999999962747,
+          "p10": 31.40000000037253,
+          "p90": 34.80000000074506,
+          "maximum": 51.5
+        }
+      }
+    },
+    {
+      "executionIndex": 11,
+      "arm": "lua-row-baseline",
+      "round": 3,
+      "rawRecordFile": "catalog-lua-row-baseline-run3.json",
+      "rawRecordSha256": "5bb5666465f0866956d830e85b7fdf14a76bd6da4561674669be1ee9c6946587",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          11.700000001117587, 11.699999999254942, 15.5, 9.300000000745058,
+          6.900000000372529, 6.599999999627471, 6.199999999254942,
+          8.300000000745058, 9.199999999254942, 5.600000001490116,
+          4.899999998509884, 5.900000000372529, 4.399999998509884,
+          12.199999999254942, 5.299999998882413, 4.800000000745058,
+          4.600000001490116, 8.5, 4.400000000372529, 4.700000001117587,
+          4.799999998882413, 5.399999998509884, 32.600000001490116,
+          5.600000001490116, 4.099999999627471, 5.199999999254942,
+          4.900000000372529, 4.699999999254942, 7.599999999627471,
+          5.699999999254942
+        ],
+        "samplesMs": [
+          33.100000001490116, 32.79999999888241, 34, 32.59999999962747,
+          33.70000000111759, 32.40000000037253, 34, 34.80000000074506,
+          35.09999999962747, 29, 33.5, 33.29999999888241, 33, 33.30000000074506,
+          33, 33.09999999962747, 33.70000000111759, 32.40000000037253,
+          33.59999999962747, 33.5, 33.399999998509884, 35.69999999925494,
+          44.30000000074506, 32.80000000074506, 52.20000000111759,
+          14.599999999627471, 33.30000000074506, 37.5, 29.199999999254942,
+          32.09999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 4.099999999627471,
+          "median": 5.650000000372529,
+          "p10": 4.400000000372529,
+          "p90": 11.700000001117587,
+          "maximum": 32.600000001490116
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 14.599999999627471,
+          "median": 33.30000000074506,
+          "p10": 29.199999999254942,
+          "p90": 35.69999999925494,
+          "maximum": 52.20000000111759
+        }
+      }
+    },
+    {
+      "executionIndex": 12,
+      "arm": "lua",
+      "round": 3,
+      "rawRecordFile": "catalog-lua-run3.json",
+      "rawRecordSha256": "df48c30d2c9231da15c91528e9b4d843bfb905047a4383648ef93d57c9377437",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "catalog",
+        "mutationPattern": "clear-one-successive-visible-material-flag-each-iteration",
+        "selectedRecipe": null,
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          11.799999998882413, 8.5, 10.099999999627471, 3.800000000745058,
+          7.900000000372529, 7.5, 2.800000000745058, 4.5, 2.699999999254942,
+          2.800000000745058, 3.099999999627471, 3.400000000372529,
+          7.799999998882413, 5.900000000372529, 6.800000000745058, 5.5,
+          4.199999999254942, 3.099999999627471, 5.300000000745058,
+          14.699999999254942, 8.299999998882413, 4.900000000372529, 3.5,
+          3.799999998882413, 4.600000001490116, 2.599999999627471,
+          4.400000000372529, 5.599999999627471, 3.299999998882413,
+          7.300000000745058
+        ],
+        "samplesMs": [
+          33, 33.5, 32.90000000037253, 32.30000000074506, 33.59999999962747,
+          32.80000000074506, 34.30000000074506, 32.40000000037253,
+          33.40000000037253, 33.5, 32.5, 35, 31.5, 33.59999999962747,
+          36.70000000111759, 29.09999999962747, 33.30000000074506, 32.5,
+          33.80000000074506, 32.40000000037253, 35, 31.699999999254942,
+          33.90000000037253, 32.19999999925494, 33.100000001490116,
+          33.09999999962747, 34.70000000111759, 31.90000000037253, 34,
+          33.40000000037253
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 2.599999999627471,
+          "median": 4.750000000931323,
+          "p10": 2.800000000745058,
+          "p90": 8.5,
+          "maximum": 14.699999999254942
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 29.09999999962747,
+          "median": 33.20000000111759,
+          "p10": 31.699999999254942,
+          "p90": 34.70000000111759,
+          "maximum": 36.70000000111759
+        }
+      }
+    },
+    {
+      "executionIndex": 13,
+      "arm": "lua-row-baseline",
+      "round": 1,
+      "rawRecordFile": "selected-first-lua-row-baseline-run1.json",
+      "rawRecordSha256": "25c1367250c77825c8a832013f0f8c98bd97b5d236c21379c64d2e36ce86598e",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          17.59999999962747, 73.90000000037253, 9, 17, 6.899999998509884,
+          8.299999998882413, 6.800000000745058, 4.400000000372529,
+          19.700000001117587, 7.299999998882413, 6.099999999627471, 7.5,
+          6.300000000745058, 4.300000000745058, 6.300000000745058,
+          7.699999999254942, 5.599999999627471, 7.199999999254942,
+          7.299999998882413, 4.900000000372529, 5.599999999627471,
+          5.900000000372529, 5.400000000372529, 4.899999998509884,
+          4.699999999254942, 4, 12.700000001117587, 5, 4.900000000372529,
+          6.099999999627471
+        ],
+        "samplesMs": [
+          33.899999998509884, 86.09999999962747, 28.899999998509884,
+          33.899999998509884, 32.69999999925494, 33.399999998509884,
+          32.19999999925494, 33.90000000037253, 32.600000001490116, 33.5,
+          33.59999999962747, 33.09999999962747, 32.30000000074506,
+          33.100000001490116, 33.80000000074506, 32.19999999925494,
+          33.09999999962747, 33.399999998509884, 33.09999999962747,
+          33.70000000111759, 32.90000000037253, 33.19999999925494,
+          32.59999999962747, 34, 32.90000000037253, 32.90000000037253,
+          33.80000000074506, 32.30000000074506, 34.59999999962747,
+          33.29999999888241
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 4,
+          "median": 6.300000000745058,
+          "p10": 4.400000000372529,
+          "p90": 17,
+          "maximum": 73.90000000037253
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 28.899999998509884,
+          "median": 33.15000000037253,
+          "p10": 32.19999999925494,
+          "p90": 33.90000000037253,
+          "maximum": 86.09999999962747
+        }
+      }
+    },
+    {
+      "executionIndex": 14,
+      "arm": "lua",
+      "round": 1,
+      "rawRecordFile": "selected-first-lua-run1.json",
+      "rawRecordSha256": "546bc3c5d2a934899609926ac607daddc8567c68bcc73ffe7d1ca44050d3340a",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          16.800000000745058, 15.400000000372529, 6.300000000745058,
+          3.299999998882413, 4.599999999627471, 6.299999998882413,
+          2.699999999254942, 5.199999999254942, 3.200000001117587, 5,
+          3.299999998882413, 3.699999999254942, 4.300000000745058,
+          3.300000000745058, 3.200000001117587, 3, 15.400000000372529, 3.5,
+          3.700000001117587, 3.199999999254942, 3.599999999627471,
+          3.299999998882413, 3.699999999254942, 4, 3.099999999627471, 2.5,
+          3.599999999627471, 2.900000000372529, 2.400000000372529,
+          4.200000001117587
+        ],
+        "samplesMs": [
+          34, 32.30000000074506, 33.19999999925494, 33, 33.5, 32.5,
+          33.79999999888241, 33.29999999888241, 33, 32.79999999888241, 34,
+          32.09999999962747, 34.20000000111759, 33.09999999962747,
+          32.20000000111759, 35.80000000074506, 31.100000001490116,
+          32.90000000037253, 32.70000000111759, 33.5, 33.29999999888241,
+          32.90000000037253, 33.69999999925494, 33.69999999925494,
+          31.799999998882413, 33, 33.40000000037253, 33.40000000037253, 33,
+          33.09999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 2.400000000372529,
+          "median": 3.599999999627471,
+          "p10": 2.699999999254942,
+          "p90": 6.300000000745058,
+          "maximum": 16.800000000745058
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.100000001490116,
+          "median": 33.09999999962747,
+          "p10": 32.09999999962747,
+          "p90": 34,
+          "maximum": 35.80000000074506
+        }
+      }
+    },
+    {
+      "executionIndex": 15,
+      "arm": "react",
+      "round": 1,
+      "rawRecordFile": "selected-first-react-run1.json",
+      "rawRecordSha256": "e3593b2ea731bba060998a5df23b914b41e2b1ebe79ae052d7a9c8fbaa66a953",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          3.400000000372529, 1.900000000372529, 1.599999999627471,
+          1.400000000372529, 2.200000001117587, 1.800000000745058, 1,
+          1.400000000372529, 1.5, 1.300000000745058, 2.099999999627471,
+          1.300000000745058, 1.199999999254942, 2.400000000372529,
+          1.599999999627471, 2.600000001490116, 1.799999998882413,
+          1.400000000372529, 1.400000000372529, 2, 1.800000000745058,
+          1.199999999254942, 1.300000000745058, 1, 1.900000000372529,
+          0.8999999985098839, 1, 1.700000001117587, 1.400000000372529,
+          1.800000000745058
+        ],
+        "samplesMs": [
+          32.40000000037253, 33.30000000074506, 32.90000000037253,
+          33.40000000037253, 33.09999999962747, 33.19999999925494,
+          33.59999999962747, 32.70000000111759, 33.59999999962747,
+          32.600000001490116, 32.90000000037253, 33.59999999962747,
+          32.59999999962747, 33.59999999962747, 31.699999999254942,
+          33.20000000111759, 33.19999999925494, 32.90000000037253,
+          33.19999999925494, 33.80000000074506, 32.600000001490116, 33,
+          33.09999999962747, 32.899999998509884, 33.69999999925494, 32.5,
+          33.90000000037253, 35.20000000111759, 30.700000001117587,
+          33.09999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.8999999985098839,
+          "median": 1.5499999998137355,
+          "p10": 1,
+          "p90": 2.200000001117587,
+          "maximum": 3.400000000372529
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 30.700000001117587,
+          "median": 33.09999999962747,
+          "p10": 32.40000000037253,
+          "p90": 33.69999999925494,
+          "maximum": 35.20000000111759
+        }
+      }
+    },
+    {
+      "executionIndex": 16,
+      "arm": "svelte",
+      "round": 1,
+      "rawRecordFile": "selected-first-svelte-run1.json",
+      "rawRecordSha256": "df09db199eea697a4ca33c914f86170dbac2b0c049f64833c782f02a1a52ae8d",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          0.900000000372529, 0.900000000372529, 1.900000000372529,
+          1.199999999254942, 1.199999999254942, 1.299999998882413,
+          1.200000001117587, 1.099999999627471, 1.199999999254942,
+          0.8000000007450581, 0.7999999988824129, 1, 1.299999998882413,
+          1.1000000014901161, 1.699999999254942, 0.8000000007450581,
+          0.900000000372529, 1.900000000372529, 2.299999998882413, 1,
+          1.299999998882413, 1, 0.900000000372529, 1.099999999627471, 1.5,
+          0.8999999985098839, 1.700000001117587, 1.199999999254942,
+          1.400000000372529, 2.800000000745058
+        ],
+        "samplesMs": [
+          33, 32.30000000074506, 33.30000000074506, 33.5, 34.29999999888241,
+          32.79999999888241, 32.5, 33.399999998509884, 33.40000000037253,
+          32.80000000074506, 33.29999999888241, 33.19999999925494,
+          33.29999999888241, 32.70000000111759, 33.30000000074506,
+          33.09999999962747, 33, 34.20000000111759, 32.29999999888241, 33.5,
+          32.59999999962747, 33.09999999962747, 32.80000000074506,
+          32.90000000037253, 34, 33.29999999888241, 32.70000000111759, 32.5, 34,
+          32.90000000037253
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.7999999988824129,
+          "median": 1.199999999254942,
+          "p10": 0.8000000007450581,
+          "p90": 1.900000000372529,
+          "maximum": 2.800000000745058
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 32.29999999888241,
+          "median": 33.09999999962747,
+          "p10": 32.5,
+          "p90": 34,
+          "maximum": 34.29999999888241
+        }
+      }
+    },
+    {
+      "executionIndex": 17,
+      "arm": "lua",
+      "round": 2,
+      "rawRecordFile": "selected-first-lua-run2.json",
+      "rawRecordSha256": "b7505331f33560f8a1d529a2110675b25e80ca19bd7c017d25b76158175fba54",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          10, 8.300000000745058, 3.800000000745058, 4.599999999627471, 7,
+          3.799999998882413, 26.100000001490116, 3.700000001117587,
+          5.100000001490116, 4.5, 4.300000000745058, 5.199999999254942,
+          4.800000000745058, 6, 17.299999998882413, 10.800000000745058,
+          8.899999998509884, 18, 5.799999998882413, 3.599999999627471,
+          4.100000001490116, 4.400000000372529, 4.800000000745058,
+          5.900000000372529, 4, 3.5, 6.099999999627471, 3.300000000745058,
+          2.800000000745058, 10.900000000372529
+        ],
+        "samplesMs": [
+          32.09999999962747, 33.30000000074506, 33.30000000074506, 33.5,
+          32.80000000074506, 37.79999999888241, 50.20000000111759,
+          27.300000000745058, 32.600000001490116, 32.80000000074506,
+          33.80000000074506, 32.79999999888241, 33.90000000037253,
+          34.09999999962747, 31.799999998882413, 35.5, 31, 30.899999998509884,
+          33, 34.19999999925494, 33.100000001490116, 32.90000000037253,
+          32.20000000111759, 34.19999999925494, 32.19999999925494,
+          33.399999998509884, 32.59999999962747, 33.90000000037253,
+          33.40000000037253, 31.5
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 2.800000000745058,
+          "median": 4.950000001117587,
+          "p10": 3.5,
+          "p90": 10.900000000372529,
+          "maximum": 26.100000001490116
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 27.300000000745058,
+          "median": 33.05000000074506,
+          "p10": 31,
+          "p90": 34.19999999925494,
+          "maximum": 50.20000000111759
+        }
+      }
+    },
+    {
+      "executionIndex": 18,
+      "arm": "react",
+      "round": 2,
+      "rawRecordFile": "selected-first-react-run2.json",
+      "rawRecordSha256": "43f579128676849086ed53b21343d8a46e46a24c079c8a148a429b38bde1a518",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.200000001117587, 1.300000000745058, 1.5, 1.599999999627471, 2,
+          1.8999999985098839, 1, 1.300000000745058, 1.5, 1.200000001117587,
+          3.599999999627471, 1.799999998882413, 1.299999998882413,
+          1.6000000014901161, 1.199999999254942, 4, 3.099999999627471,
+          1.3999999985098839, 1.099999999627471, 1.3999999985098839,
+          1.099999999627471, 1.199999999254942, 1.5, 1.5, 1.5,
+          2.199999999254942, 1.400000000372529, 1.6000000014901161,
+          2.199999999254942, 1.400000000372529
+        ],
+        "samplesMs": [
+          33.70000000111759, 32.69999999925494, 34, 33.29999999888241,
+          33.399999998509884, 33.5, 32.69999999925494, 33, 34.100000001490116,
+          31.700000001117587, 31.399999998509884, 32.899999998509884,
+          32.69999999925494, 33.5, 33.69999999925494, 32.5, 32.59999999962747,
+          33.5, 33.79999999888241, 33.19999999925494, 32.80000000074506,
+          33.59999999962747, 32.29999999888241, 33.399999998509884,
+          33.40000000037253, 33.19999999925494, 32.80000000074506,
+          33.100000001490116, 33.59999999962747, 33.70000000111759
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 1,
+          "median": 1.5,
+          "p10": 1.099999999627471,
+          "p90": 2.199999999254942,
+          "maximum": 4
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.399999998509884,
+          "median": 33.24999999906868,
+          "p10": 32.29999999888241,
+          "p90": 33.70000000111759,
+          "maximum": 34.100000001490116
+        }
+      }
+    },
+    {
+      "executionIndex": 19,
+      "arm": "svelte",
+      "round": 2,
+      "rawRecordFile": "selected-first-svelte-run2.json",
+      "rawRecordSha256": "33fa0fa1b2756404e368c4dc305ea96becd45cfbdafbe7e11b7cd7f6fe67a65d",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.799999998882413, 1.800000000745058, 1.300000000745058,
+          1.400000000372529, 1.5, 1.300000000745058, 1.200000001117587,
+          1.599999999627471, 1.300000000745058, 1.400000000372529,
+          2.800000000745058, 1.599999999627471, 1.199999999254942,
+          1.099999999627471, 0.900000000372529, 0.8000000007450581, 1, 1,
+          1.200000001117587, 0.8000000007450581, 0.900000000372529,
+          0.7999999988824129, 0.8999999985098839, 0.8000000007450581,
+          1.1000000014901161, 1.3999999985098839, 0.900000000372529,
+          0.8000000007450581, 1.099999999627471, 0.900000000372529
+        ],
+        "samplesMs": [
+          33.09999999962747, 32.59999999962747, 33.40000000037253,
+          33.100000001490116, 33, 33.5, 33.90000000037253, 32.09999999962747,
+          33.09999999962747, 33.100000001490116, 33, 33.40000000037253,
+          33.30000000074506, 33.5, 32.90000000037253, 32.80000000074506,
+          34.09999999962747, 32.80000000074506, 33.20000000111759,
+          32.70000000111759, 33.69999999925494, 33, 32.59999999962747,
+          33.40000000037253, 32.80000000074506, 33, 34, 33.59999999962747,
+          32.69999999925494, 32.80000000074506
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.7999999988824129,
+          "median": 1.150000000372529,
+          "p10": 0.8000000007450581,
+          "p90": 1.599999999627471,
+          "maximum": 2.800000000745058
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 32.09999999962747,
+          "median": 33.09999999962747,
+          "p10": 32.59999999962747,
+          "p90": 33.69999999925494,
+          "maximum": 34.09999999962747
+        }
+      }
+    },
+    {
+      "executionIndex": 20,
+      "arm": "lua-row-baseline",
+      "round": 2,
+      "rawRecordFile": "selected-first-lua-row-baseline-run2.json",
+      "rawRecordSha256": "61b9f21ad927534a2da1a05e2ff0115895c85fe072ecb1a0ff0c670ab9cd4fab",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          9.799999998882413, 10.300000000745058, 10.099999999627471,
+          6.800000000745058, 25.699999999254942, 17.09999999962747,
+          5.799999998882413, 7.699999999254942, 11.199999999254942,
+          5.100000001490116, 5, 6, 6.800000000745058, 9.400000000372529,
+          10.200000001117587, 10.300000000745058, 11.5, 13.200000001117587,
+          6.200000001117587, 7, 6.099999999627471, 6.299999998882413,
+          4.900000000372529, 7.800000000745058, 7, 6, 5.400000000372529,
+          5.099999999627471, 5.599999999627471, 5.800000000745058
+        ],
+        "samplesMs": [
+          33.09999999962747, 33.30000000074506, 33.09999999962747,
+          33.600000001490116, 33.79999999888241, 32.5, 32.40000000037253, 33.5,
+          33.09999999962747, 33, 33.5, 33.19999999925494, 32.70000000111759,
+          33.90000000037253, 36.20000000111759, 29, 33.5, 33.30000000074506,
+          33.100000001490116, 33.59999999962747, 33, 32.19999999925494,
+          33.70000000111759, 33.30000000074506, 32.5, 34.19999999925494,
+          32.40000000037253, 33.09999999962747, 33.09999999962747, 33
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 4.900000000372529,
+          "median": 6.900000000372529,
+          "p10": 5.099999999627471,
+          "p90": 11.5,
+          "maximum": 25.699999999254942
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 29,
+          "median": 33.10000000055879,
+          "p10": 32.40000000037253,
+          "p90": 33.79999999888241,
+          "maximum": 36.20000000111759
+        }
+      }
+    },
+    {
+      "executionIndex": 21,
+      "arm": "react",
+      "round": 3,
+      "rawRecordFile": "selected-first-react-run3.json",
+      "rawRecordSha256": "efb540403c9fb7c1629ca81d831cf844c4352dd50662eab219478d092cf128c1",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          2.5, 1.200000001117587, 1.400000000372529, 1.3999999985098839,
+          1.400000000372529, 1.5, 1.199999999254942, 1.599999999627471,
+          1.099999999627471, 1.199999999254942, 1, 1.400000000372529, 1,
+          1.900000000372529, 0.900000000372529, 1, 0.900000000372529,
+          1.1000000014901161, 1.300000000745058, 1.099999999627471,
+          1.199999999254942, 0.8000000007450581, 1.5, 1.800000000745058,
+          1.799999998882413, 1.200000001117587, 1.300000000745058,
+          1.200000001117587, 1.200000001117587, 0.8999999985098839
+        ],
+        "samplesMs": [
+          33.09999999962747, 33, 33.59999999962747, 32.5, 33,
+          34.100000001490116, 32.5, 33.19999999925494, 34.399999998509884,
+          32.19999999925494, 33.600000001490116, 32.69999999925494,
+          33.79999999888241, 32.40000000037253, 32.59999999962747, 34, 33,
+          33.20000000111759, 32.69999999925494, 32.80000000074506,
+          33.40000000037253, 33, 33.30000000074506, 33.5, 33.69999999925494,
+          32.30000000074506, 33.5, 32.70000000111759, 34, 32.69999999925494
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.8000000007450581,
+          "median": 1.200000001117587,
+          "p10": 0.900000000372529,
+          "p90": 1.799999998882413,
+          "maximum": 2.5
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 32.19999999925494,
+          "median": 33.049999999813735,
+          "p10": 32.40000000037253,
+          "p90": 34,
+          "maximum": 34.399999998509884
+        }
+      }
+    },
+    {
+      "executionIndex": 22,
+      "arm": "svelte",
+      "round": 3,
+      "rawRecordFile": "selected-first-svelte-run3.json",
+      "rawRecordSha256": "120807eb5ebb0d9376bafefa83be6dd4811c0921804523957431a5feff8b02f6",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.200000001117587, 1, 1.099999999627471, 1.200000001117587,
+          1.200000001117587, 1.1000000014901161, 1, 1.3999999985098839,
+          1.6000000014901161, 1.299999998882413, 0.900000000372529,
+          1.299999998882413, 1, 1.099999999627471, 1, 1.199999999254942,
+          1.1000000014901161, 1.099999999627471, 1, 0.900000000372529, 1,
+          1.200000001117587, 1.200000001117587, 0.8999999985098839,
+          1.099999999627471, 1.199999999254942, 1.099999999627471,
+          1.199999999254942, 1, 1
+        ],
+        "samplesMs": [
+          31.40000000037253, 33.80000000074506, 33, 33.30000000074506,
+          33.30000000074506, 32.5, 34.29999999888241, 33.19999999925494, 32,
+          33.09999999962747, 33.80000000074506, 32.399999998509884,
+          33.59999999962747, 33.09999999962747, 32.59999999962747, 33.5,
+          32.90000000037253, 32.79999999888241, 33.69999999925494,
+          32.80000000074506, 33.80000000074506, 32.59999999962747, 34,
+          31.699999999254942, 33.30000000074506, 33.59999999962747,
+          32.899999998509884, 33, 33.30000000074506, 34.30000000074506
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.8999999985098839,
+          "median": 1.099999999627471,
+          "p10": 0.900000000372529,
+          "p90": 1.299999998882413,
+          "maximum": 1.6000000014901161
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.40000000037253,
+          "median": 33.14999999944121,
+          "p10": 32,
+          "p90": 33.80000000074506,
+          "maximum": 34.30000000074506
+        }
+      }
+    },
+    {
+      "executionIndex": 23,
+      "arm": "lua-row-baseline",
+      "round": 3,
+      "rawRecordFile": "selected-first-lua-row-baseline-run3.json",
+      "rawRecordSha256": "b1987d5eed43c8b99966b0c6eca8825053ce66b2c17e852c3e667659bad82258",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          16.09999999962747, 13.199999999254942, 15.400000000372529,
+          10.299999998882413, 10.099999999627471, 8.900000000372529,
+          9.599999999627471, 5, 7.5, 15.099999999627471, 10.199999999254942,
+          8.700000001117587, 16.90000000037253, 4.5, 4.800000000745058,
+          5.699999999254942, 4.900000000372529, 6.400000000372529, 6, 4.5,
+          4.099999999627471, 4.800000000745058, 4.400000000372529,
+          8.400000000372529, 13.099999999627471, 4.900000000372529,
+          4.400000000372529, 4.5, 8.799999998882413, 7.800000000745058
+        ],
+        "samplesMs": [
+          26.699999999254942, 34.19999999925494, 31.800000000745058,
+          32.899999998509884, 32.59999999962747, 34, 32.899999998509884, 33.5,
+          33.19999999925494, 32.20000000111759, 34.19999999925494,
+          32.600000001490116, 33.5, 32.59999999962747, 32.80000000074506,
+          34.40000000037253, 32.30000000074506, 33.29999999888241,
+          33.19999999925494, 33.09999999962747, 32.5, 33.19999999925494,
+          33.19999999925494, 33, 34.90000000037253, 32, 32.90000000037253,
+          33.09999999962747, 34.5, 31.700000001117587
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 4.099999999627471,
+          "median": 7.650000000372529,
+          "p10": 4.400000000372529,
+          "p90": 15.099999999627471,
+          "maximum": 16.90000000037253
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 26.699999999254942,
+          "median": 33.049999999813735,
+          "p10": 31.800000000745058,
+          "p90": 34.19999999925494,
+          "maximum": 34.90000000037253
+        }
+      }
+    },
+    {
+      "executionIndex": 24,
+      "arm": "lua",
+      "round": 3,
+      "rawRecordFile": "selected-first-lua-run3.json",
+      "rawRecordSha256": "c44d1c4819ed69bbf59e284d58592c6607631865414ce1f1933a25c61c37bc9d",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-first",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 0000",
+          "onPage": true,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          5.200000001117587, 3.800000000745058, 3.5, 3.099999999627471,
+          4.400000000372529, 4.900000000372529, 4.099999999627471, 3, 3.5,
+          3.400000000372529, 2.900000000372529, 3, 3.300000000745058,
+          3.299999998882413, 5.299999998882413, 3.900000000372529,
+          3.700000001117587, 3.700000001117587, 3.799999998882413,
+          3.699999999254942, 3.099999999627471, 5.299999998882413,
+          5.700000001117587, 3.099999999627471, 3.5, 5.100000001490116,
+          3.400000000372529, 2.800000000745058, 4, 4.299999998882413
+        ],
+        "samplesMs": [
+          32.20000000111759, 32.90000000037253, 33.40000000037253, 34,
+          31.90000000037253, 34.19999999925494, 31.90000000037253,
+          33.80000000074506, 32.20000000111759, 33.30000000074506, 34.5,
+          32.70000000111759, 32.30000000074506, 33.90000000037253,
+          33.29999999888241, 32.69999999925494, 32.80000000074506,
+          34.600000001490116, 32.19999999925494, 33, 33.5, 33.59999999962747,
+          32.59999999962747, 32.69999999925494, 33.30000000074506,
+          33.30000000074506, 32.80000000074506, 33.59999999962747,
+          33.29999999888241, 32.69999999925494
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 2.800000000745058,
+          "median": 3.7000000001862645,
+          "p10": 3,
+          "p90": 5.200000001117587,
+          "maximum": 5.700000001117587
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.90000000037253,
+          "median": 33.14999999944121,
+          "p10": 32.19999999925494,
+          "p90": 34,
+          "maximum": 34.600000001490116
+        }
+      }
+    },
+    {
+      "executionIndex": 25,
+      "arm": "lua-row-baseline",
+      "round": 1,
+      "rawRecordFile": "selected-off-page-lua-row-baseline-run1.json",
+      "rawRecordSha256": "49ceb0eb5fc436204a41f442ef6b855a1689ba4ba64bbe881dade453e10089ae",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          17.59999999962747, 24.5, 18.800000000745058, 23.699999999254942, 18,
+          18.59999999962747, 18.09999999962747, 22.100000001490116,
+          12.699999999254942, 14.099999999627471, 17, 14.099999999627471,
+          15.700000001117587, 14.5, 10.900000000372529, 14.100000001490116,
+          16.90000000037253, 11.199999999254942, 11.400000000372529, 11.5,
+          11.200000001117587, 14.700000001117587, 14.099999999627471,
+          9.600000001490116, 11.900000000372529, 11.599999999627471,
+          14.599999999627471, 18.199999999254942, 12.599999999627471,
+          12.399999998509884
+        ],
+        "samplesMs": [
+          30.40000000037253, 33.20000000111759, 33.40000000037253, 32.5, 34.5,
+          32.19999999925494, 33.79999999888241, 32.70000000111759, 33,
+          34.19999999925494, 32.40000000037253, 33, 34.80000000074506,
+          31.800000000745058, 33.59999999962747, 32.30000000074506,
+          33.09999999962747, 33.5, 33.5, 33.40000000037253, 32.30000000074506,
+          33.30000000074506, 33.5, 33.600000001490116, 33.29999999888241,
+          33.09999999962747, 32.59999999962747, 33.59999999962747, 33,
+          33.399999998509884
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 9.600000001490116,
+          "median": 14.300000000745058,
+          "p10": 11.199999999254942,
+          "p90": 18.800000000745058,
+          "maximum": 24.5
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 30.40000000037253,
+          "median": 33.25,
+          "p10": 32.19999999925494,
+          "p90": 33.79999999888241,
+          "maximum": 34.80000000074506
+        }
+      }
+    },
+    {
+      "executionIndex": 26,
+      "arm": "lua",
+      "round": 1,
+      "rawRecordFile": "selected-off-page-lua-run1.json",
+      "rawRecordSha256": "e643128a148d8d7b99c7a9283c18a430eddad9ceb87660e928428e57e3e8767e",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          14.300000000745058, 22, 9, 12.599999999627471, 12.099999999627471, 14,
+          17.40000000037253, 14.100000001490116, 8.900000000372529,
+          13.399999998509884, 18.59999999962747, 10.5, 20.199999999254942,
+          12.300000000745058, 9, 9.800000000745058, 13.100000001490116, 9,
+          10.400000000372529, 12.200000001117587, 9, 10.5, 10.5,
+          9.400000000372529, 12.900000000372529, 11.699999999254942,
+          9.300000000745058, 19.800000000745058, 11.599999999627471,
+          10.599999999627471
+        ],
+        "samplesMs": [
+          32.59999999962747, 32.90000000037253, 33.30000000074506,
+          33.59999999962747, 33, 33.5, 33, 33.70000000111759, 32.69999999925494,
+          32.79999999888241, 33.19999999925494, 33.70000000111759,
+          33.09999999962747, 32.80000000074506, 33.19999999925494,
+          33.59999999962747, 33.40000000037253, 33, 33.19999999925494,
+          33.40000000037253, 33.5, 31.59999999962747, 33.40000000037253, 34,
+          32.59999999962747, 33.59999999962747, 32.40000000037253,
+          33.80000000074506, 32.09999999962747, 33.59999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 8.900000000372529,
+          "median": 11.899999999441206,
+          "p10": 9,
+          "p90": 18.59999999962747,
+          "maximum": 22
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.59999999962747,
+          "median": 33.19999999925494,
+          "p10": 32.40000000037253,
+          "p90": 33.70000000111759,
+          "maximum": 34
+        }
+      }
+    },
+    {
+      "executionIndex": 27,
+      "arm": "react",
+      "round": 1,
+      "rawRecordFile": "selected-off-page-react-run1.json",
+      "rawRecordSha256": "05a283ba11b6a80328267e2a2a57bf22123517e70465a4abfd34d4c271eb0252",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.400000000372529, 1.8999999985098839, 1.400000000372529,
+          1.799999998882413, 2.099999999627471, 1.300000000745058,
+          1.200000001117587, 1.699999999254942, 1.400000000372529,
+          1.200000001117587, 1.400000000372529, 2.099999999627471,
+          1.200000001117587, 2.600000001490116, 1.200000001117587,
+          1.400000000372529, 1.300000000745058, 1.199999999254942,
+          1.400000000372529, 1.299999998882413, 1.099999999627471,
+          1.199999999254942, 1.5, 1.300000000745058, 1.200000001117587,
+          1.599999999627471, 1.3999999985098839, 1.699999999254942,
+          1.8999999985098839, 1.799999998882413
+        ],
+        "samplesMs": [
+          33.09999999962747, 33.59999999962747, 33.09999999962747,
+          33.69999999925494, 32.80000000074506, 32.5, 33.5, 33,
+          33.20000000111759, 33.20000000111759, 33.59999999962747,
+          32.69999999925494, 33.30000000074506, 32.70000000111759,
+          34.70000000111759, 31.59999999962747, 33.40000000037253,
+          33.59999999962747, 32.59999999962747, 33, 33.30000000074506,
+          33.09999999962747, 33.40000000037253, 32.600000001490116,
+          33.80000000074506, 32.90000000037253, 33.59999999962747,
+          32.19999999925494, 33.69999999925494, 32.59999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 1.099999999627471,
+          "median": 1.400000000372529,
+          "p10": 1.199999999254942,
+          "p90": 1.8999999985098839,
+          "maximum": 2.600000001490116
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.59999999962747,
+          "median": 33.15000000037253,
+          "p10": 32.5,
+          "p90": 33.69999999925494,
+          "maximum": 34.70000000111759
+        }
+      }
+    },
+    {
+      "executionIndex": 28,
+      "arm": "svelte",
+      "round": 1,
+      "rawRecordFile": "selected-off-page-svelte-run1.json",
+      "rawRecordSha256": "09e39b813be0f1313add2a55fa4695e5e33a68874ff013626af24201841277b3",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.8999999985098839, 1, 1.099999999627471, 2, 1.299999998882413,
+          1.200000001117587, 1.400000000372529, 1.099999999627471,
+          1.400000000372529, 1.099999999627471, 0.900000000372529,
+          1.099999999627471, 1.099999999627471, 1, 1, 1.200000001117587, 1.5, 1,
+          1.199999999254942, 1.5, 1.200000001117587, 1.099999999627471,
+          1.599999999627471, 1, 1.099999999627471, 1.599999999627471,
+          1.300000000745058, 1.400000000372529, 1, 1.1000000014901161
+        ],
+        "samplesMs": [
+          32.899999998509884, 33.79999999888241, 32.40000000037253,
+          33.19999999925494, 33.09999999962747, 33.90000000037253,
+          32.70000000111759, 32.90000000037253, 33.90000000037253,
+          32.70000000111759, 33.09999999962747, 33.19999999925494, 33, 33.5,
+          32.80000000074506, 32.80000000074506, 33.70000000111759,
+          33.20000000111759, 32.80000000074506, 33.40000000037253,
+          32.70000000111759, 33.5, 33.30000000074506, 33.30000000074506, 33,
+          32.90000000037253, 33.30000000074506, 32.90000000037253,
+          33.40000000037253, 33.40000000037253
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.900000000372529,
+          "median": 1.150000000372529,
+          "p10": 1,
+          "p90": 1.599999999627471,
+          "maximum": 2
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 32.40000000037253,
+          "median": 33.14999999944121,
+          "p10": 32.70000000111759,
+          "p90": 33.70000000111759,
+          "maximum": 33.90000000037253
+        }
+      }
+    },
+    {
+      "executionIndex": 29,
+      "arm": "lua",
+      "round": 2,
+      "rawRecordFile": "selected-off-page-lua-run2.json",
+      "rawRecordSha256": "787fdaf2df4e7b93e9b09dc2785883f260bb20e5a828aba3e822410ceef4c57e",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          19.09999999962747, 23.600000001490116, 18.699999999254942,
+          15.900000000372529, 20.40000000037253, 21.800000000745058,
+          30.300000000745058, 10.800000000745058, 16.59999999962747,
+          14.099999999627471, 17.40000000037253, 14, 12.699999999254942,
+          13.800000000745058, 10, 14.200000001117587, 9.900000000372529,
+          19.299999998882413, 12.400000000372529, 10.199999999254942,
+          11.599999999627471, 20.700000001117587, 11, 11, 9.399999998509884,
+          13.300000000745058, 12.400000000372529, 16.59999999962747,
+          18.199999999254942, 18.200000001117587
+        ],
+        "samplesMs": [
+          33, 33, 32.59999999962747, 33.100000001490116, 33.59999999962747,
+          32.5, 50.30000000074506, 32.59999999962747, 32.59999999962747,
+          33.40000000037253, 33.30000000074506, 34.79999999888241,
+          33.69999999925494, 30.5, 31.5, 33.100000001490116, 33.40000000037253,
+          33, 32.80000000074506, 33.40000000037253, 33.69999999925494,
+          32.600000001490116, 33.5, 32.80000000074506, 33, 33.90000000037253,
+          32.30000000074506, 33.90000000037253, 70.90000000037253,
+          28.40000000037253
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 9.399999998509884,
+          "median": 14.150000000372529,
+          "p10": 10,
+          "p90": 20.700000001117587,
+          "maximum": 30.300000000745058
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 28.40000000037253,
+          "median": 33.05000000074506,
+          "p10": 31.5,
+          "p90": 33.90000000037253,
+          "maximum": 70.90000000037253
+        }
+      }
+    },
+    {
+      "executionIndex": 30,
+      "arm": "react",
+      "round": 2,
+      "rawRecordFile": "selected-off-page-react-run2.json",
+      "rawRecordSha256": "d386f99a16ca11cfb2120d14dcb179f92f294c3bda847579960a2d87484308fa",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          2.400000000372529, 1.299999998882413, 1.5, 2.700000001117587,
+          1.700000001117587, 1.5, 1.799999998882413, 11.300000000745058,
+          1.599999999627471, 1.400000000372529, 2.800000000745058, 1.5,
+          1.700000001117587, 2.099999999627471, 1.099999999627471,
+          1.599999999627471, 1.5, 1.5, 2.599999999627471, 2, 1.199999999254942,
+          2, 1.5, 1.5, 3.400000000372529, 1.599999999627471, 1.099999999627471,
+          1.6000000014901161, 1.3999999985098839, 2.699999999254942
+        ],
+        "samplesMs": [
+          33.90000000037253, 31.799999998882413, 33.5, 32.70000000111759,
+          32.30000000074506, 32.59999999962747, 34.09999999962747,
+          31.800000000745058, 33.5, 32.80000000074506, 33, 33.100000001490116,
+          32.70000000111759, 33.69999999925494, 33.29999999888241,
+          32.59999999962747, 33.20000000111759, 33.29999999888241, 34.5,
+          30.300000000745058, 34.29999999888241, 32.29999999888241,
+          31.90000000037253, 32.40000000037253, 33.09999999962747,
+          33.79999999888241, 33.59999999962747, 31.90000000037253,
+          33.29999999888241, 33
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 1.099999999627471,
+          "median": 1.599999999627471,
+          "p10": 1.199999999254942,
+          "p90": 2.700000001117587,
+          "maximum": 11.300000000745058
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 30.300000000745058,
+          "median": 33.049999999813735,
+          "p10": 31.800000000745058,
+          "p90": 33.90000000037253,
+          "maximum": 34.5
+        }
+      }
+    },
+    {
+      "executionIndex": 31,
+      "arm": "svelte",
+      "round": 2,
+      "rawRecordFile": "selected-off-page-svelte-run2.json",
+      "rawRecordSha256": "c3d788c43490ad5e9670a6ecf19ed057469f263baaceea8c609d9a60b3cc9723",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.400000000372529, 1.900000000372529, 1.200000001117587,
+          1.900000000372529, 1.5, 1.900000000372529, 1.599999999627471, 2,
+          1.300000000745058, 2.100000001490116, 2.699999999254942, 1,
+          1.800000000745058, 2.700000001117587, 1, 1.300000000745058,
+          3.599999999627471, 1.200000001117587, 0.8000000007450581,
+          1.200000001117587, 0.900000000372529, 1.699999999254942,
+          1.199999999254942, 1.400000000372529, 1.200000001117587,
+          1.299999998882413, 0.900000000372529, 1.199999999254942,
+          1.400000000372529, 1.5
+        ],
+        "samplesMs": [
+          33.59999999962747, 32.90000000037253, 33.20000000111759,
+          33.69999999925494, 32.5, 33.30000000074506, 33.79999999888241, 33,
+          33.5, 33.5, 31.899999998509884, 34.69999999925494, 33.90000000037253,
+          30.300000000745058, 32.30000000074506, 33.600000001490116,
+          32.59999999962747, 32.90000000037253, 33.80000000074506,
+          32.70000000111759, 33.90000000037253, 32.5, 33.59999999962747,
+          33.19999999925494, 33, 32.69999999925494, 34, 32.69999999925494,
+          33.59999999962747, 33.09999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.8000000007450581,
+          "median": 1.400000000372529,
+          "p10": 0.900000000372529,
+          "p90": 2.100000001490116,
+          "maximum": 3.599999999627471
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 30.300000000745058,
+          "median": 33.200000000186265,
+          "p10": 32.30000000074506,
+          "p90": 33.90000000037253,
+          "maximum": 34.69999999925494
+        }
+      }
+    },
+    {
+      "executionIndex": 32,
+      "arm": "lua-row-baseline",
+      "round": 2,
+      "rawRecordFile": "selected-off-page-lua-row-baseline-run2.json",
+      "rawRecordSha256": "f8715eff29bca14e2b1e485119c44be7e05d92fc557ad9e909468bbcdac301cc",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          20, 28.09999999962747, 15.599999999627471, 12.800000000745058, 16.5,
+          16.09999999962747, 12.700000001117587, 12.900000000372529,
+          12.799999998882413, 15.700000001117587, 39.5, 16.40000000037253,
+          15.100000001490116, 15.300000000745058, 12.799999998882413,
+          12.200000001117587, 14.199999999254942, 11.900000000372529,
+          14.900000000372529, 16, 12.299999998882413, 12.199999999254942,
+          14.399999998509884, 12.800000000745058, 12, 15.700000001117587,
+          15.699999999254942, 18.5, 14.300000000745058, 15
+        ],
+        "samplesMs": [
+          33.19999999925494, 33.59999999962747, 32.69999999925494,
+          33.20000000111759, 32.80000000074506, 33.40000000037253,
+          33.20000000111759, 33.09999999962747, 35.19999999925494,
+          33.30000000074506, 45.80000000074506, 32.59999999962747,
+          33.70000000111759, 33.30000000074506, 34.899999998509884, 31.5,
+          31.799999998882413, 33.79999999888241, 33.59999999962747,
+          31.59999999962747, 33.59999999962747, 33.40000000037253,
+          32.59999999962747, 33.09999999962747, 33.5, 33.5, 32.69999999925494,
+          33.30000000074506, 32.80000000074506, 33
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 11.900000000372529,
+          "median": 14.950000000186265,
+          "p10": 12.199999999254942,
+          "p90": 18.5,
+          "maximum": 39.5
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.5,
+          "median": 33.25000000093132,
+          "p10": 31.799999998882413,
+          "p90": 33.79999999888241,
+          "maximum": 45.80000000074506
+        }
+      }
+    },
+    {
+      "executionIndex": 33,
+      "arm": "react",
+      "round": 3,
+      "rawRecordFile": "selected-off-page-react-run3.json",
+      "rawRecordSha256": "72cbf7f0e6e4e362478575c1d61fde14ef4c210ed0bb65e76db1f936f703c424",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.900000000372529, 1.8999999985098839, 1.5, 3.400000000372529, 2.5,
+          1.699999999254942, 1.700000001117587, 1.699999999254942,
+          2.300000000745058, 1.900000000372529, 2.300000000745058,
+          1.900000000372529, 1.300000000745058, 2.400000000372529,
+          2.900000000372529, 2.299999998882413, 2.299999998882413,
+          1.400000000372529, 1.3999999985098839, 1.300000000745058,
+          9.800000000745058, 1.8999999985098839, 1.699999999254942,
+          2.099999999627471, 1.800000000745058, 1.300000000745058, 5.5,
+          1.199999999254942, 1.5, 2.199999999254942
+        ],
+        "samplesMs": [
+          33.90000000037253, 32.399999998509884, 34.19999999925494,
+          27.699999999254942, 33.899999998509884, 32.79999999888241, 33,
+          33.59999999962747, 33.600000001490116, 33, 32.80000000074506, 33,
+          33.20000000111759, 33.79999999888241, 33.19999999925494,
+          32.399999998509884, 33, 33, 33.59999999962747, 129.19999999925494,
+          35.90000000037253, 36.69999999925494, 29.299999998882413, 33, 33,
+          33.80000000074506, 34.19999999925494, 31.699999999254942,
+          35.69999999925494, 31.699999999254942
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 1.199999999254942,
+          "median": 1.8999999994412065,
+          "p10": 1.300000000745058,
+          "p90": 2.900000000372529,
+          "maximum": 9.800000000745058
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 27.699999999254942,
+          "median": 33.09999999962747,
+          "p10": 31.699999999254942,
+          "p90": 35.69999999925494,
+          "maximum": 129.19999999925494
+        }
+      }
+    },
+    {
+      "executionIndex": 34,
+      "arm": "svelte",
+      "round": 3,
+      "rawRecordFile": "selected-off-page-svelte-run3.json",
+      "rawRecordSha256": "175b35a6fb2f744edaf4b3f5073531076aad8d6d78ee3bafa9b846f6f112c43a",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          1.400000000372529, 1.900000000372529, 2.199999999254942,
+          1.200000001117587, 1.400000000372529, 2.400000000372529,
+          1.6000000014901161, 1.699999999254942, 2.400000000372529, 1.5,
+          0.8999999985098839, 1.199999999254942, 1.200000001117587,
+          1.699999999254942, 1.099999999627471, 1.300000000745058,
+          1.8999999985098839, 1.200000001117587, 1.3999999985098839,
+          2.699999999254942, 0.7999999988824129, 1.1000000014901161,
+          1.200000001117587, 1.599999999627471, 1.199999999254942,
+          1.099999999627471, 1.599999999627471, 1.199999999254942,
+          2.299999998882413, 1.299999998882413
+        ],
+        "samplesMs": [
+          34.20000000111759, 34.5, 30, 33.20000000111759, 32.90000000037253,
+          33.70000000111759, 33.5, 32.40000000037253, 32.5, 33.69999999925494,
+          32.79999999888241, 32.90000000037253, 33.20000000111759,
+          33.40000000037253, 33.80000000074506, 32.69999999925494,
+          33.69999999925494, 32.40000000037253, 33.29999999888241,
+          32.30000000074506, 32.69999999925494, 33.40000000037253,
+          33.40000000037253, 32.69999999925494, 33.19999999925494,
+          34.09999999962747, 32.899999998509884, 33.19999999925494,
+          32.59999999962747, 32.69999999925494
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 0.7999999988824129,
+          "median": 1.3999999994412065,
+          "p10": 1.099999999627471,
+          "p90": 2.299999998882413,
+          "maximum": 2.699999999254942
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 30,
+          "median": 33.19999999925494,
+          "p10": 32.40000000037253,
+          "p90": 33.80000000074506,
+          "maximum": 34.5
+        }
+      }
+    },
+    {
+      "executionIndex": 35,
+      "arm": "lua-row-baseline",
+      "round": 3,
+      "rawRecordFile": "selected-off-page-lua-row-baseline-run3.json",
+      "rawRecordSha256": "a989a046e10809236e4a87db75ecdc2f92c040868ef04248d13238689d83e753",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          40.5, 18.59999999962747, 30.09999999962747, 13.599999999627471, 16,
+          16.699999999254942, 14.599999999627471, 12, 17.90000000037253,
+          19.800000000745058, 27, 17.300000000745058, 13.900000000372529,
+          14.799999998882413, 16.800000000745058, 12.699999999254942,
+          14.199999999254942, 17.40000000037253, 14.599999999627471,
+          15.400000000372529, 16.09999999962747, 15.100000001490116,
+          14.300000000745058, 12.700000001117587, 14.400000000372529, 18,
+          16.800000000745058, 29.200000001117587, 14.800000000745058, 17.5
+        ],
+        "samplesMs": [
+          66.5, 31.40000000037253, 51.19999999925494, 32.899999998509884, 32,
+          32.59999999962747, 33, 33, 32.40000000037253, 33.30000000074506,
+          34.20000000111759, 31.200000001117587, 34, 33.09999999962747,
+          33.09999999962747, 32.90000000037253, 33, 33.30000000074506,
+          33.79999999888241, 32.80000000074506, 32.5, 33.80000000074506,
+          33.30000000074506, 32.59999999962747, 33.90000000037253,
+          32.80000000074506, 32.70000000111759, 49.90000000037253,
+          32.40000000037253, 34.09999999962747
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 12,
+          "median": 16.049999999813735,
+          "p10": 12.700000001117587,
+          "p90": 27,
+          "maximum": 40.5
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 31.200000001117587,
+          "median": 33.0,
+          "p10": 32,
+          "p90": 34.20000000111759,
+          "maximum": 66.5
+        }
+      }
+    },
+    {
+      "executionIndex": 36,
+      "arm": "lua",
+      "round": 3,
+      "rawRecordFile": "selected-off-page-lua-run3.json",
+      "rawRecordSha256": "9f42e1836e9ebc48cfc6b888c8448e293a3015cf20a487c28c9bae0ae72a29b2",
+      "result": {
+        "scope": "Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.",
+        "scenario": "selected-off-page",
+        "mutationPattern": "toggle-selected-material-flag-each-iteration",
+        "selectedRecipe": {
+          "name": "Recipe 9999 (selected off-page)",
+          "onPage": false,
+          "path": "/benchmark/recipe/0",
+          "sourceSlot": "0"
+        },
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+        "viewport": [1180, 757],
+        "visibility": "visible",
+        "warmups": 5,
+        "deliveryToCommitSamplesMs": [
+          13.100000001490116, 27.5, 13.799999998882413, 22.40000000037253, 16,
+          22.5, 14.099999999627471, 11.200000001117587, 15.800000000745058,
+          10.399999998509884, 42.40000000037253, 16.899999998509884, 15,
+          15.199999999254942, 16.899999998509884, 11.599999999627471, 12,
+          24.800000000745058, 22, 17.90000000037253, 12.600000001490116,
+          20.700000001117587, 12, 11.400000000372529, 10.800000000745058,
+          19.09999999962747, 12.200000001117587, 11.100000001490116,
+          11.099999999627471, 11.900000000372529
+        ],
+        "samplesMs": [
+          36.70000000111759, 46.59999999962747, 32.79999999888241,
+          36.20000000111759, 29.59999999962747, 33.5, 32.69999999925494,
+          34.600000001490116, 33.20000000111759, 32, 51.79999999888241,
+          31.199999999254942, 32.70000000111759, 33.5, 32.59999999962747,
+          33.69999999925494, 33.69999999925494, 50, 32.5, 32.69999999925494,
+          32.70000000111759, 33.30000000074506, 32.70000000111759, 34,
+          203.80000000074506, 31.59999999962747, 33.80000000074506, 29.5,
+          32.79999999888241, 33.70000000111759
+        ],
+        "renderedRows": 40
+      },
+      "statisticsMs": {
+        "deliveryToCommitSamplesMs": {
+          "n": 30,
+          "minimum": 10.399999998509884,
+          "median": 14.549999999813735,
+          "p10": 11.099999999627471,
+          "p90": 22.5,
+          "maximum": 42.40000000037253
+        },
+        "samplesMs": {
+          "n": 30,
+          "minimum": 29.5,
+          "median": 33.25000000093132,
+          "p10": 31.199999999254942,
+          "p90": 46.59999999962747,
+          "maximum": 203.80000000074506
+        }
+      }
+    }
+  ],
+  "interpretationLimits": [
+    "Only three rotated rounds per cell; the four arms were not fully counterbalanced. Shared-cloud scheduling and timer granularity make small React/Svelte timing differences uncertain.",
+    "Lua candidate pooled medians improve in all three scenarios, but selected-off-page P90 and maximum worsen. No universal or tail-latency improvement is claimed.",
+    "Two-frame intervals are scheduling-sensitive; preserve their outliers rather than reclassifying them as CPU or paint measurements.",
+    "This iteration checks benchmark state and a final selected-off-page screenshot, not a new complete all-layout/focus/accessibility certification. Earlier layout QA is pinned to fe543e, and the prior minor focus-outline edge limitation is not claimed resolved.",
+    "Results describe these exact source/artifact hashes, not later builds or languages in general. No startup, CPU, heap, exact paint, native-client, AAA-quality or native-game verdict follows.",
+    "Svelte is a provisional candidate for isolated protocol-preserving adapter tests and native acceptance, not production activation or framework-wide replacement. Retain the Lua experiment and observed gains without further tuning solely to force a win."
+  ]
+}

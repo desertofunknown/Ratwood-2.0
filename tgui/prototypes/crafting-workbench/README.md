@@ -85,10 +85,11 @@ Mounted tests use Happy DOM: they cover DOM events, action payloads, filtering,
 focus bookkeeping and stale selections, not rendered pixels or native keyboard
 activation. Separate hosted Chromium checks have captured the sampled layout
 and focus results below, plus a historical Lua scan-guard A/B. Those results are
-pinned to their recorded builds; browser timings for the current row-value
-experiment remain pending. Startup, CPU cost, heap cost and native-client
-acceptance remain unmeasured. Do not choose a framework on bundle bytes alone or
-call a synthetic DOM benchmark a browser benchmark.
+pinned to their recorded builds. The subsequent [row-value browser comparison](lua/browser-row-value.md)
+records fresh matched Lua/React/Svelte measurements at f796d58e, with all raw
+samples retained. Startup, CPU cost, heap cost and native-client acceptance
+remain unmeasured. Do not choose a framework on bundle bytes alone or call a
+Happy DOM timing run a real-browser measurement.
 
 `benchmark.ts` is a separate warm Bun derived-data cost check against the current
 category/filter/search expressions. It compares ordered identities across 24
@@ -111,7 +112,9 @@ cases. Case medians were 0.213–0.830 ms for the reference expressions and
 0.565 ms. This additional work includes preparing advisory hints and identities.
 It is a small measured derivation cost, not a performance improvement and not a
 framework verdict. Reproduce rather than generalize these machine-specific
-numbers; browser rendering remains the important missing measurement.
+numbers. Browser rendering was unmeasured at that historical checkpoint; the
+[f796d58e browser series](lua/browser-row-value.md) is separate evidence, not a
+replacement or reinterpretation of this Bun result.
 
 ```sh
 python3 tools/extract-miacraft-workload.py /tmp/crafting-fixture.json
@@ -138,9 +141,9 @@ inactive Svelte diagnostic branches despite the production setting; this is not
 a claim about the smallest output another bundler could produce. No production
 React cost is removed by this disconnected prototype.
 
-### Three-candidate build observation with visible controls
+### Three-candidate build observation at `f796d58e` with visible controls
 
-All three current demos share the visible comparison panel, system-font CSS,
+All three measured demos share the visible comparison panel, system-font CSS,
 sample catalog and action contract. No font files are redistributed. Using the
 same Node 24.19.0 gzip-9 compressor for each artifact:
 
@@ -165,10 +168,13 @@ verdict or a selected-state/native-game performance claim.
 
 The subsequent [row-value experiment](lua/row-value-experiment.md) avoids
 repeated conversions and DOM reads for unchanged renderer-owned row fields.
-Exact operation counts and mounted equivalence pass, but its browser timing
-comparison is still pending. The shared [benchmark scenarios](browser-benchmark-scenarios.md)
-now distinguish the unselected catalog, a selected visible row and a selected
-off-page row. Compare matching scenarios and builds, not historical timing series.
+Exact operation counts and mounted equivalence pass. Its [fresh hosted comparison](lua/browser-row-value.md)
+measured lower Lua pooled medians in all three scenarios, but not better off-page
+tails; React and Svelte remained faster in this tested workload. The shared
+[benchmark scenarios](browser-benchmark-scenarios.md) distinguish the unselected
+catalog, a selected visible row and a selected off-page row. Compare matching
+scenarios and builds, not historical timing series. The architecture assessment
+names Svelte a provisional integration candidate, not a production replacement.
 
 All candidates share a [short-height layout adjustment](short-height-layout.md)
 for high zoom and small windows. Its browser scrolling/focus acceptance checklist
