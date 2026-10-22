@@ -14,7 +14,7 @@
 	holder.clear_reagents()
 
 /datum/chemical_reaction/reagent_explosion/on_reaction(datum/reagents/holder, created_volume)
-	do_explosion()
+	do_explosion(holder, created_volume)
 
 /datum/chemical_reaction/reagent_explosion/potassium_explosion
 	name = "Explosion"
