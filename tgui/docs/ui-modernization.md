@@ -182,6 +182,18 @@ licensing, attribution and compatibility identifiers remain intact. Source,
 static browser rendering and synthetic tests do not establish native gameplay
 or a universal performance improvement.
 
+### Known backend readiness gap
+
+At checkpoint `06bdef8a`, the [TGUI Multiline preference](../../code/modules/tgui_input/multilinepref.dm)
+changes a current-mob flag, but the [text-input route](../../code/modules/tgui_input/text.dm)
+does not consume it. The disconnected settings candidate mirrors that existing
+state/action contract; it does not establish an effective multiline preference.
+Do not activate the flag by blindly selecting the existing native fallback. The
+paths do not share a verified contract for length, encoding/newline normalization,
+cancellation, paste suppression, timeout, UI-state checks and live preview.
+Keep production routing and current-mob scope unchanged until a separate input
+contract and native regression checks establish which prompts can support it.
+
 ## Language/framework alternatives
 
 [Svelte's compiler](https://svelte.dev/docs/svelte/svelte-compiler) produces client
