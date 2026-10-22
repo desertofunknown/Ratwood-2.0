@@ -1,7 +1,7 @@
 {
   "baseline_commit": "06bdef8a8315323e91afd10d7c6f7a91585147e3",
-  "scope": "Source-bound Python model only, not DM execution, engine compilation, JSON transport, UI mounting, or native gameplay. Ingredient fixtures use exact disjoint item requirements without subtype competition, tools, location, skill, chemistry, or consumption. All other crafting.dm bytes, including authoritative action and validation, are locked to the reviewed baseline. Recipe facts come from this repository; ordinary inheritance supplies the alternate wall name.",
-  "unchanged_crafting_sha256": "bf46c30149c5b5adf032fa9a73bce497377e3b7d22674c11ec3aed94792327a0",
+  "scope": "Source-bound Python model only, not DM execution, engine compilation, JSON transport, UI mounting, or native gameplay. Ingredient fixtures use exact disjoint item requirements without subtype competition, tools, location, skill, chemistry, or consumption. All other crafting.dm bytes, including authoritative action and validation, are locked to the reviewed baseline plus the intentional changes in baseline_adjustments. Recipe facts come from this repository; ordinary inheritance supplies the alternate wall name.",
+  "unchanged_crafting_sha256": "6834de4d430eeaaa73c75696f9c88eb54f56765c557942a940e92f17ffa8d752",
   "recipes": [
     {
       "source": "code/modules/roguetown/roguecrafting/engineering.dm",
@@ -42,5 +42,8 @@
       "definition_sha256": "01ac683185926df2ab0c72e32e5a455431b9db4bad027cc2a494115f9ce41e67",
       "name_parent": "/datum/crafting_recipe/roguetown/turfs/wood/wall"
     }
+  ],
+  "baseline_adjustments": [
+    "personal_crafting/ui_act adds if(.) followed by bare return immediately after its existing . = ..() parent call. All remaining normalized component bytes are unchanged."
   ]
 }

@@ -653,6 +653,8 @@
 
 /datum/component/personal_crafting/ui_act(action, params)
 	. = ..()
+	if(.)
+		return
 	switch(action)
 		if("craft")
 			var/path = text2path(params["item"])
