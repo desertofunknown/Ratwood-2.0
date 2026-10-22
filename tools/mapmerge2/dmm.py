@@ -31,9 +31,10 @@ class DMM:
         return _parse(bytes.decode(ENCODING))
 
     def to_file(self, fname, *, tgm = True):
-        self._presave_checks()
-        with open(fname, 'w', newline='\n', encoding=ENCODING) as f:
-            (save_tgm if tgm else save_dmm)(self, f)
+        # Finish serialization before opening (and truncating) the destination.
+        data = self.to_bytes(tgm=tgm)
+        with open(fname, 'wb') as f:
+            f.write(data)
 
     def to_bytes(self, *, tgm = True):
         self._presave_checks()
