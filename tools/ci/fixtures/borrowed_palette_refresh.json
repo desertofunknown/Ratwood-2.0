@@ -1,0 +1,118 @@
+{
+  "baseline_commit": "2c25b283ff24191a456a2e956ce0d22cdcb5c283",
+  "scope": "Exact source contracts plus a narrow Python shared-reference/candidate model, not DM execution or native acceptance.",
+  "baseline_update": "\tif(!prefs)\n\t\tprefs = mymob?.client?.prefs\n\tif(!prefs)\n\t\treturn\n\n\tvar/list/screen_objects = static_inventory + toggleable_inventory + hotkeybuttons + infodisplay + screenoverlays + inv_slots\n\tif(hand_slots)\n\t\tfor(var/held_index in hand_slots)\n\t\t\tscreen_objects += hand_slots[held_index]\n\tif(mymob?.client)\n\t\tscreen_objects += mymob.client.screen\n\n\tfor(var/screen_item as anything in screen_objects)\n\t\tvar/atom/movable/screen/screen_object = screen_item\n\t\tif(istype(screen_object))\n\t\t\tscreen_object.apply_colorblind_hud_palette(prefs)\n\n",
+  "surrounding_hud_sha256": "1d256f3fbf5007b6e3abb016c9b5a73372b254ff20c9e6355f0585ff35c118b9",
+  "source_contracts": [
+    {
+      "path": "code/_onclick/hud/screen_objects.dm",
+      "header": "/atom/movable/screen/proc/apply_colorblind_hud_palette(datum/preferences/prefs)",
+      "sha256": "c03a5c5027829a49cdd61f2b1c4f016c1aeabc53775ba9c5d920324afb987a26"
+    },
+    {
+      "path": "code/_onclick/hud/screen_objects.dm",
+      "header": "/atom/movable/screen/bloodpool/apply_colorblind_hud_palette(datum/preferences/prefs)",
+      "sha256": "165d5f5a021b4ec97dd69556e14e9993f6b14510a820740fb7b2da4ef9c8cbc2"
+    },
+    {
+      "path": "code/_onclick/hud/human.dm",
+      "header": "/datum/hud/human/New(mob/living/carbon/human/owner)",
+      "sha256": "29616d03f08e2ab3fd0ade80dbec60ed575b4200ec17d30d0f26840a3a151f92"
+    },
+    {
+      "path": "code/_onclick/hud/human.dm",
+      "header": "/atom/movable/screen/human/toggle/handle_click()",
+      "sha256": "2f887205050721a07fdd08d108e80588fda738b9ace22fc9de915f5b1877b085"
+    },
+    {
+      "path": "code/_onclick/hud/human.dm",
+      "header": "/datum/hud/human/hidden_inventory_update(mob/viewer)",
+      "sha256": "573d15b94ef5817cbcaee0054109ad507c6a7a695d7e889c4a2d18409c8bda60"
+    },
+    {
+      "path": "code/_onclick/hud/human.dm",
+      "header": "/datum/hud/human/persistent_inventory_update(mob/viewer)",
+      "sha256": "24cd00ec9cda670808f6a067d6fb87f0b2cbf070e2aaa36d8fda25e3f1430708"
+    },
+    {
+      "path": "code/_onclick/hud/ghost.dm",
+      "header": "/datum/hud/ghost/show_hud(version = 0, mob/viewmob)",
+      "sha256": "4a5817e60e166ca03a8d590800b01c797fb0f358cda2170bdc18c648bd1c9293"
+    },
+    {
+      "path": "code/modules/mob/dead/observer/observer.dm",
+      "header": "/mob/dead/observer/proc/do_observe(mob/mob_eye)",
+      "sha256": "bd566ecae5b32d2bf7fbe6a7ba63027e482af49d1fad2819ef4b70f9725dd3fd"
+    },
+    {
+      "path": "code/modules/mob/dead/observer/observer.dm",
+      "header": "/mob/dead/observer/proc/sync_observed_screens()",
+      "sha256": "30bdbb760d031c63af3aaa3dea69efb9e7335fa44f7532294db30d716b0180d7"
+    },
+    {
+      "path": "code/modules/mob/dead/observer/observer.dm",
+      "header": "/mob/dead/observer/proc/add_observed_screen(atom/movable/screen_object)",
+      "sha256": "117d959c6a89f9de119f6aa6ab68c2ae7da29651aa1a4caf59900d30fdc8d928"
+    },
+    {
+      "path": "code/modules/mob/dead/observer/observer.dm",
+      "header": "/mob/dead/observer/proc/notify_cloning(message, sound, atom/source, flashwindow = TRUE)",
+      "sha256": "d9caf50b1d81305832a9a1013f0b60375e51515a2bf6f5a7b64ed1f87e520fe4"
+    },
+    {
+      "path": "code/_onclick/hud/alert.dm",
+      "header": "/mob/proc/throw_alert(category, type, severity, obj/new_master, override = FALSE)",
+      "sha256": "0a49abbfcbfe625a3245a3958d6e0fcd11a9fe081418b5ad31a9acead5c96268"
+    },
+    {
+      "path": "code/_onclick/hud/alert.dm",
+      "header": "/datum/hud/proc/reorganize_alerts()",
+      "sha256": "61da5f5637030dbf2fd88ec595dc274618d26d22540ae7adbfb7e2ad4b743bb1"
+    },
+    {
+      "path": "code/_onclick/observer.dm",
+      "header": "/mob/living/attack_ghost_secondary(mob/dead/observer/user)",
+      "sha256": "a46a30eab420905ca712b19e3e464bfb5a7aecd73c685c61d5c1a0f92be5a3da"
+    },
+    {
+      "path": "code/modules/mob/logout.dm",
+      "header": "/mob/Logout()",
+      "sha256": "b722ebaf4d7a747a834da0a2add6ec04ce3fdc0f7361cb4d3e8fff4654516750"
+    },
+    {
+      "path": "code/modules/mob/living/logout.dm",
+      "header": "/mob/living/Logout()",
+      "sha256": "d3d25b56f80cadb7eee7ded15ad25e8bed40c30c1c52be1a05a694a9beb2db2d"
+    },
+    {
+      "path": "code/modules/client/preferences_toggles.dm",
+      "header": "/datum/toggle_options_menu/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)",
+      "sha256": "41a002fcb79db75b954ca1c5b9f7b9a3b2d2370e0c8b5ccf920063d7482115c6"
+    },
+    {
+      "path": "code/modules/client/preferences.dm",
+      "header": "/datum/preferences/proc/get_roguehud_icon()",
+      "sha256": "220c4061cc87fc79825ba4a11546b659e4c6ce8a9a6f6a45f9e940179aca9ee7"
+    },
+    {
+      "path": "code/modules/client/preferences.dm",
+      "header": "/datum/preferences/proc/get_rogueheat_icon()",
+      "sha256": "ba0ce6395d04e7b2691058c53473bf6a59764c877b2159ca343733a11d6fe3b9"
+    },
+    {
+      "path": "code/modules/client/preferences.dm",
+      "header": "/datum/preferences/proc/set_hud_colorblind_palette(new_palette)",
+      "sha256": "6bdb0089e9278b474a5cfd7923a104ff6de85cc4965898eb57f8f5af0094f0a8"
+    },
+    {
+      "path": "code/modules/client/preferences_savefile.dm",
+      "header": "/datum/preferences/proc/load_preferences()",
+      "sha256": "34cffdcf2b8b560197613a1bfe2ad8d2fdb21220a7263d1afc3d438b8e6c23ff"
+    },
+    {
+      "path": "code/modules/client/preferences_savefile.dm",
+      "header": "/datum/preferences/proc/save_preferences()",
+      "sha256": "7db101c6de03c60842570b1673febf36a95f82ed1e84a45de9847850202e1b96"
+    }
+  ]
+}

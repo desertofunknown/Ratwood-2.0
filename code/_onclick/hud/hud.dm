@@ -370,7 +370,30 @@ GLOBAL_LIST_INIT(available_ui_styles, sortList(list(
 		for(var/held_index in hand_slots)
 			screen_objects += hand_slots[held_index]
 	if(mymob?.client)
-		screen_objects += mymob.client.screen
+		var/list/client_screen_objects = mymob.client.screen.Copy()
+		var/mob/dead/observer/watcher = mymob
+		if(istype(watcher) && watcher.observetarget)
+			// Shared target objects must keep their owner's palette, including HUDs lent without a target client.
+			if(watcher.observed_screens)
+				client_screen_objects -= watcher.observed_screens
+			var/datum/hud/target_hud = watcher.observetarget.hud_used
+			if(target_hud)
+				if(target_hud.static_inventory)
+					client_screen_objects -= target_hud.static_inventory
+				if(target_hud.toggleable_inventory)
+					client_screen_objects -= target_hud.toggleable_inventory
+				if(target_hud.hotkeybuttons)
+					client_screen_objects -= target_hud.hotkeybuttons
+				if(target_hud.infodisplay)
+					client_screen_objects -= target_hud.infodisplay
+				if(target_hud.vis_holder)
+					client_screen_objects -= target_hud.vis_holder
+				if(target_hud.action_intent)
+					client_screen_objects -= target_hud.action_intent
+				if(target_hud.hand_slots)
+					for(var/borrowed_index in target_hud.hand_slots)
+						client_screen_objects -= target_hud.hand_slots[borrowed_index]
+		screen_objects += client_screen_objects
 
 	for(var/screen_item as anything in screen_objects)
 		var/atom/movable/screen/screen_object = screen_item
