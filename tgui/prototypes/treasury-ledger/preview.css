@@ -1,0 +1,61 @@
+/* Outer sample-only controls remain in document flow, never over the ledger. */
+body.TreasuryPreview {
+	margin: 0;
+	padding: clamp(12px, 3vw, 28px);
+}
+
+.TreasuryPreview__controls,
+.TreasuryPreview__footer {
+	max-width: 64rem;
+	margin: 0 auto 20px;
+}
+
+.TreasuryPreview__controls {
+	padding: 16px;
+	border: 1px solid var(--tw-control-border);
+	background: var(--tw-raised);
+}
+
+.TreasuryPreview__controls h1 {
+	margin: 0 0 6px;
+	color: var(--tw-copper);
+	font:
+		600 16px/1.5 system-ui,
+		sans-serif;
+}
+
+.TreasuryPreview__controls p {
+	margin: 0 0 14px;
+}
+
+.TreasuryPreview__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.TreasuryPreview__actions label {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.TreasuryPreview__footer {
+	margin-top: 18px;
+	color: var(--tw-muted);
+	font-size: 12px;
+}
+
+.TreasuryPreview a {
+	color: var(--tw-copper);
+}
+
+.TreasuryPreview__closed {
+	max-width: 64rem;
+	margin: auto;
+	padding: 24px;
+	border: 1px dashed var(--tw-border);
+	color: var(--tw-muted);
+}

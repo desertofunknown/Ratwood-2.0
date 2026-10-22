@@ -1,0 +1,174 @@
+/* Load ui-shared/tokens.css, then controls.css, before this candidate sheet. */
+.TithewoodSurface.TreasuryLedger {
+	width: 100%;
+	max-width: 64rem;
+	min-width: 0;
+	margin: 0 auto;
+	padding: clamp(12px, 3vw, 28px);
+	border: 1px solid var(--tw-border);
+	border-top: 3px solid var(--tw-accent);
+	background: var(--tw-surface);
+	line-height: 1.55;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 14px;
+	margin: 0 0 20px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid var(--tw-border);
+	color: var(--tw-heading);
+	font-size: clamp(24px, 4vw, 32px);
+	font-weight: normal;
+	line-height: 1.2;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__title small {
+	color: var(--tw-muted);
+	font:
+		12px/1.5 system-ui,
+		sans-serif;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 20px;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__search {
+	display: flex;
+	flex: 1 1 280px;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	color: var(--tw-heading);
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__search input {
+	flex: 1 1 0;
+	width: 100%;
+	min-width: 0;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__toolbar button {
+	flex: 0 0 auto;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__table {
+	width: 100%;
+	table-layout: fixed;
+	border-collapse: collapse;
+	border-top: 1px solid var(--tw-border);
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__accountColumn {
+	width: 34%;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__reasonColumn {
+	width: 44%;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__amountColumn {
+	width: 22%;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__table th,
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__table td {
+	padding: 12px 10px;
+	border-bottom: 1px solid var(--tw-border);
+	text-align: left;
+	vertical-align: top;
+	overflow-wrap: anywhere;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__table th {
+	color: var(--tw-heading);
+	background: var(--tw-raised);
+	font:
+		600 12px/1.5 system-ui,
+		sans-serif;
+	letter-spacing: 0.03em;
+}
+
+.TithewoodSurface.TreasuryLedger
+	.TreasuryLedger__table
+	tbody
+	tr:nth-child(even) {
+	background: var(--tw-canvas);
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__table th:last-child,
+.TithewoodSurface.TreasuryLedger
+	.TreasuryLedger__table
+	.TreasuryLedger__amount {
+	text-align: right;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__amount {
+	font-family: system-ui, sans-serif;
+	font-variant-numeric: tabular-nums;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__amount--mint {
+	color: var(--tw-success);
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__amount--burn {
+	color: var(--tw-accent);
+}
+
+.TithewoodSurface.TreasuryLedger.TreasuryLedger__loading,
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__empty {
+	color: var(--tw-muted);
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__empty {
+	margin: 0;
+	padding: 24px 0;
+	border-block: 1px solid var(--tw-border);
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__pagination {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-top: 20px;
+}
+
+.TithewoodSurface.TreasuryLedger .TreasuryLedger__pagination span {
+	flex: 1 1 7rem;
+	color: var(--tw-muted);
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 520px) {
+	.TithewoodSurface.TreasuryLedger .TreasuryLedger__search {
+		flex-basis: 100%;
+	}
+
+	.TithewoodSurface.TreasuryLedger .TreasuryLedger__table th,
+	.TithewoodSurface.TreasuryLedger .TreasuryLedger__table td {
+		padding: 10px 6px;
+	}
+
+	.TithewoodSurface.TreasuryLedger .TreasuryLedger__accountColumn {
+		width: 31%;
+	}
+
+	.TithewoodSurface.TreasuryLedger .TreasuryLedger__reasonColumn {
+		width: 41%;
+	}
+
+	.TithewoodSurface.TreasuryLedger .TreasuryLedger__amountColumn {
+		width: 28%;
+	}
+}
