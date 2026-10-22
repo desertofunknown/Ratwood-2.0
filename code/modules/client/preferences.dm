@@ -2093,7 +2093,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 
 				if("barkspeed")
 					var/datum/bark/B = GLOB.bark_list[bark_id]
-					var/borkset = tgui_input_number(user, "Choose your bark speed. Higher is slower; lower is faster.", "Bark speed", bark_speed, initial(B.maxspeed), initial(B.minspeed))
+					var/borkset = tgui_input_number(user, "Choose your bark speed. Higher is slower; lower is faster.", "Bark speed", clamp(bark_speed, initial(B.minspeed), initial(B.maxspeed)), initial(B.maxspeed), initial(B.minspeed))
 					if(!isnull(borkset))
 						bark_speed = round(clamp(borkset, initial(B.minspeed), initial(B.maxspeed)), 1)
 
