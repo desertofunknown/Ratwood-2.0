@@ -1,6 +1,7 @@
 import type { WorkbenchData } from './model';
 
 export interface DemoAdapter {
+  // Resolve after this delivery has committed its DOM changes.
   update(data: WorkbenchData): Promise<void>;
   unmount(): Promise<void>;
   actions: unknown[];
@@ -90,25 +91,31 @@ export function installBenchmark(
         await guarded.update(data);
         assertNeutral();
         const samples: number[] = [];
+        const deliveryToCommitSamples: number[] = [];
         for (let iteration = 0; iteration < 35; iteration++) {
           // Same nested record identity deliberately tests delivered in-place updates.
           data.craftability[recipes[iteration].name] = 0;
           assertNeutral();
           const start = performance.now();
           await guarded.update(data);
+          const deliveryToCommitElapsed = performance.now() - start;
           await frame();
           await frame();
           const elapsed = performance.now() - start;
           assertNeutral();
-          if (iteration >= 5) samples.push(elapsed);
+          if (iteration >= 5) {
+            deliveryToCommitSamples.push(deliveryToCommitElapsed);
+            samples.push(elapsed);
+          }
         }
         return {
           scope:
-            'Synthetic 1282-recipe delivered updates through two animation frames; not exact paint, input latency, startup or game timing.',
+            'Synthetic 1282-recipe delivery-to-DOM-commit and two-animation-frame wall-clock times; not CPU, exact paint, input latency, startup or game timing.',
           userAgent: navigator.userAgent,
           viewport: [innerWidth, innerHeight],
           visibility: document.visibilityState,
           warmups: 5,
+          deliveryToCommitSamplesMs: deliveryToCommitSamples,
           samplesMs: samples,
           renderedRows: document.querySelectorAll('.Workbench__recipe').length,
         };
@@ -129,7 +136,7 @@ export function installBenchmark(
     button.textContent = 'Run sample update benchmark';
     const note = document.createElement('p');
     note.textContent =
-      'Changes the sample catalog. Reload for design browsing. Keep this tab visible; timings include two animation frames, not exact paint.';
+      'Changes the sample catalog. Reload for design browsing. Keep this tab visible; reports DOM-commit and two-frame wall-clock times, not CPU or exact paint.';
     const output = document.createElement('pre');
     output.setAttribute('aria-live', 'polite');
     output.setAttribute('aria-label', 'Benchmark results');

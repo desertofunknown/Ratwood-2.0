@@ -66,6 +66,7 @@ test('harness records only thirty warmed samples from neutral mounted state', as
   await fixture(async (api) => {
     const result = await api.run();
     expect(result.samplesMs).toHaveLength(30);
+    expect(result.deliveryToCommitSamplesMs).toHaveLength(30);
     expect(result.renderedRows).toBe(40);
     expect(api.updates()).toBe(36);
   });
@@ -174,4 +175,37 @@ test('visible control reports rejected runs and permits retry', async () => {
       document.querySelector('.demo-benchmark pre')!.textContent,
     ).toContain('Benchmark rejected:');
   }, true);
+});
+
+test('delivery-to-commit timing awaits the adapter but excludes frame waits', async () => {
+  await fixture(async (api) => {
+    let clock = 0;
+    const now = Object.getOwnPropertyDescriptor(performance, 'now');
+    Object.defineProperty(performance, 'now', {
+      configurable: true,
+      value: () => clock,
+    });
+    globalThis.requestAnimationFrame = (callback) => {
+      queueMicrotask(() => {
+        clock += 10;
+        callback(clock);
+      });
+      return 1;
+    };
+    const update = api.demo.update;
+    api.demo.update = async (data: unknown) => {
+      await update(data);
+      await Promise.resolve();
+      clock += 3;
+    };
+    try {
+      const result = await api.run();
+      expect(result.deliveryToCommitSamplesMs).toEqual(Array(30).fill(3));
+      expect(result.samplesMs).toEqual(Array(30).fill(23));
+      expect(result.scope).toContain('not CPU');
+    } finally {
+      if (now) Object.defineProperty(performance, 'now', now);
+      else delete (performance as any).now;
+    }
+  });
 });

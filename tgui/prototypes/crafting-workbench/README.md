@@ -58,6 +58,15 @@ The collapsed “Comparison tools” panel provides a visible run button and raw
 results for supported browser testing. Nothing runs automatically; the button is
 disabled during a run, failures are shown, and the panel is removed on teardown.
 It replaces the sample catalog, so reload before returning to design browsing.
+
+`deliveryToCommitSamplesMs` measures wall-clock time until the adapter's update
+promise resolves after its DOM commit. React uses `flushSync`, Svelte awaits
+`tick`, and Lua completes its synchronous renderer; this is the standalone
+adapter boundary, not native game scheduling. `samplesMs` retains the broader
+interval through two animation frames. Both arrays contain the same 30 measured
+iterations after five warmups. The first metric excludes those frame waits, but
+still includes promise scheduling and any unrelated browser work; neither is
+CPU time or proof that pixels have painted.
 The same panel and layout are used in each candidate.
 
 Each demo exposes `window.workbenchDemo` (update, unmount, captured actions) and
@@ -135,9 +144,9 @@ same Node 24.19.0 gzip-9 compressor for each artifact:
 
 | Standalone demo JavaScript | Raw bytes | Gzip level 9 bytes |
 | -------------------------- | --------: | -----------------: |
-| React                      |   198,963 |             63,314 |
-| Svelte                     |    74,713 |             27,826 |
-| Browser Lua (Fengari)      |   234,355 |             77,758 |
+| React                      |   199,074 |             63,363 |
+| Svelte                     |    74,824 |             27,886 |
+| Browser Lua (Fengari)      |   234,477 |             77,803 |
 
 Lua includes its VM, interop and Lua source, which is parsed at mount. It is not
 native LuaJIT. The shared CSS adds the same bytes to every candidate; these are

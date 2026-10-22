@@ -38,8 +38,9 @@ maintenance cost. It is not a claim that manual Lua rendering is better.
 Lua source is bundled as text and parsed at each mount. The transfer total
 includes the complete browser-target Fengari VM, its standard libraries and
 interop, not just the Lua UI. Startup/parsing, memory, input latency and game
-integration are **not measured** by the shared two-animation-frame update
-harness. No libraries are stripped to improve reported size. Lua package file
+integration are **not measured** by the shared update harness. It separately
+records delivery-to-DOM-commit and two-animation-frame wall-clock intervals,
+not CPU or exact paint time. No libraries are stripped to improve reported size. Lua package file
 searchers are disabled because all code is bundled and the demo needs no
 runtime module fetches. Interop has DOM/global access; this is **not a security
 sandbox**.
