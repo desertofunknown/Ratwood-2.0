@@ -162,12 +162,17 @@ Initial prototype budgets are targets, not measured claims:
    against the existing React control. Keep the measured hybrid byte cost visible.
    Only then consider a separately reviewed opt-in route with immediate React
    rollback, using the existing bridge, preferences, themes and `Window` shell.
-4. Extract only proven reusable tokens and primitives. The next disconnected
-   workflow is the [Changes archive](../prototypes/changes-archive/README.md),
-   reusing the current validator/search semantics and preserving dates, credits
-   and loading failures. Its production route remains unchanged.
-   Expand by workflow family: information/ledgers, trade and ordinary modals,
-   then preferences. Keep core optimization independently measured and reviewed.
+4. Extract only proven reusable [tokens and controls](../prototypes/ui-shared/README.md).
+   The disconnected [Changes archive](../prototypes/changes-archive/README.md)
+   and [Treasury ledger](../prototypes/treasury-ledger/README.md) cover information
+   workflows without replacing their production routes. The next
+   [Display & Readability candidate](../prototypes/display-readability/README.md)
+   covers only the existing Graphics and Visuals toggle/palette contract, not a
+   new preferences backend. Preserve delivered state and exact actions; do not
+   merge account writes, current-mob state, character-slot saves or chat's browser
+   storage. Native effects and persistence still require separate acceptance.
+   Expand by workflow family rather than replacing all screens at once. Keep
+   core optimization independently measured and reviewed.
 5. Modernize chat chrome separately from its sanitizer/message renderer, then
    native skin/HUD with dedicated client acceptance. Do not replace protocol,
    gameplay or an entire framework as a side effect of a visual migration.

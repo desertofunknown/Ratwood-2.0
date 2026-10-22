@@ -1,0 +1,97 @@
+/* Unchanged ui-shared tokens/controls first; this sheet owns only local layout. */
+.TithewoodSurface.DisplayReadability {
+	width: 100%;
+	max-width: 48rem;
+	min-width: 0;
+	margin: 0 auto;
+	padding: clamp(12px, 3vw, 28px);
+	border: 1px solid var(--tw-border);
+	border-top: 3px solid var(--tw-accent);
+	background: var(--tw-surface);
+	line-height: 1.55;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__title {
+	margin: 0 0 12px;
+	color: var(--tw-heading);
+	font-size: clamp(24px, 4vw, 32px);
+	font-weight: normal;
+	line-height: 1.2;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__scope {
+	color: var(--tw-muted);
+	margin: 0 0 24px;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__category {
+	min-width: 0;
+	margin-top: 24px;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__category h3 {
+	margin: 0;
+	padding-bottom: 10px;
+	color: var(--tw-heading);
+	font-size: 20px;
+	font-weight: normal;
+	border-bottom: 1px solid var(--tw-border);
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__row {
+	padding: 14px 0;
+	border-bottom: 1px solid var(--tw-border);
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__toggle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	text-align: left;
+	overflow-wrap: anywhere;
+}
+.TithewoodSurface.DisplayReadability button[aria-pressed='true'] {
+	background: var(--tw-selected);
+	border-color: var(--tw-accent);
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__state {
+	flex: 0 0 auto;
+	min-width: 2rem;
+	text-align: right;
+	color: var(--tw-heading);
+	font-family: system-ui, sans-serif;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__description {
+	margin: 7px 0 0;
+	color: var(--tw-muted);
+	overflow-wrap: anywhere;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__transient {
+	margin: 5px 0 0;
+	color: var(--tw-copper);
+	font:
+		12px/1.5 system-ui,
+		sans-serif;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__palette {
+	min-width: 0;
+	margin: 18px 0 0;
+	padding: 12px;
+	border: 1px solid var(--tw-border);
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__palette legend {
+	padding: 0 6px;
+	color: var(--tw-heading);
+	overflow-wrap: anywhere;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+}
+.TithewoodSurface.DisplayReadability .DisplayReadability__options button {
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+@media (max-width: 380px) {
+	.TithewoodSurface.DisplayReadability .DisplayReadability__options button {
+		flex: 1 1 8rem;
+	}
+}
