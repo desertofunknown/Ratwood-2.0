@@ -19,7 +19,7 @@ HANDLER = '/datum/component/personal_crafting/ui_act(action, params)'
 PARENT_HANDLER = '/datum/proc/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)'
 PARENT_CALL = '\t. = ..()\n'
 GUARD = '\tif(.)\n\t\treturn\n'
-ACTION_TAIL = '''\tswitch(action)
+LEGACY_ACTION_TAIL = '''\tswitch(action)
 \t\tif("craft")
 \t\t\tvar/path = text2path(params["item"])
 \t\t\tvar/amount = params["amount"] || 1
@@ -30,7 +30,13 @@ ACTION_TAIL = '''\tswitch(action)
 \t\tif("checkboxonlycraftable")
 \t\t\tshowonlycraftable = params["state"]
 '''
-LEGACY_BODY = PARENT_CALL + ACTION_TAIL
+# Explicitly adopt the separate, reviewed payload/type guards while retaining
+# the historical unguarded handler used by the parent-result regression.
+PAYLOAD_GUARD = '\t\t\tif(!islist(params) || !istext(params["item"]))\n\t\t\t\treturn\n'
+PATH_GUARD = '\t\t\tif(!ispath(path, /datum/crafting_recipe))\n\t\t\t\treturn\n'
+PATH_LINE = '\t\t\tvar/path = text2path(params["item"])\n'
+ACTION_TAIL = LEGACY_ACTION_TAIL.replace(PATH_LINE, PAYLOAD_GUARD + PATH_LINE + PATH_GUARD)
+LEGACY_BODY = PARENT_CALL + LEGACY_ACTION_TAIL
 GUARDED_BODY = PARENT_CALL + GUARD + ACTION_TAIL
 PARENT_BODY = '''\tSHOULD_CALL_PARENT(TRUE)
 \tSEND_SIGNAL(src, COMSIG_UI_ACT, usr, action, params)
@@ -130,7 +136,14 @@ def dispatch(body, action, params, parent, effects):
         # DM's bare return preserves '.', rather than replacing it with TRUE.
         return result
     if action == 'craft':
+        if mode == 'guarded':
+            if not isinstance(params, Params) or not isinstance(params['item'], str):
+                return result
         path = params['item']  # text2path is a spy, not a DM implementation.
+        # This parent-ordering model accepts only its known recipe fixture.
+        # The separate ingress suite models rejected resolutions and path types.
+        if mode == 'guarded' and path != RECIPE_PATH:
+            raise AssertionError('Parent model needs its known recipe-type fixture')
         amount = params['amount'] or 1
         auto = params['auto']
         recipe = object()  # no arbitrary path is instantiated or executed.
@@ -157,7 +170,9 @@ class CraftingParentRejectionTests(unittest.TestCase):
         self.assertEqual(handler_mode(self.body), 'guarded')
         self.assertEqual(self.body, GUARDED_BODY)
         self.assertEqual(self.body.count('..()'), 1)
-        self.assertEqual(self.body.replace(GUARD, '', 1), LEGACY_BODY)
+        self.assertEqual(self.body.replace(GUARD, '', 1), PARENT_CALL + ACTION_TAIL)
+        self.assertEqual(self.body.replace(GUARD, '', 1).replace(PAYLOAD_GUARD, '', 1)
+                         .replace(PATH_GUARD, '', 1), LEGACY_BODY)
 
     def test_missing_and_noninteractive_ui_never_reach_action_effects(self):
         for has_ui, status in [(False, None), (True, -1), (True, 0), (True, 1)]:
@@ -199,7 +214,7 @@ class CraftingParentRejectionTests(unittest.TestCase):
                     effects = Effects(trace)
                     self.assertIsNone(dispatch(self.body, 'craft', params, parent, effects))
                     self.assertEqual((parent.calls, parent.signals), (1, 1))
-                    self.assertEqual(params.reads, ['item', 'amount', 'auto'])
+                    self.assertEqual(params.reads, ['item', 'item', 'amount', 'auto'])
                     self.assertEqual(len(effects.creations), 1)
                     path, recipe = effects.creations[0]
                     self.assertEqual(path, RECIPE_PATH)
@@ -207,7 +222,7 @@ class CraftingParentRejectionTests(unittest.TestCase):
                     self.assertIs(effects.lastrecipe, recipe)
                     self.assertEqual(effects.lastrecipe_writes, 1)
                     self.assertEqual(effects.checkbox_writes, 0)
-                    self.assertEqual(trace, ['parent', 'signal', ('param', 'item'),
+                    self.assertEqual(trace, ['parent', 'signal', ('param', 'item'), ('param', 'item'),
                                             ('param', 'amount'), ('param', 'auto'),
                                             'new recipe', 'construct', 'lastrecipe'])
 

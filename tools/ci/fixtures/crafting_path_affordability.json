@@ -1,7 +1,7 @@
 {
   "baseline_commit": "06bdef8a8315323e91afd10d7c6f7a91585147e3",
   "scope": "Source-bound Python model only, not DM execution, engine compilation, JSON transport, UI mounting, or native gameplay. Ingredient fixtures use exact disjoint item requirements without subtype competition, tools, location, skill, chemistry, or consumption. All other crafting.dm bytes, including authoritative action and validation, are locked to the reviewed baseline plus the intentional changes in baseline_adjustments. Recipe facts come from this repository; ordinary inheritance supplies the alternate wall name.",
-  "unchanged_crafting_sha256": "6834de4d430eeaaa73c75696f9c88eb54f56765c557942a940e92f17ffa8d752",
+  "unchanged_crafting_sha256": "cd809a7ea2a31e7b7e14d7f57d652f0a833dd1132d60003d696ee9fae2ec184a",
   "recipes": [
     {
       "source": "code/modules/roguetown/roguecrafting/engineering.dm",
@@ -44,6 +44,7 @@
     }
   ],
   "baseline_adjustments": [
-    "personal_crafting/ui_act adds if(.) followed by bare return immediately after its existing . = ..() parent call. All remaining normalized component bytes are unchanged."
+    "personal_crafting/ui_act adds if(.) followed by bare return immediately after its existing . = ..() parent call. All remaining normalized component bytes are unchanged.",
+    "personal_crafting/ui_act craft branch adds a list/text payload guard before text2path and a /datum/crafting_recipe type-path guard immediately after resolution. Both use bare return; the preceding parent-result guard, amount/auto reads, constructor, construction call, lastrecipe assignment, other actions, and all remaining normalized component bytes are unchanged."
   ]
 }

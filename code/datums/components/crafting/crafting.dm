@@ -657,7 +657,11 @@
 		return
 	switch(action)
 		if("craft")
+			if(!islist(params) || !istext(params["item"]))
+				return
 			var/path = text2path(params["item"])
+			if(!ispath(path, /datum/crafting_recipe))
+				return
 			var/amount = params["amount"] || 1
 			var/auto = params["auto"]
 			var/recipe = new path
