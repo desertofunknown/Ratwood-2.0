@@ -1,0 +1,50 @@
+/* Opt-in native controls, scoped to a new prototype's surface. */
+.TithewoodSurface button.TithewoodControl,
+.TithewoodSurface input.TithewoodControl,
+.TithewoodSurface select.TithewoodControl {
+	font: inherit;
+	min-height: 34px;
+	border: 1px solid var(--tw-control-border);
+	border-radius: 2px;
+	color: var(--tw-text);
+	background: var(--tw-raised);
+}
+
+.TithewoodSurface button.TithewoodControl {
+	padding: 7px 10px;
+	cursor: pointer;
+}
+
+.TithewoodSurface input.TithewoodControl {
+	min-width: 0;
+	padding: 7px 9px;
+}
+
+.TithewoodSurface input.TithewoodControl::placeholder {
+	color: var(--tw-muted);
+	opacity: 1;
+}
+
+.TithewoodSurface select.TithewoodControl {
+	padding: 5px;
+}
+
+.TithewoodSurface button.TithewoodControl:hover:not(:disabled) {
+	background: var(--tw-selected);
+	border-color: var(--tw-accent);
+}
+
+.TithewoodSurface button.TithewoodControl:active:not(:disabled) {
+	background: #57303a;
+	border-color: var(--tw-accent);
+}
+
+.TithewoodSurface .TithewoodControl:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.TithewoodSurface :focus-visible {
+	outline: 2px solid var(--tw-copper);
+	outline-offset: 2px;
+}

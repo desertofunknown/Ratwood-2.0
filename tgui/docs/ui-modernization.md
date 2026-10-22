@@ -52,11 +52,17 @@ endpoint. Native acceptance, supported-client policy and incremental startup/hea
 cost remain open, with React retained as the production baseline. Existing production
 interfaces remain unchanged. A [disconnected browser integration fixture](../prototypes/crafting-workbench/browser-integration/README.md)
 adds matched React/Svelte arms with the actual Window shell, store and captured
-sample actions for browser layout, focus and lifecycle checks. It substitutes
-matched system fonts and colors, not the production theme, and provides no new
-performance or native-acceptance result. This recommendation is neither automatic
-activation nor a framework-wide replacement; the compatibility and rollout gates
-below still apply. Later builds need their own measurements and acceptance.
+sample actions for browser layout, focus and lifecycle checks. The
+[8fa9742b checkpoint](https://github.com/desertofunknown/Ratwood-2.0/commit/8fa9742b1460768baa66ae11aeb276b0ff2bb557)
+passed matched cloud-browser keyboard, Close/acknowledge/resume, narrow/short
+layout and 200% zoom checks, including 340×600 CSS pixels. The original fixture
+also passed 25 visible lifecycle checks three times per arm. The final follow-up
+removed an obstructing QA panel; it did not change either workbench. These are
+sample-only browser observations with system fonts and limited shell styles,
+not production-theme, network-isolation or native-client acceptance. No new
+startup, heap or performance metric was collected. This recommendation is neither
+automatic activation nor a framework-wide replacement; the gates below still
+apply. Later builds need their own measurements and acceptance.
 
 ## Four surfaces, not one web application
 
@@ -76,12 +82,21 @@ cost must be reported separately from standalone bundle size. In either case, th
 
 ## Compatibility gate
 
-`dependencies.sh` pins BYOND 516.1673 and the frontend assumes modern Chromium,
-but [`config/config.txt`](../../config/config.txt) still declares client minimum
-511/build 1421. That is a checked-in support-policy mismatch, not proof of the
-configuration used by a deployed server. Establish the supported DreamSeeker /
-WebView2 matrix before rollout. Do not silently raise the minimum or promise
-older-client compatibility based on frontend tests.
+These are separate checked-in constraints, not a resolved support policy:
+
+- [`dependencies.sh`](../../dependencies.sh#L7-L8) pins the build toolchain to
+  BYOND 516.1673; it does not set client admission requirements.
+- [`rspack.config.ts`](../rspack.config.ts#L135) targets Edge 123 or later.
+- [`config/config.txt`](../../config/config.txt#L433-L444) declares client version
+  511 and build 1421. [`client_procs.dm`](../../code/modules/client/client_procs.dm#L451-L466)
+  actually checks both configured limits at connection, with an administrator
+  exemption. Changing these values can exclude clients; it is not a docs-only fix.
+
+The deployed configuration and DreamSeeker/WebView2 versions have not been
+verified. Establish and test the intended client/browser matrix, then make an
+explicit support-policy decision before rollout. Do not silently raise the
+minimum or promise older-client compatibility from a compiler pin, modern cloud
+browser or frontend tests.
 
 ## First workflow: workshop ledger
 
@@ -139,14 +154,23 @@ Initial prototype budgets are targets, not measured claims:
 
 1. Review the standalone crafting design and interaction evidence. Keep existing
    production behavior unchanged during this stage.
-2. Resolve client support and validate a reversible opt-in integration using the
-   existing bridge, preferences, themes and `Window` shell.
-3. Test native scaling, small windows, fancy/native chrome, resize cancellation,
-   keyboard-to-map focus, refresh/reconnect and disabled interaction states.
-4. Extract only proven reusable tokens and primitives. Expand by workflow family
-   to ledgers/trade, modals and preferences rather than replacing every screen.
-5. Modernize chat chrome separately from its message renderer, then native
-   skin/HUD with dedicated client acceptance.
+2. Resolve client support. Validate native asset and chunked action delivery, ready/suspend/resume,
+   refresh/reconnect, game-key focus, scaling, fancy/native chrome, resize
+   cancellation and actual server permission rejection in a disposable test
+   environment. The disconnected fixture does not exercise those native paths.
+3. Compare representative integrated startup, update cost and retained memory
+   against the existing React control. Keep the measured hybrid byte cost visible.
+   Only then consider a separately reviewed opt-in route with immediate React
+   rollback, using the existing bridge, preferences, themes and `Window` shell.
+4. Extract only proven reusable tokens and primitives. The next disconnected
+   workflow is the [Changes archive](../prototypes/changes-archive/README.md),
+   reusing the current validator/search semantics and preserving dates, credits
+   and loading failures. Its production route remains unchanged.
+   Expand by workflow family: information/ledgers, trade and ordinary modals,
+   then preferences. Keep core optimization independently measured and reviewed.
+5. Modernize chat chrome separately from its sanitizer/message renderer, then
+   native skin/HUD with dedicated client acceptance. Do not replace protocol,
+   gameplay or an entire framework as a side effect of a visual migration.
 
 Production activation is a separate reviewed change. Existing backend gameplay,
 licensing, attribution and compatibility identifiers remain intact. Source,

@@ -1,0 +1,43 @@
+/* Seeded from crafting-workbench/workbench.css; new prototypes only. */
+.TithewoodSurface {
+	--tw-canvas: #100d0e;
+	--tw-surface: #191416;
+	--tw-raised: #281b1f;
+	--tw-selected: #42222a;
+	--tw-text: #ded1c2;
+	--tw-heading: #e5d7c8;
+	--tw-muted: #b9a6a0;
+	--tw-border: #594046;
+	--tw-control-border: #99747b;
+	--tw-accent: #ae8189;
+	--tw-success: #b8c79b;
+	--tw-copper: #d3b184;
+	color: var(--tw-text);
+	background: var(--tw-canvas);
+	font:
+		14px/1.45 Georgia,
+		'Times New Roman',
+		serif;
+	color-scheme: dark;
+}
+
+.TithewoodSurface,
+.TithewoodSurface *,
+.TithewoodSurface *::before,
+.TithewoodSurface *::after {
+	box-sizing: border-box;
+}
+
+.TithewoodSurface .TithewoodHeading {
+	color: var(--tw-heading);
+	font:
+		24px/1.25 Georgia,
+		'Times New Roman',
+		serif;
+	margin: 2px 0 4px;
+}
+
+.TithewoodSurface .TithewoodMuted {
+	color: var(--tw-muted);
+	font-size: 12px;
+}
