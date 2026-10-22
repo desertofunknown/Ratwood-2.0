@@ -128,7 +128,8 @@
 			return
 
 	var/default_text = (current_note && current_note != default_note) ? current_note : ""
-	var/new_note = tgui_input_text(user, "Enter a new custom note for the [controlled_role]:", "Update Role Note", default_text, MAX_MESSAGE_LEN)
+	// Notes are stored HTML-encoded, but the editor expects raw text and encodes on submit.
+	var/new_note = tgui_input_text(user, "Enter a new custom note for the [controlled_role]:", "Update Role Note", html_decode(default_text), MAX_MESSAGE_LEN)
 
 	if(!new_note)
 		return
