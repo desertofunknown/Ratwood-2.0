@@ -90,14 +90,17 @@
 	if(data)
 		taste_amounts = data.Copy()
 
-	counterlist_scale(taste_amounts, volume)
+	// add_reagent has already included newvolume in volume.
+	taste_amounts = counterlist_scale(taste_amounts, volume - newvolume)
 
 	var/list/other_taste_amounts = newdata.Copy()
-	counterlist_scale(other_taste_amounts, newvolume)
+	// Incoming tastes may be raw weights, just as in on_new.
+	other_taste_amounts = counterlist_normalise(other_taste_amounts)
+	other_taste_amounts = counterlist_scale(other_taste_amounts, newvolume)
 
 	counterlist_combine(taste_amounts, other_taste_amounts)
 
-	counterlist_normalise(taste_amounts)
+	taste_amounts = counterlist_normalise(taste_amounts)
 
 	data = taste_amounts
 
