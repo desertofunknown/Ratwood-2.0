@@ -70,6 +70,12 @@ async function session(
     },
     subscribe: sample.subscribe,
   });
+  const clearFocus: Array<Element | null> = [];
+  const clear = controller.clear;
+  controller.clear = () => {
+    clearFocus.push(document.activeElement);
+    clear();
+  };
   const host = document.createElement('div');
   document.body.append(host);
   let unmount!: () => void;
@@ -82,6 +88,7 @@ async function session(
     calls,
     sample,
     controller,
+    clearFocus,
     clock,
     async advance(ms: number) {
       reactFlush(() => clock.advance(ms));
@@ -203,6 +210,48 @@ test('one mounted React/Svelte journey: exact rows, signs, controls, paging, deb
 });
 
 for (const arm of ['react', 'svelte'] as const) {
+  test(`${arm}: focused Clear returns to its own search input after one callback and debounces one empty filter`, async () => {
+    const otherSearch = document.createElement('input');
+    otherSearch.type = 'search';
+    document.body.prepend(otherSearch);
+    const s = await session(arm);
+    try {
+      await s.advance(80);
+      await s.input('discard this pending query');
+      const input = s.host.querySelector('input')!;
+      const clear = button(s.host, 'Clear');
+      clear.focus();
+      expect(document.activeElement).toBe(clear);
+
+      await s.click('Clear');
+      expect(s.clearFocus).toEqual([clear]);
+      expect(s.controller.snapshot().draft).toBe('');
+      expect(input.value).toBe('');
+      expect(clear.isConnected).toBe(false);
+      expect(s.host.querySelector('input')).toBe(input);
+      expect(document.activeElement?.tagName).toBe('INPUT');
+      expect(document.activeElement).toBe(input);
+      expect(s.calls).toEqual([['ledger_open']]);
+      await s.advance(249);
+      expect(s.calls).toEqual([['ledger_open']]);
+      await s.advance(1);
+      expect(s.calls).toEqual([
+        ['ledger_open'],
+        ['ledger_filter', { filter: '' }],
+      ]);
+      await s.advance(1000);
+      expect(s.clearFocus).toEqual([clear]);
+      expect(s.calls).toEqual([
+        ['ledger_open'],
+        ['ledger_filter', { filter: '' }],
+      ]);
+      expect(document.activeElement).toBe(input);
+    } finally {
+      await s.dispose();
+      otherSearch.remove();
+    }
+  });
+
   test(`${arm}: exactly 50, empty, duplicates, unknown kinds, scalar edges and long fields`, async () => {
     for (const entries of [
       fiftyOneEntries.slice(1),

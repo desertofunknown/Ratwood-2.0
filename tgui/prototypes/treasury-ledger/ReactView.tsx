@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 import { type LedgerViewProps, projectEntry } from './model';
 
@@ -10,6 +10,8 @@ export function ReactView({
   onPage,
   onRefresh,
 }: LedgerViewProps) {
+  const searchInput = useRef<HTMLInputElement>(null);
+
   if (!page) {
     return (
       <p className="TithewoodSurface TreasuryLedger TreasuryLedger__loading">
@@ -27,6 +29,7 @@ export function ReactView({
         <label className="TreasuryLedger__search">
           Search{' '}
           <input
+            ref={searchInput}
             className="TithewoodControl"
             type="search"
             value={draft}
@@ -35,7 +38,14 @@ export function ReactView({
           />
         </label>
         {!!draft && (
-          <button className="TithewoodControl" type="button" onClick={onClear}>
+          <button
+            className="TithewoodControl"
+            type="button"
+            onClick={() => {
+              onClear();
+              searchInput.current?.focus();
+            }}
+          >
             Clear
           </button>
         )}

@@ -3,6 +3,7 @@
 
 	let { page, draft, onDraft, onClear, onPage, onRefresh }: LedgerViewProps =
 		$props();
+	let searchInput = $state<HTMLInputElement>();
 </script>
 
 {#if !page}
@@ -18,6 +19,7 @@
 			<label class="TreasuryLedger__search">
 				Search{' '}
 				<input
+					bind:this={searchInput}
 					class="TithewoodControl"
 					type="search"
 					value={draft}
@@ -26,8 +28,13 @@
 				/>
 			</label>
 			{#if !!draft}
-				<button class="TithewoodControl" type="button" onclick={onClear}
-					>Clear</button
+				<button
+					class="TithewoodControl"
+					type="button"
+					onclick={() => {
+						onClear();
+						searchInput?.focus();
+					}}>Clear</button
 				>
 			{/if}
 			<button class="TithewoodControl" type="button" onclick={onRefresh}
