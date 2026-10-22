@@ -50,7 +50,11 @@ force a win. The [disconnected adapter fixture](../prototypes/crafting-workbench
 now exercises the real store, action transport and Window shell with a fake native
 endpoint. Native acceptance, supported-client policy and incremental startup/heap
 cost remain open, with React retained as the production baseline. Existing production
-interfaces remain unchanged. This recommendation is neither automatic
+interfaces remain unchanged. A [disconnected browser integration fixture](../prototypes/crafting-workbench/browser-integration/README.md)
+adds matched React/Svelte arms with the actual Window shell, store and captured
+sample actions for browser layout, focus and lifecycle checks. It substitutes
+matched system fonts and colors, not the production theme, and provides no new
+performance or native-acceptance result. This recommendation is neither automatic
 activation nor a framework-wide replacement; the compatibility and rollout gates
 below still apply. Later builds need their own measurements and acceptance.
 

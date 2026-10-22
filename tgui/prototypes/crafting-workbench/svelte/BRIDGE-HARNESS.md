@@ -89,9 +89,9 @@ and remount, mount/update/unmount failures, and old callback/button fencing.
 
 The separate real-Window group checks title, visibility/close calls, existing
 observer/status dimmer thresholds and owned drag/blur listener cleanup. It preserves
-existing policy: Window's dimmer controls ordinary browser interaction and the DM
-server owns action permission. A programmatic Happy DOM click can bypass hit testing;
-its captured sendAct call is **not** server acceptance or permission to craft.
+existing policy: Window's dimmer is visual-only (`pointer-events: none`), and the
+DM server owns action permission. Happy DOM does not establish browser hit testing;
+a captured sendAct call is **not** server acceptance or permission to craft.
 
 Repeated-root cleanup is tested; development React StrictMode replay is not. Happy
 DOM does not establish CSS layout, real scrolling, native focus/keyboard acceptance,

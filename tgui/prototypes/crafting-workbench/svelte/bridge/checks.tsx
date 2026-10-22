@@ -800,8 +800,8 @@ describe('real React Window shell, captured native calls only', () => {
         dimmer,
       );
     }
-    // Neither sendAct nor this host adds status authorization; native pointer
-    // blocking/server ui_act are separate. A DOM programmatic click is not hit testing.
+    // Neither sendAct nor this host adds status authorization; the CSS dimmer is
+    // visual-only. Server ui_act owns permission; this click is not native acceptance.
     await open('Awl');
     await click(button('Craft 1'));
     expect(acts()).toEqual([['act/craft', { item: '/awl' }]]);

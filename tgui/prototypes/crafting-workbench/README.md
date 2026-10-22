@@ -181,6 +181,10 @@ endpoint. It does not activate the screen or establish native acceptance.
 A separate [production-bundler experiment](svelte/bundle-experiment/README.md)
 records add-on JS/CSS costs against the existing application and matched React
 workbench; smaller standalone totals are not deployment savings.
+The [real-Window browser fixture](browser-integration/README.md) adds matched
+React/Svelte integration pages with sample-only recorded actions and visible
+lifecycle checks. Its shell/theme substitutions and remaining browser acceptance
+checks are documented separately; it does not activate either screen in-game.
 
 All candidates share a [short-height layout adjustment](short-height-layout.md)
 for high zoom and small windows. Its browser scrolling/focus acceptance checklist
