@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "baseline": {
+    "commit": "18408e4248f567dc0def4245dc8b3f910cf7aed7",
+    "path": "tools/maplint/source/lint.py",
+    "source_file_sha256": "a8c792f972a429b9dc456b3116c0f59e47be2401cb680c515d2f324e8c92bb5b",
+    "dedented_run_sha256": "5d79ee92019473f045e983f8e03bad03e41768b61b86d35b35516f5c2c7f0654",
+    "frozen_body_and_file_hash_verified_against_git_commit": true
+  },
+  "production": {
+    "path": "tools/maplint/source/lint.py",
+    "source_file_sha256": "3dbe288ee53812056dfcdbb66618e862b6f6c278221c76cc42b0dfed917fb7d0",
+    "function": "tools.maplint.source.lint.Lint.run"
+  },
+  "runtime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "pyyaml": "6.0.3"
+  },
+  "method": {
+    "scope": "All default .yml lints on each parsed map; no map writes.",
+    "timing_excludes": "Parsing, validation, hashing, GC collection and scan counting.",
+    "timing": "One untimed reference/production warmup, then alternating function order; GC disabled during timed calls.",
+    "equivalence": "Full diagnostic-field multisets, including duplicate multiplicities. Existing set return leaves order unspecified.",
+    "memory": "Optional separate incremental tracemalloc peak, not RSS or total map memory.",
+    "limits": "Developer tooling only, not gameplay/client FPS or whole-CI speedup; machine load affects timings.",
+    "scan_counts": "Reference lookup calls are counted with a stub outside timing; production counts follow one pass per affected lint, separately unit-tested."
+  },
+  "lint_files_sha256": {
+    "tools/maplint/lints/admin_library_computer.yml": "a9831ae3ef0e82a31a3c7581e898b1a262359a9024c3785dca791bbf691faff5",
+    "tools/maplint/lints/apc_pixel_shifts.yml": "d2edb255800e99583c6128f5bee1076ec00371e9fc87ed79a8eee84abcee525b",
+    "tools/maplint/lints/area_varedits.yml": "58729c0371405798dc6b2a460dfa0ada7b89db12ba2e2f829308f785094ab91d",
+    "tools/maplint/lints/base_turf.yml": "27862cd6cab911b09246e705224f5d4777af216c8f8decfe7542cf49ee546dcd",
+    "tools/maplint/lints/cable_varedits.yml": "20c5d93c09403880f4a976523c2a826771b413aa463d7e3f8da03b104b00f989",
+    "tools/maplint/lints/colorless_decals.yml": "aaf0176fe536ff2b1c32f02a302c5b64a0cdf879a4cd8ef953ff2d71770b086d",
+    "tools/maplint/lints/conveyor_cardinal_inversion.yml": "092305398a09dfd9dd79152558fc77481dded353f1f183f88cd8e9874e7cf901",
+    "tools/maplint/lints/custom_icon_helper.yml": "f9a773499572aeef78da9431d328a3b5040a30f6e9dc60a8428242674045152d",
+    "tools/maplint/lints/docking_port_varedits.yml": "140c5ec30822c9e06f802116c27028f555a22cba967fdd9b84d1592cb482f89e",
+    "tools/maplint/lints/door_name_capitalization.yml": "4783248f84c6f2f0315d870d2dfa7517057b58c96a878dbcc13ddc73c9e9a355",
+    "tools/maplint/lints/grille_stacking.yml": "4d53961c31b256de163bfa561540c388873397dd200e94ab91bf1715ea64efb8",
+    "tools/maplint/lints/identical_barricades.yml": "55d6f2bfb50eb5da3ed0b2ced65411c07f817a9aef67048e4bb0343eb63c3e44",
+    "tools/maplint/lints/identical_pipes.yml": "a1236abf28b2aa2e57103c446f7ce30678c61cc21661c902c1d0889c14ecae78",
+    "tools/maplint/lints/merge_conflict_marker.yml": "5f5c2036e448e8bc62b2cc5b83048a644b1c0596de73e7e3539ef0f310a13324",
+    "tools/maplint/lints/multiple_airlocks.yml": "3b4a4ae058a22530bf1a0258e7c89552b18cc16d707552de5d8cf0289aaff265",
+    "tools/maplint/lints/multiple_area.yml": "6f42b5e43643d61155951c547744a990f4b2159b2cf3d04b8ae425de845668a3",
+    "tools/maplint/lints/multiple_cables.yml": "325ca3c59a4b89fb67a5beb8b73d8cade2f0e709b15887b58ea840f613c194c1",
+    "tools/maplint/lints/multiple_chairs.yml": "ae003ac0fcafa196bfc7f658ebdb77a23bfded58f33bce8c6ea67907c737e292",
+    "tools/maplint/lints/multiple_closets.yml": "6fe0bfabc2ba42404e269fb5457742a20bedf07ad3a46f1756e8eb83cc2b9e70",
+    "tools/maplint/lints/multiple_firelocks.yml": "6578499823b59c683877e3552c8f90f1b9c0db423a4e2a712b64cab73f71f902",
+    "tools/maplint/lints/multiple_girders.yml": "8e75ba544d32767f09ebe40b690985be0619a946a4bf34fc7f3f87d0b7eed57f",
+    "tools/maplint/lints/multiple_grilles.yml": "fb41e36b81ad8f19f266ff24a546755ac3f1d669be0dfae9124b470cc0efbf93",
+    "tools/maplint/lints/multiple_lattice.yml": "4f77a57d9fc1f956b8fd19b3be321aecb78f60a4bb06dd781a6a2c4a2fc7c1ba",
+    "tools/maplint/lints/multiple_machinery.yml": "ffd4969e86203d6c03ff90d29a0d674770a2b9a8a34b7243caf9cfcb6e356e66",
+    "tools/maplint/lints/multiple_stairs.yml": "6171d452b92429f45c44838086cfb57c3217fbdd50742e61afa7d38ffaa4854b",
+    "tools/maplint/lints/multiple_tables.yml": "858e35c66d144116636a12f569c0f83d58b27f85b9e7b8f5ab11d2abb17168c9",
+    "tools/maplint/lints/multiple_turf.yml": "8d02392b145d7e7927a971be52b550816e74462e159381dc382f4f2b3e32dd39",
+    "tools/maplint/lints/multiple_windows.yml": "95d8adbfa1bc8a23db170c964a7332e59127e866c7b17457b7b7612735e42694",
+    "tools/maplint/lints/pixel_varedits.yml": "d9041933722feb19a8e735cdf3cb5a8f95911bc7698875c1d099d27ddf43f402",
+    "tools/maplint/lints/posters_directionals.yml": "cf25c1b6d03f18f8db06106928f428ae53402cbcca82e9263146b1e963558dc4",
+    "tools/maplint/lints/smartfridges_in_walls.yml": "a3c0b4bf77761c2683d3eeecf250d8e1ed6a0170f2f35c43eb10a80cbd34aaf5",
+    "tools/maplint/lints/stairs_with_genturf.yml": "761d5a44d7c1ad569c08afb982e3f1090acf7cccbd22ed12af6b260a2cc065dd",
+    "tools/maplint/lints/stray_item.yml": "b98ecef95d73c8a6b1b146151c438826272fe69ddffedc6feae4e4500041410f",
+    "tools/maplint/lints/wall_stacking.yml": "6d46452469d9d66f4ad0bc69b6f5b690996f1288f5efea75fb5b1c449d980013",
+    "tools/maplint/lints/windoor_var_edits.yml": "eaba4fb09c7dc228eeed0c129bc2e0b57d6b02d124e16a170ff97ef8314ae982",
+    "tools/maplint/lints/window_pane_varedits.yml": "d56236af9d3c0af2bf83f4b3c2978e071621eb3329b02b8aab6736aa1d5d0e01"
+  },
+  "samples": [
+    {
+      "map": "_maps/map_files/roguetest/roguetest.dmm",
+      "sha256": "507053d78157fd597fc5a6d353ca19d2ca74fa070848fbcde505bec92b9c5212",
+      "tiles": 5000,
+      "dictionary_pops": 248,
+      "diagnostics": 0,
+      "parse_seconds": 0.012136770998040447,
+      "baseline_full_scans_by_lint": {},
+      "baseline_full_scans": 0,
+      "production_full_scans": 0,
+      "unique_failing_pops": 0,
+      "baseline_seconds": [
+        0.019927388999349205,
+        0.02432042699729209,
+        0.014786584000830771,
+        0.015165759999945294,
+        0.014806194998527644
+      ],
+      "production_seconds": [
+        0.015593505999277113,
+        0.018984342998010106,
+        0.015267208000295796,
+        0.017286737998801982,
+        0.012943048001034185
+      ],
+      "full_field_multisets_equal": true,
+      "baseline_median_seconds": 0.015165759999945294,
+      "production_median_seconds": 0.015593505999277113,
+      "map_hash_unchanged": true
+    },
+    {
+      "map": "_maps/map_files/rockhill/rockhill.dmm",
+      "sha256": "926bcbf9a6851c11095c76c64ec455cd0ddfb6b9aad14a50adafacdb459298af",
+      "tiles": 548250,
+      "dictionary_pops": 17630,
+      "diagnostics": 88,
+      "parse_seconds": 0.9634089400024095,
+      "baseline_full_scans_by_lint": {
+        "multiple_chairs.yml": 10,
+        "multiple_stairs.yml": 20,
+        "multiple_tables.yml": 20,
+        "multiple_turf.yml": 30
+      },
+      "baseline_full_scans": 80,
+      "production_full_scans": 4,
+      "unique_failing_pops": 39,
+      "baseline_seconds": [
+        2.961199929999566,
+        2.9177380049986823,
+        3.0358699440002965,
+        2.798168720997637,
+        2.8047875849988486
+      ],
+      "production_seconds": [
+        1.5682748409999476,
+        1.543997020999086,
+        1.7444782279999345,
+        1.4594498459991883,
+        2.9419535720007843
+      ],
+      "full_field_multisets_equal": true,
+      "baseline_median_seconds": 2.9177380049986823,
+      "production_median_seconds": 1.5682748409999476,
+      "map_hash_unchanged": true
+    },
+    {
+      "map": "_maps/map_files/dun_world/dun_worldredux.dmm",
+      "sha256": "a7e769a1a9cd6bb79362ed0c79c82dda74fc3476edcbd00bd51bfd50232600c2",
+      "tiles": 630000,
+      "dictionary_pops": 18638,
+      "diagnostics": 38,
+      "parse_seconds": 3.157589566999377,
+      "baseline_full_scans_by_lint": {
+        "multiple_closets.yml": 2,
+        "multiple_machinery.yml": 6,
+        "multiple_stairs.yml": 4,
+        "multiple_tables.yml": 10,
+        "multiple_turf.yml": 16
+      },
+      "baseline_full_scans": 38,
+      "production_full_scans": 5,
+      "unique_failing_pops": 19,
+      "baseline_seconds": [
+        2.454329180000059,
+        2.926052956998319,
+        2.9007506019988796,
+        2.1944136209967837,
+        2.219729260999884
+      ],
+      "production_seconds": [
+        2.0549185919990123,
+        1.8598362260017893,
+        2.2745767419983167,
+        1.642564942001627,
+        1.6637190999972518
+      ],
+      "full_field_multisets_equal": true,
+      "baseline_median_seconds": 2.454329180000059,
+      "production_median_seconds": 1.8598362260017893,
+      "map_hash_unchanged": true
+    }
+  ],
+  "measurement_date": "2026-10-22",
+  "measurement_context": "Sibling CPU-heavy benchmark runs were serialized for this production timing run; the shared cloud machine is not guaranteed isolated."
+}

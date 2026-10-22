@@ -247,28 +247,33 @@ class Lint:
                     if len(failures) == 0:
                         continue
 
-                    coordinates = map_data.turfs_for_pop(pop)
-                    coordinate_texts = []
-
-                    for _ in range(3):
-                        coordinate = next(coordinates, None)
-                        if coordinate is None:
-                            break
-
-                        x = coordinate[0] + 1
-                        y = height - coordinate[1]
-                        z = coordinate[2] + 1
-
-                        coordinate_texts.append(f"({x}, {y}, {z})")
-
-                    leftover_coordinates = sum(1 for _ in coordinates)
-                    if leftover_coordinates > 0:
-                        coordinate_texts.append(f"and {leftover_coordinates} more")
-
                     for failure in failures:
-                        failure.coordinates = ', '.join(coordinate_texts)
                         failure.help = self.help
                         failure.pop_id = pop
                         all_failures.append(failure)
+
+        if not all_failures:
+            return []
+
+        # Scan once per failing lint, retaining only three coordinates and a
+        # count per failing pop rather than scanning every turf for each error.
+        coordinate_texts = {failure.pop_id: [] for failure in all_failures}
+        coordinate_counts = dict.fromkeys(coordinate_texts, 0)
+        for z, z_level in enumerate(map_data.turfs):
+            for x, x_level in enumerate(z_level):
+                for y, pop in enumerate(x_level):
+                    texts = coordinate_texts.get(pop)
+                    if texts is None:
+                        continue
+                    coordinate_counts[pop] += 1
+                    if len(texts) < 3:
+                        texts.append(f"({x + 1}, {height - y}, {z + 1})")
+
+        for pop, texts in coordinate_texts.items():
+            if coordinate_counts[pop] > 3:
+                texts.append(f"and {coordinate_counts[pop] - 3} more")
+
+        for failure in all_failures:
+            failure.coordinates = ', '.join(coordinate_texts[failure.pop_id])
 
         return list(set(all_failures))
