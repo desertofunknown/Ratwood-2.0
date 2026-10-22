@@ -786,6 +786,215 @@ test('Lua preserves JS zero/null/empty-string rendering and optional field remov
   expect(fields()).toEqual(['Not listed', 'Not listed', '']);
 });
 
+test('retained rows reread in-place name, ingredients and both material states', async () => {
+  const current = recipe('Before', '/retained', 'Old ingredients');
+  await render({ crafting_recipes: { Test: [current] }, craftability: {} });
+  const row = rows()[0];
+  const match = row.querySelector('.Workbench__match')!;
+  expect(row.getAttribute('aria-expanded')).toBe('false');
+  expect(match.textContent).toBe('Material match: not reported');
+  expect(match.className).toBe('Workbench__match ');
+  await click(row);
+  const craft = button('Craft 1');
+  const heading = container.querySelector('.Workbench__folio-title');
+  current.name = '<After> & "retained"';
+  current.req_text = ' 2 <silk> & [thread]';
+  data.craftability[current.name] = 1;
+  await root!.update(data);
+  expect(rows()[0]).toBe(row);
+  expect(names()).toEqual([current.name]);
+  expect(row.querySelector('.Workbench__recipe-ingredients')!.textContent).toBe(
+    current.req_text,
+  );
+  expect(match.textContent).toBe('Material match: reported');
+  expect(match.className).toBe('Workbench__match Workbench__match--yes');
+  expect(row.getAttribute('aria-expanded')).toBe('true');
+  expect(container.querySelector('.Workbench__folio-title')).toBe(heading);
+  expect(heading!.textContent).toBe(current.name);
+  expect(folio().textContent).toContain(current.req_text);
+  expect(button('Craft 1')).toBe(craft);
+  expect(container.querySelector('silk')).toBeNull();
+  data.craftability[current.name] = 0;
+  await root!.update(data);
+  expect(match.textContent).toBe('Material match: not reported');
+  expect(match.className).toBe('Workbench__match ');
+  expect(folio().textContent).toContain('Material match: not reported');
+  await click(craft);
+  expect(onAction.mock.calls).toEqual([['craft', { item: '/retained' }]]);
+  await click(button('← Back to recipes'));
+  expect(document.activeElement).toBe(row);
+  expect(row.getAttribute('aria-expanded')).toBe('false');
+  await root!.update(data);
+  expect(row.getAttribute('aria-expanded')).toBe('false');
+});
+
+test('same-identity recipe replacement refreshes details and the selected action source', async () => {
+  const original = recipe('Same label', '/same', 'Same ingredients');
+  const recipes = { slot: original };
+  await render({ crafting_recipes: { Test: recipes } });
+  const row = await open('Same label');
+  const craft = button('Craft 1');
+  const replacement = { ...original, tool_text: 'Replacement tool' };
+  recipes.slot = replacement;
+  await root!.update(data);
+  expect(rows()[0]).toBe(row);
+  expect(button('Craft 1')).toBe(craft);
+  expect(folio().textContent).toContain('Replacement tool');
+  // Without another render, crafting must read the current recipe, not the
+  // replaced object. The next delivery still applies normal identity rules.
+  replacement.path = '/current-action-source';
+  original.path = '/stale-action-source';
+  await click(craft);
+  expect(onAction.mock.calls).toEqual([
+    ['craft', { item: '/current-action-source' }],
+  ]);
+  await root!.update(data);
+  expect(container.querySelector('.Workbench__folio-title')).toBeNull();
+  await click(craft);
+  expect(onAction).toHaveBeenCalledTimes(1);
+});
+
+test('normalized row ingredients preserve undefined, null and empty fallback transitions', async () => {
+  const current = recipe('Fallback', '/fallback');
+  await render({ crafting_recipes: { Test: [current] } });
+  const row = rows()[0];
+  const ingredients = row.querySelector('.Workbench__recipe-ingredients')!;
+  for (const value of [
+    undefined,
+    null,
+    '',
+    'Ingredients not listed',
+    ' 0 & <empty>',
+    '',
+    null,
+    undefined,
+  ]) {
+    current.req_text = value;
+    await root!.update(data);
+    expect(rows()[0]).toBe(row);
+    expect(ingredients.textContent).toBe(value || 'Ingredients not listed');
+  }
+  await click(row);
+  expect(folio().querySelector('dd')!.textContent).toBe('Not listed');
+});
+
+test('unsupported primitive and coercible row values retain JS String conversion', async () => {
+  const current = recipe('Cached name', '/coercion', 'Cached ingredients');
+  const fields = current as unknown as Record<string, unknown>;
+  await render({ crafting_recipes: { Test: [current] } });
+  const row = rows()[0];
+  const name = row.querySelector('.Workbench__recipe-name')!;
+  const ingredients = row.querySelector('.Workbench__recipe-ingredients')!;
+  const values: unknown[] = [
+    0,
+    -1,
+    false,
+    true,
+    null,
+    undefined,
+    new String('Boxed string'),
+    { toString: () => '<Object> & "text"' },
+  ];
+  for (const value of values) {
+    fields.name = value;
+    fields.req_text = value;
+    for (let repeat = 0; repeat < 2; repeat++) {
+      await root!.update(data);
+      expect(rows()[0]).toBe(row);
+      expect(name.textContent).toBe(String(value));
+      expect(ingredients.textContent).toBe(
+        value === null || value === undefined
+          ? 'Ingredients not listed'
+          : String(value),
+      );
+    }
+    // Returning to an earlier string must not reuse a pre-coercion cache.
+    fields.name = 'Cached name';
+    fields.req_text = 'Cached ingredients';
+    await root!.update(data);
+    expect(name.textContent).toBe('Cached name');
+    expect(ingredients.textContent).toBe('Cached ingredients');
+  }
+  expect(container.querySelector('object')).toBeNull();
+});
+
+test('same-object changing toString runs again for unsupported name and ingredients', async () => {
+  const current = recipe('Cached name', '/changing', 'Cached ingredients');
+  const fields = current as unknown as Record<string, unknown>;
+  let nameValue = 'First name';
+  let ingredientValue = 'First ingredients';
+  const nameConversion = mock(() => nameValue);
+  const ingredientConversion = mock(() => ingredientValue);
+  await render({ crafting_recipes: { Test: [current] } });
+  const row = rows()[0];
+  fields.name = { toString: nameConversion };
+  fields.req_text = { toString: ingredientConversion };
+  for (const suffix of ['first', 'second', 'second']) {
+    nameValue = `Name ${suffix}`;
+    ingredientValue = `Ingredients ${suffix}`;
+    nameConversion.mockClear();
+    ingredientConversion.mockClear();
+    await root!.update(data);
+    expect(rows()[0]).toBe(row);
+    expect(names()).toEqual([nameValue]);
+    expect(
+      row.querySelector('.Workbench__recipe-ingredients')!.textContent,
+    ).toBe(ingredientValue);
+    // One source row avoids comparator conversions; these calls are the Lua
+    // text helper, even when the same object returns the same text again.
+    expect(nameConversion).toHaveBeenCalledTimes(1);
+    expect(ingredientConversion).toHaveBeenCalledTimes(1);
+  }
+  fields.name = 'Cached name';
+  fields.req_text = 'Cached ingredients';
+  await root!.update(data);
+  expect(names()).toEqual(['Cached name']);
+  expect(row.textContent).toContain('Cached ingredients');
+});
+
+test('in-place sorting recreates category headings without replacing retained rows', async () => {
+  const first = recipe('A', '/a');
+  const second = recipe('B', '/b');
+  const category = '<Group> & "heading"';
+  await render({ crafting_recipes: { [category]: { first, second } } });
+  const [a, b] = rows();
+  const oldHeading = a.parentElement!.querySelector(
+    '.Workbench__category-heading',
+  );
+  expect(oldHeading!.textContent).toBe(category);
+  first.name = 'Z';
+  await root!.update(data);
+  expect(rows()).toEqual([b, a]);
+  expect(
+    a.parentElement!.querySelector('.Workbench__category-heading'),
+  ).toBeNull();
+  expect(
+    b.parentElement!.querySelector('.Workbench__category-heading')!.textContent,
+  ).toBe(category);
+  expect(oldHeading!.isConnected).toBe(false);
+  first.name = 'A';
+  await root!.update(data);
+  expect(rows()).toEqual([a, b]);
+  const newHeading = a.parentElement!.querySelector(
+    '.Workbench__category-heading',
+  );
+  expect(newHeading).not.toBe(oldHeading);
+  expect(newHeading!.textContent).toBe(category);
+  expect(
+    b.parentElement!.querySelector('.Workbench__category-heading'),
+  ).toBeNull();
+  await search('B');
+  expect(rows()).toEqual([b]);
+  expect(
+    b.parentElement!.querySelector('.Workbench__category-heading')!.textContent,
+  ).toBe(category);
+  await click(button('Clear'));
+  expect(rows()[0]).not.toBe(a);
+  expect(names()).toEqual(['A', 'B']);
+  expect(rows()[0].getAttribute('aria-expanded')).toBe('false');
+  expect(rows()[0].textContent).toContain('Material match: not reported');
+});
+
 test('shared search keeps Unicode case conversion and literal matching', async () => {
   await render({
     crafting_recipes: {
@@ -950,8 +1159,18 @@ test('listener removal uses the exact JS identity, including detached detail con
   } as typeof originalRemove;
   try {
     await render();
-    await open('Awl');
+    const removedRow = await open('Awl');
     const oldCraft = button('Craft 1');
+    await search('hemp');
+    expect(listeners.get(removedRow)?.get('click')?.size).toBe(0);
+    await click(button('Clear'));
+    const reinsertedRow = rows()[0];
+    expect(reinsertedRow).not.toBe(removedRow);
+    expect(listeners.get(reinsertedRow)?.get('click')?.size).toBe(1);
+    expect(reinsertedRow.getAttribute('aria-expanded')).toBe('false');
+    await click(removedRow);
+    expect(container.querySelector('.Workbench__folio-title')).toBeNull();
+    await click(reinsertedRow);
     await click(button('← Back to recipes'));
     await open('Ribbon', 1);
     await click(oldCraft);

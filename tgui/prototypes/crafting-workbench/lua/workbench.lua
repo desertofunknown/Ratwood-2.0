@@ -324,11 +324,28 @@ return function(_, host)
         end
         text(record.category, entry.category)
       elseif record.category then record.category:remove(); record.category = nil end
-      text(record.name, entry.recipe.name)
-      text(record.ingredients, orText(entry.recipe.req_text, "Ingredients not listed"))
-      text(record.match, matchText(entry))
-      attr(record.match, "class", "Workbench__match " .. (entry.materialMatch and "Workbench__match--yes" or ""))
-      attr(record.button, "aria-expanded", entry.identity == selectedIdentity and selected ~= nil)
+      -- These nodes are renderer-owned; unchanged primitives do not repair external DOM edits.
+      local name = entry.recipe.name
+      if type(name) ~= "string" or record.lastName ~= name then
+        text(record.name, name)
+        record.lastName = type(name) == "string" and name or nil
+      end
+      local ingredients = orText(entry.recipe.req_text, "Ingredients not listed")
+      if type(ingredients) ~= "string" or record.lastIngredients ~= ingredients then
+        text(record.ingredients, ingredients)
+        record.lastIngredients = type(ingredients) == "string" and ingredients or nil
+      end
+      local materialMatch = entry.materialMatch
+      if record.lastMaterialMatch ~= materialMatch then
+        text(record.match, matchText(entry))
+        attr(record.match, "class", "Workbench__match " .. (materialMatch and "Workbench__match--yes" or ""))
+        record.lastMaterialMatch = materialMatch
+      end
+      local expanded = entry.identity == selectedIdentity and selected ~= nil
+      if record.lastExpanded ~= expanded then
+        attr(record.button, "aria-expanded", expanded)
+        record.lastExpanded = expanded
+      end
       if recipes.children[i] ~= record.node then recipes:insertBefore(record.node, recipes.children[i] or js.null) end
     end
     for identity, record in pairs(rowRecords) do

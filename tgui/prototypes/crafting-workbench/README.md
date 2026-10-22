@@ -83,10 +83,12 @@ use the displayed controls and capture a browser performance trace.
 
 Mounted tests use Happy DOM: they cover DOM events, action payloads, filtering,
 focus bookkeeping and stale selections, not rendered pixels or native keyboard
-activation. This environment has not produced a usable browser screenshot or
-browser performance result. Startup, render/update speed, heap cost and native
-client acceptance remain unmeasured. Do not choose a framework on bundle bytes
-alone or call a synthetic DOM benchmark a browser benchmark.
+activation. Separate hosted Chromium checks have captured the sampled layout
+and focus results below, plus a historical Lua scan-guard A/B. Those results are
+pinned to their recorded builds; browser timings for the current row-value
+experiment remain pending. Startup, CPU cost, heap cost and native-client
+acceptance remain unmeasured. Do not choose a framework on bundle bytes alone or
+call a synthetic DOM benchmark a browser benchmark.
 
 `benchmark.ts` is a separate warm Bun derived-data cost check against the current
 category/filter/search expressions. It compares ordered identities across 24
@@ -144,9 +146,9 @@ same Node 24.19.0 gzip-9 compressor for each artifact:
 
 | Standalone demo JavaScript | Raw bytes | Gzip level 9 bytes |
 | -------------------------- | --------: | -----------------: |
-| React                      |   199,153 |             63,407 |
-| Svelte                     |    74,905 |             27,930 |
-| Browser Lua (Fengari)      |   234,796 |             77,928 |
+| React                      |   201,301 |             64,106 |
+| Svelte                     |    77,053 |             28,621 |
+| Browser Lua (Fengari)      |   237,778 |             78,839 |
 
 Lua includes its VM, interop and Lua source, which is parsed at mount. It is not
 native LuaJIT. The shared CSS adds the same bytes to every candidate; these are
@@ -160,6 +162,13 @@ read counts, selected-state parity, and separately labeled local timing samples.
 The [hosted browser A/B](lua/browser-selection-scan.md) subsequently measured the
 neutral-state improvement with all raw samples retained. This is not a framework
 verdict or a selected-state/native-game performance claim.
+
+The subsequent [row-value experiment](lua/row-value-experiment.md) avoids
+repeated conversions and DOM reads for unchanged renderer-owned row fields.
+Exact operation counts and mounted equivalence pass, but its browser timing
+comparison is still pending. The shared [benchmark scenarios](browser-benchmark-scenarios.md)
+now distinguish the unselected catalog, a selected visible row and a selected
+off-page row. Compare matching scenarios and builds, not historical timing series.
 
 All candidates share a [short-height layout adjustment](short-height-layout.md)
 for high zoom and small windows. Its browser scrolling/focus acceptance checklist
