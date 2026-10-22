@@ -178,6 +178,9 @@ names Svelte a provisional integration candidate, not a production replacement.
 The [disconnected React-owned integration fixture](svelte/BRIDGE-HARNESS.md) now
 tests the real store, action transport and Window shell against a fake native
 endpoint. It does not activate the screen or establish native acceptance.
+A separate [production-bundler experiment](svelte/bundle-experiment/README.md)
+records add-on JS/CSS costs against the existing application and matched React
+workbench; smaller standalone totals are not deployment savings.
 
 All candidates share a [short-height layout adjustment](short-height-layout.md)
 for high zoom and small windows. Its browser scrolling/focus acceptance checklist

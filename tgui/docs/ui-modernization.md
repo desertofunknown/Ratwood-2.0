@@ -28,20 +28,28 @@ off-page). Off-page P90/maximum worsened, so the gain is not universal.
 Fresh React medians were 1.45/1.40/1.60 ms and Svelte 1.30/1.10/1.30 ms in the
 same scenario order. These are warmed wall-clock observations, not CPU time.
 
-Svelte is the **provisional browser-integration candidate**, combining favorable
-tested results with smaller standalone JavaScript: 77,053 raw/28,621 gzip bytes
-versus React's 201,301/64,106 at those hashes. React's standalone total includes
+Svelte remains a **provisional browser-integration candidate**, not a settled
+choice. Standalone JavaScript is 77,053 raw/28,621 gzip bytes versus React's
+201,301/64,106 at those hashes. React's standalone total includes
 a runtime already loaded by production; this is not a Svelte island's marginal
 cost or a production saving. The small React/Svelte timing gaps, overlapping
 spreads, shared-cloud noise and only three rounds do not establish a definitive
 framework ranking. The experiment says nothing about startup, CPU, heap, exact
 paint, native BYOND, native LuaJIT or AAA game quality.
 
+The [production-bundler experiment](../prototypes/crafting-workbench/svelte/bundle-experiment/README.md)
+now measures retaining each new screen beside the existing application. The
+Svelte implementation adds 27,368 gzip bytes including CSS, versus 4,307 for the
+matched React workbench. Their CSS is identical; the additional 23,061 gzip JS
+bytes include the differing screen, Svelte runtime and required host/adapter,
+not an isolated runtime cost. These are offline byte comparisons, not startup,
+heap or verified native wire-transfer measurements.
+
 Keep the Lua experiment and its measured gains without further tuning just to
 force a win. The [disconnected adapter fixture](../prototypes/crafting-workbench/svelte/BRIDGE-HARNESS.md)
 now exercises the real store, action transport and Window shell with a fake native
-endpoint. Native acceptance, supported-client policy and incremental hybrid cost
-remain open, with React retained as the production baseline. Existing production
+endpoint. Native acceptance, supported-client policy and incremental startup/heap
+cost remain open, with React retained as the production baseline. Existing production
 interfaces remain unchanged. This recommendation is neither automatic
 activation nor a framework-wide replacement; the compatibility and rollout gates
 below still apply. Later builds need their own measurements and acceptance.
