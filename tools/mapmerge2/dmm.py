@@ -84,12 +84,15 @@ class DMM:
             self.grid[k] = bad_keys.get(v, v)
 
     def remove_unused_keys(self, modified_keys = None):
-        unused_keys = list(set(modified_keys)) if modified_keys is not None else self.dictionary.keys()
-        for key in self.grid.values():
+        keys = list(set(modified_keys)) if modified_keys is not None else list(self.dictionary)
+        if not keys:
+            return
+        # Keep deletion order without a linear candidate-list scan for every tile.
+        unused_keys = set(keys)
+        unused_keys.difference_update(self.grid.values())
+        for key in keys:
             if key in unused_keys:
-                unused_keys.remove(key)
-        for key in unused_keys:
-            del self.dictionary[key]
+                del self.dictionary[key]
 
     def _presave_checks(self):
         # last-second handling of bogus keys to help prevent and fix broken maps

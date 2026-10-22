@@ -1,0 +1,463 @@
+{
+  "schema_version": 1,
+  "measurement_date": "2026-10-22",
+  "provenance": {
+    "status": "Historical pre-production-patch measurements; not production reruns.",
+    "comparison": "Actual imported unmodified baseline function versus a standalone pre-patch candidate. The candidate algorithm was subsequently adopted in production; the project harness now calls actual current production code.",
+    "baseline_commit": "851bb446133c875b60d41033e84ff1a6d7208cba",
+    "baseline_source": "tools/mapmerge2/dmm.py:86-92",
+    "baseline_source_file_sha256": "1ecb1c6012ae7526abfb8b1acfb0f231aa297c77b607e9efa1f6cb792a03def1",
+    "candidate_algorithm": "keys = list(set(modified_keys)) for explicit inputs, else list(dictionary); return if empty; remaining = set(keys); remaining.difference_update(grid.values()); delete remaining keys in keys sequence order.",
+    "raw_samples": "Original retained timing and allocation values, without rerunning or relabeling them as production measurements."
+  },
+  "runtime": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "bidict": "0.22.0",
+    "dependency_pin_source": "tools/requirements.txt"
+  },
+  "method": {
+    "timing_excludes": "parse, update_path, clone, serialization; gc disabled during measured function; memory measured separately",
+    "memory_scope": "tracemalloc incremental peak from cleanup only, not RSS or total map",
+    "timing_order": "Alternated original/candidate order between repetitions, with one untimed warmup per function. Memory was measured in a separate call.",
+    "fixture_scope": "Only in-memory map copies and deterministic fixtures; no map files written.",
+    "limits": "Tooling cleanup only: no gameplay, client FPS, total tool latency or total process-memory conclusions. Small sample timings are noisy."
+  },
+  "inputs_sha256": {
+    "_maps/map_files/roguetest/roguetest.dmm": "507053d78157fd597fc5a6d353ca19d2ca74fa070848fbcde505bec92b9c5212",
+    "_maps/map_files/rockhill/rockhill.dmm": "926bcbf9a6851c11095c76c64ec455cd0ddfb6b9aad14a50adafacdb459298af",
+    "_maps/map_files/dun_world/dun_worldredux.dmm": "a7e769a1a9cd6bb79362ed0c79c82dda74fc3476edcbd00bd51bfd50232600c2",
+    "tools/UpdatePaths/Scripts/2226_turf_closed_void.txt": "20b4c77181deea4da0c4603d50c1e9aa60b0faa68aebb8c2a2fb18b1f0981138",
+    "tools/UpdatePaths/Scripts/4221_tomb_of_matthios.txt": "e0986a0bd526f276231ae7679819ca017c31e641cb3155b4d685fbdb7397d905"
+  },
+  "validation": {
+    "explicit_randomized_cases": 1000,
+    "intended_default_randomized_cases": 1000,
+    "explicit_iterable_forms": 5,
+    "benchmark_equivalence_cases": 6,
+    "serialized_formats": [
+      "DMM",
+      "TGM"
+    ],
+    "map_hashes_unchanged": true,
+    "production_patch_executed_in_this_historical_run": false
+  },
+  "parse_shape_probe": [
+    {
+      "map": "_maps/map_files/roguetest/roguetest.dmm",
+      "size": [
+        50,
+        50,
+        2
+      ],
+      "grid": 5000,
+      "dictionary": 248,
+      "unused": 0,
+      "load_s": 0.01673105300142197,
+      "top_paths": [
+        [
+          "/area/rogue/indoors",
+          168
+        ],
+        [
+          "/turf/open/floor/rogue/dirt/road",
+          60
+        ],
+        [
+          "/area/rogue/outdoors",
+          44
+        ],
+        [
+          "/obj/structure/table/wood",
+          43
+        ],
+        [
+          "/turf/open/floor/rogue/grass",
+          24
+        ],
+        [
+          "/turf/open/floor/rogue/hay",
+          20
+        ],
+        [
+          "/turf/open/floor/rogue/tile/harem",
+          18
+        ],
+        [
+          "/obj/item/natural/bundle/silk",
+          18
+        ]
+      ],
+      "2226_turf_closed_void.txt": {
+        "modified": 0,
+        "unused_modified": 0
+      },
+      "4221_tomb_of_matthios.txt": {
+        "modified": 0,
+        "unused_modified": 0
+      }
+    },
+    {
+      "map": "_maps/map_files/rockhill/rockhill.dmm",
+      "size": [
+        255,
+        430,
+        5
+      ],
+      "grid": 548250,
+      "dictionary": 17630,
+      "unused": 0,
+      "load_s": 1.849752426998748,
+      "top_paths": [
+        [
+          "/obj/structure/fluff/railing/border",
+          1985
+        ],
+        [
+          "/area/rogue/indoors/town/manor/rockhill",
+          1074
+        ],
+        [
+          "/area/rogue/indoors",
+          925
+        ],
+        [
+          "/area/rogue/under/cavewet",
+          922
+        ],
+        [
+          "/obj/structure/fluff/railing/wood",
+          906
+        ],
+        [
+          "/turf/open/floor/rogue/cobble",
+          895
+        ],
+        [
+          "/turf/open/floor/rogue/ruinedwood/spiral",
+          872
+        ],
+        [
+          "/turf/open/floor/rogue/dirt/road",
+          829
+        ]
+      ],
+      "2226_turf_closed_void.txt": {
+        "modified": 10,
+        "unused_modified": 2
+      },
+      "4221_tomb_of_matthios.txt": {
+        "modified": 0,
+        "unused_modified": 0
+      }
+    },
+    {
+      "map": "_maps/map_files/dun_world/dun_worldredux.dmm",
+      "size": [
+        420,
+        300,
+        5
+      ],
+      "grid": 630000,
+      "dictionary": 18638,
+      "unused": 0,
+      "load_s": 2.9595649729999423,
+      "top_paths": [
+        [
+          "/turf/open/floor/rogue/dirt/road",
+          1172
+        ],
+        [
+          "/area/rogue/indoors/town",
+          1082
+        ],
+        [
+          "/turf/open/floor/rogue/dirt",
+          1071
+        ],
+        [
+          "/obj/effect/decal/cobbleedge",
+          987
+        ],
+        [
+          "/turf/open/floor/rogue/ruinedwood/spiral",
+          957
+        ],
+        [
+          "/turf/open/floor/rogue/cobble",
+          945
+        ],
+        [
+          "/turf/open/floor/rogue/grass",
+          854
+        ],
+        [
+          "/area/rogue/indoors/town/manor",
+          782
+        ]
+      ],
+      "2226_turf_closed_void.txt": {
+        "modified": 0,
+        "unused_modified": 0
+      },
+      "4221_tomb_of_matthios.txt": {
+        "modified": 0,
+        "unused_modified": 0
+      }
+    }
+  ],
+  "default_bug_reproduction": [
+    {
+      "reproduction": "used",
+      "error": "AttributeError: 'dict_keys' object has no attribute 'remove'",
+      "remaining_dictionary": [
+        0,
+        1
+      ]
+    },
+    {
+      "reproduction": "empty_grid",
+      "error": "RuntimeError: dictionary changed size during iteration",
+      "remaining_dictionary": [
+        1
+      ]
+    },
+    {
+      "reproduction": "empty_dict",
+      "error": null,
+      "remaining_dictionary": []
+    }
+  ],
+  "results": [
+    {
+      "case": "synthetic_small_half_unused",
+      "cells": 5000,
+      "dictionary": 65,
+      "unique_modified": 64,
+      "removed": 32,
+      "reps": 5,
+      "saved_ms": 1.269963,
+      "speedup": 2.7652742370874073,
+      "peak_extra_bytes_saved": -4120,
+      "legacy_actual_function": {
+        "median_ms": 1.989377,
+        "min_ms": 1.360808,
+        "max_ms": 3.203085,
+        "samples_ms": [
+          2.055991,
+          1.989377,
+          1.567878,
+          3.203085,
+          1.360808
+        ],
+        "peak_extra_bytes": 2896,
+        "retained_extra_bytes": 56
+      },
+      "pre_patch_candidate": {
+        "median_ms": 0.719414,
+        "min_ms": 0.171993,
+        "max_ms": 1.949328,
+        "samples_ms": [
+          0.171993,
+          0.172783,
+          1.949328,
+          0.853523,
+          0.719414
+        ],
+        "peak_extra_bytes": 7016,
+        "retained_extra_bytes": 104
+      }
+    },
+    {
+      "case": "synthetic_large_half_unused",
+      "cells": 630000,
+      "dictionary": 1025,
+      "unique_modified": 1024,
+      "removed": 512,
+      "reps": 5,
+      "saved_ms": 2540.2696610000003,
+      "speedup": 66.77411333737741,
+      "peak_extra_bytes_saved": -65560,
+      "legacy_actual_function": {
+        "median_ms": 2578.890777,
+        "min_ms": 2543.644516,
+        "max_ms": 2663.692832,
+        "samples_ms": [
+          2543.644516,
+          2578.890777,
+          2577.453122,
+          2651.57067,
+          2663.692832
+        ],
+        "peak_extra_bytes": 41296,
+        "retained_extra_bytes": 56
+      },
+      "pre_patch_candidate": {
+        "median_ms": 38.621116,
+        "min_ms": 29.771105,
+        "max_ms": 42.999675,
+        "samples_ms": [
+          38.621116,
+          29.771105,
+          42.999675,
+          29.930184,
+          39.996624
+        ],
+        "peak_extra_bytes": 106856,
+        "retained_extra_bytes": 104
+      }
+    },
+    {
+      "case": "_maps/map_files/roguetest/roguetest.dmm | actual 2226 update in memory",
+      "cells": 5000,
+      "dictionary": 248,
+      "unique_modified": 0,
+      "removed": 0,
+      "reps": 5,
+      "saved_ms": 0.090167,
+      "speedup": 23.457534246575342,
+      "peak_extra_bytes_saved": 0,
+      "legacy_actual_function": {
+        "median_ms": 0.094182,
+        "min_ms": 0.073785,
+        "max_ms": 0.47279,
+        "samples_ms": [
+          0.47279,
+          0.074281,
+          0.073785,
+          0.094182,
+          0.10991
+        ],
+        "peak_extra_bytes": 336,
+        "retained_extra_bytes": 56
+      },
+      "pre_patch_candidate": {
+        "median_ms": 0.004015,
+        "min_ms": 0.003472,
+        "max_ms": 0.004071,
+        "samples_ms": [
+          0.004071,
+          0.003847,
+          0.004026,
+          0.004015,
+          0.003472
+        ],
+        "peak_extra_bytes": 336,
+        "retained_extra_bytes": 56
+      }
+    },
+    {
+      "case": "_maps/map_files/rockhill/rockhill.dmm | actual 2226 update in memory",
+      "cells": 548250,
+      "dictionary": 17630,
+      "unique_modified": 10,
+      "removed": 2,
+      "reps": 5,
+      "saved_ms": 24.058548000000002,
+      "speedup": 3.3513808305742523,
+      "peak_extra_bytes_saved": -280,
+      "legacy_actual_function": {
+        "median_ms": 34.290216,
+        "min_ms": 30.5906,
+        "max_ms": 38.833151,
+        "samples_ms": [
+          30.5906,
+          38.833151,
+          35.039913,
+          34.290216,
+          31.203595
+        ],
+        "peak_extra_bytes": 928,
+        "retained_extra_bytes": 56
+      },
+      "pre_patch_candidate": {
+        "median_ms": 10.231668,
+        "min_ms": 7.799755,
+        "max_ms": 11.047909,
+        "samples_ms": [
+          10.489928,
+          8.537285,
+          11.047909,
+          7.799755,
+          10.231668
+        ],
+        "peak_extra_bytes": 1208,
+        "retained_extra_bytes": 104
+      }
+    },
+    {
+      "case": "_maps/map_files/rockhill/rockhill.dmm | illustrative railing removal in memory (NOT a proposed map edit)",
+      "cells": 548250,
+      "dictionary": 17630,
+      "unique_modified": 3030,
+      "removed": 2201,
+      "reps": 3,
+      "saved_ms": 14195.084923,
+      "speedup": 939.1937840721095,
+      "peak_extra_bytes_saved": -24296,
+      "legacy_actual_function": {
+        "median_ms": 14210.21515,
+        "min_ms": 13098.296502,
+        "max_ms": 15839.339915,
+        "samples_ms": [
+          15839.339915,
+          14210.21515,
+          13098.296502
+        ],
+        "peak_extra_bytes": 164104,
+        "retained_extra_bytes": 56
+      },
+      "pre_patch_candidate": {
+        "median_ms": 15.130227,
+        "min_ms": 14.068003,
+        "max_ms": 34.20102,
+        "samples_ms": [
+          34.20102,
+          15.130227,
+          14.068003
+        ],
+        "peak_extra_bytes": 188400,
+        "retained_extra_bytes": 104
+      }
+    },
+    {
+      "case": "_maps/map_files/dun_world/dun_worldredux.dmm | actual 2226 update in memory",
+      "cells": 630000,
+      "dictionary": 18638,
+      "unique_modified": 0,
+      "removed": 0,
+      "reps": 5,
+      "saved_ms": 15.897758999999999,
+      "speedup": 1853.4538569098113,
+      "peak_extra_bytes_saved": 0,
+      "legacy_actual_function": {
+        "median_ms": 15.906341,
+        "min_ms": 12.278442,
+        "max_ms": 23.280634,
+        "samples_ms": [
+          12.278442,
+          19.766297,
+          15.906341,
+          15.334348,
+          23.280634
+        ],
+        "peak_extra_bytes": 336,
+        "retained_extra_bytes": 56
+      },
+      "pre_patch_candidate": {
+        "median_ms": 0.008582,
+        "min_ms": 0.007275,
+        "max_ms": 0.009933,
+        "samples_ms": [
+          0.008582,
+          0.009933,
+          0.007275,
+          0.009137,
+          0.008506
+        ],
+        "peak_extra_bytes": 336,
+        "retained_extra_bytes": 56
+      }
+    }
+  ]
+}
