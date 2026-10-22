@@ -1,0 +1,46 @@
+{
+  "baseline_commit": "06bdef8a8315323e91afd10d7c6f7a91585147e3",
+  "scope": "Source-bound Python model only, not DM execution, engine compilation, JSON transport, UI mounting, or native gameplay. Ingredient fixtures use exact disjoint item requirements without subtype competition, tools, location, skill, chemistry, or consumption. All other crafting.dm bytes, including authoritative action and validation, are locked to the reviewed baseline. Recipe facts come from this repository; ordinary inheritance supplies the alternate wall name.",
+  "unchanged_crafting_sha256": "bf46c30149c5b5adf032fa9a73bce497377e3b7d22674c11ec3aed94792327a0",
+  "recipes": [
+    {
+      "source": "code/modules/roguetown/roguecrafting/engineering.dm",
+      "path": "/datum/crafting_recipe/roguetown/engineering/pyrobolt",
+      "name": "pyroclastic bolt",
+      "reqs": {
+        "/obj/item/ammo_casing/caseless/rogue/bolt": 1,
+        "/obj/item/reagent_containers/food/snacks/grown/rogue/fyritius": 1
+      },
+      "definition_sha256": "e9c2b1d45bc26686960bb8acce7fa244c2c83e67eb22516c7fc09f6864bb31e4"
+    },
+    {
+      "source": "code/modules/roguetown/roguecrafting/engineering.dm",
+      "path": "/datum/crafting_recipe/roguetown/engineering/pyrobolt_five",
+      "name": "pyroclastic bolt",
+      "reqs": {
+        "/obj/item/ammo_casing/caseless/rogue/bolt": 5,
+        "/obj/item/reagent_containers/food/snacks/grown/rogue/fyritius": 5
+      },
+      "definition_sha256": "55f0167b3faf802a2120f5ccf60024b0e758dd96c89bd732a180662183b12e5e"
+    },
+    {
+      "source": "code/modules/roguetown/roguecrafting/turfs.dm",
+      "path": "/datum/crafting_recipe/roguetown/turfs/wood/wall",
+      "name": "wall (wood) (2 small logs)",
+      "reqs": {
+        "/obj/item/grown/log/tree/small": 2
+      },
+      "definition_sha256": "ed3261fec72cde2ba2159d2d7acb2dc7e2e3b2cc5ad1e7d251b85013bcff84be"
+    },
+    {
+      "source": "code/modules/roguetown/roguecrafting/turfs.dm",
+      "path": "/datum/crafting_recipe/roguetown/turfs/wood/wall/alt",
+      "name": "wall (wood) (2 small logs)",
+      "reqs": {
+        "/obj/item/natural/wood/plank": 2
+      },
+      "definition_sha256": "01ac683185926df2ab0c72e32e5a455431b9db4bad027cc2a494115f9ce41e67",
+      "name_parent": "/datum/crafting_recipe/roguetown/turfs/wood/wall"
+    }
+  ]
+}

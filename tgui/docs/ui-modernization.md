@@ -194,6 +194,17 @@ cancellation, paste suppression, timeout, UI-state checks and live preview.
 Keep production routing and current-mob scope unchanged until a separate input
 contract and native regression checks establish which prompts can support it.
 
+### Crafting affordability compatibility
+
+The [production helper](../packages/tgui/interfaces/MiaCraft/craftability.ts)
+prefers optional `craftability_by_path` entries for colliding recipe names,
+including explicit zero, and otherwise retains legacy name lookup. Its
+two-argument API is unchanged. The [experimental workbench model](../prototypes/crafting-workbench/model.ts)
+still uses that name-only API; its frozen demos and measurements are not upgraded
+by this change. Before live integration, carry each recipe's exact path and the
+optional overrides through the adapter and revalidate filtering and styling.
+Craft actions and authoritative server ingredient checks remain unchanged.
+
 ## Language/framework alternatives
 
 [Svelte's compiler](https://svelte.dev/docs/svelte/svelte-compiler) produces client

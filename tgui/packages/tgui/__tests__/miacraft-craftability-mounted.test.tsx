@@ -108,7 +108,21 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
       },
     } as Record<string, Record<string, Recipe> | Recipe[]>,
   });
-  type Data = ReturnType<typeof initialData>;
+  type Data = ReturnType<typeof initialData> & {
+    craftability_by_path?: unknown;
+  };
+  const pyrobolt = '/datum/crafting_recipe/roguetown/engineering/pyrobolt';
+  const pyroboltFive = `${pyrobolt}_five`;
+  const collidingRecipes = () => ({
+    craftability: { 'pyroclastic bolt': 1 },
+    craftability_by_path: { [pyroboltFive]: 0, [pyrobolt]: 1 },
+    crafting_recipes: {
+      Ammunition: [
+        recipe('pyroclastic bolt', pyroboltFive, ' 5 bolt, 5 fyritius'),
+        recipe('pyroclastic bolt', pyrobolt, ' 1 bolt, 1 fyritius'),
+      ],
+    },
+  });
   type BackendState = NonNullable<Parameters<typeof backend.backendReducer>[0]>;
   let previousStore: Store;
   let store: Store;
@@ -228,6 +242,197 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
     if (!input) throw new Error('Missing production craftability checkbox');
     return input;
   };
+
+  test('per-path overrides show only the affordable same-name variant and send its exact path', async () => {
+    await render({ ...collidingRecipes(), showonlycraftable: true });
+    expect(titles()).toEqual(['Ammunition']);
+    await expandCategories();
+    expect(titles()).toEqual(['Ammunition', 'pyroclastic bolt']);
+    expect(button('pyroclastic bolt').style.backgroundColor).toBe('');
+    await click('pyroclastic bolt');
+    expect(container.textContent).toContain('1 bolt, 1 fyritius');
+    expect(container.textContent).not.toContain('5 bolt, 5 fyritius');
+    await click('🛠');
+    await click('2x');
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/craft', { item: pyrobolt }],
+      ['act/craft', { item: pyrobolt, amount: 2 }],
+    ]);
+  });
+
+  test('per-path show-all preserves duplicate order, grey state, and every variant action', async () => {
+    await render(collidingRecipes());
+    await expandCategories();
+    expect(titles()).toEqual([
+      'Ammunition',
+      'pyroclastic bolt',
+      'pyroclastic bolt',
+    ]);
+    expect(button('pyroclastic bolt', 0).style.backgroundColor).toBe('grey');
+    expect(button('pyroclastic bolt', 1).style.backgroundColor).toBe('');
+    await click('pyroclastic bolt', 0);
+    await click('pyroclastic bolt', 1);
+    const details = [...container.querySelectorAll('.LabeledList')];
+    expect(details).toHaveLength(2);
+    expect(details[0].textContent).toContain('5 bolt, 5 fyritius');
+    expect(details[1].textContent).toContain('1 bolt, 1 fyritius');
+    for (const index of [0, 1]) {
+      // Affordability is presentation only; the server still validates actions.
+      await click('🛠', index);
+      for (const label of ['1x', '2x', '3x', '5x', '∞']) {
+        await click(label, index);
+      }
+    }
+    expect(sendMessage.mock.calls).toEqual(
+      [pyroboltFive, pyrobolt].flatMap((item) => [
+        ['act/craft', { item }],
+        ['act/craft', { item }],
+        ['act/craft', { item, amount: 2 }],
+        ['act/craft', { item, amount: 3 }],
+        ['act/craft', { item, amount: 5 }],
+        ['act/craft', { item, auto: true }],
+      ]),
+    );
+  });
+
+  test('old payloads without overrides retain name-based duplicates, ordering, and actions', async () => {
+    const { craftability_by_path: _overrides, ...legacy } = collidingRecipes();
+    await render({ ...legacy, showonlycraftable: true });
+    await expandCategories();
+    expect(titles()).toEqual([
+      'Ammunition',
+      'pyroclastic bolt',
+      'pyroclastic bolt',
+    ]);
+    for (const index of [0, 1]) {
+      expect(button('pyroclastic bolt', index).style.backgroundColor).toBe('');
+      await click('🛠', index);
+    }
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/craft', { item: pyroboltFive }],
+      ['act/craft', { item: pyrobolt }],
+    ]);
+    await update({ craftability: { 'pyroclastic bolt': 0 } });
+    expect(titles()).toEqual([]);
+  });
+
+  test('replacement and in-place path override updates refresh filtering and grey state', async () => {
+    await render(collidingRecipes());
+    await expandCategories();
+    const replacement: Record<string, unknown> = {
+      [pyroboltFive]: 1,
+      [pyrobolt]: 0,
+    };
+    await update({ craftability_by_path: replacement });
+    expect(button('pyroclastic bolt', 0).style.backgroundColor).toBe('');
+    expect(button('pyroclastic bolt', 1).style.backgroundColor).toBe('grey');
+    await update({ showonlycraftable: true });
+    expect(titles()).toEqual(['Ammunition', 'pyroclastic bolt']);
+    await click('🛠');
+    replacement[pyroboltFive] = 0;
+    replacement[pyrobolt] = 1;
+    await update({ craftability_by_path: replacement });
+    expect(titles()).toEqual(['Ammunition', 'pyroclastic bolt']);
+    await click('🛠');
+    await update({ showonlycraftable: false });
+    expect(button('pyroclastic bolt', 0).style.backgroundColor).toBe('grey');
+    expect(button('pyroclastic bolt', 1).style.backgroundColor).toBe('');
+    // In-place ownership/enumerability changes must also be freshly observed.
+    Object.defineProperty(replacement, pyroboltFive, { enumerable: false });
+    await update({ busy: true });
+    expect(button('pyroclastic bolt', 0).style.backgroundColor).toBe('');
+    Object.defineProperty(replacement, pyroboltFive, { enumerable: true });
+    await update({ busy: false });
+    expect(button('pyroclastic bolt', 0).style.backgroundColor).toBe('grey');
+    delete replacement[pyroboltFive];
+    await update({ craftability_by_path: replacement });
+    expect(button('pyroclastic bolt', 0).style.backgroundColor).toBe('');
+    await update({
+      craftability_by_path: {},
+      craftability: { 'pyroclastic bolt': 0 },
+    });
+    for (const index of [0, 1]) {
+      expect(button('pyroclastic bolt', index).style.backgroundColor).toBe(
+        'grey',
+      );
+    }
+    await update({
+      craftability_by_path: undefined,
+      craftability: { 'pyroclastic bolt': 1 },
+    });
+    for (const index of [0, 1]) {
+      expect(button('pyroclastic bolt', index).style.backgroundColor).toBe('');
+    }
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/craft', { item: pyroboltFive }],
+      ['act/craft', { item: pyrobolt }],
+    ]);
+  });
+
+  test('path overrides preserve name-or-ingredient search and confirmed checkbox behavior', async () => {
+    await render(collidingRecipes());
+    await search('PyRoClAsTiC');
+    await expandCategories();
+    expect(titles()).toEqual([
+      'Ammunition',
+      'pyroclastic bolt',
+      'pyroclastic bolt',
+    ]);
+    await search('5 FYRITIUS');
+    expect(titles()).toEqual(['Ammunition', 'pyroclastic bolt']);
+    expect(button('pyroclastic bolt').style.backgroundColor).toBe('grey');
+    await act(async () => checkbox().click());
+    expect(titles()).toEqual(['Ammunition', 'pyroclastic bolt']);
+    await update({ showonlycraftable: true });
+    expect(titles()).toEqual([]);
+    await search('1 fYrItIuS');
+    expect(titles()).toEqual(['Ammunition']);
+    await expandCategories();
+    expect(titles()).toEqual(['Ammunition', 'pyroclastic bolt']);
+    await click('🛠');
+    await search('pyrobolt'); // Hidden path is not searchable.
+    expect(titles()).toEqual([]);
+    await search('no such material');
+    expect(titles()).toEqual([]);
+    await search('');
+    await expandCategories();
+    expect(titles()).toEqual(['Ammunition', 'pyroclastic bolt']);
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/checkboxonlycraftable', { state: true }],
+      ['act/craft', { item: pyrobolt }],
+    ]);
+  });
+
+  test('mounted overrides enforce strict values, own enumerable keys, and malformed-map fallback', async () => {
+    await render(collidingRecipes());
+    await expandCategories();
+    for (const value of [true, '1', null, undefined, 2]) {
+      await update({
+        craftability_by_path: { [pyroboltFive]: value, [pyrobolt]: 1 },
+      });
+      expect(button('pyroclastic bolt', 0).style.backgroundColor).toBe('grey');
+      expect(button('pyroclastic bolt', 1).style.backgroundColor).toBe('');
+    }
+    const inherited = Object.create({ [pyroboltFive]: 0 });
+    Object.defineProperty(inherited, pyrobolt, { value: 0 });
+    for (const overrides of [inherited, null, [], '1', 1, undefined]) {
+      await update({ craftability_by_path: overrides });
+      for (const index of [0, 1]) {
+        expect(button('pyroclastic bolt', index).style.backgroundColor).toBe(
+          '',
+        );
+      }
+    }
+    await update({
+      craftability: { 'pyroclastic bolt': 0 },
+      craftability_by_path: { [pyroboltFive]: 0, [pyrobolt]: 1 },
+    });
+    expect(button('pyroclastic bolt', 0).style.backgroundColor).toBe('grey');
+    expect(button('pyroclastic bolt', 1).style.backgroundColor).toBe('');
+    await update({ showonlycraftable: true });
+    expect(titles()).toEqual(['Ammunition', 'pyroclastic bolt']);
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
 
   test('keeps category and recipe order, duplicate names, and strict numeric-one backgrounds', async () => {
     await render();

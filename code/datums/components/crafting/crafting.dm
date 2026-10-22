@@ -106,6 +106,7 @@
 	var/showonlycraftable = TRUE
 	var/craftability_next_update = 0
 	var/list/cached_craftability = list()
+	var/list/cached_craftability_by_path = list()
 
 
 
@@ -578,6 +579,8 @@
 		craftability_next_update = world.time + 10
 		var/list/surroundings = get_surroundings(user)
 		cached_craftability = list()
+		cached_craftability_by_path = list()
+		var/list/first_recipe_by_name = list()
 		for(var/rec in GLOB.crafting_recipes)
 			var/datum/crafting_recipe/R = rec
 
@@ -589,11 +592,23 @@
 				continue
 
 			var/can_craft_recipe = check_contents(R, surroundings)
+			// Only colliding visible names need per-path overrides; unique names keep the legacy lookup.
+			if(R.name)
+				var/datum/crafting_recipe/first_recipe = first_recipe_by_name[R.name]
+				if(first_recipe)
+					var/first_path = "[first_recipe.type]"
+					// Capture the first result before OR aggregation, once even for three or more variants.
+					if(isnull(cached_craftability_by_path[first_path]))
+						cached_craftability_by_path[first_path] = cached_craftability[R.name] ? 1 : 0
+					cached_craftability_by_path["[R.type]"] = can_craft_recipe ? 1 : 0
+				else
+					first_recipe_by_name[R.name] = R
 			// Multiple recipe paths can intentionally share a display name (e.g. log/plank alternates).
 			// Keep the entry craftable if any variant with that name is craftable.
 			cached_craftability[R.name] = cached_craftability[R.name] || can_craft_recipe
 
 	data["craftability"] = cached_craftability
+	data["craftability_by_path"] = cached_craftability_by_path
 	data["showonlycraftable"] = showonlycraftable
 	return data
 

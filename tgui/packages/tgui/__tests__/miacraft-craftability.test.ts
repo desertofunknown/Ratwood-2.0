@@ -264,3 +264,270 @@ describe('MiaCraft craftability membership equivalence', () => {
     }
   });
 });
+
+describe('MiaCraft per-path craftability overrides', () => {
+  const path = '/recipe/variant';
+
+  test('explicit zero overrides a craftable shared name and one overrides an uncraftable name', () => {
+    expect(
+      isRecipeCraftable({ Recipe: 1 }, 'Recipe', path, { [path]: 0 }),
+    ).toBe(false);
+    expect(
+      isRecipeCraftable({ Recipe: 0 }, 'Recipe', path, { [path]: 1 }),
+    ).toBe(true);
+    expect(isRecipeCraftable({}, 'Missing', path, { [path]: 1 })).toBe(true);
+  });
+
+  test.each([
+    ['numeric one', 1, true],
+    ['zero', 0, false],
+    ['negative one', -1, false],
+    ['two', 2, false],
+    ['true', true, false],
+    ['false', false, false],
+    ['string one', '1', false],
+    ['empty string', '', false],
+    ['null', null, false],
+    ['undefined', undefined, false],
+    ['NaN', NaN, false],
+    ['infinity', Infinity, false],
+    ['bigint one', 1n, false],
+    ['boxed one', Object(1), false],
+    ['array containing one', [1], false],
+    ['ordinary object', {}, false],
+  ])(
+    'an existing path value requires strict numeric one: %s',
+    (_label, value, expected) => {
+      for (const legacy of [0, 1]) {
+        expect(
+          isRecipeCraftable({ Recipe: legacy }, 'Recipe', path, {
+            [path]: value,
+          }),
+        ).toBe(expected);
+      }
+    },
+  );
+
+  test('missing, empty, and malformed optional maps retain the legacy lookup', () => {
+    const malformed = [
+      undefined,
+      null,
+      {},
+      Object.create(null),
+      [],
+      [1],
+      true,
+      false,
+      1,
+      '1',
+      Symbol('map'),
+      1n,
+      () => 1,
+    ];
+    for (const overrides of malformed) {
+      for (const name of ['Recipe', 'Missing', '', 1, undefined]) {
+        const legacy = { Recipe: 1, '': 1 };
+        expect(isRecipeCraftable(legacy, name, path, overrides)).toBe(
+          originalLookup(legacy)(name),
+        );
+      }
+    }
+    // Arrays and functions are not JSON records, even with matching own keys.
+    for (const overrides of [[], () => 1]) {
+      Object.defineProperty(overrides, path, { value: 0, enumerable: true });
+      expect(isRecipeCraftable({ Recipe: 1 }, 'Recipe', path, overrides)).toBe(
+        true,
+      );
+    }
+  });
+
+  test('missing, empty, and non-string paths are not coerced into override keys', () => {
+    const noCoercion = {
+      toString() {
+        throw new Error('A recipe path must not be coerced');
+      },
+    };
+    const paths = [
+      undefined,
+      null,
+      '',
+      0,
+      1,
+      true,
+      false,
+      1n,
+      Object(path),
+      [path],
+      Symbol(path),
+      noCoercion,
+    ];
+    const overrides = {
+      '': 0,
+      '1': 0,
+      true: 0,
+      null: 0,
+      undefined: 0,
+      [path]: 0,
+    };
+    for (const candidate of paths) {
+      expect(
+        isRecipeCraftable({ Recipe: 1 }, 'Recipe', candidate, overrides),
+      ).toBe(true);
+      expect(
+        isRecipeCraftable({ Recipe: 0 }, 'Recipe', candidate, overrides),
+      ).toBe(false);
+    }
+    expect(
+      isRecipeCraftable({ Recipe: 1 }, 'Recipe', `${path} `, overrides),
+    ).toBe(true);
+    expect(
+      isRecipeCraftable({ Recipe: 1 }, 'Recipe', path.toUpperCase(), overrides),
+    ).toBe(true);
+  });
+
+  test('inherited and nonenumerable overrides fall back, but own enumerable shadows take priority', () => {
+    const overrides = Object.create({ inherited: 0, shadowed: 1 });
+    Object.defineProperties(overrides, {
+      hidden: { value: 0 },
+      shadowed: { value: 0, enumerable: true },
+      visible: { value: 1, enumerable: true },
+    });
+    for (const candidate of ['inherited', 'hidden', 'missing']) {
+      expect(
+        isRecipeCraftable({ Recipe: 1 }, 'Recipe', candidate, overrides),
+      ).toBe(true);
+      expect(
+        isRecipeCraftable({ Recipe: 0 }, 'Recipe', candidate, overrides),
+      ).toBe(false);
+    }
+    expect(
+      isRecipeCraftable({ Recipe: 1 }, 'Recipe', 'shadowed', overrides),
+    ).toBe(false);
+    expect(
+      isRecipeCraftable({ Recipe: 0 }, 'Recipe', 'visible', overrides),
+    ).toBe(true);
+  });
+
+  test('prototype-like own path keys work on ordinary and null-prototype records', () => {
+    const keys = [
+      '__proto__',
+      'constructor',
+      'toString',
+      'hasOwnProperty',
+      'propertyIsEnumerable',
+    ];
+    for (const prototype of [Object.prototype, null]) {
+      const overrides: Record<string, unknown> = Object.create(prototype);
+      for (const key of keys) {
+        Object.defineProperty(overrides, key, {
+          value: 0,
+          enumerable: true,
+          writable: true,
+        });
+        expect(isRecipeCraftable({ Recipe: 1 }, 'Recipe', key, overrides)).toBe(
+          false,
+        );
+        overrides[key] = 1;
+        expect(isRecipeCraftable({ Recipe: 0 }, 'Recipe', key, overrides)).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  test('same-object changes to path values, ownership, and enumerability are observed without caching', () => {
+    const legacy = { Recipe: 1 };
+    const overrides: Record<string, unknown> = { [path]: 0 };
+    expect(isRecipeCraftable(legacy, 'Recipe', path, overrides)).toBe(false);
+    overrides[path] = 1;
+    expect(isRecipeCraftable(legacy, 'Recipe', path, overrides)).toBe(true);
+    overrides[path] = 0;
+    Object.defineProperty(overrides, path, { enumerable: false });
+    expect(isRecipeCraftable(legacy, 'Recipe', path, overrides)).toBe(true);
+    Object.defineProperty(overrides, path, { enumerable: true });
+    expect(isRecipeCraftable(legacy, 'Recipe', path, overrides)).toBe(false);
+    delete overrides[path];
+    expect(isRecipeCraftable(legacy, 'Recipe', path, overrides)).toBe(true);
+    legacy.Recipe = 0;
+    expect(isRecipeCraftable(legacy, 'Recipe', path, overrides)).toBe(false);
+    overrides[path] = 1;
+    expect(isRecipeCraftable(legacy, 'Recipe', path, overrides)).toBe(true);
+  });
+
+  test('duplicate and triple names retain individual paths and input order', () => {
+    const recipes = [
+      { name: 'Bolt', path: '/recipe/bolt-five' },
+      { name: 'Ribbon', path: '/recipe/ribbon-two' },
+      { name: 'Bolt', path: '/recipe/bolt-one' },
+      { name: 'Ribbon', path: '/recipe/ribbon-one' },
+      { name: 'Bolt', path: '/recipe/bolt-three' },
+      { name: 'Awl', path: '/recipe/awl' },
+    ];
+    const legacy = { Bolt: 1, Ribbon: 0, Awl: 1 };
+    const overrides = {
+      '/recipe/bolt-five': 0,
+      '/recipe/bolt-one': 1,
+      '/recipe/bolt-three': 1,
+      '/recipe/ribbon-two': 1,
+      '/recipe/ribbon-one': 0,
+    };
+    const visible = recipes.filter((recipe) =>
+      isRecipeCraftable(legacy, recipe.name, recipe.path, overrides),
+    );
+    expect(visible).toEqual([recipes[1], recipes[2], recipes[4], recipes[5]]);
+    visible.forEach((recipe, index) =>
+      expect(recipe).toBe(recipes[[1, 2, 4, 5][index]]),
+    );
+  });
+
+  test('repeated paths override different names regardless of input or map order', () => {
+    const recipes = [
+      { name: 'Craftable', path: '/recipe/shared-on' },
+      { name: 'Blocked', path: '/recipe/shared-off' },
+      { name: 'Blocked', path: '/recipe/shared-on' },
+      { name: 'Craftable', path: '/recipe/shared-off' },
+    ];
+    const legacy = { Craftable: 1, Blocked: 0 };
+    const entries = [
+      ['/recipe/shared-on', 1],
+      ['/recipe/shared-off', 0],
+    ];
+    for (const input of [recipes, [...recipes].reverse()]) {
+      for (const orderedEntries of [entries, [...entries].reverse()]) {
+        const overrides = Object.fromEntries(orderedEntries);
+        const expected = input.filter(
+          (recipe) => recipe.path === '/recipe/shared-on',
+        );
+        const visible = input.filter((recipe) =>
+          isRecipeCraftable(legacy, recipe.name, recipe.path, overrides),
+        );
+        expect(visible).toEqual(expected);
+        expect(visible).toHaveLength(2);
+        visible.forEach((recipe, index) =>
+          expect(recipe).toBe(expected[index]),
+        );
+      }
+    }
+  });
+
+  test('lookups do not mutate frozen records, descriptors, or recipe inputs', () => {
+    const overrides = Object.freeze(
+      Object.defineProperties(Object.create(null), {
+        [path]: { value: 0, enumerable: true },
+        hidden: { value: 1 },
+      }),
+    );
+    const legacy = Object.freeze({ Recipe: 1 });
+    const recipe = Object.freeze({ name: 'Recipe', path });
+    const descriptors = Object.getOwnPropertyDescriptors(overrides);
+    for (let repeat = 0; repeat < 3; repeat++) {
+      expect(
+        isRecipeCraftable(legacy, recipe.name, recipe.path, overrides),
+      ).toBe(false);
+    }
+    expect(Object.getOwnPropertyDescriptors(overrides)).toEqual(descriptors);
+    expect(Object.getPrototypeOf(overrides)).toBe(null);
+    expect(legacy).toEqual({ Recipe: 1 });
+    expect(recipe).toEqual({ name: 'Recipe', path });
+  });
+});

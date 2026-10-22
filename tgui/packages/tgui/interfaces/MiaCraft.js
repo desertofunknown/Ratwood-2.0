@@ -16,7 +16,7 @@ import { matchesRecipeSearch } from './MiaCraft/search';
 const CraftingCategory = ({ crafties, key3, onlyCraftable, craftability, key, actfunc, searchText }) => {
     const visibleElements = useMemo(() => {
       return Object.entries(crafties).filter(([key2, item2]) => !onlyCraftable || 
-      craftability(item2.name))
+      craftability(item2.name, item2.path))
       .sort(([, aVal], [, bVal]) => String(aVal.name).localeCompare(String(bVal.name)))
       .filter(([id, item]) => 
       { return matchesRecipeSearch(item, searchText); });
@@ -43,7 +43,7 @@ const CraftingCategory = ({ crafties, key3, onlyCraftable, craftability, key, ac
           />
         </Stack.Item>
         <Stack.Item basis="80%">
-          <Collapsible title={recipe.name} style={{ backgroundColor: craftability(recipe.name) ? "" : "grey" }}>
+          <Collapsible title={recipe.name} style={{ backgroundColor: craftability(recipe.name, recipe.path) ? "" : "grey" }}>
             <LabeledList >
               <LabeledList.Item label="Ingredients" style={{ 'margin-left': '20px' }}>
                 {recipe.req_text}
@@ -112,7 +112,7 @@ export const MiaCraft = (props, context) => {
   const busy = data.busy;
   const [category, setCategory] = useState();
   const [subcategory, setSubcategory] = useState();
-  const craftability = (name) => isRecipeCraftable(data.craftability, name);
+  const craftability = (name, path) => isRecipeCraftable(data.craftability, name, path, data.craftability_by_path);
   const [crafting_recipes] = useState(data.crafting_recipes);
   let onlyCraftable = data.showonlycraftable;
   const [searchText, setSearchText] = useState("");
