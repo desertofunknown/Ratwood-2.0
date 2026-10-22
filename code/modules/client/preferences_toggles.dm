@@ -807,6 +807,7 @@
 	if(prefs)
 		prefs.hear_barks = !prefs.hear_barks
 		prefs.save_preferences()
+		prefs.save_hear_barks()
 	to_chat(src, "You will [prefs.hear_barks ? "" : "not "]hear vocal barks.")
 
 /client/verb/toggle_xptext() // Whether the user can see the balloon XP pop ups.

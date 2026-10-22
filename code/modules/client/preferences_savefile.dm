@@ -1099,6 +1099,34 @@ SAVEFILE UPDATING/VERSIONING - 'Simplified', or rather, more coder-friendly ~Car
 
 	return TRUE
 
+// Save only the listening toggle; unsaved or randomized character fields stay untouched.
+/datum/preferences/proc/save_hear_barks()
+	if(!path)
+		return FALSE
+	if(!fexists(path))
+		return FALSE
+
+	var/slot = default_slot
+	if(!isnum(slot) || slot < 1 || slot > max_save_slots || slot != round(slot))
+		return FALSE
+
+	var/savefile/S = new /savefile(path)
+	if(!S)
+		return FALSE
+	S.cd = "/"
+	var/slot_directory = "character[slot]"
+	if(!(slot_directory in S.dir))
+		return FALSE
+	S.cd = "/[slot_directory]"
+
+	var/savefile_version
+	S["version"] >> savefile_version
+	if(!isnum(savefile_version) || isnan(savefile_version) || isinf(savefile_version) || savefile_version < SAVEFILE_VERSION_MIN)
+		return FALSE
+
+	WRITE_FILE(S["hear_barks"], hear_barks)
+	return TRUE
+
 /datum/preferences/proc/save_character()
 	if(!path)
 		return FALSE
