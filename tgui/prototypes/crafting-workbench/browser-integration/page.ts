@@ -111,6 +111,12 @@ export async function startPage(Arm: Arm, arm: 'react' | 'svelte') {
   addButton('Unmount root', () => fixture.unmountRoot());
   addButton('Remount root', () => fixture.mountRoot());
   addButton('Refresh recorded calls', () => report());
+  addButton('Hide QA controls until reload', () => {
+    controls.remove();
+    root
+      .querySelector<HTMLElement>('.Layout__content')
+      ?.focus({ preventScroll: true });
+  });
   const notices = document.createElement('p');
   const link = document.createElement('a');
   link.href = '../NOTICE.txt';
@@ -126,4 +132,6 @@ export async function startPage(Arm: Arm, arm: 'react' | 'svelte') {
     read: () => ({ arm, result, state: fixture.read() }),
   });
   status.textContent = 'Ready. Checks run only when requested.';
+  // Internal page-test cleanup handle; the window inspection API stays read-only.
+  return fixture;
 }

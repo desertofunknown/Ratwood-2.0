@@ -57,7 +57,12 @@ dimmer and resize-handle rules therefore remain in use. Fixture-only additions:
   the real close element and mouse/keyboard handlers remain intact.
 - Give both arm host containers the same full height and add 8px title padding.
 - Show an out-of-band collapsible control panel over the bottom-right viewport.
-  Collapse it for layout/focus acceptance. The panel does not resize the Window.
+  Use **Hide QA controls until reload** for unobstructed layout/focus acceptance
+  and screenshots, especially at high zoom. Reload restores the controls. Hiding
+  removes only this panel, preserves the workbench and read-only inspection API,
+  and returns focus to the existing scrollable Window content when available.
+  Hiding is disabled while a fixture operation runs. The panel does not resize
+  the Window.
 
 No font/image assets, production theme imports or full production stylesheet are
 shipped. The workbench stylesheet is copied byte-for-byte. This is a matched
@@ -112,6 +117,10 @@ installed before application imports; fetch, XHR, WebSocket, EventSource, Worker
 and sendBeacon attempts must remain zero. Additional tests cover endpoint
 installation refusal and rejected subscriptions/non-sample actions. Teardown
 asserts zero subscriptions, balanced mount/disposal and no pending disposal.
+Actual page-level tests cover panel hiding in both arms, unchanged workbench
+identity and subscriptions, zero additional endpoint calls, focus transfer, busy-run
+blocking, read-only inspection API preservation and restoration on fresh page
+initialization. Tests remove page-owned handlers and restore inspection globals.
 This is source-mounted behavioral evidence, not browser layout or native proof.
 The 20ms shared settle delay is a scheduling allowance, not a timing sample.
 

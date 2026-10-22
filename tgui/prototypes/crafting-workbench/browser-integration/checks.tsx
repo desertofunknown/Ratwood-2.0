@@ -4,6 +4,7 @@ import { afterAll, expect, test } from 'bun:test';
 
 import { endpoint } from './bootstrap';
 import { createEndpoint, installEndpoint } from './endpoint';
+import { startPage } from './page';
 import { ReactArm } from './react-arm';
 import { createFixture } from './runtime';
 import { runChecks } from './scenarios';
@@ -39,6 +40,105 @@ for (const [name, Arm] of [
       expect(endpoint.subscriptions).toBe(0);
       expect(networkGuard.attempted).toBe(0);
       target.remove();
+    }
+  });
+}
+const waitUntilIdle = async (button: HTMLButtonElement) => {
+  for (let attempt = 0; attempt < 400; attempt++) {
+    if (!button.disabled) return;
+    await new Promise<void>((resolve) => setTimeout(resolve, 5));
+  }
+  throw new Error('Fixture control did not finish.');
+};
+for (const [name, Arm] of [
+  ['react', ReactArm],
+  ['svelte', SvelteArm],
+] as const) {
+  test(`${name}: actual page hides QA without changing workbench; reload restores it`, async () => {
+    const previousInspection = Object.getOwnPropertyDescriptor(
+      window,
+      'workbenchIntegration',
+    );
+    const previousFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    try {
+      // The second fresh initialization models reload without any saved hide state.
+      for (let page = 0; page < 2; page++) {
+        const root = document.createElement('div');
+        root.id = 'fixture-root';
+        const controls = document.createElement('aside');
+        controls.id = 'fixture-controls';
+        document.body.append(root, controls);
+        const fixture = await startPage(Arm, name);
+        try {
+          const button = (label: string) =>
+            [...controls.querySelectorAll<HTMLButtonElement>('button')].find(
+              (node) => node.textContent === label,
+            )!;
+          const hide = button('Hide QA controls until reload');
+          expect(hide).toBeDefined();
+          expect(controls.isConnected).toBe(true);
+          const inspection = Reflect.get(window, 'workbenchIntegration');
+          expect(Object.keys(inspection).sort()).toEqual(['arm', 'read']);
+          if (page === 1) {
+            const run = button('Run lifecycle and action checks');
+            run.click();
+            expect(hide.disabled).toBe(true);
+            hide.click();
+            // Also challenge the handler guard directly: dispatched synthetic
+            // events can reach disabled elements without native hit testing.
+            hide.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            expect(controls.isConnected).toBe(true);
+            await waitUntilIdle(run);
+            expect(inspection.read().result.checks.length).toBe(25);
+          }
+          const workbench = root.querySelector('.Workbench');
+          const before = fixture.read();
+          hide.focus();
+          hide.click();
+          expect(controls.isConnected).toBe(false);
+          expect(document.getElementById('fixture-controls')).toBeNull();
+          expect(root.querySelector('.Workbench')).toBe(workbench);
+          expect(root.isConnected).toBe(true);
+          expect(document.activeElement).toBe(
+            root.querySelector('.Layout__content'),
+          );
+          expect(fixture.endpoint.totalRecordedCalls).toBe(
+            before.totalRecordedCalls,
+          );
+          await waitUntilIdle(hide);
+          expect(fixture.endpoint.totalRecordedCalls).toBe(
+            before.totalRecordedCalls,
+          );
+          expect(fixture.read().mounts).toBe(before.mounts);
+          expect(fixture.read().subscriptions).toBe(before.subscriptions);
+          expect(Reflect.get(window, 'workbenchIntegration')).toBe(inspection);
+          expect(inspection.read().state.rootMounted).toBe(true);
+        } finally {
+          // Remove page-owned handlers even when the panel is already detached.
+          for (const button of controls.querySelectorAll('button')) {
+            button.onclick = null;
+          }
+          controls.replaceChildren();
+          controls.remove();
+          Reflect.deleteProperty(window, 'workbenchIntegration');
+          await fixture.dispose();
+          expect(fixture.read().subscriptions).toBe(0);
+          expect(fixture.read().mounts).toBe(fixture.read().unmounts);
+          root.remove();
+        }
+      }
+    } finally {
+      if (previousInspection) {
+        Object.defineProperty(
+          window,
+          'workbenchIntegration',
+          previousInspection,
+        );
+      } else Reflect.deleteProperty(window, 'workbenchIntegration');
+      if (previousFocus?.isConnected) previousFocus.focus();
     }
   });
 }
