@@ -144,9 +144,9 @@ same Node 24.19.0 gzip-9 compressor for each artifact:
 
 | Standalone demo JavaScript | Raw bytes | Gzip level 9 bytes |
 | -------------------------- | --------: | -----------------: |
-| React                      |   199,074 |             63,363 |
-| Svelte                     |    74,824 |             27,886 |
-| Browser Lua (Fengari)      |   234,527 |             77,819 |
+| React                      |   199,153 |             63,407 |
+| Svelte                     |    74,905 |             27,930 |
+| Browser Lua (Fengari)      |   234,796 |             77,928 |
 
 Lua includes its VM, interop and Lua source, which is parsed at mount. It is not
 native LuaJIT. The shared CSS adds the same bytes to every candidate; these are
@@ -157,7 +157,9 @@ these controls-enabled builds with the earlier controls-free snapshot.
 The Lua candidate now skips selection lookup when nothing is selected. The
 [isolated experiment](lua/selection-scan-experiment.md) records exact VM property
 read counts, selected-state parity, and separately labeled local timing samples.
-Hosted browser A/B measurement remains required; this is not a framework verdict.
+The [hosted browser A/B](lua/browser-selection-scan.md) subsequently measured the
+neutral-state improvement with all raw samples retained. This is not a framework
+verdict or a selected-state/native-game performance claim.
 
 All candidates share a [short-height layout adjustment](short-height-layout.md)
 for high zoom and small windows. Its browser scrolling/focus acceptance checklist

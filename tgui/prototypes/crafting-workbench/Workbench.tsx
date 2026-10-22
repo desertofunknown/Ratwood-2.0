@@ -89,9 +89,16 @@ export function CraftingWorkbench({ data, onAction }: CraftingWorkbenchProps) {
       headingRef.current?.focus({ preventScroll: true });
       if (folioRef.current) folioRef.current.scrollTop = 0;
     } else if (returnFocus.current) {
-      const row = rowRefs.current.get(returnFocus.current);
-      (row ?? searchRef.current)?.focus({ preventScroll: true });
+      const target =
+        rowRefs.current.get(returnFocus.current) ?? searchRef.current;
+      target?.focus({ preventScroll: true });
       if (listRef.current) listRef.current.scrollTop = listScroll.current;
+      // Preserve the inner position where possible, but reveal focus in outer scrollers too.
+      target?.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: 'instant',
+      });
       returnFocus.current = null;
     }
   }, [selected?.identity]);

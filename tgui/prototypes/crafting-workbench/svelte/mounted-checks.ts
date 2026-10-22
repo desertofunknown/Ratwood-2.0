@@ -14,6 +14,7 @@ const act = async (callback: () => unknown) => {
   await tick();
 };
 
+import { focusReturnChecks } from '../focus-return-checks';
 import { PAGE_SIZE, type WorkbenchRecipe } from '../model';
 import type { WorkbenchData } from '../model';
 
@@ -120,6 +121,19 @@ const selectCategory = async (value: string) => {
 const folio = () => container.querySelector('.Workbench__folio')!;
 
 describe('Svelte production-client mounted workbench', () => {
+  focusReturnChecks({
+    container: () => container,
+    render,
+    click,
+    backWithRemovedRecipes: async (back) => {
+      await act(async () => {
+        back.click();
+        data = { ...data, crafting_recipes: {} };
+        await root!.update(data);
+      });
+    },
+  });
+
   test('orders categories and variants without pre-mounting recipe details', async () => {
     await render();
     expect(names()).toEqual(['Awl', 'Ribbon', 'Ribbon', 'Hammer', 'Saw']);

@@ -6,9 +6,16 @@ recipe/detail region (70% of the dynamic viewport height, at least 240px).
 The hosted demo instead uses the document as that outer scroller, including
 its notices and benchmark controls. Normal-height layouts are unchanged.
 
-The existing inner list and detail scrollers are intentional: selection and
-Back restore their independent positions and focus with `preventScroll`.
-Flattening these panels into document flow would change that behavior.
+The existing inner list and detail scrollers are intentional. Back focuses its
+recipe row (or search if the row disappeared) with `preventScroll`, restores the
+saved list position, then calls `scrollIntoView` with `block: 'nearest'`,
+`inline: 'nearest'` and `behavior: 'instant'`. This also permits the outer
+scroller to reveal the target, without smooth animation. A row that fits fully
+inside the list keeps the saved inner position; for a clipped or oversized row,
+usable focus takes priority over exact scroll restoration. Opening a detail,
+ordinary data deliveries and automatic selection-removal focus are unchanged.
+Flattening these panels into document flow would change their independent scroll
+behavior.
 No text, hit targets, controls, theme colors, or width breakpoints change.
 
 ## Browser acceptance checks (pending)
@@ -20,6 +27,11 @@ No text, hit targets, controls, theme colors, or width breakpoints change.
   panel should fit without needing to hide controls or add empty trailing space.
 - Scroll down the recipe list, open a recipe, use every craft control and Back;
   verify the selected row, list position, focus, and detail heading stay usable.
+  Record the row, list and viewport rectangles before and after Back. When the
+  row fits inside the list but is clipped by the viewport, Back should preserve
+  the inner list position and move the outer scroller enough to reveal focus.
+  Repeat with a row clipped inside the list and an oversized wrapped row; allow
+  nearest-alignment adjustment rather than requiring the old inner scroll value.
 - Tab and Shift+Tab across search, filters, recipe rows, detail controls, and
   demo controls. Confirm focused controls can be brought into view and neither
   scroll region traps keyboard or pointer navigation.
@@ -32,3 +44,7 @@ No text, hit targets, controls, theme colors, or width breakpoints change.
 
 Static checks do not establish actual scrolling, focus visibility, or zoom
 usability; browser acceptance is required before calling this visually verified.
+The matched mounted tests check Back's target, options and focus/restore/reveal
+ordering, search fallback, and absence of extra calls during unrelated updates.
+Their simulated scroll adjustment checks that restoration does not overwrite a
+reveal, not that Happy DOM performs browser layout or scrolling.

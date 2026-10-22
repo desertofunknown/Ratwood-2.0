@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
+import { focusReturnChecks } from './focus-return-checks';
 import { PAGE_SIZE, type WorkbenchRecipe } from './model';
 import { CraftingWorkbench, type WorkbenchData } from './Workbench';
 
@@ -117,6 +118,19 @@ const selectCategory = async (value: string) => {
 const folio = () => container.querySelector('.Workbench__folio')!;
 
 describe('standalone mounted workbench', () => {
+  focusReturnChecks({
+    container: () => container,
+    render,
+    click,
+    backWithRemovedRecipes: async (back) => {
+      await act(async () => {
+        back.click();
+        data = { ...data, crafting_recipes: {} };
+        root.render(<CraftingWorkbench data={data} onAction={onAction} />);
+      });
+    },
+  });
+
   test('orders categories and variants without pre-mounting recipe details', async () => {
     await render();
     expect(names()).toEqual(['Awl', 'Ribbon', 'Ribbon', 'Hammer', 'Saw']);

@@ -17,7 +17,10 @@ renderer optimizations are added later; it is not a general benchmark utility.
 
 ## Reproduce
 
-With the existing frozen dependencies installed, from this Lua directory:
+Use a separate checkout of candidate commit
+`5f0f25b24908dd2371ea25fcb9f063c167c82b1e`, not the latest renderer: later
+focus-return changes are deliberately outside this one-factor experiment.
+With that checkout's frozen dependencies installed, from its Lua directory:
 
 ```sh
 bun run selection-scan-experiment.ts

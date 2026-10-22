@@ -157,8 +157,13 @@ return function(_, host)
     selectedIdentity = nil
     render()
     local row = rowRecords[identity]
-    focus(row and row.button or search, true)
+    local target = row and row.button or search
+    focus(target, true)
     list.scrollTop = listScroll
+    -- Preserve the inner position where possible, but reveal focus in outer scrollers too.
+    local options = payload()
+    options.block, options.inline, options.behavior = "nearest", "nearest", "instant"
+    target:scrollIntoView(options)
   end
   local function createDetail()
     local backButton = button("Workbench__back", "← Back to recipes", folio)

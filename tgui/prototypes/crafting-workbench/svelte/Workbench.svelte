@@ -68,8 +68,15 @@
         headingRef?.focus({ preventScroll: true });
         if (folioRef) folioRef.scrollTop = 0;
       } else if (returnFocus) {
-        (rowRefs.get(returnFocus) ?? searchRef)?.focus({ preventScroll: true });
+        const target = rowRefs.get(returnFocus) ?? searchRef;
+        target?.focus({ preventScroll: true });
         if (listRef) listRef.scrollTop = listScroll;
+        // Preserve the inner position where possible, but reveal focus in outer scrollers too.
+        target?.scrollIntoView({
+          block: 'nearest',
+          inline: 'nearest',
+          behavior: 'instant',
+        });
         returnFocus = null;
       }
     });
