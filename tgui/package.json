@@ -12,7 +12,7 @@
     "tgui:dev": "bun --smol packages/tgui-dev-server/index.ts",
     "tgui:lint": "eslint packages --ext .js,.cjs,.ts,.tsx",
     "tgui:prettier": "prettier --check .",
-    "tgui:test": "bun test",
+    "tgui:test": "bun tools/run-tests.ts",
     "tgui:test-lint": "node --test tools/lint-regressions.cjs",
     "tgui:tsc": "tsc",
     "tgui:prettier-fix": "prettier --write .",

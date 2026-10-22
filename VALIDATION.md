@@ -11,7 +11,7 @@ With Bun, Node and Python 3 installed, run from the repository root:
 ```sh
 cd tgui
 bun install --frozen-lockfile --ignore-scripts
-bun test
+bun run tgui:test
 bun run tgui:tsc
 bun run tgui:build
 bun run tgui:test-lint
@@ -53,10 +53,16 @@ engine-free test above.
   source checks or narrow source-derived models, **not DM execution**. Fixture
   documentation under `tools/ci/fixtures/` records scope and upstream attribution.
 
-Mounted frontend tests use happy-dom and synthetic events. Some suites isolate
-layout/module mocks in a child process; the outer suite counts such a child as
-one test. Report outer and focused child counts separately, never add them as
-independent coverage. See [Writing tests](tgui/docs/writing-tests.md).
+Mounted frontend tests use happy-dom and synthetic events. The canonical
+`bun run tgui:test` command runs the ordinary suite and the number-validity,
+blueprint-import and list-shortcut child suites serially, preserving each case's
+default 5-second deadline and each isolated process's existing 30-second bound.
+It verifies the three expected wrapper skips and nonempty child reports; any
+process or coverage failure returns nonzero. Report ordinary and isolated counts
+separately. Other layout/module isolation wrappers still count their child suite
+as one outer test; do not add their focused child counts again as independent
+coverage. Bare `bun test` retains the aggregate-wrapper deadline problem.
+See [Writing tests](tgui/docs/writing-tests.md) for focused commands and details.
 
 ## Compile and acceptance boundaries
 

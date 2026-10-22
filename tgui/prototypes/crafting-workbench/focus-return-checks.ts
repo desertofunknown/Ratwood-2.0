@@ -11,6 +11,7 @@ type Harness = {
 
 /** Matched call-contract checks only: Happy DOM cannot establish scroll geometry. */
 export function focusReturnChecks(harness: Harness) {
+  // Boolean identity checks avoid recursively dumping the entire DOM on failure.
   const rows = () => [
     ...harness
       .container()
@@ -61,8 +62,8 @@ export function focusReturnChecks(harness: Harness) {
       'scrollIntoView',
     ).mockImplementation(function (this: HTMLElement, options) {
       trace.push(`reveal:${scrollTop}`);
-      expect(this).toBe(target);
-      expect(document.activeElement).toBe(target);
+      expect(this === target).toBe(true);
+      expect(document.activeElement === target).toBe(true);
       expect(options).toEqual(revealOptions);
       // Simulate a browser adjustment, not layout. Nothing may overwrite it after return.
       scrollTop += visibilityAdjustment;
@@ -71,15 +72,16 @@ export function focusReturnChecks(harness: Harness) {
       for (visibilityAdjustment of [0, 17]) {
         scrollTop = 120;
         await harness.click(target);
-        expect(document.activeElement).toBe(
-          harness.container().querySelector('.Workbench__folio-title'),
-        );
+        expect(
+          document.activeElement ===
+            harness.container().querySelector('.Workbench__folio-title'),
+        ).toBe(true);
         scrollTop = 29;
         const callsBeforeBack = reveal.mock.calls.length;
         trace.length = 0;
         await harness.click(back());
         expect(trace).toEqual(['focus:29', 'restore:120', 'reveal:120']);
-        expect(document.activeElement).toBe(target);
+        expect(document.activeElement === target).toBe(true);
         expect(catalog.scrollTop).toBe(120 + visibilityAdjustment);
         expect(reveal).toHaveBeenCalledTimes(callsBeforeBack + 1);
         await harness.render();
@@ -108,15 +110,15 @@ export function focusReturnChecks(harness: Harness) {
       HTMLElement.prototype,
       'scrollIntoView',
     ).mockImplementation(function (this: HTMLElement, options) {
-      expect(this).toBe(input);
-      expect(document.activeElement).toBe(input);
+      expect(this === input).toBe(true);
+      expect(document.activeElement === input).toBe(true);
       expect(catalog.scrollTop).toBe(120);
       expect(options).toEqual(revealOptions);
     });
     try {
       await harness.backWithRemovedRecipes(back());
       expect(rows()).toHaveLength(0);
-      expect(document.activeElement).toBe(input);
+      expect(document.activeElement === input).toBe(true);
       expect(focus).toHaveBeenCalledWith({ preventScroll: true });
       expect(reveal).toHaveBeenCalledTimes(1);
       await harness.render();
@@ -144,24 +146,24 @@ export function focusReturnChecks(harness: Harness) {
           .container()
           .querySelector<HTMLButtonElement>('.Workbench__more')!,
       );
-      expect(document.activeElement).toBe(rows()[PAGE_SIZE]);
+      expect(document.activeElement === rows()[PAGE_SIZE]).toBe(true);
       await harness.click(rows()[PAGE_SIZE]);
       const heading = harness
         .container()
         .querySelector('.Workbench__folio-title');
-      expect(document.activeElement).toBe(heading);
+      expect(document.activeElement === heading).toBe(true);
       recipes[PAGE_SIZE].name = 'Updated selection';
       await harness.render();
-      expect(document.activeElement).toBe(heading);
+      expect(document.activeElement === heading).toBe(true);
       await harness.render({ crafting_recipes: {} });
-      expect(document.activeElement).toBe(search());
+      expect(document.activeElement === search()).toBe(true);
       // Removing another selection must not steal focus from an active filter.
       await harness.render({ crafting_recipes: { Test: recipes } });
       await harness.click(rows()[0]);
       const select = harness.container().querySelector('select')!;
       select.focus();
       await harness.render({ crafting_recipes: {} });
-      expect(document.activeElement).toBe(select);
+      expect(document.activeElement === select).toBe(true);
       expect(reveal).not.toHaveBeenCalled();
     } finally {
       reveal.mockRestore();
