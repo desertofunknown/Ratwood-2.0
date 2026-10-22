@@ -1,0 +1,9 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["bun", "webpack-env"]
+  },
+  "include": ["./*.ts", "./*.tsx", "../../../../global.d.ts"],
+  "exclude": []
+}

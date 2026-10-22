@@ -13,6 +13,6 @@
     "jsx": "react-jsx",
     "types": ["bun"]
   },
-  "include": ["./*.ts", "./*.svelte"],
+  "include": ["./*.ts", "./*.tsx", "./*.svelte", "./bridge/lifetime.ts"],
   "exclude": ["./dist", "./.generated", "./node_modules"]
 }

@@ -38,9 +38,11 @@ framework ranking. The experiment says nothing about startup, CPU, heap, exact
 paint, native BYOND, native LuaJIT or AAA game quality.
 
 Keep the Lua experiment and its measured gains without further tuning just to
-force a win. The next step is isolated, protocol-preserving Svelte adapter tests
-and native acceptance, with React retained as the production baseline. Existing
-production interfaces remain unchanged. This recommendation is neither automatic
+force a win. The [disconnected adapter fixture](../prototypes/crafting-workbench/svelte/BRIDGE-HARNESS.md)
+now exercises the real store, action transport and Window shell with a fake native
+endpoint. Native acceptance, supported-client policy and incremental hybrid cost
+remain open, with React retained as the production baseline. Existing production
+interfaces remain unchanged. This recommendation is neither automatic
 activation nor a framework-wide replacement; the compatibility and rollout gates
 below still apply. Later builds need their own measurements and acceptance.
 

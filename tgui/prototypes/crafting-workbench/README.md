@@ -175,6 +175,9 @@ tails; React and Svelte remained faster in this tested workload. The shared
 catalog, a selected visible row and a selected off-page row. Compare matching
 scenarios and builds, not historical timing series. The architecture assessment
 names Svelte a provisional integration candidate, not a production replacement.
+The [disconnected React-owned integration fixture](svelte/BRIDGE-HARNESS.md) now
+tests the real store, action transport and Window shell against a fake native
+endpoint. It does not activate the screen or establish native acceptance.
 
 All candidates share a [short-height layout adjustment](short-height-layout.md)
 for high zoom and small windows. Its browser scrolling/focus acceptance checklist
