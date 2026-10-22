@@ -462,6 +462,115 @@ describe('Lua VM production-client mounted workbench', () => {
     expect(rows()).toHaveLength(PAGE_SIZE);
   });
 
+  test('neutral updates stay unselected while same-object rows and filters change', async () => {
+    await render();
+    const input = container.querySelector<HTMLInputElement>(
+      'input[type="search"]',
+    )!;
+    input.focus();
+    const recipes = data.crafting_recipes.Alpha as Record<
+      string,
+      WorkbenchRecipe
+    >;
+    recipes.awl.req_text = 'Fresh unselected requirement';
+    data.craftability.Awl = 0;
+    await root!.update(data);
+    expect(rows()[0].textContent).toContain('Fresh unselected requirement');
+    expect(rows()[0].textContent).toContain('Material match: not reported');
+    expect(container.querySelector('.Workbench__folio-title')).toBeNull();
+    expect(
+      container.querySelector('.Workbench')!.getAttribute('data-open'),
+    ).toBe('false');
+    expect(document.activeElement).toBe(input);
+    await search('no matching recipe');
+    expect(rows()).toHaveLength(0);
+    await click(button('Clear'));
+    expect(rows()).toHaveLength(5);
+    expect(container.querySelector('.Workbench__folio-title')).toBeNull();
+    expect(document.activeElement).toBe(input);
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
+  test('first and last selections survive refresh and an off-page selected update restores the right row', async () => {
+    const large = Array.from({ length: 81 }, (_, index) =>
+      recipe(`Recipe ${String(index).padStart(4, '0')}`, `/recipe/${index}`),
+    );
+    await render({
+      crafting_recipes: { Large: large },
+      craftability: Object.fromEntries(large.map((entry) => [entry.name, 1])),
+    });
+    const first = await open('Recipe 0000');
+    await root!.update(data);
+    expect(first.getAttribute('aria-expanded')).toBe('true');
+    await click(button('Craft 1'));
+    await click(button('← Back to recipes'));
+    expect(document.activeElement).toBe(first);
+    await click(button('Show 40 more recipes'));
+    await click(button('Show 1 more recipes'));
+    await open('Recipe 0080');
+    // Server-controlled filter resets the visible page, not the valid selection.
+    await render({ showonlycraftable: true });
+    expect(rows()).toHaveLength(PAGE_SIZE);
+    expect(folio().textContent).toContain('Recipe 0080');
+    expect(container.querySelectorAll('[aria-expanded="true"]')).toHaveLength(
+      0,
+    );
+    const input = container.querySelector<HTMLInputElement>(
+      'input[type="search"]',
+    )!;
+    input.focus();
+    large[80].req_text = 'Updated off-page ingredient';
+    await root!.update(data);
+    expect(folio().textContent).toContain('Updated off-page ingredient');
+    expect(document.activeElement).toBe(input);
+    await click(button('Craft 3'));
+    expect(onAction.mock.calls).toEqual([
+      ['craft', { item: '/recipe/0' }],
+      ['craft', { item: '/recipe/80', amount: 3 }],
+    ]);
+    await click(button('← Back to recipes'));
+    expect(rows()).toHaveLength(81);
+    expect(document.activeElement).toBe(rows()[80]);
+    expect(rows()[80].getAttribute('aria-expanded')).toBe('false');
+  });
+
+  test('replacement and removal of an off-page selection clear it without stale actions or resurrection', async () => {
+    const large = Array.from({ length: 41 }, (_, index) =>
+      recipe(`Recipe ${String(index).padStart(4, '0')}`, `/recipe/${index}`),
+    );
+    await render({
+      crafting_recipes: { Large: large },
+      craftability: Object.fromEntries(large.map((entry) => [entry.name, 1])),
+    });
+    await click(button('Show 1 more recipes'));
+    await open('Recipe 0040');
+    await render({ showonlycraftable: true });
+    const staleCraft = button('Craft 1');
+    large[40] = recipe('Recipe 0040', '/replacement');
+    await root!.update(data);
+    expect(container.querySelector('.Workbench__folio-title')).toBeNull();
+    expect(document.activeElement).toBe(
+      container.querySelector('input[type="search"]'),
+    );
+    await click(staleCraft);
+    expect(onAction).not.toHaveBeenCalled();
+    await click(button('Show 1 more recipes'));
+    await open('Recipe 0040');
+    await click(button('Craft 1'));
+    expect(onAction.mock.calls).toEqual([['craft', { item: '/replacement' }]]);
+    await render({ showonlycraftable: false });
+    const removedCraft = button('Craft 1');
+    large.pop();
+    await root!.update(data);
+    expect(container.querySelector('.Workbench__folio-title')).toBeNull();
+    await click(removedCraft);
+    expect(onAction).toHaveBeenCalledTimes(1);
+    large.push(recipe('Recipe 0040', '/replacement'));
+    await root!.update(data);
+    expect(container.querySelector('.Workbench__folio-title')).toBeNull();
+    expect(rows()).toHaveLength(PAGE_SIZE);
+  });
+
   test('repeated open/back cycles do not duplicate details, actions, or lose focus', async () => {
     await render();
     for (let index = 0; index < 20; index++) {

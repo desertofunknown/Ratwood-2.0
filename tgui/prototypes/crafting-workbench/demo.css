@@ -72,3 +72,23 @@ body {
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
 }
+
+/* The hosted sample uses the page as its outer short-window scroller, so
+ * notices and benchmark controls cannot squeeze the workbench to a sliver.
+ * The shared stylesheet still owns the bounded list/detail panel scrollers. */
+@media (max-height: 500px) {
+	body,
+	#root,
+	.demo-shell {
+		height: auto;
+		min-height: 100%;
+	}
+	#root,
+	.demo-shell .Workbench {
+		flex: none;
+	}
+	.demo-shell .Workbench {
+		height: auto;
+		overflow: visible;
+	}
+}

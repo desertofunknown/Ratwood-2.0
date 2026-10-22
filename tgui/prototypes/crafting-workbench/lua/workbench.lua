@@ -270,8 +270,10 @@ return function(_, host)
     onlyMatches = nextOnly
     filtered = host:filterRecipeEntries(entries, query, category or js.null, onlyMatches)
     selected = nil
-    for i = 0, filtered.length - 1 do
-      if filtered[i].identity == selectedIdentity then selected = filtered[i]; break end
+    if selectedIdentity ~= nil then
+      for i = 0, filtered.length - 1 do
+        if filtered[i].identity == selectedIdentity then selected = filtered[i]; break end
+      end
     end
     local removedSelection = selectedIdentity ~= nil and selected == nil
     if removedSelection then selectedIdentity = nil end

@@ -363,3 +363,20 @@
 		grid-template-columns: 92px minmax(0, 1fr);
 	}
 }
+
+/* At high zoom or in a short window, let the controls scroll out of the way.
+ * Keep a useful panel height and the existing list/folio scroll containers:
+ * selection and Back restore their scroll positions independently. */
+@media (max-height: 500px) {
+	.Workbench {
+		overflow-y: auto;
+	}
+	.Workbench__header {
+		flex-shrink: 0;
+	}
+	.Workbench__content {
+		flex: 0 0 70vh;
+		flex-basis: 70dvh;
+		min-height: 240px;
+	}
+}
