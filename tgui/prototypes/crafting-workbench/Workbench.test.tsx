@@ -441,8 +441,13 @@ describe('standalone mounted workbench', () => {
     await click(more);
     expect(rows()).toHaveLength(80);
     expect(document.activeElement).toBe(rows()[40]);
-    while (container.querySelector('.Workbench__more')) {
-      await click(container.querySelector<HTMLElement>('.Workbench__more')!);
+    let next = container.querySelector<HTMLElement>('.Workbench__more');
+    while (next) {
+      await click(next);
+      // Avoid rescanning the growing catalog unless the current control changes.
+      if (!container.contains(next) || !next.matches('.Workbench__more')) {
+        next = container.querySelector<HTMLElement>('.Workbench__more');
+      }
     }
     expect(rows()).toHaveLength(1282);
     expect(new Set(names()).size).toBe(1282);
