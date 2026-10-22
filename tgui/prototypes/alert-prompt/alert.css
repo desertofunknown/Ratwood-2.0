@@ -1,0 +1,177 @@
+/* Disconnected alert study. Existing shared tokens and production routes stay unchanged. */
+html {
+	background: #100d0e;
+	color-scheme: dark;
+}
+body {
+	margin: 0;
+	padding: 24px 16px 48px;
+}
+#root,
+#controls {
+	width: 100%;
+	max-width: 760px;
+	margin: 0 auto;
+}
+#root {
+	display: flex;
+	justify-content: center;
+	padding-top: 24px;
+}
+.AlertPreview {
+	border: 1px solid var(--tw-border);
+	padding: 16px;
+}
+.AlertPreview summary {
+	cursor: pointer;
+	color: var(--tw-heading);
+	font-size: 17px;
+}
+.AlertPreview p {
+	color: var(--tw-muted);
+	margin: 12px 0;
+	overflow-wrap: anywhere;
+}
+.AlertPreview__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: end;
+}
+.AlertPreview__actions label {
+	display: grid;
+	gap: 4px;
+	min-width: 0;
+	max-width: 100%;
+}
+.AlertPreview__actions select,
+.AlertPreview__actions button {
+	max-width: 100%;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+.AlertPreview__record {
+	margin: 12px 0 0;
+	padding: 12px;
+	border: 1px solid var(--tw-border);
+	background: var(--tw-surface);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	max-height: 220px;
+	overflow-y: auto;
+	font:
+		12px/1.5 ui-monospace,
+		monospace;
+}
+.AlertPrompt {
+	width: 100%;
+	min-width: 0;
+	border: 1px solid var(--tw-border);
+	box-shadow: 0 8px 32px #0006;
+}
+.AlertPrompt__header {
+	display: flex;
+	align-items: start;
+	gap: 12px;
+	justify-content: space-between;
+	padding: 16px 18px;
+	background: var(--tw-surface);
+	border-bottom: 1px solid var(--tw-border);
+}
+.AlertPrompt__header > div {
+	min-width: 0;
+}
+.AlertPrompt__header h1 {
+	margin: 3px 0 0;
+	font-size: 24px;
+	line-height: 1.2;
+	font-weight: normal;
+	color: var(--tw-heading);
+	overflow-wrap: anywhere;
+}
+.AlertPrompt__eyebrow {
+	color: var(--tw-copper);
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font:
+		10px/1.5 system-ui,
+		sans-serif;
+	margin: 0;
+}
+.AlertPrompt__header > button {
+	flex: 0 0 34px;
+}
+.AlertPrompt__content {
+	padding: 18px;
+	min-width: 0;
+}
+.AlertPrompt__message {
+	margin: 0 0 18px;
+	line-height: 1.6;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	max-height: 300px;
+	overflow-y: auto;
+}
+.AlertPrompt__footer {
+	display: flex;
+	justify-content: space-around;
+	gap: 10px;
+	flex-wrap: wrap;
+	padding-top: 14px;
+	border-top: 1px solid var(--tw-border);
+}
+.AlertPrompt__footer[data-reversed='true'] {
+	flex-direction: row-reverse;
+}
+.AlertPrompt__footer[data-verbose='true'] {
+	flex-direction: column;
+}
+.AlertPrompt__footer[data-verbose='true'][data-reversed='true'] {
+	flex-direction: column-reverse;
+}
+.AlertPrompt__choice {
+	min-width: 5rem;
+	max-width: 100%;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.AlertPrompt__choice[aria-pressed='true'] {
+	border-color: var(--tw-copper);
+	background: var(--tw-selected);
+}
+.AlertPrompt__footer[data-large='true'] > button {
+	flex: 1;
+	min-height: 44px;
+}
+.AlertPrompt__footer[data-verbose='true'] > button {
+	width: 100%;
+	min-width: 0;
+}
+.AlertPrompt__autofocus {
+	position: absolute;
+	width: 0;
+	height: 0;
+	overflow: hidden;
+}
+.AlertPrompt__timeout {
+	height: 3px;
+	background: var(--tw-raised);
+}
+.AlertPrompt__timeout-progress {
+	height: 100%;
+	background: var(--tw-copper);
+}
+@media (max-width: 380px) {
+	body {
+		padding: 12px 8px 32px;
+	}
+	.AlertPreview,
+	.AlertPrompt__header,
+	.AlertPrompt__content {
+		padding: 12px;
+	}
+	.AlertPrompt__footer {
+		gap: 8px;
+	}
+}
