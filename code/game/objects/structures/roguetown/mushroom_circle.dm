@@ -261,10 +261,11 @@ GLOBAL_LIST_EMPTY(mushroom_circles)
 		to_chat(user, span_warning("I must stand within the mushroom circle to traverse the fey paths."))
 		return
 	var/list/choices = list()
+	var/list/used_labels = list()
 	for(var/obj/structure/mushroom_circle/fey/C in GLOB.mushroom_circles)
 		if(C == src || !C.active)
 			continue
-		choices[C.name] = C
+		choices[avoid_assoc_duplicate_keys(C.name, used_labels)] = C
 
 	if(!choices.len)
 		to_chat(user, span_warning("There are no other active fey mushroom circles within the network."))
