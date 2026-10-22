@@ -58,6 +58,8 @@
 //Replaces a given node so it verify the heap condition
 /datum/path_minheap/proc/ReSort(atom/A)
 	var/index = L.Find(A)
+	if(!index)
+		return
 
 	Swim(index)
 	Sink(index)

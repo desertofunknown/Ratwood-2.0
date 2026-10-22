@@ -1,0 +1,140 @@
+{
+  "description": "Constructed 14-tile same-z AStar regression, not an observed shipped map or native DM run. All unlisted cells are dense walls; the goal is isolated.",
+  "assumptions": ["Ordinary non-floating, unarmored human with no swimming trait and sufficient stamina.", "Non-dense ordinary zero-slowdown floors; west/east river subtypes at the listed positions.", "Unoccupied WEST-facing bench at (5,1), non-dense and non-climbable.", "No other objects, occupants, doors, stairs, platforms, exclusions or extra path weights."],
+  "tile_columns": ["x", "y", "slowdown", "river_direction_or_zero", "bench_direction_or_zero"],
+  "start": [1, 5],
+  "goal": [0, 0],
+  "maxnodes": 33,
+  "mintargetdist": 1,
+  "tiles": [
+    [0, 0, 0, 0, 0],
+    [1, 4, 0, 0, 0],
+    [1, 5, 0, 0, 0],
+    [2, 3, 0, 0, 0],
+    [2, 4, 0, 0, 0],
+    [3, 1, 0, 0, 0],
+    [3, 2, 5, 8, 0],
+    [3, 3, 0, 0, 0],
+    [4, 1, 0, 0, 0],
+    [4, 3, 5, 4, 0],
+    [5, 1, 0, 0, 8],
+    [5, 2, 0, 0, 0],
+    [5, 3, 0, 0, 0],
+    [5, 4, 0, 0, 0]
+  ],
+  "pops_before_repair": [
+    [1, 5, 0, 0],
+    [1, 4, 1, 1],
+    [2, 4, 2, 2],
+    [2, 3, 3, 3],
+    [3, 3, 4, 4],
+    [3, 2, 5, 5],
+    [3, 1, 12, 6],
+    [4, 1, 13, 7],
+    [4, 3, 5, 5],
+    [5, 3, 9, 6],
+    [5, 2, 10, 7],
+    [5, 1, 11, 8]
+  ],
+  "repair": {"position": [4, 1], "old_g": 13, "new_g": 12, "present": false, "from": [5, 1], "queue_length": 1, "bf": 0, "depth": 9},
+  "source_contracts": [
+    {
+      "path": "code/__HELPERS/AStar.dm",
+      "purpose": "Node priorities, retained discovered nodes, absent repair caller, failure wrapper and same-z adjacency",
+      "headers": [
+        "/datum/PathNode",
+        "/datum/PathNode/New(s,p,pg,ph,pnt,_bf)",
+        "/datum/PathNode/proc/setp(p,pg,ph,pnt)",
+        "/datum/PathNode/proc/calc_f()",
+        "/proc/get_path_to(caller, end, dist, maxnodes, maxnodedepth = 30, mintargetdist, adjacent = TYPE_PROC_REF(/turf, reachableTurftest), id=null, turf/exclude=null, allow_multiz = TRUE)",
+        "/proc/AStar(caller, _end, dist, maxnodes, maxnodedepth = 30, mintargetdist, adjacent = TYPE_PROC_REF(/turf, reachableTurftest), id=null, turf/exclude=null, allow_multiz = TRUE)",
+        "/turf/proc/reachableTurftest(caller, turf/T, ID)",
+        "/turf/proc/reachableTurftest3d(caller, turf/T, ID, recursive_call = 0)",
+        "/turf/proc/LinkBlockedWithAccess(turf/T, caller, ID)"
+      ],
+      "sha256": "588126881ba2e910e4aeef7e4de07abf41b04d9acfef6291b18ded46aeff9c2e"
+    },
+    {
+      "path": "code/game/turfs/turf.dm",
+      "purpose": "Safe ordinary turfs, no platform/climb/path weights, and source-turf cardinal heuristic costs",
+      "headers": [
+        "/turf",
+        "/turf/proc/can_traverse_safely(atom/movable/traveler)",
+        "/turf/proc/Distance_cardinal(turf/T, mob/traverser)",
+        "/turf/proc/Distance_cardinal_3d(turf/T, mob/traverser)",
+        "/turf/proc/get_heuristic_slowdown(mob/traverser, travel_dir)",
+        "/turf/proc/Heuristic_cardinal(turf/T, mob/traverser)",
+        "/turf/proc/Heuristic_cardinal_3d(turf/T, mob/traverser)"
+      ],
+      "sha256": "823d9c865d3cf02a7619cb97dbaa6e15a456fdf66fb0843a0412bfb3606d78e6"
+    },
+    {
+      "path": "code/game/turfs/open/_open.dm",
+      "purpose": "Zero ordinary floor slowdown and object-slowdown accumulation",
+      "headers": [
+        "/turf/open",
+        "/turf/proc/get_slowdown(mob/user)",
+        "/turf/open/get_slowdown(mob/user)"
+      ],
+      "sha256": "46d9830b1f2186474716ca6bd099b004b491f3373dcc40ced9fd56609b78a6b2"
+    },
+    {
+      "path": "code/game/turfs/open/water.dm",
+      "purpose": "River slowdown 5, armor/swimmer exclusions, west/east directions and downstream/side/upstream costs",
+      "headers": [
+        "/turf/open/water",
+        "/turf/open/water/get_slowdown(mob/user)",
+        "/turf/open/water/river",
+        "/turf/open/water/river/flow",
+        "/turf/open/water/river/flow/west",
+        "/turf/open/water/river/flow/east",
+        "/turf/open/water/river/get_heuristic_slowdown(mob/traverser, travel_dir)"
+      ],
+      "sha256": "d917ac1ca931624138d7941b9dc32bf69ce3f6c520cec57dc5c3ce5ebd07cfa4"
+    },
+    {
+      "path": "code/game/objects/objs.dm",
+      "purpose": "Ordinary non-dense object AStar passability",
+      "headers": [
+        "/obj/proc/CanAStarPass(ID, to_dir, caller)"
+      ],
+      "sha256": "6828ae24081ec996c0f1e940f194605fbffef068160e27ff8c1e8b11d6416a15"
+    },
+    {
+      "path": "code/game/objects/structures.dm",
+      "purpose": "Non-climbable structure default and CanAStarPass inheritance",
+      "headers": [
+        "/obj/structure",
+        "/obj/structure/CanAStarPass(ID, to_dir, caller)"
+      ],
+      "sha256": "3e631c531898c0036fa7da307aca1991a5aa095f25f75cb44dfa4aa4c29a39e7"
+    },
+    {
+      "path": "code/game/objects/structures/beds_chairs/chair.dm",
+      "purpose": "Unoccupied ordinary chair defaults",
+      "headers": [
+        "/obj/structure/chair",
+        "/obj/structure/chair/Initialize(mapload)"
+      ],
+      "sha256": "abcbbb99ae5b8fa94d5c4a7f8e9ee2a27c8cdeaef6913e402b1f752f6c4e3d82"
+    },
+    {
+      "path": "code/game/objects/structures/beds_chairs/roguechair.dm",
+      "purpose": "Bench defaults and rejection of the reverse incoming direction",
+      "headers": [
+        "/obj/structure/chair/bench",
+        "/obj/structure/chair/bench/Initialize(mapload)",
+        "/obj/structure/chair/bench/CanAStarPass(ID, travel_dir, caller)"
+      ],
+      "sha256": "c3cf8edac99b9b117f1cea9339c4bdeb110f173a191b6e99eca677d4fbd2c429"
+    },
+    {
+      "path": "code/modules/mob/living/carbon/human/npc/_npc.dm",
+      "purpose": "Human NPC uses 33-node limit, target distance 1, cardinal heuristic and 3d adjacency",
+      "headers": [
+        "/mob/living/carbon/human/proc/start_pathing_to(new_target)"
+      ],
+      "sha256": "8d006028d2af31889023f6bbb5d11c33472ed4cca7faee64d396c7caf020c49e"
+    }
+  ]
+}
