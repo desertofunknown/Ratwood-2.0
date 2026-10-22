@@ -262,6 +262,8 @@ Turf and target are separate in case you want to teleport some distance from a t
 /proc/getpois(mobs_only=0,skip_mindless=0,team=null)
 	var/list/mobs = sortmobs()
 	var/list/namecounts = list()
+	// Decoration can collide with another real name, so reserve completed labels separately.
+	var/list/final_namecounts = list()
 	var/list/pois = list()
 	for(var/mob/M in mobs)
 		if(skip_mindless && (!M.mind || !M.ckey))
@@ -274,13 +276,14 @@ Turf and target are separate in case you want to teleport some distance from a t
 			name += " \[[M.name]\]"
 		if(M.stat == DEAD)
 			continue
-		pois[name] = M
+		pois[avoid_assoc_duplicate_keys(name, final_namecounts)] = M
 
 	if(!mobs_only)
 		for(var/atom/A in GLOB.poi_list)
 			if(!A || !A.loc)
 				continue
-			pois[avoid_assoc_duplicate_keys(A.name, namecounts)] = A
+			var/name = avoid_assoc_duplicate_keys(A.name, namecounts)
+			pois[avoid_assoc_duplicate_keys(name, final_namecounts)] = A
 	pois = sort_list(pois)
 	return pois
 //Orders mobs by type then by name
