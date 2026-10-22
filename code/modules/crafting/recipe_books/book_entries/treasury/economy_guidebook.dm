@@ -64,8 +64,8 @@
 			matching_labels += label
 		else
 			other_labels += label
-	sortList(matching_labels)
-	sortList(other_labels)
+	matching_labels = sortList(matching_labels)
+	other_labels = sortList(other_labels)
 	var/list/options = matching_labels + other_labels
 	if(!length(options))
 		return
