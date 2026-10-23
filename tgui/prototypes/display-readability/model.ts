@@ -55,8 +55,11 @@ export function copyData(data: SettingsData): SettingsData {
 }
 
 /** Local lifecycle only. Open/close are NOT backend commands. */
-export function createController(deps: Dependencies) {
-  assertDisconnected();
+export function createController(
+  deps: Dependencies,
+  validateBoundary: () => void = assertDisconnected,
+) {
+  validateBoundary();
   let state: State = { open: false };
   let generation = 0;
   let unsubscribeDelivery: (() => void) | undefined;
@@ -66,7 +69,7 @@ export function createController(deps: Dependencies) {
     subscribers.forEach((notify) => notify());
   };
   const action: SettingsAction = (...command) => {
-    assertDisconnected();
+    validateBoundary();
     if (state.open) deps.action(...command);
   };
   return {
@@ -78,13 +81,13 @@ export function createController(deps: Dependencies) {
       };
     },
     open() {
-      assertDisconnected();
+      validateBoundary();
       if (state.open) return;
       const session = ++generation;
       publish({ open: true });
       if (!state.open || generation !== session) return;
       const unsubscribe = deps.subscribe((data) => {
-        assertDisconnected();
+        validateBoundary();
         if (!state.open || generation !== session) return;
         // Same-session deliveries are authoritative, not fenced by invented IDs.
         publish({ open: true, data: copyData(data) });
@@ -96,7 +99,7 @@ export function createController(deps: Dependencies) {
       unsubscribeDelivery = unsubscribe;
     },
     close() {
-      assertDisconnected();
+      validateBoundary();
       if (!state.open) return;
       ++generation;
       const unsubscribe = unsubscribeDelivery;

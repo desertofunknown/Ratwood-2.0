@@ -47,8 +47,11 @@ let sequence = 0;
 const nextId = () => `sample-quote-${++sequence}`;
 const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-export function createMarketController(sampleId = 'best-regions') {
-  assertDisconnected();
+export function createMarketController(
+  sampleId = 'best-regions',
+  validateBoundary: () => void = assertDisconnected,
+) {
+  validateBoundary();
   let sample = copy(
     MARKET_SAMPLES.find((s) => s.id === sampleId) ?? MARKET_SAMPLES[0],
   );
@@ -95,7 +98,7 @@ export function createMarketController(sampleId = 'best-regions') {
   };
   let cached = buildSnapshot();
   const allowed = () => {
-    assertDisconnected();
+    validateBoundary();
     return !disposed;
   };
   const publish = () => {
@@ -233,7 +236,7 @@ export function createMarketController(sampleId = 'best-regions') {
       publish();
     },
     dispose() {
-      assertDisconnected();
+      validateBoundary();
       disposed = true;
       resetQuote();
       cached = buildSnapshot();

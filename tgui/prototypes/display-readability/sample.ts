@@ -8,19 +8,22 @@ import {
 import { assertDisconnected } from './network-guard';
 
 /** In-memory demonstration only. No native effects or persistence are simulated. */
-export function createSample(initial: SettingsData = createSampleData()) {
-  assertDisconnected();
+export function createSample(
+  initial: SettingsData = createSampleData(),
+  validateBoundary: () => void = assertDisconnected,
+) {
+  validateBoundary();
   let data = copyData(initial);
   let active = true;
   const subscribers = new Set<DeliverData>();
   const pending: Array<() => void> = [];
   function queueDelivery(next: SettingsData) {
-    assertDisconnected();
+    validateBoundary();
     if (!active) return;
     const snapshot = copyData(next);
     const recipients = [...subscribers];
     pending.push(() => {
-      assertDisconnected();
+      validateBoundary();
       if (!active) return;
       for (const recipient of recipients) {
         if (!active) return;
@@ -29,7 +32,7 @@ export function createSample(initial: SettingsData = createSampleData()) {
     });
   }
   const action: SettingsAction = (...command) => {
-    assertDisconnected();
+    validateBoundary();
     if (!active) return;
     const [kind, payload] = command;
     if (kind === 'toggle') {
@@ -55,7 +58,7 @@ export function createSample(initial: SettingsData = createSampleData()) {
   return {
     action,
     subscribe(recipient: DeliverData) {
-      assertDisconnected();
+      validateBoundary();
       if (!active) return () => {};
       subscribers.add(recipient);
       recipient(copyData(data));
@@ -66,14 +69,14 @@ export function createSample(initial: SettingsData = createSampleData()) {
     pendingCount: () => pending.length,
     queueDelivery,
     deliverNext() {
-      assertDisconnected();
+      validateBoundary();
       if (!active) return false;
       const next = pending.shift();
       next?.();
       return Boolean(next);
     },
     dispose() {
-      assertDisconnected();
+      validateBoundary();
       active = false;
       pending.length = 0;
       subscribers.clear();

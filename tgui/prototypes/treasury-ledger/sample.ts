@@ -53,8 +53,11 @@ export type SampleOptions = {
 };
 
 /** In-memory sample source only. This has no production transport adapter. */
-export function createSample(options: SampleOptions = {}) {
-  assertDisconnected();
+export function createSample(
+  options: SampleOptions = {},
+  validateBoundary: () => void = assertDisconnected,
+) {
+  validateBoundary();
   let entries = (options.entries ?? sampleEntries).map((entry) => ({
     ...entry,
   }));
@@ -79,11 +82,11 @@ export function createSample(options: SampleOptions = {}) {
     const recipients = [...subscribers];
     const timer = schedule(() => {
       timers.delete(timer);
-      assertDisconnected();
+      validateBoundary();
       if (!open || session !== generation) return;
       // Capture the local delivery, not a request ID or a latest-request fence.
       for (const recipient of recipients) {
-        assertDisconnected();
+        validateBoundary();
         if (!open || session !== generation) return;
         if (subscribers.has(recipient)) recipient(copyPage(deliveredPage));
       }
@@ -92,7 +95,7 @@ export function createSample(options: SampleOptions = {}) {
   };
 
   const action: LedgerAction = (...command) => {
-    assertDisconnected();
+    validateBoundary();
     switch (command[0]) {
       case 'ledger_open':
         ++generation;
@@ -127,18 +130,18 @@ export function createSample(options: SampleOptions = {}) {
   return {
     action,
     subscribe(recipient: DeliverPage) {
-      assertDisconnected();
+      validateBoundary();
       subscribers.add(recipient);
       return () => {
         subscribers.delete(recipient);
       };
     },
     replaceEntries(next: readonly LedgerEntry[]) {
-      assertDisconnected();
+      validateBoundary();
       entries = next.map((entry) => ({ ...entry }));
     },
     dispose() {
-      assertDisconnected();
+      validateBoundary();
       action('ledger_close');
       subscribers.clear();
     },

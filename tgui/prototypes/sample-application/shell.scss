@@ -1,0 +1,190 @@
+// Import actual production shell rules without the bulk themes/font assets.
+@use '../../packages/tgui/styles/reset';
+@use '../../packages/tgui/styles/css-variables';
+@use '../../packages/tgui/styles/layouts/Layout';
+@use '../../packages/tgui/styles/layouts/TitleBar';
+@use '../../packages/tgui/styles/layouts/Window';
+
+:root {
+  --scaling-amount: 1;
+  --font-family: Georgia, 'Times New Roman', serif;
+  --font-size: 12px;
+  --color-text: #ded1c2;
+  --color-base: #191416;
+  --color-base-start: #191416;
+  --color-base-end: #100d0e;
+  --color-secondary: #281b1f;
+  --color-text-translucent-light: #ded1c2;
+  --color-border-dark: #594046;
+  --color-scrollbar-thumb: #99747b;
+  --color-scrollbar-base: #191416;
+  --button-background-danger: #57303a;
+  --border-thickness-tiny: 1px;
+  --transition-time-medium: 120ms;
+  --transition-time-slow: 200ms;
+  --cursor-default: default;
+  --cursor-pointer: pointer;
+  --cursor-e-resize: e-resize;
+  --cursor-s-resize: s-resize;
+  --cursor-se-resize: se-resize;
+}
+// No icon font is downloaded: keep the real close element/keyboard handler.
+.TitleBar__close--icon {
+  display: none;
+}
+.TitleBar__close::after {
+  content: '×';
+  font-family: sans-serif;
+}
+.TitleBar__title {
+  padding-left: 8px;
+}
+#fixture-controls {
+  position: fixed;
+  z-index: 200;
+  right: 8px;
+  bottom: 8px;
+  width: min(620px, calc(100vw - 16px));
+  color: #ded1c2;
+  background: #191416;
+  border: 1px solid #99747b;
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+}
+#fixture-controls details {
+  max-height: 55vh;
+  overflow: auto;
+  padding: 8px;
+}
+#fixture-controls summary {
+  cursor: pointer;
+}
+#fixture-controls button {
+  font: inherit;
+  color: #ded1c2;
+  background: #281b1f;
+  border: 1px solid #99747b;
+  padding: 6px;
+  cursor: pointer;
+}
+#fixture-controls button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+#fixture-controls :focus-visible {
+  outline: 2px solid #d3b184;
+  outline-offset: 2px;
+}
+.fixture-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#fixture-controls pre {
+  font: 12px/1.4 monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#fixture-controls a {
+  color: #d3b184;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+#fixture-root {
+  min-width: 300px;
+}
+.SampleApplication {
+  min-height: 100%;
+  color: #ded1c2;
+}
+.SampleApplication__header {
+  padding: 16px 18px 10px;
+  background: #191416;
+  border-bottom: 1px solid #594046;
+}
+.SampleApplication__disclosure {
+  margin: 0 0 12px;
+  font:
+    13px/1.5 system-ui,
+    sans-serif;
+  color: #d3bfae;
+}
+.SampleApplication__navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.SampleApplication__navigation button {
+  min-height: 40px;
+  padding: 8px 12px;
+}
+.SampleApplication__navigation [aria-current='page'] {
+  border-color: #d3b184;
+  background: #493336;
+}
+.SampleApplication__heading {
+  margin: 14px 0 0;
+  font:
+    600 22px/1.3 Georgia,
+    serif;
+}
+.SampleApplication__heading:focus {
+  outline: 2px solid #d3b184;
+  outline-offset: 4px;
+}
+.SampleApplication__screen {
+  min-height: 340px;
+  padding: 14px 18px 24px;
+}
+.SampleApplication__screen > div {
+  min-height: 0;
+}
+.SampleApplication__inactive {
+  padding: 24px;
+}
+.SampleApplication .Workbench {
+  height: 660px;
+  max-height: 76vh;
+}
+.SampleApplication .MarketQuote,
+.SampleApplication .TreasuryLedger,
+.SampleApplication .DisplayReadability {
+  max-width: none;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .SampleApplication__header,
+  .SampleApplication__screen {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .SampleApplication__navigation button {
+    flex: 1 1 44%;
+  }
+}
+
+.SampleApplication__screenControls {
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid #594046;
+  background: #191416;
+  color: #d3bfae;
+  font:
+    13px/1.5 system-ui,
+    sans-serif;
+}
+.SampleApplication__screenControls p {
+  margin: 0 0 8px;
+}
+.SampleApplication__screenControls p:last-child {
+  margin-bottom: 0;
+}
+.SampleApplication__screenControls button,
+.SampleApplication__screenControls select {
+  margin: 4px 6px 4px 0;
+  min-height: 36px;
+}

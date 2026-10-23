@@ -65,8 +65,11 @@ export function copyPage(page: LedgerPage): LedgerPage {
   return { ...page, entries: page.entries.map((entry) => ({ ...entry })) };
 }
 
-export function createController(deps: Dependencies) {
-  assertDisconnected();
+export function createController(
+  deps: Dependencies,
+  validateBoundary: () => void = assertDisconnected,
+) {
+  validateBoundary();
   let state: State = { open: false, draft: '' };
   let generation = 0;
   let touched = false;
@@ -85,19 +88,19 @@ export function createController(deps: Dependencies) {
     timer = undefined;
   };
   const action: LedgerAction = (...command) => {
-    assertDisconnected();
+    validateBoundary();
     deps.action(...command);
   };
 
   function draft(value: string) {
-    assertDisconnected();
+    validateBoundary();
     if (!state.open || (touched && state.draft === value)) return;
     touched = true;
     cancelDraft();
     publish({ draft: value });
     const session = generation;
     timer = schedule(() => {
-      assertDisconnected();
+      validateBoundary();
       if (!state.open || generation !== session) return;
       timer = undefined;
       // Keep the latest input intact. Only the sample/backend trims its filter.
@@ -115,14 +118,14 @@ export function createController(deps: Dependencies) {
       };
     },
     open() {
-      assertDisconnected();
+      validateBoundary();
       if (state.open) return;
       const session = ++generation;
       touched = false;
       publish({ open: true, draft: '', page: undefined });
       if (!state.open || generation !== session) return;
       const unsubscribe = deps.subscribe((page) => {
-        assertDisconnected();
+        validateBoundary();
         if (!state.open || generation !== session) return;
         // Do not fence by filter/page request: production has no response IDs.
         publish({ page: page === undefined ? undefined : copyPage(page) });
@@ -135,7 +138,7 @@ export function createController(deps: Dependencies) {
       action('ledger_open');
     },
     close() {
-      assertDisconnected();
+      validateBoundary();
       if (!state.open) return;
       ++generation;
       cancelDraft();
@@ -149,11 +152,11 @@ export function createController(deps: Dependencies) {
     draft,
     clear: () => draft(''),
     page(page: number) {
-      assertDisconnected();
+      validateBoundary();
       if (state.open) action('ledger_page', { page });
     },
     refresh() {
-      assertDisconnected();
+      validateBoundary();
       if (state.open) action('ledger_refresh');
     },
   };
