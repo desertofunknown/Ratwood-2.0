@@ -14,6 +14,8 @@ type CommissionerTab = 'browse' | 'manifest' | 'orders' | 'config';
 export const Commissioner = () => {
   const { act, data } = useBackend<CommissionerData>();
   const [tab, setTab] = useState<CommissionerTab>('browse');
+  // The note belongs to the manifest, not its temporarily visible tab.
+  const [note, setNote] = useState('');
   const canRead = !!data.can_read;
   const isGuildmaster = !!data.is_guildmaster;
   const activeTab = tab === 'config' && !isGuildmaster ? 'browse' : tab;
@@ -56,7 +58,7 @@ export const Commissioner = () => {
           </nav>
           <div className={`Commissioner__page ${activeTab === 'browse' ? 'Commissioner__page--browse' : ''}`} tabIndex={activeTab === 'browse' ? -1 : 0}>
             {activeTab === 'browse' && <BrowseTab data={data} act={act} canRead={canRead} />}
-            {activeTab === 'manifest' && <fieldset className="Commissioner__actions" disabled={!data.locked}><ManifestTab data={data} act={act} canRead={canRead} /></fieldset>}
+            {activeTab === 'manifest' && <fieldset className="Commissioner__actions" disabled={!data.locked}><ManifestTab data={data} act={act} canRead={canRead} note={note} setNote={setNote} /></fieldset>}
             {activeTab === 'orders' && <fieldset className="Commissioner__actions" disabled={!data.locked}><OrdersTab data={data} act={act} canRead={canRead} /></fieldset>}
             {activeTab === 'config' && isGuildmaster && <ConfigPanel data={data} act={act} />}
           </div>

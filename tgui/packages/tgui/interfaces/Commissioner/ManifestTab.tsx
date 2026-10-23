@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Input } from 'tgui-core/components';
 
 import {
@@ -46,8 +45,10 @@ export const ManifestTab = (props: {
   data: CommissionerData;
   act: ActFn;
   canRead: boolean;
+  note: string;
+  setNote: (note: string) => void;
 }) => {
-  const { data, act, canRead } = props;
+  const { data, act, canRead, note, setNote } = props;
   const lines = data.manifest;
   const total = data.manifest_total;
   const deposit = data.my_deposit;
@@ -62,7 +63,6 @@ export const ManifestTab = (props: {
     !overCap &&
     !hasActive;
   const shortfall = total - deposit;
-  const [note, setNote] = useState('');
 
   if (lines.length === 0) {
     return (
