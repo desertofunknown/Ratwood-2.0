@@ -1,0 +1,7 @@
+Disconnected Chat Highlights A/B preview.
+
+Actual Ratwood tgui-panel renderer/helper source retains its original copyright and MIT notices (including Aleksej Komarov, 2020, and Cheffie's clearChat attribution). Other repository source retains original notices and repository GNU Affero General Public License v3; see LICENSE.txt. React, ReactDOM, tgui-core, DOMPurify and resolved dependencies retain their own licenses, copied under licenses/ and inventoried in manifest.json.
+
+Baseline imports real production source unchanged. Candidate transforms only the pinned renderer/highlighter files in memory at build time. Production files are not changed. Source hashes, input graph and dependency versions appear in manifest.json. This local sample-only build is not distribution approval or a complete corresponding-source package.
+
+Before hosting/distributing, provide the exact corresponding repository checkpoint, all prototype/test source, dependency manifests/lockfiles/patches, original notices and reproduction instructions, and satisfy applicable licenses. No fonts, images, player data, server connection or externally fetched assets are included.
