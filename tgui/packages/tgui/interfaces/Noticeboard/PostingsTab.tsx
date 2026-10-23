@@ -28,6 +28,11 @@ const ROLE_MAX = 50;
 const TITLE_MAX = 50;
 const BODY_MAX = 500;
 
+// Match the server's raw "null" check and U+0000-U+0020-only trim.
+// JavaScript trim() would also reject Unicode whitespace the server accepts.
+const hasRequiredText = (value: string) =>
+  value !== 'null' && /[^\u0000-\u0020]/.test(value);
+
 const postingGridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: '1fr 1fr',
@@ -242,9 +247,9 @@ const PostingForm = ({
   const [posterName, setPosterName] = useState(data.user_default_name || '');
   const [posterTitle, setPosterTitle] = useState(data.user_default_role || '');
 
-  const titleValid = title.length > 0 && title.length <= TITLE_MAX;
-  const bodyValid = body.length > 0 && body.length <= BODY_MAX;
-  const nameValid = posterName.length > 0 && posterName.length <= NAME_MAX;
+  const titleValid = hasRequiredText(title) && title.length <= TITLE_MAX;
+  const bodyValid = hasRequiredText(body) && body.length <= BODY_MAX;
+  const nameValid = hasRequiredText(posterName) && posterName.length <= NAME_MAX;
   const roleValid = posterTitle.length <= ROLE_MAX;
   const valid = titleValid && bodyValid && nameValid && roleValid;
 
