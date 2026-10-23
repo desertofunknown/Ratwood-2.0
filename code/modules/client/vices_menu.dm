@@ -1688,7 +1688,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		else
 			var/scent_leadin = redolent_scent_leadin(new_scent_type)
 			var/scent_prompt = "Describe the scent - a preview of the output in game is shown below:"
-			new_scent = tgui_input_text(usr, scent_prompt, "Redolent", redolent_scent, max_length = 100, multiline = TRUE, preview_leadin = scent_leadin)
+			new_scent = tgui_input_text(usr, scent_prompt, "Redolent", isnull(redolent_scent) ? null : html_decode(redolent_scent), max_length = 100, multiline = TRUE, preview_leadin = scent_leadin)
 			if(isnull(new_scent))
 				return
 			if(!length(trim(new_scent)))
@@ -1817,7 +1817,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 				if(!current)
 					return
 				
-				var/new_name = tgui_input_text(usr, "Enter a custom name for this item (leave blank to use default):", "Rename Item", vars["loadout_[slot]_name"], MAX_NAME_LEN)
+				var/new_name = tgui_input_text(usr, "Enter a custom name for this item (leave blank to use default):", "Rename Item", isnull(vars["loadout_[slot]_name"]) ? null : html_decode(vars["loadout_[slot]_name"]), MAX_NAME_LEN)
 				
 				if(new_name != null) // Allow empty string to clear
 					vars["loadout_[slot]_name"] = new_name
@@ -1829,7 +1829,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 				if(!current)
 					return
 				
-				var/new_desc = tgui_input_text(usr, "Enter a custom description for this item (leave blank to use default):", "Describe Item", vars["loadout_[slot]_desc"], max_length = 500, multiline = TRUE)
+				var/new_desc = tgui_input_text(usr, "Enter a custom description for this item (leave blank to use default):", "Describe Item", isnull(vars["loadout_[slot]_desc"]) ? null : html_decode(vars["loadout_[slot]_desc"]), max_length = 500, multiline = TRUE)
 				
 				if(new_desc != null) // Allow empty string to clear
 					vars["loadout_[slot]_desc"] = new_desc
