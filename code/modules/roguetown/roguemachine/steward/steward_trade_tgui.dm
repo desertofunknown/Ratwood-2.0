@@ -733,6 +733,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 			if(isnull(price))
 				price = input(usr, "Set buy price for [D.name]", src, D.payout_price) as null|num
 			if(!isnull(price))
+				// input() yields: authority may have changed while the prompt was open.
+				if(!user_can_act(usr) || (locked && !alderman_has_access(usr)) || SStreasury.is_in_receivership() || SScity_assembly?.is_alderman(usr))
+					return TRUE
 				D.payout_price = clamp(round(price), 0, 9999)
 				D.automatic_price = FALSE
 			SStgui.update_uis(src)
@@ -747,6 +750,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 			if(isnull(price))
 				price = input(usr, "Set sell price for [D.name]", src, D.withdraw_price) as null|num
 			if(!isnull(price))
+				// input() yields: authority may have changed while the prompt was open.
+				if(!user_can_act(usr) || (locked && !alderman_has_access(usr)) || SStreasury.is_in_receivership() || SScity_assembly?.is_alderman(usr))
+					return TRUE
 				D.withdraw_price = clamp(round(price), 0, 9999)
 				D.automatic_price = FALSE
 			SStgui.update_uis(src)
@@ -761,6 +767,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 			if(isnull(lim))
 				lim = input(usr, "Set stockpile limit for [D.name]", src, D.stockpile_limit) as null|num
 			if(!isnull(lim))
+				// input() yields: authority may have changed while the prompt was open.
+				if(!user_can_act(usr) || (locked && !alderman_has_access(usr)) || SStreasury.is_in_receivership() || SScity_assembly?.is_alderman(usr))
+					return TRUE
 				D.stockpile_limit = clamp(round(lim), 0, 9999)
 				D.automatic_limit = FALSE
 			SStgui.update_uis(src)
