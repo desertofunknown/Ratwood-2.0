@@ -198,6 +198,19 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
       store.dispatch(backend.backendUpdate({ data: patch }));
     });
   };
+  const replaceCatalog = async (
+    crafting_recipes: Data['crafting_recipes'] | [],
+    patch: Partial<Data> = {},
+  ) => {
+    await act(async () => {
+      store.dispatch(
+        backend.backendUpdate({
+          static_data: { crafting_recipes },
+          data: patch,
+        }),
+      );
+    });
+  };
   const titles = () =>
     [...container.querySelectorAll<HTMLElement>('.Button--fluid')].map(
       (element) => element.textContent!.trim(),
@@ -242,6 +255,166 @@ if (!process.env.TGUI_MIACRAFT_MEMBERSHIP_TEST_CHILD) {
     if (!input) throw new Error('Missing production craftability checkbox');
     return input;
   };
+
+  test('static catalog replacement learns and forgets recipes in an expanded category without resetting search or filtering', async () => {
+    await render({
+      craftability: { Fallback: 1, 'Next stage': 0, Unaffordable: 1 },
+      craftability_by_path: { '/recipe/old-stage': 1 },
+      crafting_recipes: {
+        Stages: [
+          recipe('Old stage', '/recipe/old-stage', ' 1 Iron ingot'),
+          recipe('Fallback', '/recipe/fallback', ' 1 Iron ingot'),
+        ],
+      },
+    });
+    const input = await search('iron');
+    await act(async () => checkbox().click());
+    await update({ showonlycraftable: true });
+    await click('Stages');
+    await click('Old stage');
+    const category = button('Stages');
+    expect(titles()).toEqual(['Stages', 'Fallback', 'Old stage']);
+
+    await replaceCatalog(
+      {
+        Stages: [
+          recipe('Next stage', '/recipe/next-stage', ' 2 Iron ingot'),
+          recipe('Unaffordable', '/recipe/unaffordable', ' 1 Iron ingot'),
+          recipe('Fallback', '/recipe/fallback', ' 1 Iron ingot'),
+          recipe('Unmatched', '/recipe/unmatched', ' 1 Cloth'),
+        ],
+      },
+      {
+        craftability_by_path: {
+          '/recipe/next-stage': 1,
+          '/recipe/unaffordable': 0,
+          '/recipe/unmatched': 1,
+        },
+      },
+    );
+    expect(titles()).toEqual(['Stages', 'Fallback', 'Next stage']);
+    expect(button('Stages')).toBe(category);
+    expect(input.value).toBe('iron');
+    expect(input.isConnected).toBe(true);
+    expect(checkbox().checked).toBe(true);
+    expect(button('Next stage').style.backgroundColor).toBe('');
+    expect(button('Fallback').style.backgroundColor).toBe('');
+    expect(container.textContent).not.toContain('Old stage');
+    // The array slot stays mounted, but every action must use its new recipe.
+    expect(container.textContent).toContain('2 Iron ingot');
+    await click('🛠', 1);
+    for (const label of ['1x', '2x', '3x', '5x', '∞']) await click(label);
+    await click('🛠', 0);
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/checkboxonlycraftable', { state: true }],
+      ['act/craft', { item: '/recipe/next-stage' }],
+      ['act/craft', { item: '/recipe/next-stage' }],
+      ['act/craft', { item: '/recipe/next-stage', amount: 2 }],
+      ['act/craft', { item: '/recipe/next-stage', amount: 3 }],
+      ['act/craft', { item: '/recipe/next-stage', amount: 5 }],
+      ['act/craft', { item: '/recipe/next-stage', auto: true }],
+      ['act/craft', { item: '/recipe/fallback' }],
+    ]);
+  });
+
+  test('static catalog replacement removes obsolete categories and craft controls while retaining closed categories', async () => {
+    const retained = { kept: recipe('Kept', '/recipe/kept') };
+    await render({
+      craftability: { Kept: 1, Removed: 1, Gained: 1 },
+      crafting_recipes: {
+        Zeta: { removed: recipe('Removed', '/recipe/removed') },
+        Alpha: retained,
+      },
+    });
+    const category = button('Alpha');
+    await click('Zeta');
+    await click('Removed');
+    const obsoleteCraft = button('🛠');
+    const obsoleteRepeat = button('2x');
+    await replaceCatalog({
+      Beta: { gained: recipe('Gained', '/recipe/gained') },
+      Alpha: retained,
+    });
+    expect(titles()).toEqual(['Alpha', 'Beta']);
+    expect(button('Alpha')).toBe(category);
+    expect(obsoleteCraft.isConnected).toBe(false);
+    expect(obsoleteRepeat.isConnected).toBe(false);
+    expect(buttons('🛠')).toHaveLength(0);
+    // Detached production DOM nodes cannot dispatch a forgotten recipe action.
+    await act(async () => {
+      obsoleteCraft.click();
+      obsoleteRepeat.click();
+    });
+    expect(sendMessage).not.toHaveBeenCalled();
+    await click('Beta');
+    expect(titles()).toEqual(['Alpha', 'Beta', 'Gained']);
+    await click('🛠');
+    expect(sendMessage.mock.calls).toEqual([
+      ['act/craft', { item: '/recipe/gained' }],
+    ]);
+  });
+
+  test('unchanged static catalogs and updates omitting the catalog preserve expanded details and local state', async () => {
+    await render({ showonlycraftable: true });
+    const input = await search('iron');
+    await expandCategories();
+    await click('Awl');
+    const before = titles();
+    const category = button('Alpha');
+    const expandedRecipe = button('Awl');
+    const details = container.querySelector('.LabeledList');
+    expect(details).not.toBeNull();
+    for (const catalog of [
+      data.crafting_recipes,
+      structuredClone(data.crafting_recipes),
+    ]) {
+      await replaceCatalog(catalog);
+      expect(titles()).toEqual(before);
+      expect(button('Alpha')).toBe(category);
+      expect(button('Awl')).toBe(expandedRecipe);
+      expect(container.querySelector('.LabeledList')).toBe(details);
+      expect(input.value).toBe('iron');
+      expect(checkbox().checked).toBe(true);
+    }
+    // Ordinary data-only messages omit static_data. The real reducer retains
+    // the previous catalog, rather than treating an omitted field as empty.
+    await update({ busy: true });
+    expect(titles()).toEqual(before);
+    expect(container.querySelector('.LabeledList')).toBe(details);
+    expect(input.value).toBe('iron');
+    expect(checkbox().checked).toBe(true);
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['object', {}],
+    ['array', []],
+  ] as [string, Data['crafting_recipes'] | []][])(
+    'empty static catalog %s can gain recipes and become empty again without stale controls',
+    async (_label, empty) => {
+      // An empty DM list can arrive as an array; no null/missing initial
+      // catalog is promised by ui_static_data, which always sets this field.
+      await replaceCatalog(empty);
+      await render({ showonlycraftable: true, craftability: { Learned: 1 } });
+      const input = await search('iron');
+      expect(titles()).toEqual([]);
+      await replaceCatalog({
+        Knowledge: [recipe('Learned', '/recipe/learned', ' 1 Iron ingot')],
+      });
+      expect(titles()).toEqual(['Knowledge']);
+      await click('Knowledge');
+      expect(titles()).toEqual(['Knowledge', 'Learned']);
+      const obsoleteCraft = button('🛠');
+      await replaceCatalog(empty);
+      expect(titles()).toEqual([]);
+      expect(buttons('🛠')).toHaveLength(0);
+      expect(obsoleteCraft.isConnected).toBe(false);
+      expect(input.value).toBe('iron');
+      expect(checkbox().checked).toBe(true);
+      await act(async () => obsoleteCraft.click());
+      expect(sendMessage).not.toHaveBeenCalled();
+    },
+  );
 
   test('per-path overrides show only the affordable same-name variant and send its exact path', async () => {
     await render({ ...collidingRecipes(), showonlycraftable: true });

@@ -722,12 +722,24 @@
 /datum/mind/proc/teach_crafting_recipe(R)
 	if(!learned_recipes)
 		learned_recipes = list()
+	var/old_recipe_count = length(learned_recipes)
 	learned_recipes |= R
+	if(length(learned_recipes) != old_recipe_count)
+		var/datum/component/personal_crafting/crafting = current?.craftingthing
+		if(crafting)
+			crafting.craftability_next_update = 0
+			crafting.update_static_data(current)
 
 /datum/mind/proc/forget_crafting_recipe(R)
 	if(!learned_recipes)
 		return
+	var/old_recipe_count = length(learned_recipes)
 	learned_recipes -= R
+	if(length(learned_recipes) != old_recipe_count)
+		var/datum/component/personal_crafting/crafting = current?.craftingthing
+		if(crafting)
+			crafting.craftability_next_update = 0
+			crafting.update_static_data(current)
 
 // new crafting button interaction
 

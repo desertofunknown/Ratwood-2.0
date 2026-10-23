@@ -113,7 +113,7 @@ export const MiaCraft = (props, context) => {
   const [category, setCategory] = useState();
   const [subcategory, setSubcategory] = useState();
   const craftability = (name, path) => isRecipeCraftable(data.craftability, name, path, data.craftability_by_path);
-  const [crafting_recipes] = useState(data.crafting_recipes);
+  const crafting_recipes = data.crafting_recipes;
   let onlyCraftable = data.showonlycraftable;
   const [searchText, setSearchText] = useState("");
 
