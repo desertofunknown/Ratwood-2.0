@@ -81,7 +81,7 @@
 						next_level = 2
 				dat += "<a class='[pref_class]' role='button' aria-label='[html_encode(J.title)]: [pref_label] priority. Cycle preference.' data-villain-pref='[html_encode(J.title)]' href='byond://?src=[REF(src)];villain_pref=[url_encode(J.title)];level=[next_level]'>[pref_label]</a>"
 			else
-				dat += " <a class='villain-details' aria-label='[html_encode(J.title)] subclasses' href='?src=[REF(J)];jobsubclassinfo=1'>Details</a></th><td class='villain-state'><a aria-label='Join as [html_encode(J.title)], [J.current_positions] of [J.total_positions] slots filled' href='byond://?src=[REF(src)];SelectedJob=[url_encode(J.title)]'>Join</a><span class='villain-note villain-slot-note'>[J.current_positions] / [J.total_positions] filled</span>"
+				dat += " <a class='villain-details' aria-label='[html_encode(J.title)] subclasses' href='?src=[REF(J)];explainjob=1'>Details</a></th><td class='villain-state'><a aria-label='Join as [html_encode(J.title)], [J.current_positions] of [J.total_positions] slots filled' href='byond://?src=[REF(src)];SelectedJob=[url_encode(J.title)]'>Join</a><span class='villain-note villain-slot-note'>[J.current_positions] / [J.total_positions] filled</span>"
 			dat += "</td></tr>"
 
 		if(!found)
