@@ -823,9 +823,9 @@
 	if(do_after(user,short_cooktime, target = src))
 		add_sleep_experience(user, /datum/skill/craft/cooking, user.STAINT)
 		var/handpie = new handpie_path(get_turf(user))
-		user.put_in_hands(handpie)
 		qdel(I)
 		qdel(src)
+		user.put_in_hands(handpie)
 
 /*	.................   Strudel Dough   ................... */
 /obj/item/reagent_containers/food/snacks/rogue/strudeldough
