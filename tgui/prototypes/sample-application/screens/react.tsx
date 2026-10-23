@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
+import { ReactView as ArchiveView } from '../../changes-archive/ReactView';
 import { CraftingWorkbench } from '../../crafting-workbench/Workbench';
 import { ReactView as SettingsView } from '../../display-readability/ReactView';
 import { ReactView as MarketView } from '../../market-quote/ReactView';
@@ -8,6 +9,18 @@ import { ReactView as LedgerView } from '../../treasury-ledger/ReactView';
 import type { ScreenProps } from '../contracts';
 import { ScreenControls } from './controls';
 import type { OwnedScreenSession } from './session';
+
+function Archive({
+  session,
+}: {
+  session: Extract<OwnedScreenSession, { route: 'archive' }>;
+}) {
+  const { controller, sampleEpoch } = useSyncExternalStore(
+    session.subscribe,
+    session.snapshot,
+  );
+  return <ArchiveView key={sampleEpoch} controller={controller} />;
+}
 
 function Treasury({
   session,
@@ -77,6 +90,8 @@ function Content({ session, snapshot }: ScreenProps) {
       return <Readability session={owned} />;
     case 'market':
       return <Market session={owned} />;
+    case 'archive':
+      return <Archive session={owned} />;
   }
 }
 

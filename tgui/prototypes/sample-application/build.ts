@@ -7,10 +7,16 @@ import { gzipSync } from 'node:zlib';
 
 import { compileAsync } from 'sass-embedded';
 
+import {
+  olderSample,
+  sample as archiveSample,
+} from '../changes-archive/sample';
 import { createDemoData } from '../crafting-workbench/fixtures';
 import { createSampleData } from '../display-readability/fixtures';
 import { MARKET_SAMPLES } from '../market-quote/fixtures';
 import { sampleEntries } from '../treasury-ledger/fixtures';
+import { archiveScreenCss } from './archive-styles';
+import { auditOwnedEndpointBundle } from './audit-bundle';
 import {
   banner,
   definitions,
@@ -18,7 +24,6 @@ import {
   plugins,
   repository,
 } from './build-options';
-import { auditOwnedEndpointBundle } from './audit-bundle';
 
 // BUILD ONLY. Never imports or evaluates emitted browser bundles, serves files,
 // opens a network listener, launches a browser, or modifies production outputs.
@@ -32,9 +37,12 @@ await mkdir(output, { recursive: true });
 const digest = (bytes: Uint8Array | string) =>
   createHash('sha256').update(bytes).digest('hex');
 const inputs = new Set<string>(
-  ['endpoint-binding.ts', 'build-options.ts', 'build.ts'].map((path) =>
-    join(here, path),
-  ),
+  [
+    'endpoint-binding.ts',
+    'build-options.ts',
+    'build.ts',
+    'archive-styles.ts',
+  ].map((path) => join(here, path)),
 );
 const builds: Record<string, unknown> = {};
 for (const arm of ['react', 'svelte']) {
@@ -93,13 +101,17 @@ const screenPaths = [
   '../treasury-ledger/ledger.css',
   '../market-quote/market.css',
   '../display-readability/settings.css',
+  '../changes-archive/archive.css',
 ];
 const screenCss = (
   await Promise.all(
     screenPaths.map(async (path) => {
       const file = join(here, path);
       inputs.add(file);
-      return readFile(file, 'utf8');
+      const source = await readFile(file, 'utf8');
+      return path === '../changes-archive/archive.css'
+        ? archiveScreenCss(source)
+        : source;
     }),
   )
 ).join('\n');
@@ -114,6 +126,7 @@ await writeFile(
       ledger: sampleEntries,
       readability: createSampleData(),
       market: MARKET_SAMPLES,
+      archive: { '2026-10': archiveSample, '2026-09': olderSample },
     },
     null,
     2,

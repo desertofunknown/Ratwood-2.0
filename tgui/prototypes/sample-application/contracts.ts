@@ -3,18 +3,25 @@ import type { ComponentType } from 'react';
 import type { WorkbenchData } from '../crafting-workbench/model';
 import type { WorkbenchAction } from '../crafting-workbench/Workbench';
 
-export type Route = 'workbench' | 'treasury' | 'market' | 'readability';
+export type Route =
+  | 'workbench'
+  | 'treasury'
+  | 'market'
+  | 'readability'
+  | 'archive';
 export const routes: readonly Route[] = [
   'workbench',
   'treasury',
   'market',
   'readability',
+  'archive',
 ];
 export const routeLabels: Record<Route, string> = {
   workbench: 'Crafting workbench',
   treasury: 'Treasury ledger',
   market: 'Market quotes',
   readability: 'Display & readability',
+  archive: 'Changes / archive',
 };
 
 /** A synchronously revoked capability, independent of React commit timing. */

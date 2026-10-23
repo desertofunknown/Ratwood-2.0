@@ -1,7 +1,13 @@
+import type { Controller as ArchiveController } from '../../changes-archive/model';
+import {
+  sampleController as createArchiveSample,
+  type SampleOptions as ArchiveOptions,
+  type Scenario as ArchiveScenario,
+} from '../../changes-archive/sample';
 import type { WorkbenchAction } from '../../crafting-workbench/Workbench';
 import {
-  createController as createSettingsController,
   type Controller as SettingsController,
+  createController as createSettingsController,
 } from '../../display-readability/model';
 import { createSample as createSettingsSample } from '../../display-readability/sample';
 import {
@@ -9,9 +15,9 @@ import {
   type MarketController,
 } from '../../market-quote/model';
 import {
-  createController as createLedgerController,
   type Cancel,
   type Controller as LedgerController,
+  createController as createLedgerController,
   type Schedule,
 } from '../../treasury-ledger/model';
 import { createSample as createLedgerSample } from '../../treasury-ledger/sample';
@@ -36,16 +42,30 @@ type ReadabilitySession = ScreenSession & {
   subscribePending(notify: () => void): () => void;
   deliverNext(): void;
 };
+export type ArchiveSnapshot = Readonly<{
+  scenario: ArchiveScenario;
+  sampleEpoch: number;
+  controller: ArchiveController;
+}>;
+export type ArchiveSession = ScreenSession & {
+  route: 'archive';
+  snapshot(): ArchiveSnapshot;
+  subscribe(notify: () => void): () => void;
+  selectSample(scenario: ArchiveScenario): void;
+};
 export type OwnedScreenSession =
   | WorkbenchSession
   | TreasurySession
   | MarketSession
-  | ReadabilitySession;
+  | ReadabilitySession
+  | ArchiveSession;
 
 export type ScreenSessionOptions = {
-  /** Test clock injection only; production retains the existing 250/80 ms delays. */
+  /** Test clock injection only; each screen retains its existing delays. */
   schedule?: Schedule;
   cancel?: Cancel;
+  /** Sample-only archive scenarios and deterministic asynchronous test delivery. */
+  archive?: Pick<ArchiveOptions, 'fetch'> & { scenario?: ArchiveScenario };
 };
 
 /** Own every local subscription independently of either rendering framework. */
@@ -223,6 +243,113 @@ export function createScreenSession(
       }),
       retire: () =>
         scope.retire(() => pendingListeners.clear(), raw.close, sample.dispose),
+    };
+  }
+  if (route === 'archive') {
+    const listeners = new Set<() => void>();
+    let sampleEpoch = 0;
+    const report = (error: unknown) => {
+      try {
+        context.lifecycle.error(error);
+      } catch {
+        // A diagnostic must never prevent the remaining owned cleanup.
+      }
+    };
+    const createSample = (scenario: ArchiveScenario) => {
+      const sampleScope = sessionScope(
+        { ...context, lifecycle: { ...context.lifecycle, error: report } },
+        options,
+      );
+      let raw: ArchiveController | undefined;
+      const validateSampleBoundary = () => {
+        // Construction validates before the lease is published; retired async
+        // deliveries must not even inspect a replacement endpoint.
+        if (raw && !sampleScope.current()) return;
+        try {
+          validateBoundary();
+        } catch (error) {
+          if (raw) {
+            // Invalidate the raw request before its catch can schedule retry.
+            sampleScope.retire(raw.unmount);
+            report(error);
+          }
+          throw error;
+        }
+      };
+      const boundaryCurrent = () => {
+        if (!sampleScope.current()) return false;
+        try {
+          validateSampleBoundary();
+          return sampleScope.current();
+        } catch {
+          return false;
+        }
+      };
+      raw = createArchiveSample(
+        scenario,
+        {
+          fetch: options.archive?.fetch,
+          schedule: (callback, delay) =>
+            sampleScope.schedule(() => {
+              // The unchanged model's action occurs outside its async try.
+              if (boundaryCurrent()) callback();
+            }, delay),
+          cancel: sampleScope.cancel,
+        },
+        validateSampleBoundary,
+      ).controller;
+      const source = raw;
+      const controller: ArchiveController = {
+        dates: source.dates,
+        labels: source.labels,
+        snapshot: source.snapshot,
+        subscribe: (notify) => sampleScope.subscribe(source.subscribe, notify),
+        mount() {
+          if (boundaryCurrent()) source.mount();
+        },
+        unmount: sampleScope.gate(source.unmount),
+        select(index) {
+          if (boundaryCurrent()) source.select(index);
+        },
+        query(query) {
+          if (boundaryCurrent()) source.query(query);
+        },
+      };
+      return {
+        snapshot: Object.freeze({
+          scenario,
+          sampleEpoch: ++sampleEpoch,
+          controller,
+        }),
+        current: boundaryCurrent,
+        retire: () => sampleScope.retire(source.unmount),
+      };
+    };
+    let sample = createSample(options.archive?.scenario ?? 'success');
+    return {
+      route,
+      lease,
+      snapshot: () => sample.snapshot,
+      subscribe: (notify) =>
+        scope.subscribe((listener) => {
+          listeners.add(listener);
+          return () => {
+            listeners.delete(listener);
+          };
+        }, notify),
+      selectSample: scope.gate((scenario) => {
+        if (!sample.current()) return;
+        const next = createSample(scenario);
+        // Invalidate old retries and promises before either view can commit.
+        sample.retire();
+        sample = next;
+        listeners.forEach((notify) => notify());
+      }),
+      retire: () =>
+        scope.retire(
+          () => listeners.clear(),
+          () => sample.retire(),
+        ),
     };
   }
   const raw = createMarketController(undefined, validateBoundary);

@@ -1,7 +1,53 @@
 import { useSyncExternalStore } from 'react';
 
+import type { Scenario as ArchiveScenario } from '../../changes-archive/sample';
 import { MARKET_SAMPLES } from '../../market-quote/model';
 import type { OwnedScreenSession } from './session';
+
+function ArchiveControls({
+  session,
+}: {
+  session: Extract<OwnedScreenSession, { route: 'archive' }>;
+}) {
+  const { scenario } = useSyncExternalStore(
+    session.subscribe,
+    session.snapshot,
+  );
+  return (
+    <div className="SampleApplication__screenControls">
+      <p>
+        Authored archives only. Retry succeeds on attempt 3; failure stops after
+        6 attempts. Loading a sample or leaving this screen resets local state.
+        No archive request reaches the game or network.
+      </p>
+      <label>
+        Sample outcome{' '}
+        <select
+          className="TithewoodControl"
+          aria-label="Archive sample scenario"
+          value={scenario}
+          onChange={(event) =>
+            session.selectSample(event.currentTarget.value as ArchiveScenario)
+          }
+        >
+          {(['success', 'retry', 'failure', 'empty'] as const).map((choice) => (
+            <option key={choice} value={choice}>
+              {choice}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        className="TithewoodControl"
+        data-sample-reload="archive"
+        onClick={() => session.selectSample(scenario)}
+      >
+        Load sample
+      </button>
+    </div>
+  );
+}
 
 function ReadabilityControls({
   session,
@@ -113,6 +159,7 @@ function MarketControls({
 
 /** Identical local demonstration controls for both presentation arms. */
 export function ScreenControls({ session }: { session: OwnedScreenSession }) {
+  if (session.route === 'archive') return <ArchiveControls session={session} />;
   if (session.route === 'readability') {
     return <ReadabilityControls session={session} />;
   }

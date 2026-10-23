@@ -25,7 +25,7 @@ export async function startPage(
     summary.textContent = `${arm === 'react' ? 'React control' : 'React host + Svelte screens'}: disconnected QA controls`;
     const explanation = document.createElement('p');
     explanation.textContent =
-      'One production React Window and store. Four local sample screens. Calls stay in memory. No native subscription, live trade, saved preferences or production routing. Status dimming is visual only.';
+      'One production React Window and store. Five local sample screens. Calls stay in memory. No native subscription, live trade, saved preferences or production routing. Status dimming is visual only.';
     const buttons = document.createElement('div');
     buttons.className = 'fixture-buttons';
     const status = document.createElement('p');

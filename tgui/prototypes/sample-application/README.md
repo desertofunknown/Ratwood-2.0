@@ -1,7 +1,7 @@
 # Disconnected Tithewood application study
 
 This experimental application composes the existing crafting workbench, treasury
-ledger, market quote and display/readability studies in one actual React-owned
+ledger, market quote, display/readability and Changes/archive studies in one actual React-owned
 Window and backend store. The React control and Svelte-backed arm use the same
 host, sample data, external styles and screen lifecycle. It is not a production
 route, a framework migration, a native-client acceptance result or a game server.
@@ -17,7 +17,8 @@ facade, validating each call against that owned endpoint. This includes Window
 close, drag and retained callbacks, not only screen-controller actions. The endpoint facade is lexical,
 not a browser-global property. The endpoint records only the existing
 narrow workbench/Window commands. Treasury and settings actions stay in private in-memory sample sources;
-market quotes cannot dispatch shipments.
+market quotes cannot dispatch shipments. Archive content is supplied by the
+existing in-memory samples, not a network request or a game archive service.
 
 One synchronous screen lease is active at a time. Navigation invalidates the old
 lease before React commits, retires its controllers and removes its owned view.
@@ -30,8 +31,10 @@ server and settings changes are not saved to player preferences.
 Existing domain views, quote calculations, debounce behavior and local keyboard
 policies are reused. There is no new router, event bus or persistence layer.
 Previous hosted studies remain separate immutable artifacts, not rewritten by
-this build. The five controller/sample factory seams are explicit optional
-validator injection, not relaxed default transport guards.
+this build. The controller/sample factory seams are explicit optional validator
+injection, not relaxed default transport guards. The archive sample additionally
+accepts an injected clock and fetch function for deterministic lifecycle tests;
+its default remains the original in-memory sample loader.
 
 ## Local checks and build
 
@@ -39,8 +42,7 @@ From `tgui/prototypes/sample-application`, using the repository's pinned Bun and
 installed dependencies:
 
 ```sh
-bun test.ts
-bun ../../node_modules/typescript/bin/tsc --project tsconfig.json
+bun check.ts
 bun build.ts
 bun build-controls.ts
 ```
@@ -69,7 +71,7 @@ policy, actual game transport/data lifecycle, persistent state and failure
 behavior, keyboard/accessibility and real rendering performance still require
 separate acceptance. This study changes none of those policies or routes.
 
-## Checked development snapshot (2026-10-23)
+## Original four-screen development snapshot (2026-10-23, 225e99f8)
 
 Independent review covered 109 distinct focused tests / 1,419 assertions: 27
 source-mounted integration cases and 82 boundary, lifecycle and failure cases.
@@ -94,6 +96,38 @@ within the proposed +100 KiB raw / +30 KiB gzip JS review thresholds. Shared
 shell CSS includes real production shell rules, not only new navigation styles.
 No speedup, memory saving or whole-UI migration conclusion follows.
 
-Hosted-browser acceptance of this combined application remains pending. Earlier
-standalone browser results do not prove the new composition. Native BYOND client,
+The original four-screen composition has separate hosted-browser evidence. That
+evidence does not establish acceptance of later extensions. Native BYOND client,
 screen-reader, real network/transport and game acceptance remain separate gates.
+
+## Changes/archive extension (2026-10-23)
+
+The fifth screen reuses the original archive controller and both domain views.
+Its success, transient retry, terminal failure and empty scenarios remain
+sample-only. Leaving the screen or replacing its sample synchronously retires
+the prior request generation, timers and subscriptions. Late fetch/body delivery
+cannot update the replacement screen. Loss of the fixture's exact endpoint
+ownership also retires the archive and reports once, rather than scheduling an
+unhandled retry. Returning to the archive starts fresh local state.
+
+The additional mounted suite covers 36 cases / 2,073 assertions in simulated
+DOM. These are not native-client, browser-rendering or performance results.
+The ordinary suite, including five CSS extraction cases, passes 956 cases, with
+the separate 36/24/44 isolated suites also passing. TypeScript, production build and seven lint
+regressions pass; full production lint still reports 115 existing findings.
+
+Build-only transfer accounting (raw / per-file gzip bytes):
+
+- React: 407,673 / 133,798; additional 97,268 / 32,005 versus its workbench-only control.
+- Svelte-backed: 479,537 / 161,841; additional 104,896 / 35,548 versus its workbench-only control.
+- Archive extension alone versus the four-screen build: React +57,553 / +19,657; Svelte-backed +60,187 / +20,564.
+- Shared shell CSS: 6,524 / 2,077; combined screen CSS: 23,537 / 4,522.
+
+The original +100 KiB raw / +30 KiB gzip JS review thresholds are unchanged.
+The React arm now exceeds the gzip threshold, and the Svelte-backed arm exceeds
+both. Existing YAML/date/archive logic is eagerly included in each single-script
+sample bundle. This is an explicit feature/transfer-cost tradeoff, not a passed
+size gate or evidence that either framework is faster. A later route-lazy design
+would need its own first-open, failure and disposal measurements; this extension
+does not introduce one. Hosted-browser acceptance of the five-screen application
+remains pending.

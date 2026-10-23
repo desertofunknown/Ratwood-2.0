@@ -9,6 +9,7 @@ for (const command of [
     'false',
   ],
   [process.execPath, 'test.ts'],
+  [process.execPath, 'archive-test.ts'],
   [
     process.execPath,
     'test',
@@ -19,6 +20,7 @@ for (const command of [
     'tests/screens-mount.test.ts',
     'tests/screens-workbench-failure.test.ts',
     'tests/bundle-audit.test.ts',
+    'tests/archive-styles.test.ts',
   ],
 ]) {
   const child = Bun.spawn(command, {
