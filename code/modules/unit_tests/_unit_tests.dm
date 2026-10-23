@@ -90,6 +90,7 @@
 #include "colorblind_hud_palette.dm"
 #include "component_tests.dm"
 #include "create_and_destroy.dm"
+#include "direct_import_quote.dm"
 #include "focus_only_tests.dm"
 #include "harddels.dm"
 #include "path_minheap.dm"
