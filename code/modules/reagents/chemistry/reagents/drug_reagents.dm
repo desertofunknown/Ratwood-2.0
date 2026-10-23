@@ -359,6 +359,8 @@
 	. = ..()
 
 /datum/reagent/drug/mentha // distinct from SS13 menthol, for the mentha zigs
+	parent_type = /datum/reagent/drug/food_reagent
+	stress_type = /datum/stressevent/menthasmoke
 	name = "Mentha"
 	description = "Extract from the mentha herb. Produces a cooling sensation."
 	reagent_state = LIQUID
@@ -386,6 +388,8 @@
 	return TRUE
 
 /datum/reagent/drug/blackberry
+	parent_type = /datum/reagent/drug/food_reagent
+	stress_type = /datum/stressevent/blackberrysmoke
 	name = "Blackberry"
 	description = "Extract from the blackberry. Produces a sweet-tart sensation."
 	reagent_state = LIQUID
@@ -413,6 +417,8 @@
 	return TRUE
 	
 /datum/reagent/drug/apple 
+	parent_type = /datum/reagent/drug/food_reagent
+	stress_type = /datum/stressevent/applesmoke
 	name = "Apple"
 	description = "Extract from the apple. Produces a sourness and coolness sensation."
 	reagent_state = LIQUID
