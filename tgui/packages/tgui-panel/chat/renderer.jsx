@@ -494,7 +494,7 @@ class ChatRenderer {
       // Store the node in the message
       message.node = node;
       // Query all possible selectors to find out the message type
-      if (!message.type) {
+      if (typeof message.type !== 'string' || !message.type) {
         const typeDef = MESSAGE_TYPES.find(
           (typeDef) => typeDef.selector && node.querySelector(typeDef.selector),
         );

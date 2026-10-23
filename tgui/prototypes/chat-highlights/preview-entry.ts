@@ -10,7 +10,7 @@ Object.defineProperty(window, 'Byond', {
   writable: false,
   value: new Proxy(Object.create(null), {
     get(_target, key) {
-      if (key === 'sendMessage')
+      if (key === 'sendMessage') {
         return (payload: any) => {
           if (
             payload?.type !== 'log' ||
@@ -23,6 +23,7 @@ Object.defineProperty(window, 'Byond', {
           }
           fixtureLogs.push({ ...payload });
         };
+      }
       throw Error(`Disconnected preview rejected Byond.${String(key)}`);
     },
     set() {
@@ -60,8 +61,9 @@ async function main() {
     for (const message of new Set([
       ...renderer.messages,
       ...renderer.visibleMessages,
-    ]))
+    ])) {
       renderer.disposeMessage(message);
+    }
     renderer.rootNode = null;
     renderer.messages = [];
     renderer.visibleMessages = [];
@@ -84,11 +86,13 @@ async function main() {
   const signature = () => {
     const html = renderer.rootNode.innerHTML;
     let hash = 2166136261;
-    for (let i = 0; i < html.length; i++)
+    for (let i = 0; i < html.length; i++) {
       hash = Math.imul(hash ^ html.charCodeAt(i), 16777619);
+    }
     const types: Record<string, number> = {};
-    for (const message of renderer.messages)
+    for (const message of renderer.messages) {
       types[message.type] = (types[message.type] || 0) + 1;
+    }
     return {
       messages: renderer.messages.length,
       visible: renderer.visibleMessages.length,
@@ -115,7 +119,7 @@ async function main() {
     statistics:
       'Median averages the two middle samples for even n; p95 uses nearest rank. All warmups and samples retained.',
     lifecycle:
-      'One actual production renderer singleton and its single pruning interval per page; dispose/unmount and fresh root/state outside each timed sample. No replacement constructors.',
+      'One frozen historical renderer singleton (not current production) and its single pruning interval per page; dispose/unmount and fresh root/state outside each timed sample. No replacement constructors.',
     boundary:
       'Synchronous mounted renderer methods only; excludes paint, animation frames, pruning callbacks, input generation, reset and DOM cleanup. Not CPU time, FPS, frame time or real-game latency.',
   });
@@ -163,8 +167,9 @@ async function main() {
         !Number.isInteger(warmups) ||
         warmups < 0 ||
         warmups > 20
-      )
+      ) {
         throw Error('Samples must be 1–100; warmups 0–20.');
+      }
       const results: unknown[] = [];
       const result = {
         ...metadata(),

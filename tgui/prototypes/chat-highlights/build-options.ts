@@ -1,8 +1,11 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
+
 import type { BunPlugin } from 'bun';
+
 import { SOURCE_SHA256, transformSource } from './candidate-overlay';
+import { historicalSourcePath } from './historical-source';
 
 export const here = import.meta.dir;
 export const repository = join(here, '../../..');
@@ -25,8 +28,9 @@ export function plugins(
     const actual = createHash('sha256')
       .update(readFileSync(join(repository, path)))
       .digest('hex');
-    if (actual !== expected)
+    if (actual !== expected) {
       throw Error(`Disconnected host source drift: ${path}`);
+    }
   }
   return [
     {
@@ -45,7 +49,6 @@ export function plugins(
           }),
         );
         build.onLoad({ filter: /./ }, async ({ path }) => {
-          inputs.add(path);
           const rel = relative(repository, path).replaceAll('\\', '/');
           if (
             /packages\/(?:tgui|tgui-panel)\/(?:backend|assets|index\.|store|storage|byond|native)/.test(
@@ -54,16 +57,19 @@ export function plugins(
           ) {
             throw Error(`Native boundary import forbidden: ${rel}`);
           }
-          if (Object.hasOwn(SOURCE_SHA256, rel))
+          const actualPath = join(repository, historicalSourcePath(rel));
+          inputs.add(actualPath);
+          if (Object.hasOwn(SOURCE_SHA256, rel)) {
             return {
               contents: transformSource(
                 rel,
-                await Bun.file(path).text(),
+                await Bun.file(actualPath).text(),
                 variant,
               ),
               loader: path.endsWith('.jsx') ? 'jsx' : 'js',
               resolveDir: dirname(path),
             };
+          }
         });
       },
     },

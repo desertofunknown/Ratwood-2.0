@@ -1,7 +1,10 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+
 import { afterAll, expect, test } from 'bun:test';
+
 import { SOURCE_SHA256, transformSource } from '../candidate-overlay';
+import { historicalSourcePath } from '../historical-source';
 const repo = resolve(import.meta.dir, '../../../..');
 const helperPath = 'tgui/packages/tgui-panel/chat/replaceInTextNode.js';
 const source = await readFile(resolve(repo, helperPath), 'utf8');
@@ -27,9 +30,12 @@ const factory = (text: string) => {
   node.textContent = text;
   return node;
 };
-test('overlay pins production files and rejects drift, repeat application and invalid variants', async () => {
+test('overlay pins historical source inputs and rejects drift, repeat application and invalid variants', async () => {
   for (const path of Object.keys(SOURCE_SHA256)) {
-    const original = await readFile(resolve(repo, path), 'utf8');
+    const original = await readFile(
+      resolve(repo, historicalSourcePath(path)),
+      'utf8',
+    );
     expect(transformSource(path, original, 'baseline')).toBe(original);
     expect(() => transformSource(path, original + '\n', 'candidate')).toThrow(
       'source drift',

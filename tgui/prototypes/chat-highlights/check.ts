@@ -1,13 +1,18 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+
 import { here, repository } from './build-options';
 import { SOURCE_SHA256, transformSource } from './candidate-overlay';
+import { historicalSourcePath } from './historical-source';
 const assert = (value: unknown, message: string) => {
   if (!value) throw Error(message);
 };
 for (const path of Object.keys(SOURCE_SHA256)) {
-  const source = await readFile(join(repository, path), 'utf8');
+  const source = await readFile(
+    join(repository, historicalSourcePath(path)),
+    'utf8',
+  );
   assert(
     transformSource(path, source, 'baseline') === source,
     `Baseline changed: ${path}`,
@@ -32,7 +37,7 @@ const hash = (data: string | Uint8Array) =>
 for (const source of manifest.sources) {
   assert(
     hash(await readFile(join(repository, source.path))) === source.sha256,
-    `Stale build source: ${source.path}; rebuild both arms`,
+    `Stale build source: ${source.path}; historical artifact is stale against this checkout; do not overwrite frozen dist or treat it as current measurements`,
   );
 }
 for (const variant of ['baseline', 'candidate']) {
@@ -60,15 +65,16 @@ for (const variant of ['baseline', 'candidate']) {
     `${variant}: missing safety/control contract`,
   );
   for (const path of [
-    ...Object.keys(SOURCE_SHA256),
+    ...Object.keys(SOURCE_SHA256).map(historicalSourcePath),
     'tgui/packages/tgui-panel/chat/model.js',
     'tgui/packages/tgui/logging.ts',
     'tgui/packages/tgui/components/TooltipHTML.tsx',
-  ])
+  ]) {
     assert(
       manifest.builds[variant].inputs.includes(path),
       `${variant}: missing ${path}`,
     );
+  }
 }
 assert(
   manifest.builds.baseline.sha256 !== manifest.builds.candidate.sha256,

@@ -3,18 +3,20 @@ import { createHash } from 'node:crypto';
 import {
   copyFile,
   mkdir,
-  readFile,
   readdir,
+  readFile,
   writeFile,
 } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
+
 import {
   here,
+  HOST_BOUNDARY_SHA256,
   plugins,
   repository,
-  HOST_BOUNDARY_SHA256,
 } from './build-options';
 import { SOURCE_SHA256 } from './candidate-overlay';
+import { historicalSourcePath, sourceProvenance } from './historical-source';
 const output = join(here, 'dist');
 const hash = (data: string | Uint8Array) =>
   createHash('sha256').update(data).digest('hex');
@@ -48,12 +50,15 @@ for (const variant of ['baseline', 'candidate'] as const) {
     /new WebSocket|127\.0\.0\.1:3000|Byond\.subscribe|Byond\.winset|localStorage|sessionStorage|indexedDB/.test(
       new TextDecoder().decode(bytes),
     )
-  )
+  ) {
     throw Error('Connected runtime residue');
+  }
   for (const path of armInputs) inputs.add(path);
-  for (const required of Object.keys(SOURCE_SHA256))
-    if (!armInputs.has(join(repository, required)))
-      throw Error(`Missing actual source: ${required}`);
+  for (const required of Object.keys(SOURCE_SHA256)) {
+    if (!armInputs.has(join(repository, historicalSourcePath(required)))) {
+      throw Error(`Missing historical study source: ${required}`);
+    }
+  }
   builds[variant] = {
     bytes: bytes.length,
     sha256: hash(bytes),
@@ -63,7 +68,7 @@ for (const variant of ['baseline', 'candidate'] as const) {
     join(output, variant, 'index.html'),
     document(
       `Chat highlights / ${variant}`,
-      `<h1>Chat highlights: ${variant}</h1><p>Disconnected synthetic fixtures through the actual production chat renderer. <a href="../${variant === 'baseline' ? 'candidate' : 'baseline'}/">Other arm</a> · <a href="../">Overview</a></p><p class="notice">No game connection, real player data, storage or native helpers. Timings are synchronous mounted renderer work, not paint, FPS, CPU time or game latency.</p><div class="controls"><label>Measured samples<input id="samples" type="number" min="1" max="100" value="7"></label><label>Warmups<input id="warmups" type="number" min="0" max="20" value="2"></label><button id="correctness">Run correctness</button><button id="benchmark">Run benchmark</button></div><p id="status" role="status" aria-live="polite">Loading actual renderer…</p><div id="viewport" aria-label="Mounted synthetic chat"></div><h2>Raw JSON results</h2><pre id="output">No run yet.</pre><p class="notice">Copy both JSON results. Alternate arm order and keep conditions equal. All raw samples and warmups retained. <a href="../README.txt">Method and limitations</a> · <a href="../NOTICE.txt">Source and license requirements</a> · <a href="../manifest.json">Provenance</a></p>`,
+      `<h1>Chat highlights: ${variant}</h1><p>Disconnected synthetic fixtures through the frozen historical chat renderer, not current production. <a href="../${variant === 'baseline' ? 'candidate' : 'baseline'}/">Other arm</a> · <a href="../">Overview</a></p><p class="notice">No game connection, real player data, storage or native helpers. Timings are synchronous mounted renderer work, not paint, FPS, CPU time or game latency.</p><div class="controls"><label>Measured samples<input id="samples" type="number" min="1" max="100" value="7"></label><label>Warmups<input id="warmups" type="number" min="0" max="20" value="2"></label><button id="correctness">Run correctness</button><button id="benchmark">Run benchmark</button></div><p id="status" role="status" aria-live="polite">Loading actual renderer…</p><div id="viewport" aria-label="Mounted synthetic chat"></div><h2>Raw JSON results</h2><pre id="output">No run yet.</pre><p class="notice">Copy both JSON results. Alternate arm order and keep conditions equal. All raw samples and warmups retained. <a href="../README.txt">Method and limitations</a> · <a href="../NOTICE.txt">Source and license requirements</a> · <a href="../manifest.json">Provenance</a></p>`,
       true,
     ),
   );
@@ -72,8 +77,9 @@ for (const [src, dest] of [
   ['preview.css', 'preview.css'],
   ['README.md', 'README.txt'],
   ['NOTICE.txt', 'NOTICE.txt'],
-])
+]) {
   await copyFile(join(here, src), join(output, dest));
+}
 await copyFile(join(repository, 'LICENSE'), join(output, 'LICENSE.txt'));
 async function inventory(folder: string) {
   for (const entry of await readdir(folder, { withFileTypes: true })) {
@@ -84,8 +90,9 @@ async function inventory(folder: string) {
   }
 }
 await inventory(here);
-for (const path of Object.keys(HOST_BOUNDARY_SHA256))
+for (const path of Object.keys(HOST_BOUNDARY_SHA256)) {
   inputs.add(join(repository, path));
+}
 for (const path of [
   'LICENSE',
   'tgui/package.json',
@@ -157,7 +164,8 @@ await writeFile(
           'Core component barrel resolves to its unchanged Tooltip export only, excluding unrelated ByondUi native lifecycle side effects identically in both arms.',
         sources: HOST_BOUNDARY_SHA256,
       },
-      pinnedProductionSources: SOURCE_SHA256,
+      pinnedHistoricalSources: SOURCE_SHA256,
+      sourceProvenance: sourceProvenance(repository),
       sources: await Promise.all(
         [...inputs].sort().map(async (path) => ({
           path: relative(repository, path),
@@ -167,7 +175,7 @@ await writeFile(
       dependencies: [...dependencies.values()],
       tools: { bun: Bun.version },
       boundary:
-        'Actual renderer graph. Baseline unchanged; only hash-checked candidate overlay. No backend, native transport, storage or deployment.',
+        'Historical renderer graph, not current production. Baseline unchanged; only hash-checked candidate overlay. No backend, native transport, storage or deployment.',
     },
     null,
     2,
@@ -177,7 +185,7 @@ await writeFile(
   join(output, 'index.html'),
   document(
     'Disconnected chat highlight comparison',
-    '<h1>Actual chat renderer: highlight A/B</h1><p>Synthetic sample only, not a deployed game change.</p><p><a href="baseline/">Baseline production renderer</a> · <a href="candidate/">Prepared-highlighter candidate</a></p><p>Run correctness first, then benchmarks with equal settings. Keep tabs visible and alternate arm order. These elapsed synchronous timings are not FPS, CPU time or game latency.</p><p><a href="README.txt">Method</a> · <a href="NOTICE.txt">Source and licenses</a> · <a href="manifest.json">Build manifest</a></p>',
+    '<h1>Historical chat renderer: highlight A/B</h1><p>Historical synthetic study only. Results are not measurements of current production; retained dist artifacts are frozen.</p><p><a href="baseline/">Frozen historical baseline</a> · <a href="candidate/">Prepared-highlighter candidate</a></p><p>Run correctness first, then benchmarks with equal settings. Keep tabs visible and alternate arm order. These elapsed synchronous timings are not FPS, CPU time or game latency.</p><p><a href="README.txt">Method</a> · <a href="NOTICE.txt">Source and licenses</a> · <a href="manifest.json">Build manifest</a></p>',
   ),
 );
 console.log(

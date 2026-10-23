@@ -1,13 +1,15 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+
 import { expect, test } from 'bun:test';
+
 import { plugins, repository } from '../build-options';
 import {
   compareRendererSnapshots,
   runRendererFixtures,
 } from './renderer-fixtures';
 
-test('happyDOM differential: actual baseline/candidate renderer HTML, highlights, types, order, storage, events', async () => {
+test('happyDOM historical differential: frozen baseline/candidate renderer HTML, highlights, types, order, storage, events', async () => {
   const temp = await mkdtemp('/tmp/chat-renderer-differential-');
   const results: unknown[] = [];
   const originalByond = Object.getOwnPropertyDescriptor(globalThis, 'Byond');
@@ -26,7 +28,7 @@ test('happyDOM differential: actual baseline/candidate renderer HTML, highlights
     'Byond',
     new Proxy(Object.create(null), {
       get(_target, key) {
-        if (key === 'sendMessage')
+        if (key === 'sendMessage') {
           return (payload: any) => {
             if (
               payload?.type !== 'log' ||
@@ -39,6 +41,7 @@ test('happyDOM differential: actual baseline/candidate renderer HTML, highlights
             }
             nativeCalls.push({ ...payload });
           };
+        }
         throw new Error(`Differential test rejected Byond.${String(key)}`);
       },
       set() {
@@ -74,9 +77,9 @@ test('happyDOM differential: actual baseline/candidate renderer HTML, highlights
     for (const id of intervals) clearInterval(id);
     globalThis.setInterval = interval;
     (window as any).__chatRenderer__ = originalRenderer;
-    if (originalByond)
+    if (originalByond) {
       Object.defineProperty(globalThis, 'Byond', originalByond);
-    else Reflect.deleteProperty(globalThis, 'Byond');
+    } else Reflect.deleteProperty(globalThis, 'Byond');
     await rm(temp, { recursive: true, force: true });
   }
 }, 30000);

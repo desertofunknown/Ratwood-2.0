@@ -8,7 +8,7 @@ bun test ./prototypes/chat-highlights/tests
 
 No added dependencies or package scripts. `happydom.ts` is the existing test preload.
 The helper suite imports temporary copies of the **actual pinned source**, transformed
-only by `candidate-overlay.ts`. The renderer test bundles the **actual production
+only by `candidate-overlay.ts`. The renderer test bundles the **frozen historical production
 renderer and dependencies**, using the preview's pinned Tooltip-only resolver boundary and
 production logging define. The original Tooltip export is used directly to avoid
 unrelated ByondUi native registration from the production component barrel; this
@@ -46,3 +46,5 @@ Source-drift, repeated-overlay and invalid-variant/path checks fail closed. Exis
 HTML/sanitizer boundaries remain unchanged. Passing happyDOM/local differential
 checks do not establish browser speed, BYOND/IE compatibility, game acceptance,
 or blanket security/sanitizer correctness.
+
+Historical source tests use historical/renderer.jsx.txt (exact pinned production bytes, not a reimplementation). The 15-snapshot differential is historical reproducibility, not a current-production regression/performance result. historical-source.test.ts separately asserts current renderer drift is stale and that provenance attributes bundled bytes to the fixture, preserving original dependency resolution. Artifact checks remain fail-closed against frozen stale dist; do not rebuild it.
