@@ -29,7 +29,7 @@
 	parent_mob.add_stress(/datum/stressevent/empathic_bond_formed)
 
 	// Set up termination timer
-	addtimer(CALLBACK(src, PROC_REF(end_obsession)), duration)
+	addtimer(CALLBACK(src, PROC_REF(end_obsession)), duration, TIMER_UNIQUE | TIMER_OVERRIDE | TIMER_NO_HASH_WAIT)
 	START_PROCESSING(SSprocessing, src)
 
 	// Register signal handlers
@@ -177,7 +177,7 @@
 
 	// Extend obsession duration due to grief
 	obsession_duration += 20 MINUTES
-	addtimer(CALLBACK(src, PROC_REF(end_obsession)), obsession_duration)
+	addtimer(CALLBACK(src, PROC_REF(end_obsession)), obsession_duration, TIMER_UNIQUE | TIMER_OVERRIDE | TIMER_NO_HASH_WAIT)
 
 /datum/component/empathic_obsession/proc/on_target_revive(mob/living/source)
 	SIGNAL_HANDLER
