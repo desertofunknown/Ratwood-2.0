@@ -26,12 +26,12 @@
 	if(length(conjured_mobs) >= 2)
 		to_chat(user, span_warning("You can not possibly maintain your focus on any more primordials!"))
 		revert_cast()
-		return
+		return FALSE
 	var/turf/T = get_turf(targets[1])
 	if(!isopenturf(T))
 		to_chat(user, span_warning("The targeted location is blocked. My summon fails to come forth."))
 		revert_cast()
-		return
+		return FALSE
 
 	var/obj/item/sacrifice
 	for(var/obj/item/I in user.held_items)
@@ -42,7 +42,7 @@
 	if(!sacrifice)
 		to_chat(user, span_warning("I require some essentia in a free hand."))
 		revert_cast()
-		return
+		return FALSE
 	if(!spellsgranted)
 		var/obj/effect/proc_holder/spell/primordial_order = new /obj/effect/proc_holder/spell/invoked/minion_order/primordial
 		var/obj/effect/proc_holder/spell/primordialmark = new /obj/effect/proc_holder/spell/invoked/primordialmark
