@@ -566,7 +566,7 @@ SUBSYSTEM_DEF(economy)
 
 
 /datum/controller/subsystem/economy/proc/fulfill_order(mob/user, datum/standing_order/order, partial = FALSE)
-	if(!order || order.is_fulfilled)
+	if(!order || order.is_fulfilled || !(order in GLOB.standing_order_pool))
 		return FALSE
 	var/datum/economic_region/ER = GLOB.economic_regions[order.region_id]
 	if(ER?.is_region_blockaded)
