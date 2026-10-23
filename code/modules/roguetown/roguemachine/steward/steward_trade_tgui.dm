@@ -933,6 +933,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 				mult = input(usr, "Multiply ALL buy prices by (e.g. 0.8 to slash bids 20%). Sets each entry to manual pricing.", src, 1) as null|num
 			if(isnull(mult) || mult <= 0)
 				return TRUE
+			// input() yields: authority may have changed while the prompt was open.
+			if(!user_can_act(usr) || (locked && !alderman_has_access(usr)) || SStreasury.is_in_receivership() || SScity_assembly?.is_alderman(usr))
+				return TRUE
 			for(var/datum/roguestock/stockpile/A in SStreasury.stockpile_datums)
 				A.refresh_auto_price()
 				A.payout_price = max(1, round(A.payout_price * mult))
@@ -946,6 +949,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 			if(isnull(mult))
 				mult = input(usr, "Multiply ALL sell prices by (e.g. 0.8 to discount asks 20%). Sets each entry to manual pricing.", src, 1) as null|num
 			if(isnull(mult) || mult <= 0)
+				return TRUE
+			// input() yields: authority may have changed while the prompt was open.
+			if(!user_can_act(usr) || (locked && !alderman_has_access(usr)) || SStreasury.is_in_receivership() || SScity_assembly?.is_alderman(usr))
 				return TRUE
 			for(var/datum/roguestock/stockpile/A in SStreasury.stockpile_datums)
 				A.refresh_auto_price()
@@ -964,6 +970,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 			if(isnull(mult))
 				mult = input(usr, "Multiply all [category_label] buy prices by (e.g. 0.8 to slash bids 20%). Sets each entry to manual pricing.", src, 1) as null|num
 			if(isnull(mult) || mult <= 0)
+				return TRUE
+			// input() yields: authority may have changed while the prompt was open.
+			if(!user_can_act(usr) || (locked && !alderman_has_access(usr)) || SStreasury.is_in_receivership() || SScity_assembly?.is_alderman(usr))
 				return TRUE
 			for(var/datum/roguestock/stockpile/A in SStreasury.stockpile_datums)
 				if(!A.trade_good_id)
@@ -988,6 +997,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 				mult = input(usr, "Multiply all [category_label] sell prices by (e.g. 0.8 to discount asks 20%). Sets each entry to manual pricing.", src, 1) as null|num
 			if(isnull(mult) || mult <= 0)
 				return TRUE
+			// input() yields: authority may have changed while the prompt was open.
+			if(!user_can_act(usr) || (locked && !alderman_has_access(usr)) || SStreasury.is_in_receivership() || SScity_assembly?.is_alderman(usr))
+				return TRUE
 			for(var/datum/roguestock/stockpile/A in SStreasury.stockpile_datums)
 				if(!A.trade_good_id)
 					continue
@@ -1006,6 +1018,9 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 			if(isnull(pct))
 				pct = input(usr, "Surplus threshold (0-100%). Stock above (limit x threshold) is surplus - the daily Crown sweep and the Export Surplus button move that excess to the highest-paying region, capped at that region's daily demand. Lower = more aggressive export.", src, round(SStreasury.autoexport_percentage * 100)) as null|num
 			if(isnull(pct))
+				return TRUE
+			// input() yields: authority may have changed while the prompt was open.
+			if(!user_can_act(usr) || (locked && !alderman_has_access(usr)) || SStreasury.is_in_receivership() || SScity_assembly?.is_alderman(usr))
 				return TRUE
 			pct = clamp(round(pct), 0, 100)
 			SStreasury.autoexport_percentage = pct * 0.01
