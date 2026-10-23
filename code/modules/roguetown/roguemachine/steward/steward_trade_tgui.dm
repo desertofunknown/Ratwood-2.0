@@ -595,6 +595,8 @@ GLOBAL_LIST_INIT(steward_trade_sequestration_locked_actions, list(
 					var/missing_text = preview["missing_text"]
 					var/confirm = alert(usr, "Settle [O.name] short? Coverage: [coverage_pct]%. Payout: [preview_payout]m at [round(STANDING_ORDER_PARTIAL_PAYOUT_MULT * 100)]% of the delivered share. Missing: [missing_text].", "Partial Fulfillment", "Yes", "No")
 					if(confirm == "Yes")
+						if(!user_can_act(usr) || (locked && !alderman_has_access(usr)))
+							return TRUE
 						var/list/partial_result = SSeconomy.fulfill_order(usr, O, TRUE)
 						if(islist(partial_result) && partial_result["status"] == "partial")
 							var/pq_delta = partial_result["quality_delta"]

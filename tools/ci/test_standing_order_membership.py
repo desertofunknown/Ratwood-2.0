@@ -5,7 +5,8 @@ Baseline: 225e99f8. A partial-settlement alert retains an order while daily or
 event expiry can remove it from the active pool. The resumed call must reject
 that stale order before scans, inventory consumption, payouts, or statistics.
 
-The source binding accepts only the reviewed one-line entry-guard addition;
+The source binding accepts only the reviewed entry guard and exact post-alert
+authorization guard additions;
 every other byte of fulfill_order and the relevant producers/callers is pinned.
 The small positive-integer stock-only model illustrates that lifecycle contract.
 It is not BYOND execution, suspended-UI testing, treasury integration, warehouse
@@ -77,6 +78,15 @@ def bind_source():
     start = ui.index('\t\t\tvar/datum/standing_order/O = locate(params["ref"]) in GLOB.standing_order_pool')
     end = ui.index('\n\t\t\t\tif(islist(result)', start)
     caller = ui[start:end]
+    # Normalize only the reviewed post-alert authorization guard, in its exact
+    # position. Preserve the original caller hash and all membership assertions.
+    confirm = '\t\t\t\t\tif(confirm == "Yes")\n'
+    authorization_guard = (
+        '\t\t\t\t\t\tif(!user_can_act(usr) || (locked && !alderman_has_access(usr)))\n'
+        '\t\t\t\t\t\t\treturn TRUE\n')
+    guarded_confirm = confirm + authorization_guard
+    if caller.count(guarded_confirm) == 1:
+        caller = caller.replace(guarded_confirm, confirm, 1)
     if sha(caller) != CALLSITE_SHA or sha(ORDERS.read_text()) != ORDERS_SHA:
         raise AssertionError('Unreviewed standing-order UI/caller source')
     defines = DEFINES.read_text()

@@ -524,6 +524,9 @@
 	var/is_alderman_acting = alderman_has_access(user)
 	if(locked && !is_alderman_acting)
 		return
+	// Region prompts yield; check current receivership before committing trade.
+	if(SStreasury.is_in_receivership())
+		return
 	var/datum/economic_region/region = GLOB.economic_regions[region_id]
 	var/datum/trade_good/tg = GLOB.trade_goods[good_id]
 	if(!region || !tg)
@@ -556,6 +559,9 @@
 		return
 	var/is_alderman_acting = alderman_has_access(user)
 	if(locked && !is_alderman_acting)
+		return
+	// Region prompts yield; check current receivership before committing trade.
+	if(SStreasury.is_in_receivership())
 		return
 	var/datum/economic_region/region = GLOB.economic_regions[region_id]
 	var/datum/trade_good/tg = GLOB.trade_goods[good_id]
