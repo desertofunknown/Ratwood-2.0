@@ -94,7 +94,12 @@ export class Interactive extends Component<InteractiveProps> {
   handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const pressedKey = event.key;
 
-    if (!isArrow(pressedKey)) {
+    if (
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      !isArrow(pressedKey)
+    ) {
       return;
     }
     event.preventDefault();
