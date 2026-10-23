@@ -1,0 +1,87 @@
+{
+  "status": "verified",
+  "hubPath": "/evaluation/",
+  "provenance": {
+    "hostingCommit": "daa15193ce54369da3b9faa645bb48e6a210af25",
+    "release": "v17",
+    "scope": "Exact existing navigation destinations supplied by hosting inventory review. Root crafting landing and historical Lua baseline routes remain unchanged and unlisted."
+  },
+  "routes": [
+    {
+      "id": "display-readability-svelte",
+      "path": "/display-readability/svelte/"
+    },
+    {
+      "id": "display-readability-react",
+      "path": "/display-readability/react/"
+    },
+    {
+      "id": "alert-prompt-svelte",
+      "path": "/alert-prompt/svelte/"
+    },
+    {
+      "id": "alert-prompt-react",
+      "path": "/alert-prompt/react/"
+    },
+    {
+      "id": "selection-prompt-svelte",
+      "path": "/selection-prompt/svelte/"
+    },
+    {
+      "id": "selection-prompt-react",
+      "path": "/selection-prompt/react/"
+    },
+    {
+      "id": "value-prompts-svelte",
+      "path": "/value-prompts/svelte/"
+    },
+    {
+      "id": "value-prompts-react",
+      "path": "/value-prompts/react/"
+    },
+    {
+      "id": "crafting-workbench-svelte",
+      "path": "/integration/svelte/"
+    },
+    {
+      "id": "crafting-workbench-react",
+      "path": "/integration/react/"
+    },
+    {
+      "id": "market-quote-svelte",
+      "path": "/market-quote/svelte/"
+    },
+    {
+      "id": "market-quote-react",
+      "path": "/market-quote/react/"
+    },
+    {
+      "id": "treasury-ledger-svelte",
+      "path": "/treasury/svelte/"
+    },
+    {
+      "id": "treasury-ledger-react",
+      "path": "/treasury/react/"
+    },
+    {
+      "id": "changes-archive-svelte",
+      "path": "/changes/svelte/"
+    },
+    {
+      "id": "changes-archive-react",
+      "path": "/changes/react/"
+    },
+    {
+      "id": "crafting-standalone-svelte",
+      "path": "/svelte/"
+    },
+    {
+      "id": "crafting-standalone-react",
+      "path": "/react/"
+    },
+    {
+      "id": "crafting-standalone-lua",
+      "path": "/lua/"
+    }
+  ]
+}

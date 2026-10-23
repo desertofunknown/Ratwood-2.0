@@ -1,0 +1,13 @@
+Tithewood disconnected UI evaluation hub.
+This new static navigation study is governed by the repository's GNU Affero
+General Public License, version 3; the unchanged text is in LICENSE.txt.
+The palette and system-serif typography are copied byte-for-byte at build time
+from tgui/prototypes/ui-shared/tokens.css, originally seeded from the crafting
+workbench. Existing studies and production code are not copied or modified.
+There are no bundled third-party runtime dependencies, fonts, images or scripts.
+The source/ directory preserves every exact input needed to reproduce this hub,
+including the shared token source and repository license. manifest.json records
+source and output SHA-256 hashes. Preserve these sources, instructions, notices
+and license when distributing the hub. Linked studies are separate artifacts;
+their corresponding-source and licensing obligations remain separate and must
+also be preserved by the host. This build does not publish or deploy anything.
