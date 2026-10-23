@@ -49,15 +49,21 @@ export const PaperWriterPanel = () => {
   };
 
   useEffect(() => {
-    // Only sync from server if the user is not actively typing.
-    if (!isFocused.current) {
+    // An older acknowledgement must not replace unsent or unacknowledged edits.
+    if (
+      !isFocused.current &&
+      !previewDirty &&
+      (writer_sequence || 0) >= actionSeq.current
+    ) {
       setDraft(initialDraft || '');
     }
-  }, [initialDraft]);
+  }, [initialDraft, writer_sequence, previewDirty]);
 
   useEffect(() => {
-    setFont(backendFont || 'default');
-  }, [backendFont]);
+    if (!previewDirty && (writer_sequence || 0) >= actionSeq.current) {
+      setFont(backendFont || 'default');
+    }
+  }, [backendFont, writer_sequence, previewDirty]);
 
   const pushDraft = (nextDraft: string, nextFont: string = font) => {
     setDraft(nextDraft);
