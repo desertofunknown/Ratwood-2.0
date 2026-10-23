@@ -32,8 +32,7 @@
 	var/produces_today = region.produces_today[D.trade_good_id] || 0
 	if(daily_pace <= 0 || produces_today <= 0)
 		return null
-	var/starting_index = max(0, daily_pace - produces_today)
-	var/unit_cost = SSeconomy.compute_import_unit_price(D.trade_good_id, region, starting_index + 1)
+	var/unit_cost = best["unit_price"]
 	var/margin = (SStreasury.royal_custom_active && SStreasury.royal_custom_unlocked) ? SStreasury.royal_custom_margin : ROYAL_CUSTOM_DEFAULT_MARGIN
 	var/price = max(1, round(unit_cost * (100 + margin) / 100))
 	return list("region" = region, "unit_cost" = unit_cost, "price" = price)
