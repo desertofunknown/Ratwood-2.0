@@ -4,7 +4,6 @@ import {
   type SampleOptions as ArchiveOptions,
   type Scenario as ArchiveScenario,
 } from '../../changes-archive/sample';
-import type { WorkbenchAction } from '../../crafting-workbench/Workbench';
 import {
   type Controller as SettingsController,
   createController as createSettingsController,
@@ -15,24 +14,24 @@ import {
   type MarketController,
 } from '../../market-quote/model';
 import {
-  type Cancel,
   type Controller as LedgerController,
   createController as createLedgerController,
-  type Schedule,
 } from '../../treasury-ledger/model';
 import { createSample as createLedgerSample } from '../../treasury-ledger/sample';
 import type { Route, ScreenSession, SessionContext } from '../contracts';
 import { createDialogController } from '../dialogs/controller';
+import {
+  createWorkbenchSession,
+  type SessionClock,
+  sessionScope,
+  type WorkbenchSession,
+} from './session-core';
 
 export type DialogSession = ScreenSession & {
   route: 'dialogs';
   controller: ReturnType<typeof createDialogController>;
 };
 
-type WorkbenchSession = ScreenSession & {
-  route: 'workbench';
-  action: WorkbenchAction;
-};
 type TreasurySession = ScreenSession & {
   route: 'treasury';
   controller: LedgerController;
@@ -67,90 +66,10 @@ export type OwnedScreenSession =
   | ArchiveSession
   | DialogSession;
 
-export type ScreenSessionOptions = {
-  /** Test clock injection only; each screen retains its existing delays. */
-  schedule?: Schedule;
-  cancel?: Cancel;
+export type ScreenSessionOptions = SessionClock & {
   /** Sample-only archive scenarios and deterministic asynchronous test delivery. */
   archive?: Pick<ArchiveOptions, 'fetch'> & { scenario?: ArchiveScenario };
 };
-
-/** Own every local subscription independently of either rendering framework. */
-function sessionScope(context: SessionContext, options: ScreenSessionOptions) {
-  let retired = false;
-  const subscriptions = new Set<() => void>();
-  const timers = new Set<unknown>();
-  const current = () => !retired && context.lease.isCurrent();
-  const schedule = options.schedule ?? ((fn, delay) => setTimeout(fn, delay));
-  const cancel =
-    options.cancel ??
-    ((timer) => clearTimeout(timer as ReturnType<typeof setTimeout>));
-  function subscribe<Args extends unknown[]>(
-    source: (notify: (...args: Args) => void) => () => void,
-    notify: (...args: Args) => void,
-  ) {
-    if (!current()) return () => {};
-    const unsubscribe = source((...args) => {
-      if (current()) notify(...args);
-    });
-    let subscribed = true;
-    const cleanup = () => {
-      if (!subscribed) return;
-      subscribed = false;
-      subscriptions.delete(cleanup);
-      unsubscribe();
-    };
-    if (!current()) cleanup();
-    else subscriptions.add(cleanup);
-    return cleanup;
-  }
-  const attempt = (cleanup: () => void) => {
-    try {
-      cleanup();
-    } catch (error) {
-      context.lifecycle.error(error);
-    }
-  };
-  function retire(...cleanups: Array<() => void>) {
-    if (retired) return;
-    retired = true;
-    // A broken subscriber or validator cannot keep the other owned resources
-    // alive. Report each failure while completing the remaining cleanup.
-    for (const unsubscribe of [...subscriptions]) attempt(unsubscribe);
-    for (const timer of timers) attempt(() => cancel(timer));
-    timers.clear();
-    for (const cleanup of cleanups) attempt(cleanup);
-  }
-  return {
-    current,
-    subscribe,
-    schedule(callback: () => void, delay: number) {
-      const timer = schedule(() => {
-        timers.delete(timer);
-        if (current()) callback();
-      }, delay);
-      timers.add(timer);
-      return timer;
-    },
-    cancel(timer: unknown) {
-      if (timers.delete(timer)) cancel(timer);
-    },
-    gate<Args extends unknown[]>(callback: (...args: Args) => void) {
-      return (...args: Args) => {
-        if (current()) callback(...args);
-      };
-    },
-    retire,
-    construct<T>(factory: () => T, cleanup: () => void): T {
-      try {
-        return factory();
-      } catch (error) {
-        retire(cleanup);
-        throw error;
-      }
-    },
-  };
-}
 
 /** One private source/controller per route visit, never a cross-route cache. */
 export function createScreenSession(
@@ -158,20 +77,13 @@ export function createScreenSession(
   context: SessionContext,
   options: ScreenSessionOptions = {},
 ): OwnedScreenSession {
+  if (route === 'workbench') return createWorkbenchSession(context, options);
   const { lease, validateBoundary } = context;
   validateBoundary();
   const scope = sessionScope(context, options);
   if (route === 'dialogs') {
     const controller = createDialogController(context);
     return { route, lease, controller, retire: controller.retire };
-  }
-  if (route === 'workbench') {
-    return {
-      route,
-      lease,
-      action: scope.gate(context.onWorkbenchAction),
-      retire: () => scope.retire(),
-    };
   }
   if (route === 'treasury') {
     const sample = createLedgerSample(

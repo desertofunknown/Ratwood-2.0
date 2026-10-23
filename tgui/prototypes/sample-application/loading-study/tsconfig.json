@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "include": [
+    "./build-proof.ts",
+    "./deferred-probe.ts",
+    "./eager-probe.ts",
+    "./endpoint-binding.d.ts",
+    "./host-bootstrap.ts",
+    "./module-binding.ts",
+    "./production-host.ts",
+    "./proof-checks.ts",
+    "./run-proof.ts",
+    "../../../global.d.ts"
+  ],
+  "exclude": ["./dist", "./.generated"]
+}

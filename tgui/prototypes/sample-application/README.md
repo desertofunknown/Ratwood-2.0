@@ -187,3 +187,11 @@ Independent review additionally reproduced and checked throwing-observer and
 reentrant replacement cleanup before clearance. Existing production JS/CSS and
 other retained preview artifacts remain byte-identical to this checkpoint's
 baseline. No DM source changed and no engine run is implied.
+
+## Route-loading experiment
+
+The separate [loading study](loading-study/APPLICATION.md) compares a matched
+six-screen eager module build with a crafting-first deferred build. It preserves
+this eager application as a control and does not activate production routing.
+Initial and total graph costs, ownership tests and data-readiness limits are
+reported separately; a smaller initial download is not a native performance claim.

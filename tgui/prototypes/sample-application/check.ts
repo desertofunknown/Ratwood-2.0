@@ -11,6 +11,7 @@ for (const command of [
   [process.execPath, 'test.ts'],
   [process.execPath, 'archive-test.ts'],
   [process.execPath, 'dialogs-test.ts'],
+  [process.execPath, 'extraction-test.ts'],
   [
     process.execPath,
     'test',

@@ -1,5 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react';
-import { createPortal } from 'react-dom';
+import { useLayoutEffect, useSyncExternalStore } from 'react';
 
 import { ReactView as ArchiveView } from '../../changes-archive/ReactView';
 import { CraftingWorkbench } from '../../crafting-workbench/Workbench';
@@ -9,6 +8,7 @@ import { ReactView as LedgerView } from '../../treasury-ledger/ReactView';
 import type { ScreenProps } from '../contracts';
 import { ReactDialogs } from '../dialogs/ReactDialogs';
 import { ScreenControls } from './controls';
+import { ReactScreenOwner } from './react-owner';
 import type { OwnedScreenSession } from './session';
 
 function Archive({
@@ -98,44 +98,18 @@ function Content({ session, snapshot }: ScreenProps) {
   }
 }
 
-function Generation(props: ScreenProps) {
-  const { session, lifecycle } = props;
-  const owned = session as OwnedScreenSession;
-  const container = useRef<HTMLDivElement>(null);
-  const target = useMemo(() => document.createElement('div'), [session]);
-  useLayoutEffect(() => {
-    if (!session.lease.isCurrent()) return;
-    target.dataset.sampleScreenTarget = session.route;
-    container.current!.append(target);
-    let mounted = true;
-    const detach = () => {
-      target.remove();
-      if (!mounted) return;
-      mounted = false;
-      lifecycle.unmounted();
-    };
-    const unregister = session.lease.onRetire(detach);
-    lifecycle.mounted(owned.route === 'workbench' ? owned.action : undefined);
-    return () => {
-      unregister();
-      detach();
-    };
-  }, [session]);
-  return (
-    <div ref={container} data-sample-screen-host="react">
-      {session.lease.isCurrent() &&
-        createPortal(
-          <>
-            <ScreenControls session={owned} />
-            <Content {...props} />
-          </>,
-          target,
-        )}
-    </div>
-  );
-}
-
 /** A portal is still the shell's one React root, never a nested createRoot. */
 export function ReactScreen(props: ScreenProps) {
-  return <Generation key={props.session.lease.screenEpoch} {...props} />;
+  const owned = props.session as OwnedScreenSession;
+  return (
+    <ReactScreenOwner
+      key={owned.lease.screenEpoch}
+      session={owned}
+      lifecycle={props.lifecycle}
+      action={owned.route === 'workbench' ? owned.action : undefined}
+    >
+      <ScreenControls session={owned} />
+      <Content {...props} />
+    </ReactScreenOwner>
+  );
 }
