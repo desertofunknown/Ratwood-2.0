@@ -126,6 +126,13 @@ export const TextInputModal = (props) => {
               {/* height:100% propagates the Stack.Item's grown height down to the TextArea */}
               <div
                 style={{ height: '100%' }}
+                onKeyDownCapture={(event) => {
+                  // IME owns its candidate-confirm/cancel keys. Intercept before
+                  // the core textarea can blur or the modal can submit/cancel.
+                  if (event.nativeEvent.isComposing) {
+                    event.stopPropagation();
+                  }
+                }}
                 onDrop={handleBlockedInput}
                 onPaste={handleBlockedInput}
               >
