@@ -1,7 +1,7 @@
 {
   "baseline_commit": "06bdef8a8315323e91afd10d7c6f7a91585147e3",
   "scope": "Source-bound Python model only, not DM execution, engine compilation, JSON transport, UI mounting, or native gameplay. Ingredient fixtures use exact disjoint item requirements without subtype competition, tools, location, skill, chemistry, or consumption. All other crafting.dm bytes, including authoritative action and validation, are locked to the reviewed baseline plus the intentional changes in baseline_adjustments. Recipe facts come from this repository; ordinary inheritance supplies the alternate wall name.",
-  "unchanged_crafting_sha256": "b98d58fd24dbaabd0766df978277af420f029f07d08980a411908623b442bd7a",
+  "unchanged_crafting_sha256": "3f380719afb5c3abc20929b0687e04601ebc9cc80ae546c16b358b30ac751e5e",
   "recipes": [
     {
       "source": "code/modules/roguetown/roguecrafting/engineering.dm",
@@ -46,6 +46,7 @@
   "baseline_adjustments": [
     "personal_crafting/ui_act adds if(.) followed by bare return immediately after its existing . = ..() parent call. All remaining normalized component bytes are unchanged.",
     "personal_crafting/ui_act craft branch adds a list/text payload guard before text2path and a /datum/crafting_recipe type-path guard immediately after resolution. Both use bare return; the preceding parent-result guard, amount/auto reads, constructor, construction call, lastrecipe assignment, other actions, and all remaining normalized component bytes are unchanged.",
-    "Mind teach/forget helpers retain their existing list operations and now invalidate craftability and request the supported existing-UI static refresh only when membership count changes. No action, ingredient validation, recipe or pricing logic changes. This exact normalized digest includes the reviewed helper delta; no additional bytes are excluded."
+    "Mind teach/forget helpers retain their existing list operations and now invalidate craftability and request the supported existing-UI static refresh only when membership count changes. No action, ingredient validation, recipe or pricing logic changes. This exact normalized digest includes the reviewed helper delta; no additional bytes are excluded.",
+    "A default-off recipe flag enables a repeated existing TurfCheck only for the wooden and stone down-stair recipes after a successful crafting roll and before ingredient consumption. The original target, callbacks, roll formulas, ingredient logic and other recipe behavior remain unchanged. This exact normalized digest includes the reviewed guard; no additional bytes are excluded."
   ]
 }

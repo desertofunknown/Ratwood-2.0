@@ -483,6 +483,7 @@
 	skillcraft = /datum/skill/craft/carpentry
 	craftdiff = 2
 	ontile = TRUE
+	recheck_turf_after_delay = TRUE
 
 /datum/crafting_recipe/roguetown/structure/stairsd/TurfCheck(mob/user, turf/T)
 	var/turf/checking = get_step(T, user.dir)
@@ -513,6 +514,7 @@
 	verbage_simple = "builds"
 	verbage = "builds"
 	ontile = TRUE
+	recheck_turf_after_delay = TRUE
 
 /datum/crafting_recipe/roguetown/structure/stonestairsd/TurfCheck(mob/user, turf/T)
 	var/turf/checking = get_step(T, user.dir)

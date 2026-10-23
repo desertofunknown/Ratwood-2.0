@@ -400,6 +400,9 @@
 							continue
 						to_chat(user, span_danger("I've failed to craft \the [result_name]."))
 						continue
+					if(R.recheck_turf_after_delay && !R.TurfCheck(user, T))
+						to_chat(user, span_warning("I can't craft here."))
+						return FALSE
 					var/list/quality_capture = R.skip_quality ? list() : null
 					var/list/parts = del_reqs(R, user, quality_capture)
 					if(isnull(parts))

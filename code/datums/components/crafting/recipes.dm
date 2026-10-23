@@ -15,6 +15,8 @@
 	var/subcategory = CAT_NONE
 	var/always_availible = FALSE //Set to FALSE if it needs to be learned first.
 	var/ontile = FALSE		//crafted on our tile instead of in front of us
+	/// Opt in when placement depends on state that can change during the crafting delay.
+	var/recheck_turf_after_delay = FALSE
 	var/req_table = FALSE
 	var/skillcraft = /datum/skill/craft/crafting
 	var/verbage_simple = "craft"
