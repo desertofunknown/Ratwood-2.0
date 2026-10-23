@@ -444,7 +444,7 @@
 	if(!length(corpses))
 		to_chat(user, span_warning("The Undermaiden's grasp lets slip."))
 		revert_cast()
-		return .
+		return FALSE
 
 	var/selected = tgui_input_list(user, "Which body shall I seek?", "Available Bodies", corpses)
 
