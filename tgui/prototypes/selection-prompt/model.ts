@@ -25,8 +25,9 @@ export function createController(
   initial: Data,
   act: Act,
   onClose: () => void = () => {},
+  validateBoundary: () => void = assertDisconnected,
 ) {
-  assertDisconnected();
+  validateBoundary();
   let data = initial,
     selection = initial.init_value;
   let searchBarVisible = initial.items.length > 8,
@@ -58,7 +59,7 @@ export function createController(
     listeners.forEach((listener) => listener());
   }
   function allowed() {
-    assertDisconnected();
+    validateBoundary();
     return !closed;
   }
   function select(item: string) {

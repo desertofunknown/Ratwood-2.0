@@ -15,7 +15,17 @@ import { createDemoData } from '../crafting-workbench/fixtures';
 import { createSampleData } from '../display-readability/fixtures';
 import { MARKET_SAMPLES } from '../market-quote/fixtures';
 import { sampleEntries } from '../treasury-ledger/fixtures';
+import { fixtures as confirmationSamples } from '../alert-prompt/fixtures';
+import {
+  sampleData as selectionSample,
+  scenarios as selectionScenarios,
+} from '../selection-prompt/sample';
+import {
+  sampleData as valueSample,
+  scenarios as valueScenarios,
+} from '../value-prompts/fixtures';
 import { archiveScreenCss } from './archive-styles';
+import { dialogScreenCss } from './dialog-styles';
 import { auditOwnedEndpointBundle } from './audit-bundle';
 import {
   banner,
@@ -42,6 +52,7 @@ const inputs = new Set<string>(
     'build-options.ts',
     'build.ts',
     'archive-styles.ts',
+    'dialog-styles.ts',
   ].map((path) => join(here, path)),
 );
 const builds: Record<string, unknown> = {};
@@ -102,6 +113,10 @@ const screenPaths = [
   '../market-quote/market.css',
   '../display-readability/settings.css',
   '../changes-archive/archive.css',
+  '../selection-prompt/selection.css',
+  '../value-prompts/value.css',
+  '../alert-prompt/alert.css',
+  './dialogs/dialogs.css',
 ];
 const screenCss = (
   await Promise.all(
@@ -109,6 +124,12 @@ const screenCss = (
       const file = join(here, path);
       inputs.add(file);
       const source = await readFile(file, 'utf8');
+      if (path === '../selection-prompt/selection.css')
+        return dialogScreenCss(source, 'Selection');
+      if (path === '../value-prompts/value.css')
+        return dialogScreenCss(source, 'Value');
+      if (path === '../alert-prompt/alert.css')
+        return dialogScreenCss(source, 'Alert');
       return path === '../changes-archive/archive.css'
         ? archiveScreenCss(source)
         : source;
@@ -127,6 +148,18 @@ await writeFile(
       readability: createSampleData(),
       market: MARKET_SAMPLES,
       archive: { '2026-10': archiveSample, '2026-09': olderSample },
+      dialogs: {
+        selection: Object.fromEntries(
+          selectionScenarios.map((name) => [name, selectionSample(name)]),
+        ),
+        text: Object.fromEntries(
+          valueScenarios.map((name) => [name, valueSample('text', name)]),
+        ),
+        number: Object.fromEntries(
+          valueScenarios.map((name) => [name, valueSample('number', name)]),
+        ),
+        confirmation: confirmationSamples,
+      },
     },
     null,
     2,

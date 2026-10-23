@@ -1,8 +1,8 @@
 # Disconnected Tithewood application study
 
 This experimental application composes the existing crafting workbench, treasury
-ledger, market quote, display/readability and Changes/archive studies in one actual React-owned
-Window and backend store. The React control and Svelte-backed arm use the same
+ledger, market quote, display/readability, Changes/archive and prompt-family
+studies in one actual React-owned Window and backend store. The React control and Svelte-backed arm use the same
 host, sample data, external styles and screen lifecycle. It is not a production
 route, a framework migration, a native-client acceptance result or a game server.
 
@@ -129,5 +129,61 @@ both. Existing YAML/date/archive logic is eagerly included in each single-script
 sample bundle. This is an explicit feature/transfer-cost tradeoff, not a passed
 size gate or evidence that either framework is faster. A later route-lazy design
 would need its own first-open, failure and disposal measurements; this extension
-does not introduce one. Hosted-browser acceptance of the five-screen application
-remains pending.
+does not introduce one. The five-screen source `df107bc4` subsequently passed sampled hosted Chromium
+journeys in both arms: search/month/Clear/credits, success/retry/failure/empty,
+leave-return reset and Close/acknowledge/resume. The retained report contains
+49 observations, including narrow 340×600 CSS and 200% zoom checks. Exact pending
+request races remain mounted-test coverage, not instrumented browser evidence.
+There is still no native-client or performance acceptance.
+
+
+## Owned prompt-family extension
+
+The sixth screen composes the existing selection, text, number and confirmation
+studies into the same screen lease. It is a local launcher with one active
+prompt subtree, not a new modal focus trap or a replacement for game routing.
+Existing prompt views keep their original keyboard, validation, local buffer,
+choice identity, preview and delivered-timeout behavior.
+
+Submit, Cancel and Choose record their exact local command but do not invent an
+immediate server acknowledgement. The explicit sample acknowledgement disposes
+the current prompt. Its titlebar Close is distinct from Cancel. Replacement,
+route departure and host/root retirement synchronously fence old controller
+methods and subscriptions. Returning starts a fresh local prompt session.
+Only a still-current, connected launcher can receive return focus after a local
+close or acknowledgement. No timeout countdown, audio or game command is run.
+
+Domain styles are extracted with a selector allowlist and scoped to this sample;
+standalone page and fixture chrome are excluded. The original studies and their
+published artifacts remain separate, unchanged controls. This extension adds no
+production routing, minimum-client policy, persistence or native fallback change.
+Endpoint ownership loss also notifies the current wrapper after revoking every
+capability, removing its prompt subtree without returning focus to a launcher.
+Observer failures and reentrant retirement/replacement are covered explicitly.
+
+Build-only transfer accounting (raw / per-file gzip bytes):
+
+- React: 437,797 / 143,485; prompt extension +30,124 / +9,687 versus five screens.
+- Svelte-backed: 515,186 / 173,241; prompt extension +35,649 / +11,400.
+- Versus the unchanged workbench-only controls, additional React 127,392 / 41,692 and Svelte-backed 140,545 / 46,948.
+- Shared shell CSS remains 6,524 / 2,077; combined screen CSS is 36,613 / 6,165.
+
+Both arms now exceed both original review thresholds (+100 KiB raw / +30 KiB
+gzip). These budgets have not been raised. Existing prompt editor/control code
+is eagerly included alongside the archive logic, not fetched on first open.
+The additional screen is an explicit functionality/transfer-cost tradeoff,
+not a passed size gate, production rollout, or speed claim. Build auditing finds
+zero unbound native endpoint identifiers in either arm. Hosted-browser acceptance
+of this six-screen extension remains pending.
+
+
+Validation for this extension: 207 distinct focused cases / 5,544 assertions
+(27 existing host, 36 archive, 25 prompt mounted cases, and 119 unit/failure/style
+cases). The ordinary suite passes 988 cases, including those 119 unit cases;
+the separate 36/24/44 isolated suites also pass. TypeScript, production build and
+seven lint-regression cases pass. Full production lint retains 115 existing
+findings. The prompt mounted cases use simulated DOM, not native browser input.
+Independent review additionally reproduced and checked throwing-observer and
+reentrant replacement cleanup before clearance. Existing production JS/CSS and
+other retained preview artifacts remain byte-identical to this checkpoint's
+baseline. No DM source changed and no engine run is implied.

@@ -50,8 +50,9 @@ export function createController(
   initial: Data,
   act: Act,
   onClose: () => void = () => {},
+  validateBoundary: () => void = assertDisconnected,
 ) {
-  assertDisconnected();
+  validateBoundary();
   let data = { ...initial };
   let value: Value =
     kind === 'number' ? initial.init_value : initial.placeholder || '';
@@ -117,7 +118,7 @@ export function createController(
     listeners.forEach((listener) => listener());
   }
   function allowed() {
-    assertDisconnected();
+    validateBoundary();
     return !closed;
   }
   function setValue(next: Value) {

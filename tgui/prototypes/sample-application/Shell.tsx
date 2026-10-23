@@ -36,7 +36,7 @@ export function Shell({
     <div className="SampleApplication" data-sample-application="">
       <header className="SampleApplication__header">
         <p className="SampleApplication__disclosure">
-          Disconnected sample application · All five screens use local fixture
+          Disconnected sample application · All six screens use local fixture
           data. No live game, trade dispatch or preference saving.
         </p>
         <nav

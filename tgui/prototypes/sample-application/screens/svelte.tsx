@@ -12,6 +12,7 @@ import MarketView from '../../market-quote/SvelteView.svelte';
 import LedgerSession from '../../treasury-ledger/SvelteSession.svelte';
 import type { ScreenLifecycle, ScreenProps } from '../contracts';
 import ArchiveSession from './ArchiveSession.svelte';
+import SvelteDialogs from '../dialogs/SvelteDialogs.svelte';
 import { ScreenControls } from './controls';
 import { disposeFailedView, mountOwnedView } from './mount-lifetime';
 import type { OwnedScreenSession } from './session';
@@ -48,12 +49,17 @@ export function mountScreenContent(
               target,
               props: { controller: session.controller },
             })
-          : session.route === 'archive'
-            ? mount(ArchiveSession, { target, props: { session } })
-            : mount(MarketView, {
+          : session.route === 'dialogs'
+            ? mount(SvelteDialogs, {
                 target,
-                props: { controller: session.controller },
-              }),
+                props: { controller: session.controller, lease: session.lease },
+              })
+            : session.route === 'archive'
+              ? mount(ArchiveSession, { target, props: { session } })
+              : mount(MarketView, {
+                  target,
+                  props: { controller: session.controller },
+                }),
     flushSync,
     unmount,
   );

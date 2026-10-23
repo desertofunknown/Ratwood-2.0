@@ -10,6 +10,7 @@ for (const command of [
   ],
   [process.execPath, 'test.ts'],
   [process.execPath, 'archive-test.ts'],
+  [process.execPath, 'dialogs-test.ts'],
   [
     process.execPath,
     'test',
@@ -21,6 +22,8 @@ for (const command of [
     'tests/screens-workbench-failure.test.ts',
     'tests/bundle-audit.test.ts',
     'tests/archive-styles.test.ts',
+    'tests/dialog-styles.test.ts',
+    'tests/dialog-controller.test.ts',
   ],
 ]) {
   const child = Bun.spawn(command, {

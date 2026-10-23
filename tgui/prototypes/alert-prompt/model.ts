@@ -40,8 +40,9 @@ export function createController(
   initial: Data,
   act: Act,
   onClose: () => void = () => {},
+  validateBoundary: () => void = assertDisconnected,
 ) {
-  assertDisconnected();
+  validateBoundary();
   let data = { ...initial };
   let selected = 0;
   let closed = false;
@@ -74,7 +75,7 @@ export function createController(
     listeners.forEach((listener) => listener());
   }
   function allowed() {
-    assertDisconnected();
+    validateBoundary();
     return !closed;
   }
   function navigate(direction: number) {

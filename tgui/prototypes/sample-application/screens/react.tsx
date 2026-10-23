@@ -7,6 +7,7 @@ import { ReactView as SettingsView } from '../../display-readability/ReactView';
 import { ReactView as MarketView } from '../../market-quote/ReactView';
 import { ReactView as LedgerView } from '../../treasury-ledger/ReactView';
 import type { ScreenProps } from '../contracts';
+import { ReactDialogs } from '../dialogs/ReactDialogs';
 import { ScreenControls } from './controls';
 import type { OwnedScreenSession } from './session';
 
@@ -92,6 +93,8 @@ function Content({ session, snapshot }: ScreenProps) {
       return <Market session={owned} />;
     case 'archive':
       return <Archive session={owned} />;
+    case 'dialogs':
+      return <ReactDialogs controller={owned.controller} lease={owned.lease} />;
   }
 }
 

@@ -8,13 +8,15 @@ export type Route =
   | 'treasury'
   | 'market'
   | 'readability'
-  | 'archive';
+  | 'archive'
+  | 'dialogs';
 export const routes: readonly Route[] = [
   'workbench',
   'treasury',
   'market',
   'readability',
   'archive',
+  'dialogs',
 ];
 export const routeLabels: Record<Route, string> = {
   workbench: 'Crafting workbench',
@@ -22,6 +24,7 @@ export const routeLabels: Record<Route, string> = {
   market: 'Market quotes',
   readability: 'Display & readability',
   archive: 'Changes / archive',
+  dialogs: 'Prompts & decisions',
 };
 
 /** A synchronously revoked capability, independent of React commit timing. */

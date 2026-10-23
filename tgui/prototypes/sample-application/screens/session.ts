@@ -22,6 +22,12 @@ import {
 } from '../../treasury-ledger/model';
 import { createSample as createLedgerSample } from '../../treasury-ledger/sample';
 import type { Route, ScreenSession, SessionContext } from '../contracts';
+import { createDialogController } from '../dialogs/controller';
+
+export type DialogSession = ScreenSession & {
+  route: 'dialogs';
+  controller: ReturnType<typeof createDialogController>;
+};
 
 type WorkbenchSession = ScreenSession & {
   route: 'workbench';
@@ -58,7 +64,8 @@ export type OwnedScreenSession =
   | TreasurySession
   | MarketSession
   | ReadabilitySession
-  | ArchiveSession;
+  | ArchiveSession
+  | DialogSession;
 
 export type ScreenSessionOptions = {
   /** Test clock injection only; each screen retains its existing delays. */
@@ -154,6 +161,10 @@ export function createScreenSession(
   const { lease, validateBoundary } = context;
   validateBoundary();
   const scope = sessionScope(context, options);
+  if (route === 'dialogs') {
+    const controller = createDialogController(context);
+    return { route, lease, controller, retire: controller.retire };
+  }
   if (route === 'workbench') {
     return {
       route,

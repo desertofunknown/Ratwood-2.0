@@ -1,0 +1,153 @@
+/* Local launcher chrome only; original prompt presentation is reused intact. */
+.SampleDialogs {
+	min-width: 0;
+}
+
+.SampleDialogs__disclosure,
+.SampleDialogs__delivery,
+.SampleDialogs__status,
+.SampleDialogs__record,
+.SampleDialogs__family {
+	font:
+		13px/1.5 system-ui,
+		sans-serif;
+}
+
+.SampleDialogs__disclosure {
+	margin: 0 0 14px;
+	color: var(--tw-muted);
+}
+
+.SampleDialogs__launchers {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.SampleDialogs__family {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 6px;
+	min-width: 0;
+	margin: 0;
+	padding: 10px;
+	border: 1px solid var(--tw-border);
+	background: var(--tw-surface);
+}
+
+.SampleDialogs__family legend {
+	padding: 0 5px;
+	font-weight: 600;
+	color: var(--tw-heading);
+}
+
+.SampleDialogs__family .TithewoodControl {
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.SampleDialogs__family [data-active-sample='true'] {
+	border-color: var(--tw-copper);
+	background: var(--tw-selected);
+}
+
+.SampleDialogs__delivery {
+	padding: 12px;
+	border: 1px solid var(--tw-border);
+	background: var(--tw-surface);
+}
+
+.SampleDialogs__deliveryActions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.SampleDialogs__deliveryActions > span {
+	margin-right: 4px;
+	color: var(--tw-heading);
+}
+
+.SampleDialogs__deliveryActions .TithewoodControl {
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.SampleDialogs__hint {
+	margin: 8px 0 0;
+	color: var(--tw-muted);
+	font-size: 12px;
+}
+
+.SampleDialogs__hint + .SampleDialogs__deliveryActions {
+	margin-top: 10px;
+}
+
+.SampleDialogs__status {
+	margin: 14px 0 8px;
+	color: var(--tw-muted);
+	overflow-wrap: anywhere;
+}
+
+.SampleDialogs__stage {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	min-width: 0;
+	padding: 16px;
+	border: 1px solid var(--tw-border);
+	background: var(--tw-surface);
+}
+
+.SampleDialogs__stage > .SelectionPrompt {
+	margin: 0;
+}
+
+.SampleDialogs__empty {
+	max-width: 44em;
+	margin: 28px 0;
+	color: var(--tw-muted);
+	text-align: center;
+}
+
+.SampleDialogs__record {
+	margin-top: 14px;
+	padding: 12px;
+	border: 1px solid var(--tw-border);
+}
+
+.SampleDialogs__record p {
+	margin: 0 0 6px;
+}
+
+.SampleDialogs__record pre {
+	max-height: 220px;
+	margin: 0;
+	padding: 10px;
+	overflow: auto;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	background: var(--tw-surface);
+	font:
+		12px/1.5 ui-monospace,
+		monospace;
+}
+
+@media (max-width: 760px) {
+	.SampleDialogs__launchers {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.SampleDialogs__stage {
+		padding: 8px;
+	}
+}
+
+@media (max-width: 380px) {
+	.SampleDialogs__deliveryActions > span {
+		flex-basis: 100%;
+	}
+}
