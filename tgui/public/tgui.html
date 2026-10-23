@@ -13,6 +13,30 @@
     <!-- tgui:inline-css -->
   </head>
   <body style="background-color: var(--color-base)">
+    <!-- Keep this diagnostic readable before modern application scripts load. -->
+    <div
+      id="tgui:legacy-browser"
+      role="alert"
+      style="
+        display: none;
+        position: relative;
+        z-index: 1001;
+        padding: 12px;
+        color: #ffffff;
+        background-color: #242424;
+        font: 14px/1.5 sans-serif;
+      "
+    >
+      This interface cannot run in the legacy Internet Explorer browser engine.
+      Update BYOND to a version with a supported Chromium-based embedded browser,
+      then reconnect. The game's minimum BYOND version does not guarantee browser
+      compatibility.
+    </div>
+    <script>
+      if (document.documentMode > 0) {
+        document.getElementById('tgui:legacy-browser').style.display = 'block';
+      }
+    </script>
     <!-- tgui:assets -->
     <!-- tgui:inline-html-start -->
     <!-- tgui:inline-html -->
